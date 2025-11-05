@@ -1,11 +1,11 @@
 // =====================================================
-// 🌊 Server for Reservatórios HAG
+// 🌊 Server for Reservatórios HAG (versão calibrada)
 // =====================================================
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const { users } = require("./users"); // deve exportar { users: [ { username, password } ] }
+const { users } = require("./users");
 
 const app = express();
 app.use(cors());
@@ -19,20 +19,63 @@ app.use(express.static(path.join(__dirname, "public")));
 const API_KEY = process.env.HAG_API_KEY || "ffbshagf2025";
 
 // =====================================================
-// ⚙️ CONFIGURAÇÃO DOS SENSORES
+// ⚙️ CONFIGURAÇÃO DOS SENSORES (calibrada)
 // =====================================================
+// Campos: capacidade (L), altura (m), leitura vazio, leitura cheio
 const SENSOR_CONFIG = {
-  "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, vazio: 0.004168, cheio: 0.007855 },
-  "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, vazio: 0.00505, cheio: 0.006533 },
-  "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, vazio: 0.004088, cheio: 0.004408 },
-  "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 },
-  "Presao_Saida_current": { nome: "Pressão de Saída", capacidade: 0, vazio: 0, cheio: 0 },
-  "Pressao_saida_current": { nome: "Pressão de Saída (variação)", capacidade: 0, vazio: 0, cheio: 0 },
-  "Pressao_Retorno_current": { nome: "Pressão de Retorno", capacidade: 0, vazio: 0, cheio: 0 }
+  "Reservatorio_Elevador_current": {
+    nome: "Reservatório Elevador",
+    capacidade: 20000,
+    alturaRes: 1.45,
+    vazio: 0.004168,
+    cheio: 0.007855
+  },
+  "Reservatorio_Osmose_current": {
+    nome: "Reservatório Osmose",
+    capacidade: 200,
+    alturaRes: 1.0,
+    vazio: 0.00505,
+    cheio: 0.006533
+  },
+  "Reservatorio_CME_current": {
+    nome: "Reservatório CME",
+    capacidade: 1000,
+    alturaRes: 0.45,
+    vazio: 0.004088,
+    cheio: 0.004408
+  },
+  "Agua_Abrandada_current": {
+    nome: "Reservatório Água Abrandada",
+    capacidade: 9000,
+    alturaRes: 0.6,
+    vazio: 0.004008,
+    cheio: 0.004929
+  },
+  "Presao_Saida_current": {
+    nome: "Pressão de Saída",
+    capacidade: 0,
+    alturaRes: 0,
+    vazio: 0,
+    cheio: 0
+  },
+  "Pressao_saida_current": {
+    nome: "Pressão de Saída (variação)",
+    capacidade: 0,
+    alturaRes: 0,
+    vazio: 0,
+    cheio: 0
+  },
+  "Pressao_Retorno_current": {
+    nome: "Pressão de Retorno",
+    capacidade: 0,
+    alturaRes: 0,
+    vazio: 0,
+    cheio: 0
+  }
 };
 
 // =====================================================
-// 📂 GARANTE QUE A PASTA DE DADOS EXISTE
+// 📂 GARANTE PASTA E ARQUIVO DE DADOS
 // =====================================================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
@@ -51,7 +94,7 @@ app.post("/api/login", (req, res) => {
 });
 
 // =====================================================
-// 📊 OBTÉM DADOS ATUAIS (para o dashboard)
+// 📊 RETORNA DADOS SALVOS
 // =====================================================
 app.get("/dados", (req, res) => {
   fs.readFile(DATA_FILE, "utf8", (err, data) => {
@@ -67,7 +110,7 @@ app.get("/dados", (req, res) => {
 app.post("/atualizar", (req, res) => {
   const payload = req.body;
 
-  // 🔐 Verifica chave de segurança
+  // 🔐 Valida chave de API
   const apiKeyHeader = req.headers["x-api-key"];
   if (apiKeyHeader !== API_KEY) {
     console.warn(`🚨 Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader}`);
@@ -81,7 +124,7 @@ app.post("/atualizar", (req, res) => {
   if (Array.isArray(payload.data)) items = payload.data;
   if (!Array.isArray(items)) items = [items];
 
-  // Lê dados atuais (para preservar valores antigos)
+  // Lê dados atuais
   let current = {};
   try {
     const raw = fs.readFileSync(DATA_FILE, "utf8");
@@ -90,19 +133,18 @@ app.post("/atualizar", (req, res) => {
     current = {};
   }
 
-  // Dicionário para corrigir nomes diferentes do mesmo sensor
+  // Corrige nomes equivalentes
   const alias = {
     "pressao_saida_current": "Presao_Saida_current",
-    "pressao_retorno_current": "Pressao_Retorno_current",
+    "pressao_retorno_current": "Pressao_Retorno_current"
   };
 
-  // Processa cada item recebido
+  // Processa os dados recebidos
   items.forEach(item => {
     let ref = item.ref || item.name;
     const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
 
-    // Normaliza e aplica alias
     const norm = ref.toLowerCase().trim();
     if (alias[norm]) ref = alias[norm];
 
@@ -127,7 +169,7 @@ app.post("/atualizar", (req, res) => {
     };
   });
 
-  // Salva arquivo atualizado
+  // Salva as leituras atualizadas
   fs.writeFile(DATA_FILE, JSON.stringify(current, null, 2), "utf8", (err) => {
     if (err) {
       console.error("Erro ao salvar readings.json:", err);
