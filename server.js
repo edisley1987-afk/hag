@@ -3,7 +3,7 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const { users } = require("./users");
+const { users } = require("./users"); // Assume que 'users.js' existe
 
 const app = express();
 app.use(cors());
@@ -24,7 +24,9 @@ const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, vazio: 0.004168, cheio: 0.007855 },
   "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, vazio: 0.00505, cheio: 0.006533 },
   "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, vazio: 0.004088, cheio: 0.004408 },
-  "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 }
+  "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 },
+  // Incluindo o sensor 'Presao_Saida_current' encontrado no payload, mas sem config de volume
+  "Presao_Saida_current": { nome: "Pressão de Saída (Raw)", capacidade: 0, vazio: 0, cheio: 0 }
 };
 
 const DATA_FILE = path.join(__dirname, "data", "readings.json");
@@ -65,7 +67,8 @@ app.post("/atualizar", (req, res) => {
   // 1. VERIFICAÇÃO DE SEGURANÇA: Checa o Header HTTP 'X-API-KEY'
   const apiKeyHeader = req.headers['x-api-key'];
   if (apiKeyHeader !== API_KEY) {
-    console.warn(Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader});
+    // 🚨 Esta linha está verificada contra o SyntaxError
+    console.warn(Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader}); 
     return res.status(401).json({ error: "Chave de API inválida. Acesso negado." });
   }
 
@@ -88,7 +91,6 @@ app.post("/atualizar", (req, res) => {
   // Process incoming records
   items.forEach(item => {
     // item expected to have: ref (string), value (number)
-    // O payload do Khomp usa 'ref' e 'value' corretamente.
     const ref = item.ref || item.name;
     const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
