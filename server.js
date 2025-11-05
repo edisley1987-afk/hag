@@ -11,6 +11,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// =================================================================
+// 🚨 CHAVE DE SEGURANÇA (API KEY)
+// 
+// MELHOR PRÁTICA: Usar process.env.HAG_API_KEY. 
+// O valor 'ffbshagf2025' é o padrão se a variável de ambiente não estiver definida.
+const API_KEY = process.env.HAG_API_KEY || "ffbshagf2025";
+// =================================================================
+
 // sensor config: capacidade (L), leituraVazio (raw), leituraCheio (raw), nome
 const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, vazio: 0.004168, cheio: 0.007855 },
@@ -21,7 +29,7 @@ const SENSOR_CONFIG = {
 
 const DATA_FILE = path.join(__dirname, "data", "readings.json");
 // ensure data folder exists
-if (!fs.existsSync(path.join(__dirname, "data"))) fs.mkdirSync(path.join(__dirname, "data"));
+if (!fs.existsSync(path.join(_dirname, "data"))) fs.mkdirSync(path.join(_dirname, "data"));
 
 // initialize file if missing
 if (!fs.existsSync(DATA_FILE)) {
@@ -53,9 +61,17 @@ app.get("/dados", (req, res) => {
 // It will convert raw sensor values into liters using SENSOR_CONFIG, then save file.
 app.post("/atualizar", (req, res) => {
   const payload = req.body;
+
+  // 1. VERIFICAÇÃO DE SEGURANÇA: Checa o Header HTTP 'X-API-KEY'
+  const apiKeyHeader = req.headers['x-api-key'];
+  if (apiKeyHeader !== API_KEY) {
+    console.warn(Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader});
+    return res.status(401).json({ error: "Chave de API inválida. Acesso negado." });
+  }
+
   if (!payload) return res.status(400).json({ error: "Payload vazio" });
 
-  // Accept either an array or object with "data" field (common gateway formats)
+  // Aceita o formato que o Khomp envia: array dentro de 'data' ou array direto.
   let items = payload;
   if (Array.isArray(payload.data)) items = payload.data;
   if (!Array.isArray(items)) items = [items];
@@ -72,6 +88,7 @@ app.post("/atualizar", (req, res) => {
   // Process incoming records
   items.forEach(item => {
     // item expected to have: ref (string), value (number)
+    // O payload do Khomp usa 'ref' e 'value' corretamente.
     const ref = item.ref || item.name;
     const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
@@ -114,4 +131,4 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(Servidor rodando na porta ${PORT}));
