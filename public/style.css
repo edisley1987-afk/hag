@@ -1,0 +1,34 @@
+/* Style using hospital colors */
+:root{
+  --primary:#2aa89b; /* teal-ish */
+  --dark:#092026;
+  --card:#0d2a2b;
+  --muted:#7eaea6;
+  --accent:#06b3ff;
+}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#081319;
+  color:#dfeef0;
+}
+header.header{
+  background:var(--primary);
+  padding:22px 24px;
+  color:#023;
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+.header .logo{height:48px}
+h1{margin:0;font-size:28px;color:#012a2a}
+#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;padding:20px}
+.card{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+.card h3{margin:0 0 8px;color:var(--primary)}
+.bar{background:#062426;border-radius:8px;height:18px;overflow:hidden;margin-top:10px}
+.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary))}
+.center{text-align:center;padding:18px}
+#lastUpdate{color:#9fbdb8;margin:12px 20px}
+footer{padding:16px;text-align:center;color:#9fbdb8;background:#021617;margin-top:30px}
+.chart-wrap{padding:20px;max-width:900px;margin:12px}
+canvas{background:#071316;border-radius:8px;padding:8px}

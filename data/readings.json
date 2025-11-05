@@ -1,0 +1,18 @@
+{
+  "Reservatorio_Elevador_current": {
+    "nome": "Reservat\u00f3rio Elevador",
+    "valor": 12500
+  },
+  "Reservatorio_Osmose_current": {
+    "nome": "Reservat\u00f3rio Osmose",
+    "valor": 8200
+  },
+  "Reservatorio_CME_current": {
+    "nome": "Reservat\u00f3rio CME",
+    "valor": 9100
+  },
+  "Agua_Abrandada_current": {
+    "nome": "Reservat\u00f3rio \u00c1gua Abrandada",
+    "valor": 6000
+  }
+}

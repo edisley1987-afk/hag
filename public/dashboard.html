@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reservatórios HAG - Monitoramento</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="header">
+    <img src="logo-gavazza-top.png" class="logo" alt="Hospital logo">
+    <h1>Monitoramento de Reservatórios - HAG</h1>
+  </header>
+
+  <section id="cards" class="cards"></section>
+
+  <div class="center">
+    <p id="lastUpdate">Carregando...</p>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="chartCanvas" width="900" height="360"></canvas>
+  </div>
+
+  <footer>© 2025 — Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
