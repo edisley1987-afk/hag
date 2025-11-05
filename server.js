@@ -1,50 +1,48 @@
-// ===============================
-// 🌊 Server for Reservatorios-HAG
-// ===============================
+// =====================================================
+// 🌊 Server for Reservatórios HAG
+// =====================================================
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const { users } = require("./users"); // Certifique-se que existe users.js exportando { users }
+const { users } = require("./users"); // deve exportar { users: [ { username, password } ] }
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// =================================================================
-// 🚨 CHAVE DE SEGURANÇA (API KEY)
-//
-// MELHOR PRÁTICA: usar variável de ambiente HAG_API_KEY
-// O valor abaixo é o padrão (fallback)
+// =====================================================
+// 🔐 CHAVE DE SEGURANÇA
+// =====================================================
 const API_KEY = process.env.HAG_API_KEY || "ffbshagf2025";
-// =================================================================
 
-// sensor config: capacidade (L), leituraVazio (raw), leituraCheio (raw)
+// =====================================================
+// ⚙️ CONFIGURAÇÃO DOS SENSORES
+// =====================================================
 const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, vazio: 0.004168, cheio: 0.007855 },
   "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, vazio: 0.00505, cheio: 0.006533 },
   "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, vazio: 0.004088, cheio: 0.004408 },
   "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 },
-  "Presao_Saida_current": { nome: "Pressão de Saída (Raw)", capacidade: 0, vazio: 0, cheio: 0 }
+  "Presao_Saida_current": { nome: "Pressão de Saída", capacidade: 0, vazio: 0, cheio: 0 },
+  "Pressao_saida_current": { nome: "Pressão de Saída (variação)", capacidade: 0, vazio: 0, cheio: 0 },
+  "Pressao_Retorno_current": { nome: "Pressão de Retorno", capacidade: 0, vazio: 0, cheio: 0 }
 };
 
-// Caminho para salvar os dados
+// =====================================================
+// 📂 GARANTE QUE A PASTA DE DADOS EXISTE
+// =====================================================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 
-// ✅ Correção: era "_dirname" (erro de digitação)
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
 
-// Inicializa arquivo se não existir
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
-}
-
-// ===============================================================
-// LOGIN SIMPLES
-// ===============================================================
+// =====================================================
+// 🔑 LOGIN SIMPLES
+// =====================================================
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username && u.password === password);
@@ -52,28 +50,24 @@ app.post("/api/login", (req, res) => {
   return res.status(401).json({ success: false, message: "Usuário ou senha inválidos" });
 });
 
-// ===============================================================
-// RETORNA LEITURAS ATUAIS (para dashboard)
-// ===============================================================
+// =====================================================
+// 📊 OBTÉM DADOS ATUAIS (para o dashboard)
+// =====================================================
 app.get("/dados", (req, res) => {
   fs.readFile(DATA_FILE, "utf8", (err, data) => {
     if (err) return res.status(500).json({ error: "Erro ao ler arquivo de dados" });
-    try {
-      res.setHeader("Content-Type", "application/json");
-      res.send(data);
-    } catch (e) {
-      res.status(500).json({ error: "JSON inválido" });
-    }
+    res.setHeader("Content-Type", "application/json");
+    res.send(data);
   });
 });
 
-// ===============================================================
-// RECEBE LEITURAS DO GATEWAY ITG
-// ===============================================================
+// =====================================================
+// 🚀 RECEBE LEITURAS DO GATEWAY ITG
+// =====================================================
 app.post("/atualizar", (req, res) => {
   const payload = req.body;
 
-  // 1️⃣ VERIFICA CHAVE DE SEGURANÇA
+  // 🔐 Verifica chave de segurança
   const apiKeyHeader = req.headers["x-api-key"];
   if (apiKeyHeader !== API_KEY) {
     console.warn(`🚨 Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader}`);
@@ -82,12 +76,12 @@ app.post("/atualizar", (req, res) => {
 
   if (!payload) return res.status(400).json({ error: "Payload vazio" });
 
-  // Aceita array direto ou dentro de 'data'
+  // Aceita array direto ou dentro de { data: [...] }
   let items = payload;
   if (Array.isArray(payload.data)) items = payload.data;
   if (!Array.isArray(items)) items = [items];
 
-  // Lê dados atuais (para preservar sensores não atualizados)
+  // Lê dados atuais (para preservar valores antigos)
   let current = {};
   try {
     const raw = fs.readFileSync(DATA_FILE, "utf8");
@@ -96,16 +90,25 @@ app.post("/atualizar", (req, res) => {
     current = {};
   }
 
-  // Processa registros recebidos
+  // Dicionário para corrigir nomes diferentes do mesmo sensor
+  const alias = {
+    "pressao_saida_current": "Presao_Saida_current",
+    "pressao_retorno_current": "Pressao_Retorno_current",
+  };
+
+  // Processa cada item recebido
   items.forEach(item => {
-    const ref = item.ref || item.name;
+    let ref = item.ref || item.name;
     const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
 
+    // Normaliza e aplica alias
+    const norm = ref.toLowerCase().trim();
+    if (alias[norm]) ref = alias[norm];
+
     const cfg = SENSOR_CONFIG[ref];
     if (!cfg) {
-      // Sensor desconhecido → salva valor bruto
-      current[ref] = { nome: ref, valor_raw: rawValue };
+      current[ref] = { nome: ref, valor_raw: rawValue, time: item.time || Date.now() };
       return;
     }
 
@@ -116,7 +119,12 @@ app.post("/atualizar", (req, res) => {
 
     const litros = capacidade * ratio;
 
-    current[ref] = { nome: cfg.nome, valor: Number(litros.toFixed(2)) };
+    current[ref] = {
+      nome: cfg.nome,
+      valor: Number(litros.toFixed(2)),
+      raw: rawValue,
+      time: item.time || Date.now()
+    };
   });
 
   // Salva arquivo atualizado
@@ -129,15 +137,15 @@ app.post("/atualizar", (req, res) => {
   });
 });
 
-// ===============================================================
-// FRONTEND
-// ===============================================================
+// =====================================================
+// 🌐 FRONTEND
+// =====================================================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
-// ===============================================================
-// INICIALIZA SERVIDOR
-// ===============================================================
+// =====================================================
+// 🚦 INICIALIZA SERVIDOR
+// =====================================================
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
