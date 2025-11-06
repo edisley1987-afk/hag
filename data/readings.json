@@ -1,5 +1,7 @@
-{ { "ref": "Reservatorio_Elevador_current", "value": 0.004368 },
-  { "ref": "Reservatorio_Osmose_current", "value": 0.006212 },
-  { "ref": "Reservatorio_CME_current", "value": 0.004088 }
+{ 
+        "Reservatorio_Elevador_current": 1085,
+        "Reservatorio_Osmose_current": 157,
+        "Reservatorio_CME_current": 0,
+        "timestamp": "2025-11-06T18:46:34.976Z"
 }
 
