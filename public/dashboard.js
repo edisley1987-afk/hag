@@ -18,8 +18,18 @@ function atualizarPainel(dados) {
   const valores = [];
   const capacidades = [];
 
-  Object.entries(dados).forEach(([key, valor]) => {
-    const nome = key.replace("Reservatorio_", "Reservatório ").replace("_current", "");
+  // Ignora a chave "timestamp"
+  Object.entries(dados).forEach(([key, valorBruto]) => {
+    if (key === "timestamp") return;
+
+    const nome = key
+      .replace("Reservatorio_", "Reservatório ")
+      .replace("_current", "");
+
+    // Garante que é número
+    const valor = Number(valorBruto) || 0;
+
+    // Define capacidade conforme o reservatório
     let capacidade = 0;
     if (nome.includes("Elevador")) capacidade = 20000;
     if (nome.includes("Osmose")) capacidade = 200;
@@ -27,10 +37,13 @@ function atualizarPainel(dados) {
     if (nome.includes("Abrandada")) capacidade = 9000;
 
     const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
-    let cor = "#00c9a7";
-    if (porcent < 30) cor = "#e53935";
-    else if (porcent < 50) cor = "#fbc02d";
 
+    // Define cor conforme o nível
+    let cor = "#00c9a7"; // verde
+    if (porcent < 30) cor = "#e53935"; // vermelho
+    else if (porcent < 50) cor = "#fbc02d"; // amarelo
+
+    // Cria o card
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
@@ -38,7 +51,9 @@ function atualizarPainel(dados) {
       <div class="progress">
         <div class="progress-fill" style="width:${porcent.toFixed(1)}%; background:${cor}"></div>
       </div>
-      <div class="valor" style="color:${cor}">${valor.toFixed(0)} L (${porcent.toFixed(1)}%)</div>
+      <div class="valor" style="color:${cor}">
+        ${valor.toFixed(0)} L (${porcent.toFixed(1)}%)
+      </div>
     `;
     cards.appendChild(card);
 
@@ -89,7 +104,7 @@ function atualizarGrafico(labels, valores, capacidades) {
         legend: { labels: { color: "#fff" } },
         title: {
           display: true,
-          text: "Níveis dos Reservatórios (litros)",
+          text: "Níveis dos Reservatórios (litros) — Hospital Arnaldo Gavazza",
           color: "#fff",
           font: { size: 16 },
         },
@@ -109,5 +124,6 @@ function atualizarGrafico(labels, valores, capacidades) {
   });
 }
 
+// Atualiza automaticamente a cada 15s
 setInterval(carregarDados, 15000);
 carregarDados();
