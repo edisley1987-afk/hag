@@ -1,8 +1,6 @@
 // =====================================================
-// 🌊 Server para Monitoramento dos Reservatórios HAG
-// 🔧 Versão calibrada e aprimorada (Nov/2025)
+// 🌊 Server para Reservatórios HAG (versão compatível ITG)
 // =====================================================
-
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -16,13 +14,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // =====================================================
-// 🔐 CHAVE DE SEGURANÇA
+// 🔐 CHAVE DE SEGURANÇA (usada apenas se enviada)
 // =====================================================
 const API_KEY = process.env.HAG_API_KEY || "ffbshagf2025";
 
 // =====================================================
-// ⚙️ CONFIGURAÇÃO DOS SENSORES (calibração final)
+// ⚙️ CONFIGURAÇÃO DOS SENSORES (calibrada)
 // =====================================================
+// Campos: capacidade (L), altura (m), leitura vazio, leitura cheio
 const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": {
     nome: "Reservatório Elevador",
@@ -59,13 +58,6 @@ const SENSOR_CONFIG = {
     vazio: 0,
     cheio: 0
   },
-  "Pressao_saida_current": {
-    nome: "Pressão de Saída (variação)",
-    capacidade: 0,
-    alturaRes: 0,
-    vazio: 0,
-    cheio: 0
-  },
   "Pressao_Retorno_current": {
     nome: "Pressão de Retorno",
     capacidade: 0,
@@ -76,18 +68,16 @@ const SENSOR_CONFIG = {
 };
 
 // =====================================================
-// 📂 GARANTE PASTAS E ARQUIVOS DE DADOS
+// 📂 GARANTE PASTA E ARQUIVO DE DADOS
 // =====================================================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const LOG_DIR = path.join(__dirname, "logs");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR);
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
 
 // =====================================================
-// 🔑 LOGIN SIMPLES (para painel web)
+// 🔑 LOGIN SIMPLES
 // =====================================================
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
@@ -97,7 +87,7 @@ app.post("/api/login", (req, res) => {
 });
 
 // =====================================================
-// 📊 RETORNA DADOS SALVOS (painel)
+// 📊 RETORNA DADOS SALVOS
 // =====================================================
 app.get("/dados", (req, res) => {
   fs.readFile(DATA_FILE, "utf8", (err, data) => {
@@ -108,34 +98,18 @@ app.get("/dados", (req, res) => {
 });
 
 // =====================================================
-// ⚡ ROTA DE STATUS (ver última leitura)
-// =====================================================
-app.get("/status", (req, res) => {
-  try {
-    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8") || "{}");
-    const lastUpdate = Object.values(data)
-      .map(d => d.time)
-      .sort((a, b) => b - a)[0];
-    res.json({
-      ultimaLeitura: lastUpdate ? new Date(lastUpdate).toLocaleString("pt-BR") : "Sem dados",
-      sensores: Object.keys(data).length
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao ler status" });
-  }
-});
-
-// =====================================================
-// 🚀 RECEBE LEITURAS DO GATEWAY ITG
+// 🚀 RECEBE LEITURAS DO GATEWAY ITG (SEM HEADER)
 // =====================================================
 app.post("/atualizar", (req, res) => {
   const payload = req.body;
 
-  // 🔐 Valida chave de API
+  // 🔓 Aceita requisições com ou sem cabeçalho
   const apiKeyHeader = req.headers["x-api-key"];
-  if (apiKeyHeader !== API_KEY) {
-    console.warn(`🚨 Tentativa de acesso não autorizada. Chave inválida: ${apiKeyHeader}`);
-    return res.status(401).json({ error: "Chave de API inválida. Acesso negado." });
+  if (apiKeyHeader && apiKeyHeader !== API_KEY) {
+    console.warn(`🚨 Chave de API incorreta: ${apiKeyHeader}`);
+    return res.status(401).json({ error: "Chave incorreta" });
+  } else if (!apiKeyHeader) {
+    console.log("⚠️ Requisição sem x-api-key (aceita)");
   }
 
   if (!payload) return res.status(400).json({ error: "Payload vazio" });
@@ -160,10 +134,10 @@ app.post("/atualizar", (req, res) => {
     "pressao_retorno_current": "Pressao_Retorno_current"
   };
 
-  // Processa cada leitura recebida
+  // Processa os dados recebidos
   items.forEach(item => {
     let ref = item.ref || item.name;
-    const rawValue = typeof item.value === "number" ? item.value : parseFloat(item.value);
+    const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
 
     const norm = ref.toLowerCase().trim();
@@ -180,38 +154,29 @@ app.post("/atualizar", (req, res) => {
     if (cheio !== vazio) ratio = (rawValue - vazio) / (cheio - vazio);
     ratio = Math.max(0, Math.min(1, ratio));
 
-    if (rawValue < vazio || rawValue > cheio) {
-      console.warn(`⚠️ Valor fora do intervalo (${ref}): ${rawValue}`);
-    }
-
     const litros = capacidade * ratio;
 
     current[ref] = {
       nome: cfg.nome,
       valor: Number(litros.toFixed(2)),
       raw: rawValue,
-      data_hora: new Date(item.time || Date.now()).toLocaleString("pt-BR"),
       time: item.time || Date.now()
     };
   });
 
-  // Salva as leituras
+  // Salva as leituras atualizadas
   fs.writeFile(DATA_FILE, JSON.stringify(current, null, 2), "utf8", (err) => {
     if (err) {
-      console.error("❌ Erro ao salvar readings.json:", err);
+      console.error("Erro ao salvar readings.json:", err);
       return res.status(500).json({ error: "Erro ao salvar arquivo" });
     }
-
-    // Cria log diário
-    const logMsg = `[${new Date().toISOString()}] Leituras recebidas de ${items.length} sensores.\n`;
-    fs.appendFileSync(path.join(LOG_DIR, `${new Date().toISOString().split("T")[0]}.log`), logMsg);
-
-    return res.json({ success: true, atualizados: Object.keys(current).length });
+    console.log("✅ Leituras atualizadas com sucesso!");
+    return res.json({ success: true, saved: Object.keys(current).length });
   });
 });
 
 // =====================================================
-// 🌐 FRONTEND (painel web)
+// 🌐 FRONTEND
 // =====================================================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
