@@ -1,34 +1,85 @@
-/* Style using hospital colors */
-:root{
-  --primary:#2aa89b; /* teal-ish */
-  --dark:#092026;
-  --card:#0d2a2b;
-  --muted:#7eaea6;
-  --accent:#06b3ff;
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f7f9fc;
+  margin: 0;
+  color: #333;
 }
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#081319;
-  color:#dfeef0;
+
+header.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #004aad;
+  color: white;
+  padding: 15px 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
-header.header{
-  background:var(--primary);
-  padding:22px 24px;
-  color:#023;
-  display:flex;
-  align-items:center;
-  gap:20px;
+
+header .logo {
+  height: 50px;
 }
-.header .logo{height:48px}
-h1{margin:0;font-size:28px;color:#012a2a}
-#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;padding:20px}
-.card{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
-.card h3{margin:0 0 8px;color:var(--primary)}
-.bar{background:#062426;border-radius:8px;height:18px;overflow:hidden;margin-top:10px}
-.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary))}
-.center{text-align:center;padding:18px}
-#lastUpdate{color:#9fbdb8;margin:12px 20px}
-footer{padding:16px;text-align:center;color:#9fbdb8;background:#021617;margin-top:30px}
-.chart-wrap{padding:20px;max-width:900px;margin:12px}
-canvas{background:#071316;border-radius:8px;padding:8px}
+
+h1 {
+  font-size: 1.5em;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-weight: bold;
+  color: #004aad;
+  margin-bottom: 8px;
+}
+
+.bar {
+  height: 25px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.fill {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.info {
+  text-align: right;
+  font-size: 0.95em;
+  color: #555;
+}
+
+.center {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.chart-wrap {
+  width: 90%;
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+footer {
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9em;
+  color: #666;
+  background: #f1f1f1;
+}
