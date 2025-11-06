@@ -1,4 +1,4 @@
-const API_URL = "https://hag-9umi.onrender.com/dados";
+const API_URL = "/dados";
 
 async function carregarDados() {
   try {
@@ -21,8 +21,6 @@ function atualizarPainel(dados) {
   Object.entries(dados).forEach(([key, sensor]) => {
     const nome = sensor.nome || key;
     const valor = sensor.valor ?? 0;
-
-    // Capacidade conforme o reservatório
     let capacidade = 0;
     if (nome.includes("Elevador")) capacidade = 20000;
     if (nome.includes("Osmose")) capacidade = 200;
@@ -31,19 +29,15 @@ function atualizarPainel(dados) {
 
     const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
 
-    // === Define cor conforme nível ===
-    let cor = "#00c9a7"; // verde normal
-    if (porcent < 30) cor = "#e53935"; // vermelho
-    else if (porcent < 50) cor = "#fbc02d"; // amarelo
+    let cor = "#00c9a7";
+    if (porcent < 30) cor = "#e53935";
+    else if (porcent < 50) cor = "#fbc02d";
 
-    // === Card ===
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
       <h2>${nome}</h2>
-      <div class="progress">
-        <div class="progress-fill" style="width:${porcent.toFixed(1)}%; background:${cor}"></div>
-      </div>
+      <div class="progress"><div class="progress-fill" style="width:${porcent.toFixed(1)}%; background:${cor}"></div></div>
       <div class="valor" style="color:${cor}">${valor.toFixed(0)} L (${porcent.toFixed(1)}%)</div>
     `;
     cards.appendChild(card);
@@ -63,58 +57,22 @@ let chart;
 function atualizarGrafico(labels, valores, capacidades) {
   const ctx = document.getElementById("chartCanvas").getContext("2d");
   if (chart) chart.destroy();
-
   chart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
       datasets: [
-        {
-          label: "Capacidade Total (L)",
-          data: capacidades,
-          backgroundColor: "rgba(0, 120, 166, 0.3)",
-          borderColor: "#0078a6",
-          borderWidth: 2,
-        },
-        {
-          label: "Nível Atual (L)",
-          data: valores,
-          backgroundColor: valores.map((v, i) => {
-            const porcent = (v / capacidades[i]) * 100;
-            if (porcent < 30) return "#e53935";
-            if (porcent < 50) return "#fbc02d";
-            return "#00c9a7";
-          }),
-          borderWidth: 2,
-        },
-      ],
+        { label: "Capacidade Total (L)", data: capacidades, backgroundColor: "rgba(0,120,166,0.3)", borderColor: "#0078a6", borderWidth: 2 },
+        { label: "Nível Atual (L)", data: valores, backgroundColor: valores.map((v,i)=>((v/capacidades[i])*100<30?"#e53935":(v/capacidades[i])*100<50?"#fbc02d":"#00c9a7")), borderWidth: 2 }
+      ]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { labels: { color: "#fff" } },
-        title: {
-          display: true,
-          text: "Níveis dos Reservatórios (litros)",
-          color: "#fff",
-          font: { size: 16 },
-        },
-      },
-      scales: {
-        x: {
-          ticks: { color: "#ddd" },
-          grid: { color: "rgba(255,255,255,0.1)" },
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: "#ddd" },
-          grid: { color: "rgba(255,255,255,0.1)" },
-        },
-      },
-    },
+      plugins: { legend: { labels: { color: "#fff" } }, title: { display: true, text: "Níveis dos Reservatórios (litros)", color: "#fff", font: { size: 16 } } },
+      scales: { x: { ticks: { color: "#ddd" }, grid: { color: "rgba(255,255,255,0.1)" } }, y: { beginAtZero: true, ticks: { color: "#ddd" }, grid: { color: "rgba(255,255,255,0.1)" } } }
+    }
   });
 }
 
-// Atualiza automaticamente a cada 15s
 setInterval(carregarDados, 15000);
 carregarDados();

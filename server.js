@@ -1,101 +1,55 @@
-
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
-import https from "https";
-import http from "http";
-import { fileURLToPath } from "url";
 
-// === Corrigir __dirname para ES Modules ===
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// === Inicializa servidor ===
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "5mb" }));
 
-// === Caminhos ===
+const __dirname = path.resolve();
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
-// === Cria pasta data se não existir ===
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}", "utf8");
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
 
-// === Rota principal ===
 app.get("/", (req, res) => {
-  res.send("Servidor HAG Proxy rodando com sucesso ✅");
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
-// === Rota do painel ===
-app.use(express.static(PUBLIC_DIR));
+app.get("/dados", (req, res) => {
+  try {
+    const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    res.json(dados);
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao ler dados" });
+  }
+});
 
-// === Rota para receber dados do gateway ===
-app.post("/api/data", (req, res) => {
+app.post("/atualizar", (req, res) => {
   try {
     const body = req.body;
-    if (!body || typeof body !== "object") {
-      return res.status(400).json({ error: "JSON inválido" });
+    if (Array.isArray(body)) {
+      let dados = {};
+      body.forEach(item => {
+        if (item.ref && item.value !== undefined) {
+          dados[item.ref] = {
+            nome: item.ref.replace(/_/g, " "),
+            valor: item.value * 10000 // conversão simples
+          };
+        }
+      });
+      fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+      res.json({ success: true, saved: Object.keys(dados).length });
+    } else {
+      res.status(400).json({ error: "Formato inválido" });
     }
-
-    // Exemplo de payload:
-    // { "ref": "Reservatorio_Elevador_current", "valor": 12500 }
-
-    const ref = body.ref;
-    const valor = body.value ?? body.valor ?? 0;
-
-    if (!ref) return res.status(400).json({ error: "Campo 'ref' obrigatório" });
-
-    let readings = {};
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, "utf8");
-      readings = JSON.parse(raw || "{}");
-    }
-
-    // Atualiza o valor
-    readings[ref] = {
-      nome: ref.replace(/_/g, " "),
-      valor: valor,
-      hora: new Date().toISOString(),
-    };
-
-    fs.writeFileSync(DATA_FILE, JSON.stringify(readings, null, 2), "utf8");
-
-    console.log(`✅ Atualizado: ${ref} = ${valor}`);
-    res.json({ success: true, saved: ref });
-  } catch (err) {
-    console.error("Erro ao salvar dados:", err);
-    res.status(500).json({ error: "Falha ao salvar dados" });
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao salvar dados", details: e.message });
   }
 });
 
-// === Configuração de HTTPS (Render usa certificados internos, mas mantemos suporte local) ===
-const PORT = process.env.PORT || 443;
-
-try {
-  const keyPath = path.join(__dirname, "certs", "private.key");
-  const certPath = path.join(__dirname, "certs", "certificate.crt");
-
-  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-    const options = {
-      key: fs.readFileSync(keyPath),
-      cert: fs.readFileSync(certPath),
-    };
-    https.createServer(options, app).listen(PORT, () => {
-      console.log(`🌐 Servidor HTTPS rodando na porta ${PORT}`);
-    });
-  } else {
-    // fallback HTTP se não tiver certificados
-    http.createServer(app).listen(PORT, () => {
-      console.log(`⚙️ Servidor HTTP rodando na porta ${PORT}`);
-    });
-  }
-} catch (e) {
-  console.error("Erro ao iniciar HTTPS:", e);
-  http.createServer(app).listen(PORT, () => {
-    console.log(`⚙️ Servidor iniciado em modo HTTP (sem certificado)`);
-  });
-}
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor HAG rodando na porta ${PORT}`));

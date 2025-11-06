@@ -1,12 +1,14 @@
 {
-  "name": "hag-proxy",
+  "name": "reservatorios-hag",
   "version": "1.0.0",
+  "description": "Servidor HAG Proxy com painel de reservatórios",
+  "main": "server.js",
   "type": "module",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  },
   "scripts": {
     "start": "node server.js"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2"
   }
 }
