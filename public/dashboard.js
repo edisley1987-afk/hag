@@ -1,100 +1,105 @@
-// public/dashboard.js
-const endpoint = "/dados";
-const updateInterval = 10000; // 10 seconds
+// =====================================================
+// 📊 DASHBOARD HAG - leitura em tempo real do servidor
+// =====================================================
+const API_URL = "https://hag-9umi.onrender.com/dados";
+const cardsContainer = document.getElementById("cards");
+const lastUpdateEl = document.getElementById("lastUpdate");
+const ctx = document.getElementById("chartCanvas").getContext("2d");
 
-const config = {
-  "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000 },
-  "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200 },
-  "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000 },
-  "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000 }
+let chart;
+
+// Configuração dos reservatórios
+const CONFIG = {
+  "Reservatório Elevador": { capacidade: 20000 },
+  "Reservatório Osmose": { capacidade: 200 },
+  "Reservatório CME": { capacidade: 1000 },
+  "Reservatório Água Abrandada": { capacidade: 9000 },
+  "Pressão Saída": { capacidade: 0 },
+  "Pressão Retorno": { capacidade: 0 }
 };
 
-let chart = null;
-
-async function atualizarDados() {
+// Função principal de atualização
+async function atualizarDashboard() {
   try {
-    const resp = await fetch(endpoint);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const dados = await resp.json();
-
-    const container = document.getElementById("cards");
-    container.innerHTML = "";
+    const res = await fetch(API_URL + "?_=" + Date.now());
+    const dados = await res.json();
+    cardsContainer.innerHTML = "";
 
     const labels = [];
     const valores = [];
-    const capacidades = [];
 
-    for (const chave of Object.keys(config)) {
-      const info = config[chave];
-      const valorObj = dados[chave] || {};
-      const valor = Number(valorObj.valor || 0);
-      const porcentagem = info.capacidade > 0 ? ((valor / info.capacidade) * 100) : 0;
-      const pctText = Number.isFinite(porcentagem) ? porcentagem.toFixed(1) : "0.0";
+    Object.values(dados).forEach(sensor => {
+      const nome = sensor.nome || "Desconhecido";
+      const valor = sensor.valor || 0;
+      const capacidade = CONFIG[nome]?.capacidade || 0;
+      const percentual = capacidade > 0 ? Math.round((valor / capacidade) * 100) : 0;
 
+      // Cor dinâmica por nível
+      let cor = "#00b050"; // verde
+      if (percentual < 30) cor = "#ff4d4d";
+      else if (percentual < 60) cor = "#ffc000";
+
+      // Card HTML
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
-        <h3>${info.nome}</h3>
-        <p><strong>${valor}</strong> L (${pctText}%)</p>
-        <div class="bar"><div class="fill" style="width:${Math.max(0, Math.min(100, pctText))}%"></div></div>
+        <div class="card-title">${nome}</div>
+        <div class="bar">
+          <div class="fill" style="width:${percentual}%; background:${cor}"></div>
+        </div>
+        <div class="info">
+          ${valor.toFixed(1)} L — ${percentual}%
+        </div>
       `;
-      container.appendChild(card);
+      cardsContainer.appendChild(card);
 
-      labels.push(info.nome);
-      valores.push(valor);
-      capacidades.push(info.capacidade);
-    }
+      // Adiciona ao gráfico
+      if (capacidade > 0) {
+        labels.push(nome);
+        valores.push(percentual);
+      }
+    });
 
-    document.getElementById("lastUpdate").textContent =
-      "Última atualização: " + new Date().toLocaleString();
+    // Atualiza hora
+    lastUpdateEl.innerText = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
 
-    atualizarGrafico(labels, valores, capacidades);
+    // Atualiza gráfico
+    atualizarGrafico(labels, valores);
   } catch (err) {
-    console.error("Erro ao atualizar:", err);
-    document.getElementById("lastUpdate").textContent = "Erro ao obter dados do servidor.";
+    console.error("Erro ao carregar dados:", err);
+    lastUpdateEl.innerText = "Erro ao conectar ao servidor";
   }
 }
 
-function atualizarGrafico(labels, valores, capacidades) {
-  const ctx = document.getElementById("chartCanvas").getContext("2d");
-
-  if (chart) {
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = valores;
-    chart.data.datasets[1].data = capacidades;
-    chart.update();
-    return;
-  }
-
+// Gráfico de barras (nível atual)
+function atualizarGrafico(labels, valores) {
+  if (chart) chart.destroy();
   chart = new Chart(ctx, {
-    type: 'bar',
+    type: "bar",
     data: {
       labels,
-      datasets: [
-        {
-          label: 'Volume (L)',
-          data: valores,
-          backgroundColor: 'rgba(99,180,173,0.9)',
-          borderColor: 'rgba(99,180,173,1)',
-          borderWidth: 1
-        },
-        {
-          label: 'Capacidade (L)',
-          data: capacidades,
-          backgroundColor: 'rgba(28,89,86,0.15)',
-          borderColor: 'rgba(28,89,86,0.6)',
-          borderWidth: 1
-        }
-      ]
+      datasets: [{
+        label: "% de Nível Atual",
+        data: valores,
+        borderWidth: 1,
+        backgroundColor: valores.map(v => v < 30 ? "#ff4d4d" : v < 60 ? "#ffc000" : "#00b050")
+      }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
-      plugins: { legend: { position: 'top' } }
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { stepSize: 20 }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     }
   });
 }
 
-setInterval(atualizarDados, updateInterval);
-window.onload = atualizarDados;
+// Atualiza a cada 10 segundos
+atualizarDashboard();
+setInterval(atualizarDashboard, 10000);
