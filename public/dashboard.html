@@ -1,125 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento HAG</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f7f9fc;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #004aad;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: 0.3s;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-    }
-    .title {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #004aad;
-    }
-    .bar-container {
-      height: 25px;
-      background: #e4e4e4;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
-    .bar {
-      height: 100%;
-      transition: width 0.5s ease;
-    }
-    .value {
-      font-size: 1em;
-    }
-    .updated {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 0.9em;
-      color: #777;
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reservatórios HAG - Monitoramento</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
-  <h1>💧 Monitoramento de Reservatórios HAG</h1>
+  <header class="header">
+    <img src="logo-gavazza-top.png" class="logo" alt="Hospital logo">
+    <h1>Monitoramento de Reservatórios - HAG</h1>
+  </header>
 
-  <div id="cards" class="container"></div>
-  <div id="updated" class="updated"></div>
+  <section id="cards" class="cards"></section>
 
-  <script>
-    const API_URL = "https://hag-9umi.onrender.com/dados";
+  <div class="center">
+    <p id="lastUpdate">Carregando...</p>
+  </div>
 
-    async function carregarDados() {
-      try {
-        const res = await fetch(API_URL + "?_=" + Date.now());
-        const dados = await res.json();
+  <div class="chart-wrap">
+    <canvas id="chartCanvas" width="900" height="360"></canvas>
+  </div>
 
-        const container = document.getElementById("cards");
-        container.innerHTML = "";
+  <footer>© 2025 — Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
 
-        Object.entries(dados).forEach(([key, sensor]) => {
-          const nome = sensor.nome || key;
-          const valor = sensor.valor ?? 0;
-          const capacidade = obterCapacidade(nome);
-          const porcentagem = capacidade > 0 ? Math.round((valor / capacidade) * 100) : 0;
-
-          let cor = "#00b050"; // verde
-          if (porcentagem < 30) cor = "#ff4d4d"; // vermelho
-          else if (porcentagem < 60) cor = "#ffc000"; // amarelo
-
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <div class="title">${nome}</div>
-            <div class="bar-container">
-              <div class="bar" style="width:${porcentagem}%; background:${cor}"></div>
-            </div>
-            <div class="value">${valor.toFixed(1)} L (${porcentagem}%)</div>
-          `;
-          container.appendChild(card);
-        });
-
-        document.getElementById("updated").innerText =
-          "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
-      } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-        document.getElementById("cards").innerHTML =
-          "<p style='color:red;'>Erro ao conectar ao servidor.</p>";
-      }
-    }
-
-    function obterCapacidade(nome) {
-      if (nome.includes("Elevador")) return 20000;
-      if (nome.includes("Osmose")) return 200;
-      if (nome.includes("CME")) return 1000;
-      if (nome.includes("Abrandada")) return 9000;
-      return 0;
-    }
-
-    // Atualiza a cada 10 segundos
-    carregarDados();
-    setInterval(carregarDados, 10000);
-  </script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
