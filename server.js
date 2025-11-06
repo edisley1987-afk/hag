@@ -1,6 +1,8 @@
 // =====================================================
-// 🌊 Server for Reservatórios HAG (versão calibrada)
+// 🌊 Server para Monitoramento dos Reservatórios HAG
+// 🔧 Versão calibrada e aprimorada (Nov/2025)
 // =====================================================
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -19,9 +21,8 @@ app.use(express.static(path.join(__dirname, "public")));
 const API_KEY = process.env.HAG_API_KEY || "ffbshagf2025";
 
 // =====================================================
-// ⚙️ CONFIGURAÇÃO DOS SENSORES (calibrada)
+// ⚙️ CONFIGURAÇÃO DOS SENSORES (calibração final)
 // =====================================================
-// Campos: capacidade (L), altura (m), leitura vazio, leitura cheio
 const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": {
     nome: "Reservatório Elevador",
@@ -75,16 +76,18 @@ const SENSOR_CONFIG = {
 };
 
 // =====================================================
-// 📂 GARANTE PASTA E ARQUIVO DE DADOS
+// 📂 GARANTE PASTAS E ARQUIVOS DE DADOS
 // =====================================================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
+const LOG_DIR = path.join(__dirname, "logs");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR);
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
 
 // =====================================================
-// 🔑 LOGIN SIMPLES
+// 🔑 LOGIN SIMPLES (para painel web)
 // =====================================================
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
@@ -94,7 +97,7 @@ app.post("/api/login", (req, res) => {
 });
 
 // =====================================================
-// 📊 RETORNA DADOS SALVOS
+// 📊 RETORNA DADOS SALVOS (painel)
 // =====================================================
 app.get("/dados", (req, res) => {
   fs.readFile(DATA_FILE, "utf8", (err, data) => {
@@ -102,6 +105,24 @@ app.get("/dados", (req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.send(data);
   });
+});
+
+// =====================================================
+// ⚡ ROTA DE STATUS (ver última leitura)
+// =====================================================
+app.get("/status", (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8") || "{}");
+    const lastUpdate = Object.values(data)
+      .map(d => d.time)
+      .sort((a, b) => b - a)[0];
+    res.json({
+      ultimaLeitura: lastUpdate ? new Date(lastUpdate).toLocaleString("pt-BR") : "Sem dados",
+      sensores: Object.keys(data).length
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao ler status" });
+  }
 });
 
 // =====================================================
@@ -139,10 +160,10 @@ app.post("/atualizar", (req, res) => {
     "pressao_retorno_current": "Pressao_Retorno_current"
   };
 
-  // Processa os dados recebidos
+  // Processa cada leitura recebida
   items.forEach(item => {
     let ref = item.ref || item.name;
-    const rawValue = (typeof item.value === "number") ? item.value : parseFloat(item.value);
+    const rawValue = typeof item.value === "number" ? item.value : parseFloat(item.value);
     if (!ref || isNaN(rawValue)) return;
 
     const norm = ref.toLowerCase().trim();
@@ -159,28 +180,38 @@ app.post("/atualizar", (req, res) => {
     if (cheio !== vazio) ratio = (rawValue - vazio) / (cheio - vazio);
     ratio = Math.max(0, Math.min(1, ratio));
 
+    if (rawValue < vazio || rawValue > cheio) {
+      console.warn(`⚠️ Valor fora do intervalo (${ref}): ${rawValue}`);
+    }
+
     const litros = capacidade * ratio;
 
     current[ref] = {
       nome: cfg.nome,
       valor: Number(litros.toFixed(2)),
       raw: rawValue,
+      data_hora: new Date(item.time || Date.now()).toLocaleString("pt-BR"),
       time: item.time || Date.now()
     };
   });
 
-  // Salva as leituras atualizadas
+  // Salva as leituras
   fs.writeFile(DATA_FILE, JSON.stringify(current, null, 2), "utf8", (err) => {
     if (err) {
-      console.error("Erro ao salvar readings.json:", err);
+      console.error("❌ Erro ao salvar readings.json:", err);
       return res.status(500).json({ error: "Erro ao salvar arquivo" });
     }
-    return res.json({ success: true, saved: Object.keys(current).length });
+
+    // Cria log diário
+    const logMsg = `[${new Date().toISOString()}] Leituras recebidas de ${items.length} sensores.\n`;
+    fs.appendFileSync(path.join(LOG_DIR, `${new Date().toISOString().split("T")[0]}.log`), logMsg);
+
+    return res.json({ success: true, atualizados: Object.keys(current).length });
   });
 });
 
 // =====================================================
-// 🌐 FRONTEND
+// 🌐 FRONTEND (painel web)
 // =====================================================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
