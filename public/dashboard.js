@@ -1,9 +1,5 @@
-// === CONFIGURAÇÃO DO ENDPOINT DA API ===
-const API_URL = window.location.hostname.includes("onrender.com")
-  ? "https://hag-9umi.onrender.com/dados"
-  : "http://localhost:3000/dados";
+const API_URL = "https://hag-9umi.onrender.com/dados";
 
-// === FUNÇÃO PARA CARREGAR DADOS DO SERVIDOR ===
 async function carregarDados() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
@@ -14,7 +10,6 @@ async function carregarDados() {
   }
 }
 
-// === FUNÇÃO PARA ATUALIZAR O PAINEL ===
 function atualizarPainel(dados) {
   const cards = document.getElementById("cards");
   cards.innerHTML = "";
@@ -23,13 +18,8 @@ function atualizarPainel(dados) {
   const valores = [];
   const capacidades = [];
 
-  // Recebe formato: { Reservatorio_Elevador_current: 4168, ... }
   Object.entries(dados).forEach(([key, valor]) => {
-    // Extrai nome amigável
-    let nome = key.replace("_current", "").replace("Reservatorio_", "Reservatório ");
-    nome = nome.replaceAll("_", " ");
-
-    // Define capacidade conforme o nome
+    const nome = key.replace("Reservatorio_", "Reservatório ").replace("_current", "");
     let capacidade = 0;
     if (nome.includes("Elevador")) capacidade = 20000;
     if (nome.includes("Osmose")) capacidade = 200;
@@ -37,7 +27,6 @@ function atualizarPainel(dados) {
     if (nome.includes("Abrandada")) capacidade = 9000;
 
     const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
-
     let cor = "#00c9a7";
     if (porcent < 30) cor = "#e53935";
     else if (porcent < 50) cor = "#fbc02d";
@@ -49,9 +38,7 @@ function atualizarPainel(dados) {
       <div class="progress">
         <div class="progress-fill" style="width:${porcent.toFixed(1)}%; background:${cor}"></div>
       </div>
-      <div class="valor" style="color:${cor}">
-        ${valor.toFixed(0)} L (${porcent.toFixed(1)}%)
-      </div>
+      <div class="valor" style="color:${cor}">${valor.toFixed(0)} L (${porcent.toFixed(1)}%)</div>
     `;
     cards.appendChild(card);
 
@@ -60,14 +47,12 @@ function atualizarPainel(dados) {
     capacidades.push(capacidade);
   });
 
-  // Mostra data/hora da atualização
   document.getElementById("lastUpdate").textContent =
     "Última atualização: " + new Date().toLocaleString("pt-BR");
 
   atualizarGrafico(labels, valores, capacidades);
 }
 
-// === FUNÇÃO PARA ATUALIZAR O GRÁFICO ===
 let chart;
 function atualizarGrafico(labels, valores, capacidades) {
   const ctx = document.getElementById("chartCanvas").getContext("2d");
@@ -81,7 +66,7 @@ function atualizarGrafico(labels, valores, capacidades) {
         {
           label: "Capacidade Total (L)",
           data: capacidades,
-          backgroundColor: "rgba(0,120,166,0.3)",
+          backgroundColor: "rgba(0, 120, 166, 0.3)",
           borderColor: "#0078a6",
           borderWidth: 2,
         },
@@ -89,8 +74,10 @@ function atualizarGrafico(labels, valores, capacidades) {
           label: "Nível Atual (L)",
           data: valores,
           backgroundColor: valores.map((v, i) => {
-            const pct = (v / capacidades[i]) * 100;
-            return pct < 30 ? "#e53935" : pct < 50 ? "#fbc02d" : "#00c9a7";
+            const porcent = (v / capacidades[i]) * 100;
+            if (porcent < 30) return "#e53935";
+            if (porcent < 50) return "#fbc02d";
+            return "#00c9a7";
           }),
           borderWidth: 2,
         },
@@ -108,7 +95,10 @@ function atualizarGrafico(labels, valores, capacidades) {
         },
       },
       scales: {
-        x: { ticks: { color: "#ddd" }, grid: { color: "rgba(255,255,255,0.1)" } },
+        x: {
+          ticks: { color: "#ddd" },
+          grid: { color: "rgba(255,255,255,0.1)" },
+        },
         y: {
           beginAtZero: true,
           ticks: { color: "#ddd" },
@@ -119,6 +109,5 @@ function atualizarGrafico(labels, valores, capacidades) {
   });
 }
 
-// === LOOP DE ATUALIZAÇÃO AUTOMÁTICA ===
 setInterval(carregarDados, 15000);
 carregarDados();
