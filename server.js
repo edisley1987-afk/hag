@@ -1,6 +1,7 @@
 // =====================================================
 // 🌊 Servidor HAG — Compatível com Gateway ITG
 // Aceita array com leituras múltiplas (ref, value, dev_id...)
+// Serve o site em /public (dashboard + login)
 // =====================================================
 const express = require("express");
 const fs = require("fs");
@@ -42,7 +43,7 @@ app.post("/atualizar", (req, res) => {
   try {
     let data = req.body;
 
-    // Tenta converter texto puro em JSON
+    // 🔄 Tenta converter texto puro em JSON
     if (typeof data === "string") {
       try {
         data = JSON.parse(data);
@@ -72,7 +73,12 @@ app.post("/atualizar", (req, res) => {
 
       if (!cfg) {
         // Sensor desconhecido
-        current[ref] = { nome: ref, raw: value, time: item.time || Date.now(), dev_id: item.dev_id || null };
+        current[ref] = {
+          nome: ref,
+          raw: value,
+          time: item.time || Date.now(),
+          dev_id: item.dev_id || null
+        };
         return;
       }
 
@@ -116,10 +122,14 @@ app.get("/dados", (req, res) => {
 });
 
 // =====================================================
-// 🌐 Página inicial (opcional)
+// 🌐 Servir o site (dashboard + login)
 // =====================================================
+const PUBLIC_DIR = path.join(__dirname, "public");
+app.use(express.static(PUBLIC_DIR));
+
+// Rota raiz abre o dashboard.html
 app.get("/", (req, res) => {
-  res.send(`<h2>✅ Servidor HAG Gateway Online</h2><p>Use o endpoint <code>/atualizar</code> para enviar dados.</p>`);
+  res.sendFile(path.join(PUBLIC_DIR, "dashboard.html"));
 });
 
 // =====================================================
