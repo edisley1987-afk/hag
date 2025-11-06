@@ -10,45 +10,62 @@ app.use(express.json({ limit: "5mb" }));
 const __dirname = path.resolve();
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const PUBLIC_DIR = path.join(__dirname, "public"); // pasta do dashboard
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR);
 
-// Servir os arquivos estáticos (HTML, CSS, JS, imagens)
-app.use(express.static(PUBLIC_DIR));
+// Conversão de altura (em metros) → litros
+const SENSORES = {
+  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
+  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505, leituraCheio: 0.006533, capacidade: 200 },
+  "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
+};
 
-// Endpoint para receber dados do gateway
-app.post("/dados", (req, res) => {
+// === Rota POST chamada pelo Gateway ITG ===
+app.post("/atualizar", (req, res) => {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(req.body, null, 2));
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Erro ao salvar dados:", err);
-    res.status(500).json({ error: "Falha ao salvar" });
-  }
-});
+    const leituras = req.body;
 
-// Endpoint para ler os dados mais recentes
-app.get("/dados", (req, res) => {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-      res.json(data);
-    } else {
-      res.json({});
+    // Espera uma lista (array) de objetos do Gateway
+    if (!Array.isArray(leituras)) {
+      return res.status(400).json({ erro: "Formato inválido: esperado array de leituras" });
     }
+
+    const dadosConvertidos = {};
+
+    for (const item of leituras) {
+      const { ref, value } = item;
+      const sensor = SENSORES[ref];
+      if (!sensor) continue;
+
+      // Converte leitura em litros (regra linear)
+      const { leituraVazio, leituraCheio, capacidade } = sensor;
+      const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+
+      dadosConvertidos[ref] = Math.max(0, Math.min(capacidade, Math.round(nivel)));
+    }
+
+    dadosConvertidos.timestamp = new Date().toISOString();
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dadosConvertidos, null, 2));
+    res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
-    console.error("Erro ao ler dados:", err);
-    res.status(500).json({ error: "Falha ao ler" });
+    console.error("Erro ao processar atualização:", err);
+    res.status(500).json({ erro: "Erro ao processar atualização" });
   }
 });
 
-// Página inicial (dashboard)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
+// === Rota GET usada pelo dashboard ===
+app.get("/dados", (req, res) => {
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.json({});
+  }
+  const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  res.json(data);
 });
 
-// Porta (Render define automaticamente)
+app.get("/", (req, res) => {
+  res.send("Servidor HAG Proxy rodando com sucesso ✅");
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Proxy rodando na porta ${PORT}`));
