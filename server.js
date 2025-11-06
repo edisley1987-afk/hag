@@ -33,10 +33,13 @@ app.get("/", (req, res) => {
 // === Rota POST chamada pelo Gateway ITG ===
 app.post("/atualizar", (req, res) => {
   try {
-    const leituras = req.body;
+    const body = req.body;
+
+    // Aceita tanto array direto quanto objeto com campo "data"
+    const leituras = Array.isArray(body) ? body : body.data;
 
     if (!Array.isArray(leituras)) {
-      return res.status(400).json({ erro: "Formato inválido: esperado array de leituras" });
+      return res.status(400).json({ erro: "Formato inválido: esperado array ou objeto com campo 'data'" });
     }
 
     const dadosConvertidos = {};
@@ -46,6 +49,7 @@ app.post("/atualizar", (req, res) => {
       const sensor = SENSORES[ref];
       if (!sensor) continue;
 
+      // Converte leitura em litros (regra linear)
       const { leituraVazio, leituraCheio, capacidade } = sensor;
       const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
 
