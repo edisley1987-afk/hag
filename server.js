@@ -1,6 +1,6 @@
 // =====================================================
-// 🌊 Servidor HAG — Versão Blindada (Render Safe)
-// Aceita JSON, texto, form-data e qualquer tipo de requisição
+// 🌊 Servidor HAG — Compatível com Gateway ITG
+// Aceita array com leituras múltiplas (ref, value, dev_id...)
 // =====================================================
 const express = require("express");
 const fs = require("fs");
@@ -9,47 +9,52 @@ const cors = require("cors");
 
 const app = express();
 
-// 🔧 Middlewares robustos
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false, type: () => true }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// 🗂️ Pastas
+// =====================================================
+// 📂 Arquivos de dados
+// =====================================================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
 
-// ⚙️ Sensores calibrados
+// =====================================================
+// ⚙️ Configuração calibrada dos sensores
+// =====================================================
 const SENSOR_CONFIG = {
   "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, vazio: 0.004168, cheio: 0.007855 },
   "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, vazio: 0.00505, cheio: 0.006533 },
   "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, vazio: 0.004088, cheio: 0.004408 },
-  "Agua_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 }
+  "Reservatorio_Abrandada_current": { nome: "Reservatório Água Abrandada", capacidade: 9000, vazio: 0.004008, cheio: 0.004929 },
+  "Presao_Saida_current": { nome: "Pressão Saída", capacidade: 0, vazio: 0, cheio: 0 },
+  "Pressao_saida_current": { nome: "Pressão Saída (variação)", capacidade: 0, vazio: 0, cheio: 0 },
+  "Pressao_Retorno_current": { nome: "Pressão Retorno", capacidade: 0, vazio: 0, cheio: 0 }
 };
 
-// 📡 Endpoint de atualização (aceita qualquer formato)
-app.post("/atualizar", async (req, res) => {
+// =====================================================
+// 🚀 Endpoint principal: /atualizar
+// =====================================================
+app.post("/atualizar", (req, res) => {
   try {
     let data = req.body;
 
-    // Se o corpo vier como texto, tenta converter para JSON
+    // Tenta converter texto puro em JSON
     if (typeof data === "string") {
       try {
         data = JSON.parse(data);
       } catch {
-        // tenta extrair números simples tipo "ref=value"
-        if (data.includes("=")) {
-          const [ref, value] = data.split("=");
-          data = { [ref.trim()]: parseFloat(value) };
-        } else {
-          data = { raw: data };
-        }
+        return res.status(400).json({ error: "Formato inválido (esperado JSON ou array)" });
       }
     }
 
-    // Lê arquivo atual
+    // Garante que é um array
+    const items = Array.isArray(data) ? data : [data];
+
+    // Lê o arquivo atual
     let current = {};
     try {
       current = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
@@ -57,48 +62,49 @@ app.post("/atualizar", async (req, res) => {
       current = {};
     }
 
-    // Garante array
-    let items = [];
-    if (Array.isArray(data)) items = data;
-    else if (data.data && Array.isArray(data.data)) items = data.data;
-    else if (typeof data === "object") {
-      items = Object.entries(data).map(([ref, value]) => ({ ref, value }));
-    } else {
-      items = [{ ref: "Desconhecido", value: data }];
-    }
-
-    // Processa leituras
+    // Processa cada leitura recebida
     items.forEach((item) => {
       const ref = item.ref || item.name || "Desconhecido";
-      const value = parseFloat(
-        ("" + (item.value ?? item.val ?? item.reading ?? 0)).replace(",", ".")
-      );
-
+      const value = parseFloat((item.value ?? 0).toString().replace(",", "."));
       const cfg = SENSOR_CONFIG[ref];
+
+      if (!ref || isNaN(value)) return;
+
       if (!cfg) {
-        current[ref] = { nome: ref, raw: value, time: Date.now() };
+        // Sensor desconhecido
+        current[ref] = { nome: ref, raw: value, time: item.time || Date.now(), dev_id: item.dev_id || null };
         return;
       }
 
-      const ratio = Math.max(0, Math.min(1, (value - cfg.vazio) / (cfg.cheio - cfg.vazio)));
+      const { capacidade, vazio, cheio } = cfg;
+      let ratio = 0;
+      if (cheio !== vazio) ratio = (value - vazio) / (cheio - vazio);
+      ratio = Math.max(0, Math.min(1, ratio));
+
+      const litros = capacidade * ratio;
+
       current[ref] = {
         nome: cfg.nome,
-        valor: Number((cfg.capacidade * ratio).toFixed(2)),
+        valor: Number(litros.toFixed(2)),
         raw: value,
-        time: Date.now(),
+        dev_id: item.dev_id || null,
+        time: item.time || Date.now(),
       };
     });
 
-    // Salva arquivo
+    // Salva no arquivo
     fs.writeFileSync(DATA_FILE, JSON.stringify(current, null, 2));
+
     res.json({ success: true, saved: items.length });
   } catch (err) {
     console.error("Erro ao atualizar:", err);
-    res.status(500).json({ error: "Falha ao processar payload", detail: err.message });
+    res.status(500).json({ error: "Falha ao processar dados", detail: err.message });
   }
 });
 
-// 📊 Endpoint de dados
+// =====================================================
+// 📊 Endpoint de leitura
+// =====================================================
 app.get("/dados", (req, res) => {
   try {
     const raw = fs.readFileSync(DATA_FILE, "utf8");
@@ -109,11 +115,15 @@ app.get("/dados", (req, res) => {
   }
 });
 
-// 🖥️ Painel
+// =====================================================
+// 🌐 Página inicial (opcional)
+// =====================================================
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+  res.send(`<h2>✅ Servidor HAG Gateway Online</h2><p>Use o endpoint <code>/atualizar</code> para enviar dados.</p>`);
 });
 
-// 🚀 Inicialização
+// =====================================================
+// 🚦 Inicialização
+// =====================================================
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`✅ Servidor blindado rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
