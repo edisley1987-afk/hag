@@ -71,6 +71,14 @@ app.get("/", (req, res) => {
 });
 
 // ===== Inicia servidor =====
+app.get("/debug", (req, res) => {
+  const file = path.join(DATA_DIR, "readings.json");
+  if (!fs.existsSync(file)) {
+    return res.status(404).send("Arquivo readings.json não encontrado");
+  }
+  const content = fs.readFileSync(file, "utf8");
+  res.type("text/plain").send(content);
+});
 app.listen(PORT, () => {
   console.log(`✅ Servidor HAG Proxy rodando com sucesso na porta ${PORT}`);
 });
