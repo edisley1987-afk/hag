@@ -1,31 +1,43 @@
+server.js (versão completa e funcional)
+
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
 
 const app = express();
+const __dirname = path.resolve();
+
+// === Configurações gerais ===
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 
-const __dirname = path.resolve();
+// === Pastas e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-// Conversão de altura (em metros) → litros
+// === Conversão de altura (em metros) → litros ===
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
-  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505, leituraCheio: 0.006533, capacidade: 200 },
+  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505,  leituraCheio: 0.006533, capacidade: 200 },
   "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
 };
+
+// === Servir arquivos estáticos do dashboard (HTML, JS, CSS) ===
+app.use(express.static(path.join(__dirname, "public")));
+
+// === Rota principal -> abre o index.html do dashboard ===
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // === Rota POST chamada pelo Gateway ITG ===
 app.post("/atualizar", (req, res) => {
   try {
     const leituras = req.body;
 
-    // Espera uma lista (array) de objetos do Gateway
     if (!Array.isArray(leituras)) {
       return res.status(400).json({ erro: "Formato inválido: esperado array de leituras" });
     }
@@ -37,7 +49,6 @@ app.post("/atualizar", (req, res) => {
       const sensor = SENSORES[ref];
       if (!sensor) continue;
 
-      // Converte leitura em litros (regra linear)
       const { leituraVazio, leituraCheio, capacidade } = sensor;
       const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
 
@@ -54,7 +65,7 @@ app.post("/atualizar", (req, res) => {
   }
 });
 
-// === Rota GET usada pelo dashboard ===
+// === Rota GET usada pelo dashboard para ler o JSON ===
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) {
     return res.json({});
@@ -63,9 +74,8 @@ app.get("/dados", (req, res) => {
   res.json(data);
 });
 
-app.get("/", (req, res) => {
-  res.send("Servidor HAG Proxy rodando com sucesso ✅");
-});
-
+// === Inicialização do servidor ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Proxy rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+  console.log(✅ Servidor HAG rodando com sucesso na porta ${PORT});
+});
