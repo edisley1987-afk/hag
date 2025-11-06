@@ -1,3 +1,4 @@
+// === server.js ===
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -22,24 +23,41 @@ const SENSORES = {
   "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
 };
 
-// === Servir arquivos estáticos do dashboard (HTML, JS, CSS) ===
+// === Servir dashboard (HTML, JS, CSS) ===
 app.use(express.static(path.join(__dirname, "public")));
 
-// === Rota principal -> abre o index.html do dashboard ===
+// === Página inicial ===
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// === Rota POST chamada pelo Gateway ITG ===
+// === Rota POST chamada pelo Gateway ou API ===
 app.post("/atualizar", (req, res) => {
   try {
     const body = req.body;
+    let leituras = [];
 
-    // Aceita tanto array direto quanto objeto com campo "data"
-    const leituras = Array.isArray(body) ? body : body.data;
+    // Formato 1 → Gateway ITG (array de objetos)
+    if (Array.isArray(body)) {
+      leituras = body;
+    }
 
-    if (!Array.isArray(leituras)) {
-      return res.status(400).json({ erro: "Formato inválido: esperado array ou objeto com campo 'data'" });
+    // Formato 2 → body.data (objeto dentro de campo "data")
+    else if (body.data && Array.isArray(body.data)) {
+      leituras = body.data;
+    }
+
+    // Formato 3 → objeto simples (ex: {"Reservatorio_Elevador_current":4168, ...})
+    else if (typeof body === "object") {
+      for (const [ref, valor] of Object.entries(body)) {
+        if (SENSORES[ref]) {
+          leituras.push({ ref, value: Number(valor) });
+        }
+      }
+    }
+
+    if (!Array.isArray(leituras) || leituras.length === 0) {
+      return res.status(400).json({ erro: "Formato inválido: esperado array ou objeto com campos de sensores" });
     }
 
     const dadosConvertidos = {};
@@ -49,7 +67,6 @@ app.post("/atualizar", (req, res) => {
       const sensor = SENSORES[ref];
       if (!sensor) continue;
 
-      // Converte leitura em litros (regra linear)
       const { leituraVazio, leituraCheio, capacidade } = sensor;
       const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
 
@@ -61,12 +78,12 @@ app.post("/atualizar", (req, res) => {
     fs.writeFileSync(DATA_FILE, JSON.stringify(dadosConvertidos, null, 2));
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
-    console.error("Erro ao processar atualização:", err);
+    console.error("❌ Erro ao processar atualização:", err);
     res.status(500).json({ erro: "Erro ao processar atualização" });
   }
 });
 
-// === Rota GET usada pelo dashboard para ler o JSON ===
+// === Rota GET para o dashboard ===
 app.get("/dados", (req, res) => {
   try {
     if (!fs.existsSync(DATA_FILE)) {
@@ -75,7 +92,7 @@ app.get("/dados", (req, res) => {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
     res.json(data);
   } catch (err) {
-    console.error("Erro ao ler arquivo de dados:", err);
+    console.error("❌ Erro ao ler arquivo de dados:", err);
     res.status(500).json({ erro: "Falha ao ler dados" });
   }
 });
