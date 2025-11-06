@@ -1,12 +1,12 @@
 {
-  "name": "reservatorios-hag",
+  "name": "hag-proxy",
   "version": "1.0.0",
-  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node proxy.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "axios": "^1.4.0"
   }
 }
