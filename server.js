@@ -2,54 +2,75 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+const PORT = process.env.PORT || 443;
+
+// ===== Configuração =====
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "10mb" }));
 
-const __dirname = path.resolve();
-const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const PUBLIC_DIR = path.join(__dirname, "public");
+// ===== Pasta pública (site) =====
+app.use(express.static(path.join(__dirname, "public")));
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
+// ===== Caminho do arquivo de dados =====
+const DATA_FILE = path.join(__dirname, "data", "readings.json");
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-});
-
-app.get("/dados", (req, res) => {
-  try {
-    const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    res.json(dados);
-  } catch (e) {
-    res.status(500).json({ error: "Erro ao ler dados" });
-  }
-});
-
+// ===== Recebe dados do gateway =====
 app.post("/atualizar", (req, res) => {
   try {
-    const body = req.body;
+    let body = req.body;
+
+    // Se for array, converte para objeto indexado por ref
     if (Array.isArray(body)) {
-      let dados = {};
-      body.forEach(item => {
+      const novo = {};
+      body.forEach((item) => {
         if (item.ref && item.value !== undefined) {
-          dados[item.ref] = {
-            nome: item.ref.replace(/_/g, " "),
-            valor: item.value * 10000 // conversão simples
+          novo[item.ref] = {
+            nome: item.ref,
+            valor: item.value * 10000, // conversão opcional (ajuste conforme necessidade)
           };
         }
       });
-      fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-      res.json({ success: true, saved: Object.keys(dados).length });
-    } else {
-      res.status(400).json({ error: "Formato inválido" });
+      body = novo;
     }
-  } catch (e) {
-    res.status(500).json({ error: "Erro ao salvar dados", details: e.message });
+
+    if (!body || Object.keys(body).length === 0) {
+      return res.status(400).json({ success: false, error: "JSON inválido" });
+    }
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(body, null, 2));
+    console.log("📥 Dados recebidos e salvos:", Object.keys(body).length);
+    res.json({ success: true, saved: Object.keys(body).length });
+  } catch (err) {
+    console.error("❌ Erro ao salvar dados:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor HAG rodando na porta ${PORT}`));
+// ===== Fornece dados ao dashboard =====
+app.get("/dados", (req, res) => {
+  try {
+    if (!fs.existsSync(DATA_FILE)) {
+      return res.json({});
+    }
+    const dados = JSON.parse(fs.readFileSync(DATA_FILE));
+    res.json(dados);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Página inicial =====
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+// ===== Inicia servidor =====
+app.listen(PORT, () => {
+  console.log(`✅ Servidor HAG Proxy rodando com sucesso na porta ${PORT}`);
+});
