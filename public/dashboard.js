@@ -18,18 +18,25 @@ function atualizarPainel(dados) {
   const valores = [];
   const capacidades = [];
 
-  // Ignora a chave "timestamp"
+  const pressoes = [];
+
   Object.entries(dados).forEach(([key, valorBruto]) => {
     if (key === "timestamp") return;
 
+    // Se for pressão
+    if (key.toLowerCase().includes("pressao")) {
+      pressoes.push({ nome: key.replace("_current", ""), valor: valorBruto });
+      return;
+    }
+
+    // Caso seja reservatório
     const nome = key
       .replace("Reservatorio_", "Reservatório ")
+      .replace("Agua_", "Água ")
       .replace("_current", "");
 
-    // Garante que é número
     const valor = Number(valorBruto) || 0;
 
-    // Define capacidade conforme o reservatório
     let capacidade = 0;
     if (nome.includes("Elevador")) capacidade = 20000;
     if (nome.includes("Osmose")) capacidade = 200;
@@ -38,18 +45,18 @@ function atualizarPainel(dados) {
 
     const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
 
-    // Define cor conforme o nível
     let cor = "#00c9a7"; // verde
-    if (porcent < 30) cor = "#e53935"; // vermelho
-    else if (porcent < 50) cor = "#fbc02d"; // amarelo
+    if (porcent < 30) cor = "#e53935";
+    else if (porcent < 50) cor = "#fbc02d";
 
-    // Cria o card
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
       <h2>${nome}</h2>
       <div class="progress">
-        <div class="progress-fill" style="width:${porcent.toFixed(1)}%; background:${cor}"></div>
+        <div class="progress-fill" style="width:${porcent.toFixed(
+          1
+        )}%; background:${cor}"></div>
       </div>
       <div class="valor" style="color:${cor}">
         ${valor.toFixed(0)} L (${porcent.toFixed(1)}%)
@@ -61,6 +68,25 @@ function atualizarPainel(dados) {
     valores.push(valor);
     capacidades.push(capacidade);
   });
+
+  // === Cartões de pressão ===
+  if (pressoes.length > 0) {
+    const blocoPressao = document.createElement("div");
+    blocoPressao.className = "pressao-bloco";
+    blocoPressao.innerHTML = "<h2>Pressões</h2>";
+
+    pressoes.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card-pressao";
+      card.innerHTML = `
+        <div class="pressao-nome">${p.nome.replace("_", " ")}</div>
+        <div class="pressao-valor">${p.valor} A</div>
+      `;
+      blocoPressao.appendChild(card);
+    });
+
+    cards.appendChild(blocoPressao);
+  }
 
   document.getElementById("lastUpdate").textContent =
     "Última atualização: " + new Date().toLocaleString("pt-BR");
@@ -81,7 +107,7 @@ function atualizarGrafico(labels, valores, capacidades) {
         {
           label: "Capacidade Total (L)",
           data: capacidades,
-          backgroundColor: "rgba(0, 120, 166, 0.3)",
+          backgroundColor: "rgba(0, 120, 166, 0.2)",
           borderColor: "#0078a6",
           borderWidth: 2,
         },
@@ -100,13 +126,14 @@ function atualizarGrafico(labels, valores, capacidades) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { labels: { color: "#fff" } },
         title: {
           display: true,
-          text: "Níveis dos Reservatórios (litros) — Hospital Arnaldo Gavazza",
+          text: "Níveis dos Reservatórios (litros)",
           color: "#fff",
-          font: { size: 16 },
+          font: { size: 14 },
         },
       },
       scales: {
@@ -124,6 +151,6 @@ function atualizarGrafico(labels, valores, capacidades) {
   });
 }
 
-// Atualiza automaticamente a cada 15s
+// Atualiza a cada 15 segundos
 setInterval(carregarDados, 15000);
 carregarDados();
