@@ -1,104 +1,133 @@
 const API_URL = "https://reservatorios-hag-dashboard.onrender.com/dados";
 
-const CONFIG = {
-  Reservatorio_Elevador: { nome: "Reservatório Elevador", capacidade: 20000 },
-  Reservatorio_Osmose: { nome: "Reservatório Osmose", capacidade: 200 },
-  Reservatorio_CME: { nome: "Reservatório CME", capacidade: 1000 },
-  Agua_Abrandada: { nome: "Água Abrandada", capacidade: 9000 },
-};
-
-// === Cria os cards fixos uma única vez ===
-function criarCardsFixos() {
-  const cards = document.getElementById("cards");
-  cards.innerHTML = "";
-
-  Object.entries(CONFIG).forEach(([key, info]) => {
-    const card = document.createElement("div");
-    card.className = "card card-animada";
-    card.id = `card_${key}`;
-
-    card.innerHTML = `
-      <h2>${info.nome}</h2>
-      <div class="progress">
-        <div class="progress-fill" id="fill_${key}" style="width:0%; background:#00c9a7"></div>
-      </div>
-      <div class="valor" id="valor_${key}">-- L (--%)</div>
-    `;
-
-    cards.appendChild(card);
-  });
-
-  // Cria bloco de pressões
-  const blocoPressao = document.createElement("div");
-  blocoPressao.className = "pressao-bloco";
-  blocoPressao.innerHTML = "<h2>Pressões</h2>";
-
-  const nomesPressao = [
-    "Pressao_Saida_CME_current",
-    "Pressao_Retorno_Osmose_current",
-    "Pressao_Saida_Osmose_current",
-  ];
-
-  nomesPressao.forEach((p) => {
-    const card = document.createElement("div");
-    card.className = "card-pressao";
-    card.id = `pressao_${p}`;
-    card.innerHTML = `
-      <div class="pressao-nome">${p.replaceAll("_", " ")}</div>
-      <div class="pressao-valor">-- A</div>
-    `;
-    blocoPressao.appendChild(card);
-  });
-
-  cards.appendChild(blocoPressao);
-}
-
-// === Atualiza somente os valores ===
 async function carregarDados() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
     const dados = await res.json();
-
-    Object.entries(CONFIG).forEach(([key, info]) => {
-      const valor = Number(dados[`${key}_current`] || 0);
-      const porcent = (valor / info.capacidade) * 100;
-
-      let cor = "#00c9a7";
-      if (porcent < 30) cor = "#e53935";
-      else if (porcent < 50) cor = "#fbc02d";
-
-      const fill = document.getElementById(`fill_${key}`);
-      const texto = document.getElementById(`valor_${key}`);
-      const card = document.getElementById(`card_${key}`);
-
-      if (fill) fill.style.width = `${porcent.toFixed(1)}%`;
-      if (fill) fill.style.background = cor;
-      if (texto)
-        texto.textContent = `${valor.toFixed(0)} L (${porcent.toFixed(1)}%)`;
-
-      // brilho vermelho se estiver crítico
-      card.style.boxShadow =
-        porcent < 30
-          ? "0 0 15px 2px rgba(229,57,53,0.4)"
-          : "0 0 10px rgba(0,0,0,0.2)";
-    });
-
-    // Atualiza pressões
-    Object.keys(dados).forEach((key) => {
-      if (key.toLowerCase().includes("pressao")) {
-        const el = document.querySelector(`#pressao_${key} .pressao-valor`);
-        if (el) el.textContent = `${dados[key]} A`;
-      }
-    });
-
-    document.getElementById("lastUpdate").textContent =
-      "Última atualização: " + new Date().toLocaleString("pt-BR");
+    atualizarPainel(dados);
   } catch (err) {
     console.error("Erro ao carregar dados:", err);
   }
 }
 
-// === Inicialização ===
-criarCardsFixos();
-carregarDados();
+function atualizarPainel(dados) {
+  const cards = document.getElementById("cards");
+  const gaugeGrid = document.getElementById("gaugeGrid");
+  cards.innerHTML = "";
+  gaugeGrid.innerHTML = "";
+
+  const pressoes = [];
+
+  Object.entries(dados).forEach(([key, valorBruto]) => {
+    if (key === "timestamp") return;
+
+    if (key.toLowerCase().includes("pressao")) {
+      pressoes.push({ nome: key.replace("_current", ""), valor: valorBruto });
+      return;
+    }
+
+    const nome = key
+      .replace("Reservatorio_", "Reservatório ")
+      .replace("Agua_", "Água ")
+      .replace("_current", "");
+
+    const valor = Number(valorBruto) || 0;
+
+    // === Capacidade total por reservatório ===
+    const nomeLower = nome.toLowerCase();
+    let capacidade = 0;
+    if (nomeLower.includes("elevador")) capacidade = 20000;
+    if (nomeLower.includes("osmose")) capacidade = 200;
+    if (nomeLower.includes("cme")) capacidade = 1000;
+    if (nomeLower.includes("abrandada")) capacidade = 9000;
+
+    const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
+
+    let cor = "#00c853"; // verde
+    if (porcent < 30) cor = "#e53935"; // vermelho
+    else if (porcent < 50) cor = "#ffb300"; // amarelo
+
+    // === CARD simples (resumo numérico) ===
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h3>${nome}</h3>
+      <p><strong>${valor.toFixed(0)} L</strong> — ${porcent.toFixed(1)}%</p>
+    `;
+    cards.appendChild(card);
+
+    // === GAUGE circular (substitui o gráfico grande) ===
+    const gaugeDiv = document.createElement("div");
+    gaugeDiv.className = "gauge-item";
+    gaugeDiv.innerHTML = `
+      <canvas id="gauge_${key}" width="200" height="200"></canvas>
+      <div class="gauge-label">${nome}</div>
+    `;
+    gaugeGrid.appendChild(gaugeDiv);
+
+    const ctx = document.getElementById(`gauge_${key}`).getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        datasets: [
+          {
+            data: [porcent, 100 - porcent],
+            backgroundColor: [cor, "rgba(255,255,255,0.15)"],
+            borderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        rotation: -90,
+        circumference: 180,
+        cutout: "70%",
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      },
+      plugins: [
+        {
+          id: "textCenter",
+          afterDraw(chart) {
+            const { ctx } = chart;
+            ctx.save();
+            ctx.font = "bold 18px Segoe UI";
+            ctx.fillStyle = cor;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
+              `${porcent.toFixed(0)}%`,
+              chart.width / 2,
+              chart.height / 1.2
+            );
+            ctx.restore();
+          },
+        },
+      ],
+    });
+  });
+
+  // === BLOCO DE PRESSÕES ===
+  if (pressoes.length > 0) {
+    const blocoPressao = document.createElement("div");
+    blocoPressao.className = "pressao-bloco";
+    blocoPressao.innerHTML = "<h2>Pressões</h2>";
+
+    pressoes.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card-pressao";
+      card.innerHTML = `
+        <div class="pressao-nome">${p.nome.replace("_", " ")}</div>
+        <div class="pressao-valor">${p.valor} A</div>
+      `;
+      blocoPressao.appendChild(card);
+    });
+
+    cards.appendChild(blocoPressao);
+  }
+
+  document.getElementById("lastUpdate").textContent =
+    "Última atualização: " + new Date().toLocaleString("pt-BR");
+}
+
+// Atualiza a cada 15 segundos
 setInterval(carregarDados, 15000);
+carregarDados();
