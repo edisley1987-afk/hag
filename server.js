@@ -20,8 +20,12 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 // === Função para salvar leituras ===
 function salvarDados(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2), "utf-8");
+    console.log("💾 Leituras atualizadas:", dados);
+  } catch (err) {
+    console.error("❌ Erro ao salvar leituras:", err);
+  }
 }
 
 // === Sensores configurados ===
@@ -106,14 +110,43 @@ app.all("/atualizar", (req, res) => {
 
 // === Endpoint para o dashboard ===
 app.get("/dados", (req, res) => {
-  if (!fs.existsSync(DATA_FILE)) return res.json({});
-  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  res.json(dados);
+  try {
+    // Se o arquivo não existir, cria um vazio
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, "{}", "utf-8");
+      return res.json({});
+    }
+
+    const content = fs.readFileSync(DATA_FILE, "utf-8").trim();
+
+    // Se estiver vazio, retorna objeto vazio
+    if (!content) {
+      return res.json({});
+    }
+
+    // Tenta converter o conteúdo
+    let dados;
+    try {
+      dados = JSON.parse(content);
+    } catch (err) {
+      console.error("⚠️ readings.json corrompido, recriando:", err.message);
+      fs.writeFileSync(DATA_FILE, "{}", "utf-8");
+      return res.json({});
+    }
+
+    // Retorna JSON válido
+    res.json(dados);
+  } catch (err) {
+    console.error("❌ Erro ao ler /dados:", err);
+    res.status(500).json({ erro: "Falha ao ler arquivo de dados" });
+  }
 });
 
 // === Servir dashboard estático ===
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
