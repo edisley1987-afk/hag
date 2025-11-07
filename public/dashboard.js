@@ -1,4 +1,4 @@
-const API_URL = "https://hag-9umi.onrender.com/dados";
+const API_URL = "https://reservatorios-hag-dashboard.onrender.com/dados";
 
 async function carregarDados() {
   try {
