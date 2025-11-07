@@ -1,30 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reservatórios HAG - Monitoramento</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento de Reservatórios - HAG</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="header">
-    <img src="logo-gavazza-top.png" class="logo" alt="Hospital logo">
-    <h1>Monitoramento de Reservatórios - HAG</h1>
-  </header>
 
-  <section id="cards" class="cards"></section>
+    <header>
+        <img src="logo-gavazza-top.png" alt="Logo Hospital Arnaldo Gavazza" class="logo">
+        <h1>Monitoramento de Reservatórios - Hospital Arnaldo Gavazza</h1>
+        <div id="lastUpdate">Última atualização: --/--/---- --:--:--</div>
+    </header>
 
-  <div class="center">
-    <p id="lastUpdate">Carregando...</p>
-  </div>
+    <div class="main-content">
+        
+        <div class="cards" id="cards">
+            </div>
 
-  <div class="chart-wrap">
-    <canvas id="chartCanvas" width="900" height="360"></canvas>
-  </div>
+        <div class="chart-wrap">
+            <canvas id="chartCanvas"></canvas>
+        </div>
 
-  <footer>© 2025 — Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
+    </div>
 
-  <script src="dashboard.js"></script>
+    <footer>
+        <p>&copy; 2025 HAG - Desenvolvido por Edisley</p>
+    </footer>
+
+    <script src="dashboard.js"></script>
 </body>
 </html>
