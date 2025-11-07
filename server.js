@@ -4,99 +4,98 @@ import path from "path";
 import cors from "cors";
 
 const app = express();
+const __dirname = path.resolve();
+
+// === Configurações gerais ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-const __dirname = path.resolve();
+// === Pastas e arquivos ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
-
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-// ✅ Função para salvar as leituras no arquivo
+// === Função utilitária para salvar dados ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
   console.log("💾 Leituras atualizadas:", dados);
 }
 
-// ✅ Rota principal de atualização
+// === Configuração dos sensores ===
+const SENSORES = {
+  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
+  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505,  leituraCheio: 0.006533, capacidade: 200 },
+  "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
+};
+
+// === Rota POST/ALL para receber dados do Gateway ===
 app.all("/atualizar", (req, res) => {
   try {
     let body = req.body;
 
-    // Aceita JSON como texto puro também
+    // Tenta converter texto puro em JSON
     if (typeof body === "string") {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("⚠️ Corpo recebido não é JSON válido, ignorando parse...");
+        console.log("⚠️ Corpo recebido não é JSON válido.");
       }
     }
 
-    // Extrai dados independente do formato
+    // Extrai leituras de vários formatos possíveis
     let dataArray = [];
-
     if (Array.isArray(body)) {
       dataArray = body;
     } else if (body && Array.isArray(body.data)) {
       dataArray = body.data;
     } else if (typeof body === "object") {
-      // Caso seja objeto direto tipo {Reservatorio_Elevador_current: 0.0076}
       dataArray = Object.keys(body)
-        .filter((key) => key.includes("_current"))
-        .map((key) => ({ ref: key, value: body[key] }));
+        .filter((k) => k.includes("_current"))
+        .map((k) => ({ ref: k, value: body[k] }));
     }
 
     if (!dataArray.length) {
-      return res.status(400).json({
-        status: "erro",
-        detalhe: "Nenhum dado de leitura encontrado no corpo da requisição",
-      });
+      return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
-    // Monta o objeto final de leituras
-    const leituras = {};
+    // Converte as leituras
+    const dadosConvertidos = {};
     for (const item of dataArray) {
-      if (item.ref && typeof item.value === "number") {
-        leituras[item.ref] = item.value;
-      }
+      const { ref, value } = item;
+      const sensor = SENSORES[ref];
+      if (!sensor || typeof value !== "number") continue;
+
+      const { leituraVazio, leituraCheio, capacidade } = sensor;
+      const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+      dadosConvertidos[ref] = Math.max(0, Math.min(capacidade, Math.round(nivel)));
     }
 
-    const dados = {
-      status: "ok",
-      dados: {
-        Reservatorio_Elevador_current:
-          leituras.Reservatorio_Elevador_current ?? 0,
-        Reservatorio_CME_current: leituras.Reservatorio_CME_current ?? 0,
-        Reservatorio_Osmose_current: leituras.Reservatorio_Osmose_current ?? 0,
-        timestamp: new Date().toISOString(),
-      },
-    };
+    dadosConvertidos.timestamp = new Date().toISOString();
+    salvarDados(dadosConvertidos);
 
-    salvarDados(dados);
-    return res.json(dados);
+    res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
     console.error("❌ Erro ao atualizar:", err);
-    res.status(500).json({ status: "erro", detalhe: err.message });
+    res.status(500).json({ erro: err.message });
   }
 });
 
-// ✅ Rota para retornar as últimas leituras
+// === Rota GET para o dashboard ler ===
 app.get("/dados", (req, res) => {
-  if (!fs.existsSync(DATA_FILE))
-    return res.json({ status: "vazio", dados: {} });
-  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-  res.json(dados);
+  if (!fs.existsSync(DATA_FILE)) return res.json({});
+  const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  res.json(data);
 });
 
-// ✅ Página simples para teste
+// === Servir os arquivos do dashboard ===
+app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
-  res.send("Servidor HAG Proxy rodando com sucesso ✅");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// === Inicialização ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`🚀 Servidor rodando na porta ${PORT}`)
-);
+app.listen(PORT, () => console.log(`✅ Servidor HAG rodando com sucesso na porta ${PORT}`));
