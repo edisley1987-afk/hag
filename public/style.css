@@ -1,3 +1,4 @@
+/* ===== Estilo geral ===== */
 body {
   background: #00354a;
   color: #fff;
@@ -13,6 +14,12 @@ header {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
 }
 
+.logo {
+  height: 60px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
 h1 {
   margin: 0;
   font-size: 1.8rem;
@@ -24,25 +31,34 @@ h1 {
   color: #aee0f5;
 }
 
-.cards-container {
+/* ===== Cards dos reservatórios ===== */
+.cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 1rem;
   padding: 1rem;
+  justify-items: center;
 }
 
 .card {
   background: #004b63;
   border-radius: 12px;
   padding: 1rem;
+  width: 100%;
+  max-width: 300px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.card h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem 0;
 }
 
 .progress {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  height: 16px;
-  margin: 10px 0;
+  height: 14px;
+  margin: 8px 0;
   overflow: hidden;
 }
 
@@ -57,16 +73,61 @@ h1 {
   margin-top: 5px;
 }
 
-footer {
-  background: #002f3e;
+/* ===== Cards de pressão ===== */
+.pressao-bloco {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
   padding: 1rem;
-  color: #aee0f5;
-  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
-.grafico {
+.card-pressao {
+  background: #0d2b3a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.card-pressao:hover {
+  transform: translateY(-3px);
+  background: #006381;
+}
+
+.pressao-nome {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #aee0f5;
+  margin-bottom: 4px;
+}
+
+.pressao-valor {
+  font-size: 1.2em;
+  color: #00c9a7;
+}
+
+/* ===== Gráfico ===== */
+.chart-wrap {
   background: #004b63;
   border-radius: 12px;
-  margin: 1rem;
-  padding: 1rem;
+  margin: 0.5rem auto 1rem;
+  padding: 0.5rem;
+  width: 95%;
+  height: 240px; /* reduzido para caber sem rolagem */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Rodapé ===== */
+footer {
+  background: #002f3e;
+  padding: 0.8rem;
+  color: #aee0f5;
+  font-size: 0.85rem;
 }
