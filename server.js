@@ -1,3 +1,5 @@
+// ======= Servidor Universal HAG - compatível com Gateway ITG =======
+
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -6,7 +8,7 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// === Middleware universal: aceita QUALQUER formato de body ===
+// === Middleware universal: aceita QUALQUER tipo de requisição ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
@@ -34,18 +36,15 @@ const SENSORES = {
   "Pressao_Retorno_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 }
 };
 
-// === LOGGER GLOBAL: mostra todas as requisições que chegam ===
-app.use((req, res, next) => {
-  console.log(`➡️ Recebido ${req.method} em ${req.url} de ${req.ip}`);
-  next();
-});
+// === Endpoint universal do Gateway ===
+// Aceita /atualizar e QUALQUER subrota (ex: /atualizar/api/v1_2/json/itg/connection_status)
+app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
+  console.log(`➡️ Recebido ${req.method} em ${req.path} de ${req.ip}`);
 
-// === Endpoint universal para o Gateway ===
-app.all("/atualizar", (req, res) => {
   try {
     let body = req.body;
 
-    // 🔍 Tenta converter texto ou Buffer em JSON
+    // 🔍 Se o corpo vier como Buffer ou texto puro, tenta converter
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
       try {
@@ -70,7 +69,7 @@ app.all("/atualizar", (req, res) => {
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
-    // 🔧 Converte as leituras para litros ou mantém valores de pressão
+    // 🔧 Converte leituras
     const dadosConvertidos = {};
     for (const item of dataArray) {
       const ref = item.ref || item.name;
@@ -84,16 +83,14 @@ app.all("/atualizar", (req, res) => {
       }
 
       const { leituraVazio, leituraCheio, capacidade } = sensor;
-
       let leituraConvertida;
+
       if (capacidade > 1) {
-        // É reservatório em litros
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
         leituraConvertida = Math.round(leituraConvertida);
       } else {
-        // É pressão, mantém valor bruto
         leituraConvertida = Number(valor.toFixed(5));
       }
 
@@ -112,14 +109,10 @@ app.all("/atualizar", (req, res) => {
 
 // === Endpoint para o dashboard ===
 app.get("/dados", (req, res) => {
-  try {
-    if (!fs.existsSync(DATA_FILE)) return res.json({});
-    const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    res.json(dados);
-  } catch (err) {
-    console.error("❌ Erro ao ler dados:", err);
-    res.status(500).json({ erro: err.message });
-  }
+  console.log(`➡️ Recebido GET em ${req.url} de ${req.ip}`);
+  if (!fs.existsSync(DATA_FILE)) return res.json({});
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  res.json(dados);
 });
 
 // === Servir dashboard estático ===
@@ -130,5 +123,4 @@ app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.ht
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor universal HAG ativo na porta ${PORT}`);
-  console.log(`🌐 Endpoint de atualização: https://reservatorios-hag-dashboard.onrender.com/atualizar`);
 });
