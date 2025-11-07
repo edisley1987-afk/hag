@@ -1,12 +1,1 @@
-{
-  "status": "ok",
-  "dados": {
-    "Reservatorio_Elevador_current": 18200,
-    "Reservatorio_Osmose_current": 185,
-    "Reservatorio_CME_current": 970,
-    "Agua_Abrandada_current": 8950,
-    "Pressao_Saida_current": 0.005,
-    "Pressao_Retorno_current": 0.0048,
-    "timestamp": "2025-11-07T18:10:00.000Z"
-  }
-}
+{}
