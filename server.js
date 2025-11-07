@@ -25,9 +25,40 @@ function salvarDados(dados) {
 
 // === Configuração dos sensores ===
 const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
-  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505,  leituraCheio: 0.006533, capacidade: 200 },
-  "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
+  // ----- Reservatórios -----
+  "Reservatorio_Elevador_current": {
+    tipo: "nivel",
+    leituraVazio: 0.004168,
+    leituraCheio: 0.007855,
+    capacidade: 20000,
+    alturaRes: 1.45
+  },
+  "Reservatorio_Osmose_current": {
+    tipo: "nivel",
+    leituraVazio: 0.00505,
+    leituraCheio: 0.006533,
+    capacidade: 200,
+    alturaRes: 1.0
+  },
+  "Reservatorio_CME_current": {
+    tipo: "nivel",
+    leituraVazio: 0.004088,
+    leituraCheio: 0.004408,
+    capacidade: 1000,
+    alturaRes: 0.45
+  },
+  "Reservatorio_Abrandada_current": {
+    tipo: "nivel",
+    leituraVazio: 0.004008,
+    leituraCheio: 0.004929,
+    capacidade: 9000,
+    alturaRes: 0.6
+  },
+
+  // ----- Pressões -----
+  "Pressao_saida_current": { tipo: "pressao" },
+  "Pressao_Retorno_current": { tipo: "pressao" },
+  "Pressao_Saida_current": { tipo: "pressao" }
 };
 
 // === Rota POST/ALL para receber dados do Gateway ===
@@ -40,7 +71,7 @@ app.all("/atualizar", (req, res) => {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("⚠️ Corpo recebido não é JSON válido.");
+        console.log("⚠️ Corpo recebido não é JSON válido, tentando interpretar campos diretos...");
       }
     }
 
@@ -60,16 +91,23 @@ app.all("/atualizar", (req, res) => {
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
-    // Converte as leituras
+    // Converte e armazena os dados
     const dadosConvertidos = {};
+
     for (const item of dataArray) {
       const { ref, value } = item;
       const sensor = SENSORES[ref];
       if (!sensor || typeof value !== "number") continue;
 
-      const { leituraVazio, leituraCheio, capacidade } = sensor;
-      const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
-      dadosConvertidos[ref] = Math.max(0, Math.min(capacidade, Math.round(nivel)));
+      if (sensor.tipo === "nivel") {
+        // Converte leitura em litros
+        const { leituraVazio, leituraCheio, capacidade } = sensor;
+        const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+        dadosConvertidos[ref] = Math.max(0, Math.min(capacidade, Math.round(nivel)));
+      } else if (sensor.tipo === "pressao") {
+        // Apenas salva o valor cru (ex: 0.0053)
+        dadosConvertidos[ref] = Number(value.toFixed(5));
+      }
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
