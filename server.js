@@ -4,100 +4,99 @@ import path from "path";
 import cors from "cors";
 
 const app = express();
-const __dirname = path.resolve();
-
-// === Configurações gerais ===
 app.use(cors());
-app.use(express.json({ limit: "5mb", strict: false }));
-app.use(express.text({ type: "*/*", limit: "5mb" })); // Aceita texto bruto
+app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.text({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// === Pastas e arquivos de dados ===
+const __dirname = path.resolve();
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
+
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-// === Configuração dos sensores ===
-const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
-  "Reservatorio_Osmose_current":   { leituraVazio: 0.00505,  leituraCheio: 0.006533, capacidade: 200 },
-  "Reservatorio_CME_current":      { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
-};
+// ✅ Função para salvar as leituras no arquivo
+function salvarDados(dados) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+  console.log("💾 Leituras atualizadas:", dados);
+}
 
-// === Servir arquivos estáticos do dashboard ===
-app.use(express.static(path.join(__dirname, "public")));
-
-// === Página principal ===
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// === Rota chamada pelo Gateway ITG ===
-app.post("/atualizar", (req, res) => {
+// ✅ Rota principal de atualização
+app.all("/atualizar", (req, res) => {
   try {
     let body = req.body;
 
-    // Se veio como string (texto cru), tenta converter pra JSON
+    // Aceita JSON como texto puro também
     if (typeof body === "string") {
       try {
-        // Remove possível lixo HTML, vírgulas extras, etc.
-        const clean = body
-          .replace(/^[^{[]+/, "") // remove caracteres antes de { ou [
-          .replace(/[\]\}][^{}\[\]]*$/, ""); // remove depois do final de JSON
-        body = JSON.parse(clean);
-      } catch (e) {
-        console.error("❌ Corpo recebido não é JSON válido:", body);
-        return res.status(400).send("Formato inválido recebido do Gateway");
+        body = JSON.parse(body);
+      } catch {
+        console.log("⚠️ Corpo recebido não é JSON válido, ignorando parse...");
       }
     }
 
-    // Aceita tanto array direto quanto { data: [...] }
-    const leituras = Array.isArray(body) ? body : body.data;
+    // Extrai dados independente do formato
+    let dataArray = [];
 
-    if (!Array.isArray(leituras)) {
-      console.error("❌ Formato inesperado:", body);
-      return res.status(400).json({ erro: "Formato inválido: esperado array ou objeto com campo 'data'" });
+    if (Array.isArray(body)) {
+      dataArray = body;
+    } else if (body && Array.isArray(body.data)) {
+      dataArray = body.data;
+    } else if (typeof body === "object") {
+      // Caso seja objeto direto tipo {Reservatorio_Elevador_current: 0.0076}
+      dataArray = Object.keys(body)
+        .filter((key) => key.includes("_current"))
+        .map((key) => ({ ref: key, value: body[key] }));
     }
 
-    // Processar leituras
-    const dadosConvertidos = {};
-
-    for (const item of leituras) {
-      const { ref, value } = item;
-      const sensor = SENSORES[ref];
-      if (!sensor) continue;
-
-      const { leituraVazio, leituraCheio, capacidade } = sensor;
-      const nivel = ((value - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
-      dadosConvertidos[ref] = Math.max(0, Math.min(capacidade, Math.round(nivel)));
+    if (!dataArray.length) {
+      return res.status(400).json({
+        status: "erro",
+        detalhe: "Nenhum dado de leitura encontrado no corpo da requisição",
+      });
     }
 
-    dadosConvertidos.timestamp = new Date().toISOString();
+    // Monta o objeto final de leituras
+    const leituras = {};
+    for (const item of dataArray) {
+      if (item.ref && typeof item.value === "number") {
+        leituras[item.ref] = item.value;
+      }
+    }
 
-    // Grava no arquivo JSON
-    fs.writeFileSync(DATA_FILE, JSON.stringify(dadosConvertidos, null, 2));
-    console.log("✅ Dados atualizados com sucesso via Gateway:", dadosConvertidos);
+    const dados = {
+      status: "ok",
+      dados: {
+        Reservatorio_Elevador_current:
+          leituras.Reservatorio_Elevador_current ?? 0,
+        Reservatorio_CME_current: leituras.Reservatorio_CME_current ?? 0,
+        Reservatorio_Osmose_current: leituras.Reservatorio_Osmose_current ?? 0,
+        timestamp: new Date().toISOString(),
+      },
+    };
 
-    res.json({ status: "ok", dados: dadosConvertidos });
+    salvarDados(dados);
+    return res.json(dados);
   } catch (err) {
-    console.error("🔥 Erro ao processar atualização:", err);
-    res.status(500).json({ erro: "Erro ao processar atualização" });
+    console.error("❌ Erro ao atualizar:", err);
+    res.status(500).json({ status: "erro", detalhe: err.message });
   }
 });
 
-// === Endpoint de leitura (dashboard) ===
+// ✅ Rota para retornar as últimas leituras
 app.get("/dados", (req, res) => {
-  try {
-    if (!fs.existsSync(DATA_FILE)) return res.json({});
-    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    res.json(data);
-  } catch (err) {
-    console.error("Erro ao ler dados:", err);
-    res.status(500).json({ erro: "Falha ao ler dados" });
-  }
+  if (!fs.existsSync(DATA_FILE))
+    return res.json({ status: "vazio", dados: {} });
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  res.json(dados);
 });
 
-// === Inicialização do servidor ===
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`✅ Servidor HAG Proxy rodando com sucesso na porta ${PORT}`);
+// ✅ Página simples para teste
+app.get("/", (req, res) => {
+  res.send("Servidor HAG Proxy rodando com sucesso ✅");
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
+  console.log(`🚀 Servidor rodando na porta ${PORT}`)
+);
