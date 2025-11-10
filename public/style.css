@@ -1,156 +1,88 @@
-/* ======== GERAL ======== */
 body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background-color: #0b1726;
+  background-color: #0b1e3b;
   color: white;
-}
-
-/* ======== HEADER ======== */
-header {
-  background-color: #0d1b2a;
-  padding: 15px;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
   text-align: center;
-  border-bottom: 2px solid #1e88e5;
-}
-header h1 {
-  font-size: 1.5em;
-  margin-bottom: 5px;
-}
-header p {
-  color: #b0bec5;
 }
 
-/* ======== CARDS ======== */
+header {
+  padding: 20px;
+  background-color: #112c54;
+}
+
 .cards-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
   padding: 20px;
 }
 
 .card {
-  background-color: #1a2b3c;
-  border-radius: 12px;
-  padding: 15px;
-  width: 220px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease-in-out;
+  background-color: #142850;
+  border-radius: 15px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transition: transform 0.3s ease;
 }
+
 .card:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 15px;
+  border: 5px solid transparent;
+  transition: border 0.4s linear;
+  pointer-events: none;
+}
+
 .card h2 {
-  font-size: 1.1em;
-  margin-bottom: 10px;
-}
-.card .value {
-  font-size: 1.4em;
-  color: #4fc3f7;
-  font-weight: bold;
-}
-.card .percent {
-  font-size: 1.2em;
-  color: #81d4fa;
-}
-.historico-btn {
-  margin-top: 10px;
-  background-color: #1e88e5;
-  border: none;
-  padding: 8px 12px;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-.historico-btn:hover {
-  background-color: #1565c0;
+  margin-top: 0;
+  color: #66ccff;
 }
 
-/* ======== GAUGES ======== */
-.relogios-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 20px;
-  justify-items: center;
-  align-items: center;
-  padding: 20px;
-  background-color: #0b1726;
-  border-top: 2px solid #123456;
+.value {
+  font-size: 1.8rem;
+  margin: 10px 0;
 }
 
-.relogios-container canvas {
-  width: 140px !important;
-  height: 140px !important;
-  background: #11223b;
-  border-radius: 50%;
-  padding: 8px;
-  box-shadow: 0 0 10px rgba(0, 120, 166, 0.3);
-}
-
-/* ======== FOOTER ======== */
-footer {
-  background-color: #0d1b2a;
+.percent {
+  font-size: 1.2rem;
   color: #ccc;
-  text-align: center;
-  padding: 10px;
-  border-top: 2px solid #1e88e5;
-}
-footer p {
-  margin: 5px;
 }
 
-/* ======== MODAL HISTÓRICO ======== */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(10, 10, 20, 0.85);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: #1a2b3c;
-  border-radius: 10px;
-  padding: 20px;
-  width: 90%;
-  max-width: 450px;
+.historico-btn {
+  background-color: #1e88e5;
   color: white;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-}
-
-.close-btn {
-  float: right;
-  font-size: 24px;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
   cursor: pointer;
-  color: #81d4fa;
-}
-.close-btn:hover {
-  color: #ff5252;
+  transition: background 0.3s;
 }
 
-#tabelaHistorico {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+.historico-btn:hover {
+  background-color: #42a5f5;
 }
-#tabelaHistorico th,
-#tabelaHistorico td {
-  border-bottom: 1px solid #2e3f54;
-  padding: 8px;
-  text-align: center;
+
+footer {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #112c54;
 }
-#tabelaHistorico th {
-  background-color: #123456;
-}
-#tabelaHistorico tr:hover {
-  background-color: #0f243a;
+
+/* Barra de progresso (em volta dos cards) */
+.card[data-progress]:before {
+  border-color: var(--progress-color, #1e88e5);
+  border-width: 5px;
+  border-style: solid;
+  mask: conic-gradient(from 0deg, #000 calc(var(--progress) * 1%), transparent 0);
+  -webkit-mask: conic-gradient(from 0deg, #000 calc(var(--progress) * 1%), transparent 0);
 }
