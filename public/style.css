@@ -6,6 +6,7 @@ body {
   margin: 0;
   padding: 0;
   text-align: center;
+  overflow-x: hidden; /* evita rolagem lateral */
 }
 
 header {
@@ -25,39 +26,30 @@ h1 {
   opacity: 0.9;
 }
 
-/* ===== Layout dos cards ===== */
+/* ===== Layout horizontal dos cards ===== */
 .cards-container {
   display: flex;
-  justify-content: center;
-  align-items: stretch;
-  gap: 20px;
+  flex-wrap: wrap;               /* Quebra se for necessário */
+  justify-content: center;       /* Centraliza horizontalmente */
+  align-items: stretch;          /* Alturas iguais */
+  gap: 20px;                     /* Espaço entre os cartões */
   margin: 40px auto;
-  max-width: 1200px;
   padding: 0 20px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scroll-behavior: smooth;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1400px;             /* aumenta o limite para não cortar */
 }
 
-.cards-container::-webkit-scrollbar {
-  height: 8px;
-}
-.cards-container::-webkit-scrollbar-thumb {
-  background-color: #004c91;
-  border-radius: 4px;
-}
-
-/* ===== Cada card ===== */
+/* ===== Cada card (reservatório) ===== */
 .card {
   background: white;
   border-radius: 15px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   width: 260px;
-  min-width: 260px;
   padding: 20px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.5s ease;
-  flex-shrink: 0;
-  border: 4px solid transparent;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.4s ease;
+  border: 5px solid var(--cor-barra, #2196f3); /* cor variável */
+  box-sizing: border-box;
 }
 
 .card:hover {
@@ -70,24 +62,7 @@ h1 {
   color: #004c91;
 }
 
-/* ===== Barra de nível ===== */
-.nivel-barra {
-  width: 100%;
-  height: 14px;
-  background-color: #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.nivel-preenchimento {
-  height: 100%;
-  width: 0%;
-  background-color: #2ecc71; /* verde inicial */
-  transition: width 0.5s ease, background-color 0.5s ease;
-}
-
-/* ===== Informações ===== */
+/* ===== Informações dentro do card ===== */
 .info {
   margin-bottom: 15px;
 }
@@ -103,7 +78,7 @@ h1 {
   color: #0077cc;
 }
 
-/* ===== Botão ===== */
+/* ===== Botão de histórico ===== */
 .historico-btn {
   background-color: #004c91;
   color: white;
@@ -130,13 +105,21 @@ footer {
 #clock {
   font-weight: bold;
 }
-/* ===== Animação de alerta (nível crítico) ===== */
-@keyframes piscar-alerta {
-  0% { box-shadow: 0 0 12px #f44336aa; }
-  50% { box-shadow: 0 0 25px #f44336ff; }
-  100% { box-shadow: 0 0 12px #f44336aa; }
+
+/* ===== Responsividade ===== */
+@media (max-width: 1100px) {
+  .cards-container {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    width: 45%;
+  }
 }
 
-.alerta-pulso {
-  animation: piscar-alerta 1.2s infinite;
+@media (max-width: 700px) {
+  .card {
+    width: 90%;
+  }
 }
