@@ -1,86 +1,87 @@
+:root {
+  --verde-escuro: #004f46;
+  --verde-claro: #009b8e;
+  --branco: #f9f9f9;
+  --sombra: rgba(0, 0, 0, 0.2);
+}
+
 body {
-  font-family: "Poppins", sans-serif;
-  background-color: #004d47; /* tom verde-água escuro */
-  color: #ffffff;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: var(--verde-escuro);
+  color: var(--branco);
   margin: 0;
-  padding: 0;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 header {
   text-align: center;
-  padding: 1rem;
-  background-color: #00665f;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
-h1 {
-  font-size: 1.6rem;
-  margin-bottom: 0.2rem;
-}
-
-#lastUpdate {
-  font-size: 0.9rem;
-  color: #b2dfdb;
+  padding: 20px;
+  background-color: var(--verde-escuro);
+  box-shadow: 0 2px 6px var(--sombra);
 }
 
 .cards-container {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 30px auto;
+  position: sticky;
+  top: 0;
+  background-color: var(--verde-escuro);
+  z-index: 10;
+  padding-bottom: 10px;
 }
 
 .card {
-  background: #00796b;
+  background-color: #00665b;
   border-radius: 15px;
-  padding: 1rem;
-  width: 250px;
-  height: 280px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-  transition: transform 0.3s ease, background 0.3s ease;
+  padding: 20px;
+  width: 230px;
+  box-shadow: 0 4px 8px var(--sombra);
+  text-align: center;
+  transition: transform 0.2s ease;
 }
-
 .card:hover {
-  transform: translateY(-5px);
-  background: #009688;
+  transform: scale(1.05);
 }
 
 .card h2 {
-  font-size: 1.1rem;
-  text-align: center;
-  color: #e0f2f1;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
 }
 
-.gauge-container {
-  position: relative;
-  width: 180px;
-  height: 180px;
+.card .value {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--verde-claro);
+}
+
+.card .percent {
+  font-size: 1.1rem;
+  color: #d7fff3;
+}
+
+.relogios-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 40px;
+  padding: 30px;
+}
+
+canvas {
+  width: 230px !important;
+  height: 230px !important;
 }
 
 footer {
   text-align: center;
-  padding: 1rem;
-  margin-top: auto;
-  font-size: 0.85rem;
-  background-color: #003d39;
-  color: #a7ffeb;
-}
-
-@media (max-width: 600px) {
-  .card {
-    width: 180px;
-    height: 220px;
-  }
-  .gauge-container {
-    width: 140px;
-    height: 140px;
-  }
+  padding: 15px;
+  font-size: 0.9rem;
+  background-color: #003b35;
+  color: #d7fff3;
 }
