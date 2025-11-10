@@ -18,13 +18,8 @@ app.use(express.raw({ type: "*/*", limit: "10mb" }));
 // === Pastas e arquivos ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
+const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-
-// === Função para salvar leituras ===
-function salvarDados(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
-}
 
 // === Sensores configurados ===
 const SENSORES = {
@@ -36,25 +31,56 @@ const SENSORES = {
   "Pressao_Retorno_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 }
 };
 
+// === Função para salvar leituras ===
+function salvarDados(dados) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+  console.log("💾 Leituras atualizadas:", dados);
+}
+
+// === Função para registrar histórico diário ===
+function registrarHistorico(dados) {
+  const hoje = new Date().toISOString().split("T")[0];
+  let historico = {};
+
+  if (fs.existsSync(HIST_FILE)) {
+    try {
+      historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+    } catch {
+      historico = {};
+    }
+  }
+
+  if (!historico[hoje]) historico[hoje] = {};
+
+  Object.entries(dados).forEach(([ref, valor]) => {
+    if (ref === "timestamp" || typeof valor !== "number") return;
+    if (!historico[hoje][ref]) {
+      historico[hoje][ref] = { min: valor, max: valor };
+    } else {
+      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
+      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
+    }
+  });
+
+  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+}
+
 // === Endpoint universal do Gateway ===
-// Aceita /atualizar e QUALQUER subrota (ex: /atualizar/api/v1_2/json/itg/connection_status)
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path} de ${req.ip}`);
 
   try {
     let body = req.body;
 
-    // 🔍 Se o corpo vier como Buffer ou texto puro, tenta converter
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("⚠️ Corpo recebido não é JSON — conteúdo bruto:", body.slice(0, 200));
+        console.log("⚠️ Corpo não-JSON, conteúdo bruto:", body.slice(0, 200));
       }
     }
 
-    // 🔍 Extrai dados
     let dataArray = [];
     if (Array.isArray(body)) dataArray = body;
     else if (body && Array.isArray(body.data)) dataArray = body.data;
@@ -69,7 +95,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
-    // 🔧 Converte leituras
     const dadosConvertidos = {};
     for (const item of dataArray) {
       const ref = item.ref || item.name;
@@ -99,6 +124,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
     dadosConvertidos.timestamp = new Date().toISOString();
     salvarDados(dadosConvertidos);
+    registrarHistorico(dadosConvertidos); // ✅ histórico diário
 
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
@@ -109,15 +135,24 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
 // === Endpoint para o dashboard ===
 app.get("/dados", (req, res) => {
-  console.log(`➡️ Recebido GET em ${req.url} de ${req.ip}`);
+  console.log(`➡️ GET em ${req.url} de ${req.ip}`);
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   res.json(dados);
 });
 
+// === Endpoint para histórico ===
+app.get("/historico", (req, res) => {
+  if (!fs.existsSync(HIST_FILE)) return res.json({});
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  res.json(historico);
+});
+
 // === Servir dashboard estático ===
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
