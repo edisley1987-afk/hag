@@ -5,23 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitoramento de Reservatórios — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header>
-    <h1>💧 Monitoramento de Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <p id="lastUpdate">Carregando...</p>
+    <h1>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
+    <p id="lastUpdate">Última atualização: —</p>
   </header>
 
   <main>
-    <section id="cards" class="cards-container"></section>
+    <section id="cards" class="cards-container">
+      <div class="card" id="cardElevador">
+        <h2>Reservatório Elevador</h2>
+        <div class="info">
+          <p class="value" id="elevadorValor">0 L</p>
+          <p class="percent" id="elevadorPercent">0%</p>
+        </div>
+        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
+      </div>
 
-    <!-- Seção dos gráficos tipo relógio -->
-    <section id="graficoContainer" class="gauge-container"></section>
+      <div class="card" id="cardOsmose">
+        <h2>Reservatório Osmose</h2>
+        <div class="info">
+          <p class="value" id="osmoseValor">0 L</p>
+          <p class="percent" id="osmosePercent">0%</p>
+        </div>
+        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
+      </div>
+
+      <div class="card" id="cardCME">
+        <h2>Reservatório CME</h2>
+        <div class="info">
+          <p class="value" id="cmeValor">0 L</p>
+          <p class="percent" id="cmePercent">0%</p>
+        </div>
+        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
+      </div>
+
+      <div class="card" id="cardAbrandada">
+        <h2>Água Abrandada</h2>
+        <div class="info">
+          <p class="value" id="abrandadaValor">0 L</p>
+          <p class="percent" id="abrandadaPercent">0%</p>
+        </div>
+        <button class="historico-btn" onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
+      </div>
+    </section>
   </main>
 
   <footer>
-    <div id="relogio"></div>
+    <p id="clock">—:—:—</p>
     <p>© Hospital Arnaldo Gavazza</p>
   </footer>
 
