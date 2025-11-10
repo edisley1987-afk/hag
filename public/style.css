@@ -1,7 +1,6 @@
-/* ===== Estilo geral ===== */
 body {
   font-family: Arial, sans-serif;
-  background: #f6faf7; /* Fundo bem claro esverdeado */
+  background: #e6f4ea; /* Verde hospitalar suave */
   color: #222;
   margin: 0;
   padding: 0;
@@ -9,7 +8,7 @@ body {
 }
 
 header {
-  background-color: #2e7d32; /* Verde institucional */
+  background-color: #3aa374;
   color: white;
   padding: 20px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
@@ -20,47 +19,33 @@ h1 {
   font-size: 1.6em;
 }
 
-#lastUpdate {
-  font-size: 0.9em;
-  opacity: 0.9;
-}
-
-/* ===== Layout dos cards ===== */
 .cards-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: stretch;
   gap: 20px;
   margin: 40px auto;
   max-width: 1300px;
   padding: 0 20px;
 }
 
-/* ===== Cada card (reservatório) ===== */
 .card {
   background: white;
   border-radius: 15px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-  width: 280px;
+  width: 260px;
   padding: 20px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.3s ease;
-  border: 4px solid transparent;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.3s;
+  border: 5px solid transparent;
 }
 
 .card:hover {
   transform: scale(1.05);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.25);
 }
 
 .card h2 {
   margin-bottom: 15px;
-  color: #2e7d32;
-}
-
-/* ===== Informações dentro do card ===== */
-.info {
-  margin-bottom: 15px;
+  color: #3aa374;
 }
 
 .value {
@@ -70,39 +55,25 @@ h1 {
 }
 
 .percent {
-  font-size: 1.1em;
-  color: #388e3c;
+  font-size: 1em;
+  color: #444;
+  margin-top: 10px;
 }
 
-/* ===== Botão de histórico ===== */
-.historico-btn {
-  background-color: #43a047;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.historico-btn:hover {
-  background-color: #2e7d32;
-}
-
-/* ===== Rodapé ===== */
 footer {
   margin-top: 40px;
-  background-color: #2e7d32;
+  background-color: #3aa374;
   color: white;
   padding: 10px;
-  font-size: 0.9em;
 }
 
-#clock {
-  font-weight: bold;
+/* ===== Cores conforme o nível ===== */
+.card.verde {
+  border-color: #3aa374;
 }
-
-/* ===== Borda colorida dinâmica ===== */
-.card {
-  border: 4px solid var(--cor-barra, #2e7d32);
+.card.amarelo {
+  border-color: #f4c542;
+}
+.card.vermelho {
+  border-color: #e64a19;
 }
