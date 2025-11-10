@@ -3,28 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>📊 Histórico — Hospital Arnaldo Gavazza</title>
+
+  <!-- Fonte e favicon -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="https://gavazza.com.br/wp-content/uploads/2022/03/cropped-favicon-hag-32x32.png">
+
+  <!-- Estilo -->
+  <link rel="stylesheet" href="style-historico.css" />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <header>
-    <h1 id="tituloHistorico">Histórico</h1>
+    <div class="header-container">
+      <img src="https://gavazza.com.br/wp-content/uploads/2022/03/logo-hag.png" alt="Logo Hospital Arnaldo Gavazza" class="logo">
+      <h1 id="tituloHistorico">📊 Histórico de Níveis</h1>
+    </div>
     <a href="index.html" class="voltar-btn">⬅ Voltar ao Painel</a>
   </header>
 
   <main class="historico-main">
-    <canvas id="graficoHistorico"></canvas>
-    <table id="tabelaHistorico">
-      <thead>
-        <tr>
-          <th>Hora</th>
-          <th>Nível (%)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <section class="grafico-container">
+      <canvas id="graficoHistorico"></canvas>
+    </section>
+
+    <section class="tabela-container">
+      <h2>Leituras Recentes</h2>
+      <table id="tabelaHistorico">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Nível (%)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </main>
+
+  <footer>
+    <small>© Hospital Arnaldo Gavazza — Sistema de Monitoramento de Reservatórios</small>
+  </footer>
 
   <script src="historico.js"></script>
 </body>
