@@ -1,7 +1,7 @@
 // === dashboard.js ===
 // Local: /public/dashboard.js
 
-const API_URL = "https://reservatorios-hag-dashboard.onrender.com"; // ajuste conforme seu domínio
+const API_URL = "https://reservatorios-hag-dashboard.onrender.com/dados";
 
 const CONFIG = {
   Reservatorio_elevador: { capacidade: 20000, leituraVazio: 0.004168, leituraCheio: 0.008056 },
