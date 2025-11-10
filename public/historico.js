@@ -3,12 +3,22 @@ async function carregarHistorico() {
   const ctx = document.getElementById("graficoHistorico");
   container.innerHTML = "⏳ Carregando histórico...";
 
+  // 👉 Pega o reservatório da URL
+  const params = new URLSearchParams(window.location.search);
+  const reservatorio = params.get("reservatorio");
+
   try {
     const res = await fetch("/historico");
     if (!res.ok) throw new Error("Erro ao buscar histórico");
     const historico = await res.json();
 
-    if (!Object.keys(historico).length) {
+    // Se tiver parâmetro, filtra só esse reservatório
+    let dadosFiltrados = historico;
+    if (reservatorio && historico[reservatorio]) {
+      dadosFiltrados = { [reservatorio]: historico[reservatorio] };
+    }
+
+    if (!Object.keys(dadosFiltrados).length) {
       container.innerHTML = "<p>Nenhum dado de histórico encontrado.</p>";
       return;
     }
@@ -30,22 +40,20 @@ async function carregarHistorico() {
     const labels = [];
     const datasets = {};
 
-    Object.entries(historico).forEach(([data, sensores]) => {
-      labels.push(data);
-
-      Object.entries(sensores).forEach(([nome, valores]) => {
+    Object.entries(dadosFiltrados).forEach(([nomeSensor, dias]) => {
+      Object.entries(dias).forEach(([data, valores]) => {
         html += `
           <tr>
             <td>${data}</td>
-            <td>${nome}</td>
+            <td>${nomeSensor}</td>
             <td>${valores.min}</td>
             <td>${valores.max}</td>
           </tr>
         `;
 
-        // Prepara dados para o gráfico
-        if (!datasets[nome]) datasets[nome] = [];
-        datasets[nome].push((valores.max + valores.min) / 2); // média do dia
+        if (!datasets[nomeSensor]) datasets[nomeSensor] = { labels: [], values: [] };
+        datasets[nomeSensor].labels.push(data);
+        datasets[nomeSensor].values.push((valores.max + valores.min) / 2);
       });
     });
 
@@ -54,10 +62,10 @@ async function carregarHistorico() {
 
     // === Gerar gráfico ===
     const chartData = {
-      labels,
-      datasets: Object.entries(datasets).map(([nome, valores]) => ({
+      labels: Object.values(datasets)[0].labels,
+      datasets: Object.entries(datasets).map(([nome, info]) => ({
         label: nome,
-        data: valores,
+        data: info.values,
         borderColor: getRandomColor(),
         fill: false,
         tension: 0.2
