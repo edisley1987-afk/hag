@@ -1,41 +1,107 @@
+/* === Estilo base === */
 body {
   font-family: Arial, sans-serif;
-  background: #f7f7f7;
+  background: #f4f7fb;
   margin: 0;
   padding: 20px;
+  color: #333;
 }
 
+/* === Cabeçalho === */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  background: #0056b3;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+/* === Botão voltar === */
 .voltar-btn {
   text-decoration: none;
   color: white;
   background: #007bff;
   padding: 8px 16px;
   border-radius: 8px;
+  transition: background 0.2s ease;
+  font-weight: bold;
 }
 
+.voltar-btn:hover {
+  background: #339dff;
+}
+
+/* === Área principal === */
+.historico-main {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+}
+
+/* === Gráfico === */
+canvas {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+  max-width: 950px;
+  width: 100%;
+}
+
+/* === Tabela === */
 .tabela-historico {
   width: 100%;
+  max-width: 950px;
   border-collapse: collapse;
   background: white;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .tabela-historico th,
 .tabela-historico td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 10px 8px;
   text-align: center;
+  font-size: 0.95rem;
 }
 
 .tabela-historico th {
   background: #007bff;
   color: white;
+  font-weight: 600;
+}
+
+.tabela-historico tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* === Responsividade === */
+@media (max-width: 700px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .tabela-historico th,
+  .tabela-historico td {
+    font-size: 0.85rem;
+    padding: 6px;
+  }
+
+  canvas {
+    padding: 10px;
+  }
 }
