@@ -7,66 +7,61 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <body>
   <header>
-    <h1>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <p id="lastUpdate">Última atualização: —</p>
+    <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
+    <div id="lastUpdate">Última atualização: --:--:--</div>
   </header>
 
-  <main>
-    <section id="cards" class="cards-container">
-      <!-- === Reservatórios === -->
-      <div class="card" id="cardElevador">
-        <h2>Reservatório Elevador</h2>
-        <p id="elevadorValor">—</p>
-        <p id="elevadorPercent">—</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">
-          Ver Histórico
-        </button>
-      </div>
+  <!-- ✅ Container que organiza os cards lado a lado -->
+  <div class="cards-container">
+    <!-- Reservatório Elevador -->
+    <div class="card" id="cardElevador">
+      <h2>Reservatório Elevador</h2>
+      <p id="nivelElevador">--%</p>
+      <p id="litrosElevador">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardOsmose">
-        <h2>Reservatório Osmose</h2>
-        <p id="osmoseValor">—</p>
-        <p id="osmosePercent">—</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">
-          Ver Histórico
-        </button>
-      </div>
+    <!-- Reservatório Osmose -->
+    <div class="card" id="cardOsmose">
+      <h2>Reservatório Osmose</h2>
+      <p id="nivelOsmose">--%</p>
+      <p id="litrosOsmose">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardCME">
-        <h2>Reservatório CME</h2>
-        <p id="cmeValor">—</p>
-        <p id="cmePercent">—</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">
-          Ver Histórico
-        </button>
-      </div>
+    <!-- Reservatório CME -->
+    <div class="card" id="cardCME">
+      <h2>Reservatório CME</h2>
+      <p id="nivelCME">--%</p>
+      <p id="litrosCME">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardAbrandada">
-        <h2>Água Abrandada</h2>
-        <p id="abrandadaValor">—</p>
-        <p id="abrandadaPercent">—</p>
-        <button class="historico-btn" onclick="abrirHistorico('Agua_Abrandada_current')">
-          Ver Histórico
-        </button>
-      </div>
+    <!-- Água Abrandada -->
+    <div class="card" id="cardAbrandada">
+      <h2>Água Abrandada</h2>
+      <p id="nivelAbrandada">--%</p>
+      <p id="litrosAbrandada">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
+    </div>
 
-      <!-- === Pressões === -->
-      <div class="card" id="cardPressaoSaida">
-        <h2>Pressão Saída Osmose</h2>
-        <p id="pressaoSaidaValor">—</p>
-      </div>
+    <!-- Pressão Saída Osmose -->
+    <div class="card" id="cardPressaoSaida">
+      <h2>Pressão Saída Osmose</h2>
+      <p id="pressaoSaida">-- bar</p>
+    </div>
 
-      <div class="card" id="cardPressaoRetorno">
-        <h2>Pressão Retorno Osmose</h2>
-        <p id="pressaoRetornoValor">—</p>
-      </div>
-    </section>
-  </main>
+    <!-- Pressão Retorno Osmose -->
+    <div class="card" id="cardPressaoRetorno">
+      <h2>Pressão Retorno Osmose</h2>
+      <p id="pressaoRetorno">-- bar</p>
+    </div>
+  </div>
 
   <footer>
-    <p id="clock">—:—:—</p>
-    <p>© Hospital Arnaldo Gavazza</p>
+    © Hospital Arnaldo Gavazza
   </footer>
 
   <script src="dashboard.js"></script>
