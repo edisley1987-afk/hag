@@ -1,95 +1,170 @@
-:root {
-  --bg-dark: #004c46;
-  --bg-card: #006d63;
-  --accent: #00d7a0;
-  --text-light: #ffffff;
-  --text-muted: #a8dadc;
-}
-
+/* === ESTILO GERAL === */
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-light);
   margin: 0;
+  font-family: "Poppins", Arial, sans-serif;
+  background-color: #0c1b2a; /* Azul hospitalar escuro */
+  color: #e0e6ed;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
+/* === CABEÇALHO === */
 header {
-  background-color: var(--bg-card);
+  background: linear-gradient(90deg, #004c91, #0078a6);
+  color: white;
   text-align: center;
-  padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  padding: 20px 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
+  letter-spacing: 0.5px;
 }
 
 #lastUpdate {
-  color: var(--text-muted);
+  margin-top: 5px;
   font-size: 0.9rem;
+  opacity: 0.8;
 }
 
+/* === CONTEÚDO PRINCIPAL === */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 25px;
+}
+
+/* === CARDS DE RESERVATÓRIO === */
 .cards-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 15px;
+  width: 100%;
+  max-width: 1200px;
 }
 
 .card {
-  background-color: var(--bg-card);
-  border-radius: 12px;
-  padding: 1.2rem;
+  background-color: #122940;
+  border: 1px solid #1f3b57;
+  border-radius: 16px;
+  padding: 18px;
   width: 260px;
   text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-  transition: transform 0.3s;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s, box-shadow 0.3s;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 .card h2 {
-  margin-bottom: 0.6rem;
   font-size: 1.1rem;
+  margin-bottom: 10px;
 }
 
-.card p {
-  margin: 0.3rem 0;
+.progress {
+  width: 100%;
+  height: 12px;
+  background: #233d56;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
 }
 
+.progress-fill {
+  height: 100%;
+  background-color: #00c9a7;
+  transition: width 0.5s ease, background-color 0.5s ease;
+}
+
+.valor {
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+/* === GAUGES (Relógios de nível) === */
 .gauge-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 25px;
+  width: 100%;
+  max-width: 1200px;
+  padding: 30px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .gauge {
+  position: relative;
   width: 200px;
   height: 200px;
+  background: conic-gradient(
+    #00c9a7 0deg,
+    #00c9a7 var(--percent),
+    rgba(255, 255, 255, 0.1) var(--percent)
+  );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 201, 167, 0.3);
 }
 
-footer {
-  background-color: var(--bg-card);
+.gauge::before {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: #0c1b2a;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.gauge .label {
+  position: absolute;
+  z-index: 2;
   text-align: center;
-  padding: 1rem;
-  margin-top: auto;
-  font-size: 0.9rem;
-  color: var(--text-muted);
+}
+
+.gauge.low {
+  background: conic-gradient(#e53935 0deg, #e53935 var(--percent), rgba(255, 255, 255, 0.1) var(--percent));
+}
+
+.gauge.medium {
+  background: conic-gradient(#fbc02d 0deg, #fbc02d var(--percent), rgba(255, 255, 255, 0.1) var(--percent));
+}
+
+.gauge.high {
+  background: conic-gradient(#00c9a7 0deg, #00c9a7 var(--percent), rgba(255, 255, 255, 0.1) var(--percent));
+}
+
+/* === RODAPÉ === */
+footer {
+  background-color: #0a1623;
+  color: #bbb;
+  text-align: center;
+  padding: 10px 0 15px;
+  font-size: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #relogio {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #66b2ff;
 }
