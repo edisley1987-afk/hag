@@ -28,13 +28,23 @@ h1 {
 /* ===== Layout horizontal dos cards ===== */
 .cards-container {
   display: flex;
-  flex-wrap: wrap;              /* Quebra linha se a tela for menor */
   justify-content: center;      /* Centraliza na horizontal */
-  align-items: stretch;         /* Alinha na altura */
+  align-items: stretch;         /* Mesmo tamanho vertical */
   gap: 20px;                    /* Espaço entre os cartões */
   margin: 40px auto;
   max-width: 1200px;
   padding: 0 20px;
+  flex-wrap: nowrap;            /* 🔹 Impede quebra de linha */
+  overflow-x: auto;             /* 🔹 Rolagem horizontal em telas pequenas */
+  scroll-behavior: smooth;      /* Rolagem suave */
+}
+
+.cards-container::-webkit-scrollbar {
+  height: 8px;
+}
+.cards-container::-webkit-scrollbar-thumb {
+  background-color: #004c91;
+  border-radius: 4px;
 }
 
 /* ===== Cada card (reservatório) ===== */
@@ -42,9 +52,11 @@ h1 {
   background: white;
   border-radius: 15px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-  width: 260px;                /* Tamanho fixo para manter alinhamento */
+  width: 260px;
+  min-width: 260px;             /* 🔹 Garante largura fixa mesmo ao rolar */
   padding: 20px;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  flex-shrink: 0;               /* 🔹 Impede que o card diminua de tamanho */
 }
 
 .card:hover {
