@@ -1,13 +1,14 @@
 // === Dashboard.js ===
-// Exibe leituras diretamente (em litros) com bordas coloridas animadas
+// Exibe leituras de nível e pressão com cores dinâmicas e estilo hospitalar
 
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // atualização a cada 5s
 
-// Configuração dos reservatórios (capacidade total em litros)
-const RESERVATORIOS = {
+// Configuração dos sensores
+const SENSORES = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
+    tipo: "nivel",
     capacidade: 20000,
     valorId: "elevadorValor",
     percentId: "elevadorPercent",
@@ -15,6 +16,7 @@ const RESERVATORIOS = {
   },
   Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
+    tipo: "nivel",
     capacidade: 200,
     valorId: "osmoseValor",
     percentId: "osmosePercent",
@@ -22,6 +24,7 @@ const RESERVATORIOS = {
   },
   Reservatorio_CME_current: {
     nome: "Reservatório CME",
+    tipo: "nivel",
     capacidade: 1000,
     valorId: "cmeValor",
     percentId: "cmePercent",
@@ -29,14 +32,27 @@ const RESERVATORIOS = {
   },
   Agua_Abrandada_current: {
     nome: "Água Abrandada",
+    tipo: "nivel",
     capacidade: 9000,
     valorId: "abrandadaValor",
     percentId: "abrandadaPercent",
     cardId: "cardAbrandada",
   },
+  Pressao_Saida_Osmose_current: {
+    nome: "Pressão Saída Osmose",
+    tipo: "pressao",
+    cardId: "cardPressaoSaida",
+    valorId: "pressaoSaidaValor",
+  },
+  Pressao_Retorno_Osmose_current: {
+    nome: "Pressão Retorno Osmose",
+    tipo: "pressao",
+    cardId: "cardPressaoRetorno",
+    valorId: "pressaoRetornoValor",
+  },
 };
 
-// Função para buscar os dados no servidor
+// === Função para buscar dados do servidor ===
 async function carregarDados() {
   try {
     const res = await fetch(API_URL);
@@ -48,56 +64,50 @@ async function carregarDados() {
   }
 }
 
-// Atualiza o dashboard
+// === Atualiza todos os cards ===
 function atualizarDashboard(dados) {
-  Object.entries(RESERVATORIOS).forEach(([chave, cfg]) => {
-    const litros = dados[chave];
-    if (litros == null) return;
+  Object.entries(SENSORES).forEach(([chave, cfg]) => {
+    const valor = dados[chave];
+    if (valor == null) return;
 
-    const porcentagem = Math.min(100, Math.max(0, (litros / cfg.capacidade) * 100));
-
-    const valorEl = document.getElementById(cfg.valorId);
-    const percentEl = document.getElementById(cfg.percentId);
     const cardEl = document.getElementById(cfg.cardId);
+    if (!cardEl) return;
 
-    if (!valorEl || !percentEl || !cardEl) {
-      console.warn("Elemento ausente:", cfg.cardId);
-      return;
+    let cor = "#3aa374"; // verde padrão
+    let textoPrincipal = "";
+    let textoSecundario = "";
+
+    if (cfg.tipo === "nivel") {
+      // Nível em litros e %
+      const porcentagem = Math.min(100, Math.max(0, (valor / cfg.capacidade) * 100));
+      if (porcentagem < 50) cor = "#e64a19"; // vermelho
+      else if (porcentagem < 80) cor = "#f4c542"; // amarelo
+      textoPrincipal = `${porcentagem.toFixed(1)}%`;
+      textoSecundario = `${valor.toFixed(0)} L de ${cfg.capacidade.toLocaleString()} L`;
+    } 
+    else if (cfg.tipo === "pressao") {
+      // Pressão em bar (alerta se < 1 bar)
+      textoPrincipal = `${valor.toFixed(2)} bar`;
+      cor = valor < 1 ? "#e64a19" : "#3aa374"; // vermelho se < 1 bar
     }
 
-    // === Cores conforme o nível ===
-    let cor = "#2196f3"; // Azul padrão (fallback)
-    if (porcentagem >= 80) cor = "#4caf50";       // Verde
-    else if (porcentagem >= 50) cor = "#ffeb3b";  // Amarelo
-    else if (porcentagem >= 30) cor = "#ff9800";  // Laranja
-    else cor = "#f44336";                         // Vermelho crítico
+    // Atualiza cor e texto do card
+    cardEl.style.borderColor = cor;
+    const valorEl = document.getElementById(cfg.valorId);
+    if (valorEl) valorEl.textContent = textoPrincipal;
 
-    // Atualiza HTML
-    valorEl.textContent = `${litros.toFixed(0)} L`;
-    percentEl.textContent = `${porcentagem.toFixed(1)}%`;
-
-    // Atualiza a cor da borda do card
-    cardEl.style.setProperty("--cor-barra", cor);
+    const percentEl = document.getElementById(cfg.percentId);
+    if (percentEl) percentEl.textContent = textoSecundario;
   });
 
-  document.getElementById("lastUpdate").textContent =
-    "Última atualização: " + new Date().toLocaleTimeString("pt-BR", { hour12: false });
+  // Atualiza hora
+  const last = document.getElementById("lastUpdate");
+  if (last)
+    last.textContent =
+      "Última atualização: " +
+      new Date().toLocaleTimeString("pt-BR", { hour12: false });
 }
 
-// Função para abrir o histórico
-function abrirHistorico(nomeReservatorio) {
-  window.location.href = `historico.html?reservatorio=${nomeReservatorio}`;
-}
-
-// Relógio no rodapé
-function atualizarRelogio() {
-  const agora = new Date();
-  const clock = document.getElementById("clock");
-  if (clock) clock.textContent = agora.toLocaleTimeString("pt-BR", { hour12: false });
-}
-
-// Inicialização
+// === Atualização automática ===
 setInterval(carregarDados, UPDATE_INTERVAL);
-setInterval(atualizarRelogio, 1000);
 carregarDados();
-atualizarRelogio();
