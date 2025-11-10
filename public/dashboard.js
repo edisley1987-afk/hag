@@ -12,120 +12,78 @@ async function carregarDados() {
 
 function atualizarPainel(dados) {
   const cards = document.getElementById("cards");
-  const gaugeGrid = document.getElementById("gaugeGrid");
   cards.innerHTML = "";
-  gaugeGrid.innerHTML = "";
 
-  const pressoes = [];
-
-  Object.entries(dados).forEach(([key, valorBruto]) => {
-    if (key === "timestamp") return;
-
-    if (key.toLowerCase().includes("pressao")) {
-      pressoes.push({ nome: key.replace("_current", ""), valor: valorBruto });
-      return;
-    }
+  Object.entries(dados).forEach(([key, valor]) => {
+    if (key === "timestamp" || key.toLowerCase().includes("pressao")) return;
 
     const nome = key
       .replace("Reservatorio_", "Reservatório ")
       .replace("Agua_", "Água ")
       .replace("_current", "");
 
-    const valor = Number(valorBruto) || 0;
+    const capacidade = nome.includes("Elevador")
+      ? 20000
+      : nome.includes("Osmose")
+      ? 200
+      : nome.includes("CME")
+      ? 1000
+      : nome.includes("Abrandada")
+      ? 9000
+      : 0;
 
-    // === Capacidade total por reservatório ===
-    const nomeLower = nome.toLowerCase();
-    let capacidade = 0;
-    if (nomeLower.includes("elevador")) capacidade = 20000;
-    if (nomeLower.includes("osmose")) capacidade = 200;
-    if (nomeLower.includes("cme")) capacidade = 1000;
-    if (nomeLower.includes("abrandada")) capacidade = 9000;
+    const porcent = capacidade ? (valor / capacidade) * 100 : 0;
+    const cor =
+      porcent < 30 ? "#e53935" : porcent < 50 ? "#fbc02d" : "#00c9a7";
 
-    const porcent = capacidade > 0 ? (valor / capacidade) * 100 : 0;
-
-    let cor = "#00c853"; // verde
-    if (porcent < 30) cor = "#e53935"; // vermelho
-    else if (porcent < 50) cor = "#ffb300"; // amarelo
-
-    // === CARD simples (resumo numérico) ===
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <h3>${nome}</h3>
-      <p><strong>${valor.toFixed(0)} L</strong> — ${porcent.toFixed(1)}%</p>
+      <h2>${nome}</h2>
+      <div class="gauge-container">
+        <canvas id="gauge_${key}"></canvas>
+      </div>
+      <div style="font-size:1rem; color:${cor}">
+        ${valor.toFixed(0)} L — ${porcent.toFixed(1)}%
+      </div>
     `;
     cards.appendChild(card);
 
-    // === GAUGE circular (substitui o gráfico grande) ===
-    const gaugeDiv = document.createElement("div");
-    gaugeDiv.className = "gauge-item";
-    gaugeDiv.innerHTML = `
-      <canvas id="gauge_${key}" width="200" height="200"></canvas>
-      <div class="gauge-label">${nome}</div>
-    `;
-    gaugeGrid.appendChild(gaugeDiv);
-
-    const ctx = document.getElementById(`gauge_${key}`).getContext("2d");
-    new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        datasets: [
-          {
-            data: [porcent, 100 - porcent],
-            backgroundColor: [cor, "rgba(255,255,255,0.15)"],
-            borderWidth: 0,
-          },
-        ],
-      },
-      options: {
-        rotation: -90,
-        circumference: 180,
-        cutout: "70%",
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      },
-      plugins: [
-        {
-          id: "textCenter",
-          afterDraw(chart) {
-            const { ctx } = chart;
-            ctx.save();
-            ctx.font = "bold 18px Segoe UI";
-            ctx.fillStyle = cor;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(
-              `${porcent.toFixed(0)}%`,
-              chart.width / 2,
-              chart.height / 1.2
-            );
-            ctx.restore();
-          },
-        },
-      ],
-    });
+    desenharGauge(`gauge_${key}`, porcent, cor);
   });
-
-  // === BLOCO DE PRESSÕES ===
-  if (pressoes.length > 0) {
-    const blocoPressao = document.createElement("div");
-    blocoPressao.className = "pressao-bloco";
-    blocoPressao.innerHTML = "<h2>Pressões</h2>";
-
-    pressoes.forEach((p) => {
-      const card = document.createElement("div");
-      card.className = "card-pressao";
-      card.innerHTML = `
-        <div class="pressao-nome">${p.nome.replace("_", " ")}</div>
-        <div class="pressao-valor">${p.valor} A</div>
-      `;
-      blocoPressao.appendChild(card);
-    });
-
-    cards.appendChild(blocoPressao);
-  }
 
   document.getElementById("lastUpdate").textContent =
     "Última atualização: " + new Date().toLocaleString("pt-BR");
+}
+
+function desenharGauge(canvasId, porcent, cor) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          data: [porcent, 100 - porcent],
+          backgroundColor: [cor, "rgba(255,255,255,0.1)"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      cutout: "75%",
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        datalabels: {
+          display: true,
+          color: "#fff",
+          formatter: () => `${porcent.toFixed(0)}%`,
+          font: { weight: "bold", size: 16 },
+        },
+      },
+    },
+    plugins: [ChartDataLabels],
+  });
 }
 
 // Atualiza a cada 15 segundos
