@@ -1,124 +1,99 @@
-// ======== CONFIGURAÇÃO ========
-const API_URL = "/dados"; // endpoint do servidor
-
-// Config dos reservatórios (igual no servidor)
-const SENSOR_CONFIG = {
-  "Reservatorio_Elevador_current": {
-    nome: "Reservatório Elevador",
-    leituraVazio: 4168,
-    alturaRes: 1.45,
-    capacidadeTotal: 20000,
-  },
-  "Reservatorio_Osmose_current": {
-    nome: "Reservatório Osmose",
-    leituraVazio: 505,
-    alturaRes: 1.0,
-    capacidadeTotal: 200,
-  },
-  "Reservatorio_CME_current": {
-    nome: "Reservatório CME",
-    leituraVazio: 4088,
-    alturaRes: 0.45,
-    capacidadeTotal: 1000,
-  },
-};
-
-// ======== FUNÇÕES AUXILIARES ========
-function calcularNivel(leitura, config) {
-  const { leituraVazio, capacidadeTotal } = config;
-  const perc = Math.max(
-    0,
-    Math.min(100, ((leituraVazio - leitura) / leituraVazio) * 100)
-  );
-  const litros = (capacidadeTotal * perc) / 100;
-  return { perc, litros };
-}
-
-function corDoNivel(perc) {
-  if (perc < 30) return "#ff4d4d"; // vermelho
-  if (perc < 60) return "#ffcc00"; // amarelo
-  return "#2ecc71"; // verde
-}
-
-// ======== GAUGE ========
-function desenharGauge(canvas, perc, color, nome, litros, capacidade) {
-  const ctx = canvas.getContext("2d");
-  const size = canvas.width;
-  const center = size / 2;
-  const radius = size * 0.4;
-  ctx.clearRect(0, 0, size, size);
-
-  // Fundo do gauge
-  ctx.beginPath();
-  ctx.arc(center, center, radius, Math.PI, 0);
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 15;
-  ctx.stroke();
-
-  // Nível
-  ctx.beginPath();
-  ctx.arc(center, center, radius, Math.PI, Math.PI + (Math.PI * perc) / 100, false);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 15;
-  ctx.stroke();
-
-  // Texto
-  ctx.font = "bold 18px Poppins";
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
-  ctx.fillText(`${nome}`, center, center + 50);
-  ctx.font = "bold 24px Poppins";
-  ctx.fillText(`${perc.toFixed(1)}%`, center, center + 15);
-  ctx.font = "14px Poppins";
-  ctx.fillText(`${litros.toFixed(0)} L / ${capacidade} L`, center, center + 75);
-}
-
-// ======== ATUALIZAÇÃO ========
-async function atualizarDashboard() {
+async function buscarDados() {
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    const lastUpdate = new Date().toLocaleString("pt-BR");
-    document.getElementById("lastUpdate").textContent = `Última atualização: ${lastUpdate}`;
-
-    const cardsContainer = document.getElementById("cards");
-    cardsContainer.innerHTML = "";
-
-    Object.keys(SENSOR_CONFIG).forEach((key) => {
-      const config = SENSOR_CONFIG[key];
-      const leitura = data[key];
-      if (leitura === undefined) return;
-
-      const { perc, litros } = calcularNivel(leitura, config);
-      const color = corDoNivel(perc);
-
-      // Card fixo
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <h3>${config.nome}</h3>
-        <p><strong>${litros.toFixed(0)} L</strong> (${perc.toFixed(1)}%)</p>
-      `;
-      card.style.borderColor = color;
-      card.style.boxShadow = `0 0 10px ${color}`;
-      cardsContainer.appendChild(card);
-
-      // Cria canvas para gauge
-      let gauge = document.getElementById(`gauge-${key}`);
-      if (!gauge) {
-        gauge = document.createElement("canvas");
-        gauge.id = `gauge-${key}`;
-        gauge.width = 200;
-        gauge.height = 120;
-        document.querySelector(".grafico").appendChild(gauge);
-      }
-      desenharGauge(gauge, perc, color, config.nome, litros, config.capacidadeTotal);
-    });
-  } catch (err) {
-    console.error("Erro ao atualizar dashboard:", err);
+    const res = await fetch("/dados");
+    return await res.json();
+  } catch (e) {
+    console.error("Erro ao buscar dados:", e);
+    return null;
   }
 }
 
-// Atualiza a cada 5 segundos
-setInterval(atualizarDashboard, 5000);
-atualizarDashboard();
+function criarCard(nome, litros, percentual, capacidade) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <h2>${nome}</h2>
+    <p><strong>${percentual.toFixed(1)}%</strong> — ${litros} L</p>
+    <p>Capacidade: ${capacidade} L</p>
+  `;
+  return card;
+}
+
+function criarGauge(nome, percentual) {
+  const canvas = document.createElement("canvas");
+  canvas.className = "gauge";
+
+  const cor =
+    percentual <= 30 ? "#ff4d4d" :
+    percentual <= 60 ? "#ffd166" :
+    "#00d7a0";
+
+  new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          data: [percentual, 100 - percentual],
+          backgroundColor: [cor, "#2a9d8f40"],
+          borderWidth: 0,
+          cutout: "75%",
+        },
+      ],
+      labels: ["Nível", "Restante"],
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        title: {
+          display: true,
+          text: `${nome}\n${percentual.toFixed(1)}%`,
+          color: "#fff",
+          font: { size: 14 },
+        },
+      },
+    },
+  });
+
+  return canvas;
+}
+
+async function atualizarDashboard() {
+  const dados = await buscarDados();
+  if (!dados) return;
+
+  const containerCards = document.getElementById("cards");
+  const containerGauges = document.getElementById("graficoContainer");
+  containerCards.innerHTML = "";
+  containerGauges.innerHTML = "";
+
+  const sensores = [
+    { nome: "Reservatório Elevador", key: "Reservatorio_Elevador_current", capacidade: 20000 },
+    { nome: "Reservatório Osmose", key: "Reservatorio_Osmose_current", capacidade: 200 },
+    { nome: "Reservatório CME", key: "Reservatorio_CME_current", capacidade: 1000 },
+    { nome: "Água Abrandada", key: "Agua_Abrandada_current", capacidade: 9000 },
+  ];
+
+  sensores.forEach((s) => {
+    const valor = dados[s.key] ?? 0;
+    const percentual = (valor / s.capacidade) * 100;
+
+    containerCards.appendChild(criarCard(s.nome, valor, percentual, s.capacidade));
+    containerGauges.appendChild(criarGauge(s.nome, percentual));
+  });
+
+  const updateEl = document.getElementById("lastUpdate");
+  updateEl.textContent = "Última atualização: " + new Date().toLocaleString("pt-BR");
+}
+
+function atualizarRelogio() {
+  const relogio = document.getElementById("relogio");
+  relogio.textContent = new Date().toLocaleTimeString("pt-BR");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarDashboard();
+  atualizarRelogio();
+  setInterval(atualizarDashboard, 10000);
+  setInterval(atualizarRelogio, 1000);
+});
