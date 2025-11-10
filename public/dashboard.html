@@ -66,4 +66,15 @@
 
   <script src="dashboard.js"></script>
 </body>
+  // === dashboard.js ===
+// ... seu código atual ...
+
+function abrirHistorico(reservatorioId) {
+  // Exemplo simples: abrir uma nova aba com o histórico
+  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+}
+
+// Torna acessível globalmente (caso o arquivo use módulo)
+window.abrirHistorico = abrirHistorico;
+
 </html>
