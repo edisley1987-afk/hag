@@ -3,172 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>💧 Monitoramento de Reservatórios — HAG</title>
-
+  <title>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    /* ====== ESTILO DO DASHBOARD ====== */
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #0a1b2a;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      text-align: center;
-      background-color: #123c69;
-      padding: 1.5rem 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.6rem;
-    }
-
-    #lastUpdate {
-      font-size: 0.9rem;
-      color: #aad4ff;
-    }
-
-    main {
-      padding: 1.5rem;
-    }
-
-    .cards-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .card {
-      position: relative;
-      background-color: #112d4e;
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
-      overflow: hidden;
-      transition: transform 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-    }
-
-    .card .value {
-      font-size: 1.4rem;
-      font-weight: bold;
-      margin: 0.5rem 0;
-    }
-
-    .card .percent {
-      font-size: 1rem;
-      color: #9ad3ff;
-      margin-bottom: 1rem;
-    }
-
-    .historico-btn {
-      background-color: #1e88e5;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      padding: 0.6rem 1rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .historico-btn:hover {
-      background-color: #42a5f5;
-    }
-
-    /* ====== BARRA DE PROGRESSO AO REDOR ====== */
-    .card::before {
-      content: "";
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      border-radius: 18px;
-      padding: 2px;
-      background: conic-gradient(#1e88e5 var(--progress, 0%), #333 var(--progress, 0%));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: destination-out;
-      mask-composite: exclude;
-      z-index: 0;
-    }
-
-    .card * {
-      position: relative;
-      z-index: 1;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      background-color: #0b2035;
-      color: #aad4ff;
-    }
-
-    #clock {
-      font-size: 1.1rem;
-      margin-bottom: 0.3rem;
-    }
-  </style>
 </head>
-
 <body>
   <header>
-    <h1>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <p id="lastUpdate">Última atualização: —</p>
+    <h1>💧 Monitoramento dos Reservatórios</h1>
+    <h2>Hospital Arnaldo Gavazza</h2>
+    <p id="lastUpdate">Última atualização: --:--:--</p>
   </header>
 
-  <main>
-    <section id="cards" class="cards-container">
-      <div class="card" id="cardElevador">
-        <h2>Reservatório Elevador</h2>
-        <p class="value" id="elevadorValor">0 L</p>
-        <p class="percent" id="elevadorPercent">0%</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador')">Ver Histórico</button>
-      </div>
+  <main id="dashboard">
+    <div class="card" id="cardElevador">
+      <h3>Reservatório Elevador</h3>
+      <p class="valor" id="elevadorValor">-- L</p>
+      <p class="percent" id="elevadorPercent">--%</p>
+      <button onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardOsmose">
-        <h2>Reservatório Osmose</h2>
-        <p class="value" id="osmoseValor">0 L</p>
-        <p class="percent" id="osmosePercent">0%</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose')">Ver Histórico</button>
-      </div>
+    <div class="card" id="cardOsmose">
+      <h3>Reservatório Osmose</h3>
+      <p class="valor" id="osmoseValor">-- L</p>
+      <p class="percent" id="osmosePercent">--%</p>
+      <button onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardCME">
-        <h2>Reservatório CME</h2>
-        <p class="value" id="cmeValor">0 L</p>
-        <p class="percent" id="cmePercent">0%</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME')">Ver Histórico</button>
-      </div>
+    <div class="card" id="cardCME">
+      <h3>Reservatório CME</h3>
+      <p class="valor" id="cmeValor">-- L</p>
+      <p class="percent" id="cmePercent">--%</p>
+      <button onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
+    </div>
 
-      <div class="card" id="cardAbrandada">
-        <h2>Água Abrandada</h2>
-        <p class="value" id="abrandadaValor">0 L</p>
-        <p class="percent" id="abrandadaPercent">0%</p>
-        <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Abrandada')">Ver Histórico</button>
-      </div>
-    </section>
+    <div class="card" id="cardAbrandada">
+      <h3>Água Abrandada</h3>
+      <p class="valor" id="abrandadaValor">-- L</p>
+      <p class="percent" id="abrandadaPercent">--%</p>
+      <button onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
+    </div>
   </main>
 
   <footer>
-    <p id="clock">—:—:—</p>
-    <p>© Hospital Arnaldo Gavazza</p>
+    <p id="clock">--:--:--</p>
+    <small>© Hospital Arnaldo Gavazza</small>
   </footer>
 
   <script src="dashboard.js"></script>
