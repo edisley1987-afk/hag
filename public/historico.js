@@ -1,89 +1,90 @@
-// === Função principal ===
 async function carregarHistorico() {
   const container = document.getElementById("historico");
   const ctx = document.getElementById("graficoHistorico");
   container.innerHTML = "⏳ Carregando histórico...";
 
   try {
-    const res = await fetch("/leituras");
-    if (!res.ok) throw new Error("Erro ao carregar dados");
-    const dados = await res.json();
+    const res = await fetch("/historico");
+    if (!res.ok) throw new Error("Erro ao buscar histórico");
+    const historico = await res.json();
 
-    // Filtrar últimas 24h
-    const agora = Date.now();
-    const ultimas24h = dados.filter(item => {
-      const tempo = new Date(item.timestamp).getTime();
-      return agora - tempo <= 24 * 60 * 60 * 1000;
-    });
-
-    if (ultimas24h.length === 0) {
-      container.innerHTML = "<p>Nenhum dado registrado nas últimas 24 horas.</p>";
+    if (!Object.keys(historico).length) {
+      container.innerHTML = "<p>Nenhum dado de histórico encontrado.</p>";
       return;
     }
 
-    // Criar tabela
+    // === Montar tabela de histórico diário ===
     let html = `
       <table class="tabela-historico">
         <thead>
           <tr>
-            <th>Reservatório</th>
-            <th>Canal</th>
-            <th>Setor</th>
-            <th>Leitura Atual</th>
-            <th>Capacidade (%)</th>
-            <th>Data/Hora</th>
+            <th>Data</th>
+            <th>Sensor</th>
+            <th>Leitura Mínima</th>
+            <th>Leitura Máxima</th>
           </tr>
         </thead>
         <tbody>
     `;
 
-    ultimas24h.forEach(item => {
-      html += `
-        <tr>
-          <td>${item.reservatorio || "-"}</td>
-          <td>${item.canal || "-"}</td>
-          <td>${item.setor || "-"}</td>
-          <td>${item.leituraAtual || "-"}</td>
-          <td>${item.capacidade || "-"}</td>
-          <td>${new Date(item.timestamp).toLocaleString("pt-BR")}</td>
-        </tr>
-      `;
+    const labels = [];
+    const datasets = {};
+
+    Object.entries(historico).forEach(([data, sensores]) => {
+      labels.push(data);
+
+      Object.entries(sensores).forEach(([nome, valores]) => {
+        html += `
+          <tr>
+            <td>${data}</td>
+            <td>${nome}</td>
+            <td>${valores.min}</td>
+            <td>${valores.max}</td>
+          </tr>
+        `;
+
+        // Prepara dados para o gráfico
+        if (!datasets[nome]) datasets[nome] = [];
+        datasets[nome].push((valores.max + valores.min) / 2); // média do dia
+      });
     });
 
     html += "</tbody></table>";
     container.innerHTML = html;
 
-    // === Criar gráfico com Chart.js ===
-    const labels = ultimas24h.map(d => new Date(d.timestamp).toLocaleTimeString("pt-BR"));
-    const valores = ultimas24h.map(d => Number(d.capacidade || 0));
+    // === Gerar gráfico ===
+    const chartData = {
+      labels,
+      datasets: Object.entries(datasets).map(([nome, valores]) => ({
+        label: nome,
+        data: valores,
+        borderColor: getRandomColor(),
+        fill: false,
+        tension: 0.2
+      }))
+    };
 
     new Chart(ctx, {
       type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Nível (%)",
-            data: valores,
-            borderColor: "blue",
-            backgroundColor: "rgba(0, 123, 255, 0.2)",
-            fill: true,
-            tension: 0.3,
-          },
-        ],
-      },
+      data: chartData,
       options: {
         responsive: true,
-        scales: {
-          y: { beginAtZero: true, max: 100 },
-        },
-      },
+        plugins: { legend: { position: "bottom" } },
+        scales: { y: { beginAtZero: true } }
+      }
     });
 
   } catch (err) {
     container.innerHTML = `<p style="color:red;">Erro: ${err.message}</p>`;
     console.error(err);
   }
+}
+
+function getRandomColor() {
+  const r = Math.floor(Math.random() * 200);
+  const g = Math.floor(Math.random() * 200);
+  const b = Math.floor(Math.random() * 200);
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 carregarHistorico();
