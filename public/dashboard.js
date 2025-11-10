@@ -1,106 +1,92 @@
-// ====== CONFIGURAÇÃO ======
-const API_URL = window.location.origin + "/dados"; // rota do servidor
-const UPDATE_INTERVAL = 5000; // atualização a cada 5 segundos
+// === Dashboard.js ===
+// Exibe leituras diretamente (já em litros) com barra de progresso
 
-// Configuração dos reservatórios
-const SENSOR_CONFIG = {
-  Reservatorio_Elevador: {
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000; // atualização a cada 5s
+
+// Configuração dos reservatórios (capacidade total em litros)
+const RESERVATORIOS = {
+  Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
-    leituraVazio: 0.004168,
-    leituraCheio: 0.008056,
-    capacidadeTotal: 20000,
+    capacidade: 20000,
     valorId: "elevadorValor",
     percentId: "elevadorPercent",
     cardId: "cardElevador",
   },
-  Reservatorio_Osmose: {
+  Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006533,
-    capacidadeTotal: 200,
+    capacidade: 200,
     valorId: "osmoseValor",
     percentId: "osmosePercent",
     cardId: "cardOsmose",
   },
-  Reservatorio_CME: {
+  Reservatorio_CME_current: {
     nome: "Reservatório CME",
-    leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
-    capacidadeTotal: 1000,
+    capacidade: 1000,
     valorId: "cmeValor",
     percentId: "cmePercent",
     cardId: "cardCME",
   },
-  Reservatorio_Abrandada: {
+  Agua_Abrandada_current: {
     nome: "Água Abrandada",
-    leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
-    capacidadeTotal: 9000,
+    capacidade: 9000,
     valorId: "abrandadaValor",
     percentId: "abrandadaPercent",
     cardId: "cardAbrandada",
   },
 };
 
-// ====== FUNÇÃO PRINCIPAL ======
+// Função para buscar os dados no servidor
 async function carregarDados() {
   try {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Falha ao buscar dados");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const dados = await res.json();
-
     atualizarDashboard(dados);
-  } catch (err) {
-    console.error("Erro ao buscar dados:", err);
+  } catch (e) {
+    console.error("Erro ao buscar dados:", e);
   }
 }
 
-// ====== ATUALIZAÇÃO DO DASHBOARD ======
+// Atualiza o dashboard
 function atualizarDashboard(dados) {
-  Object.entries(SENSOR_CONFIG).forEach(([chave, cfg]) => {
-    const leitura = dados[`${chave}_current`];
-    if (leitura == null) return;
+  Object.entries(RESERVATORIOS).forEach(([chave, cfg]) => {
+    const litros = dados[chave];
+    if (litros == null) return;
 
-    const proporcao =
-      (leitura - cfg.leituraVazio) /
-      (cfg.leituraCheio - cfg.leituraVazio);
-
-    const porcentagem = Math.min(Math.max(proporcao * 100, 0), 100);
-    const volume = (porcentagem / 100) * cfg.capacidadeTotal;
+    const porcentagem = Math.min(100, Math.max(0, (litros / cfg.capacidade) * 100));
 
     const valorEl = document.getElementById(cfg.valorId);
     const percentEl = document.getElementById(cfg.percentId);
     const cardEl = document.getElementById(cfg.cardId);
 
     if (!valorEl || !percentEl || !cardEl) {
-      console.warn("Elemento ausente no DOM:", cfg.cardId);
+      console.warn("Elemento ausente:", cfg.cardId);
       return;
     }
 
-    valorEl.textContent = `${volume.toFixed(0)} L`;
+    valorEl.textContent = `${litros.toFixed(0)} L`;
     percentEl.textContent = `${porcentagem.toFixed(1)}%`;
     cardEl.style.setProperty("--progress", `${porcentagem}%`);
   });
 
-  const agora = new Date();
   document.getElementById("lastUpdate").textContent =
-    "Última atualização: " +
-    agora.toLocaleTimeString("pt-BR", { hour12: false });
+    "Última atualização: " + new Date().toLocaleTimeString("pt-BR", { hour12: false });
 }
 
-// ====== FUNÇÃO PARA VER HISTÓRICO ======
+// Função para abrir o histórico
 function abrirHistorico(nomeReservatorio) {
   window.location.href = `historico.html?reservatorio=${nomeReservatorio}`;
 }
 
-// ====== RELÓGIO ======
+// Relógio no rodapé
 function atualizarRelogio() {
   const agora = new Date();
   const clock = document.getElementById("clock");
   if (clock) clock.textContent = agora.toLocaleTimeString("pt-BR", { hour12: false });
 }
 
-// ====== INICIALIZAÇÃO ======
+// Inicialização
 setInterval(carregarDados, UPDATE_INTERVAL);
 setInterval(atualizarRelogio, 1000);
 carregarDados();
