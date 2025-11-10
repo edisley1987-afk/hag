@@ -1,5 +1,5 @@
 // === Dashboard.js ===
-// Exibe leituras diretamente (já em litros) com barra de progresso
+// Exibe leituras diretamente (em litros) com bordas coloridas animadas
 
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // atualização a cada 5s
@@ -65,19 +65,18 @@ function atualizarDashboard(dados) {
       return;
     }
 
-    // Define cores conforme nível
+    // Define cor conforme nível
     let cor = "#2196f3"; // Azul padrão
     if (porcentagem >= 90) cor = "#4caf50";       // Verde
     else if (porcentagem >= 60) cor = "#ffeb3b";  // Amarelo
     else if (porcentagem >= 30) cor = "#ff9800";  // Laranja
     else cor = "#f44336";                         // Vermelho crítico
 
-    // Atualiza valores no HTML
+    // Atualiza HTML
     valorEl.textContent = `${litros.toFixed(0)} L`;
     percentEl.textContent = `${porcentagem.toFixed(1)}%`;
 
-    // Atualiza estilos dinâmicos do card
-    cardEl.style.setProperty("--progress", `${porcentagem}%`);
+    // Atualiza a cor da borda
     cardEl.style.setProperty("--cor-barra", cor);
   });
 
