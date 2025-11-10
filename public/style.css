@@ -1,88 +1,185 @@
-body {
-  background-color: #0b1e3b;
-  color: white;
-  font-family: "Segoe UI", sans-serif;
+/* === ESTILO GERAL === */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+
+:root {
+  --bg-color: #0e1a24;
+  --card-bg: #162635;
+  --text-color: #ffffff;
+  --accent-color: #1e88e5;
+  --success-color: #00c853;
+  --warning-color: #ffca28;
+  --danger-color: #e53935;
+  --progress: 0;
+  --progress-color: var(--accent-color);
+}
+
+* {
   margin: 0;
   padding: 0;
-  text-align: center;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+  color: var(--text-color);
 }
 
-header {
+body {
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
   padding: 20px;
-  background-color: #112c54;
 }
 
+/* === CABEÇALHO === */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+#lastUpdate {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* === CONTAINER DE CARDS === */
 .cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  padding: 20px;
+  gap: 25px;
+  width: 100%;
+  max-width: 1100px;
+  margin-bottom: 40px;
 }
 
+/* === CARD COM BORDA ANIMADA === */
 .card {
-  background-color: #142850;
-  border-radius: 15px;
-  padding: 20px;
+  --progress: 0;
+  --progress-color: var(--accent-color);
+
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  transition: transform 0.3s ease;
+  background: var(--card-bg);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  overflow: visible;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+/* efeito de brilho do progresso */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  padding: 6px;
+  background: conic-gradient(
+    var(--progress-color) calc(var(--progress) * 1turn),
+    rgba(255, 255, 255, 0.05) 0deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: background 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .card:hover {
   transform: scale(1.03);
+  background: rgba(30, 136, 229, 0.15);
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 15px;
-  border: 5px solid transparent;
-  transition: border 0.4s linear;
-  pointer-events: none;
+.card > * {
+  position: relative;
+  z-index: 1;
 }
 
+/* === TEXTO DO CARD === */
 .card h2 {
-  margin-top: 0;
-  color: #66ccff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 10px;
 }
 
 .value {
-  font-size: 1.8rem;
-  margin: 10px 0;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #ffffff;
 }
 
 .percent {
   font-size: 1.2rem;
-  color: #ccc;
+  opacity: 0.85;
+  margin-bottom: 15px;
 }
 
+/* === BOTÃO HISTÓRICO === */
 .historico-btn {
-  background-color: #1e88e5;
-  color: white;
-  border: none;
-  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
   padding: 8px 16px;
+  color: var(--accent-color);
   cursor: pointer;
-  transition: background 0.3s;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .historico-btn:hover {
-  background-color: #42a5f5;
+  background: var(--accent-color);
+  color: #fff;
 }
 
+/* === RELÓGIOS / GRÁFICOS === */
+.relogios-container {
+  display: none; /* desativado, substituído pela borda circular */
+}
+
+/* === RODAPÉ === */
 footer {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #112c54;
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Barra de progresso (em volta dos cards) */
-.card[data-progress]:before {
-  border-color: var(--progress-color, #1e88e5);
-  border-width: 5px;
-  border-style: solid;
-  mask: conic-gradient(from 0deg, #000 calc(var(--progress) * 1%), transparent 0);
-  -webkit-mask: conic-gradient(from 0deg, #000 calc(var(--progress) * 1%), transparent 0);
+#clock {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--accent-color);
+}
+
+/* === RESPONSIVIDADE === */
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 1.3rem;
+  }
+
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .value {
+    font-size: 1.3rem;
+  }
+
+  .percent {
+    font-size: 1rem;
+  }
 }
