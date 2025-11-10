@@ -21,14 +21,18 @@ const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Sensores configurados ===
+// === Sensores calibrados conforme planilha ===
 const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
-  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006533, capacidade: 200 },
+  // --- Reservatórios (litros e calibração real) ---
+  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008056, capacidade: 20000 },
+  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
-  "Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
-  "Pressao_Saida_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 },
-  "Pressao_Retorno_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 }
+  "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
+
+  // --- Pressões (Keller PR-21Y 4–20 mA → 0–20 bar) ---
+  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
+  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
+  "Pressao_Saida_CME_current": { tipo: "pressao" },
 };
 
 // === Função para salvar leituras ===
@@ -107,10 +111,17 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         continue;
       }
 
-      const { leituraVazio, leituraCheio, capacidade } = sensor;
+      const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
       let leituraConvertida;
 
-      if (capacidade > 1) {
+      if (tipo === "pressao") {
+        // Converte 4–20 mA em 0–20 bar
+        const corrente = valor; // em Ampères
+        leituraConvertida = ((corrente - 0.004) / 0.016) * 20;
+        leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
+        leituraConvertida = Number(leituraConvertida.toFixed(2));
+      } else if (capacidade > 1) {
+        // Conversão em litros (reservatórios)
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
