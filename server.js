@@ -31,37 +31,36 @@ const SENSORES = {
   "Pressao_Retorno_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 }
 };
 
-// === Função para salvar leituras ===
+// === Função para salvar leituras atuais ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
   console.log("💾 Leituras atualizadas:", dados);
 }
 
-// === Função para registrar histórico diário ===
+// === Função para registrar histórico (últimas 24h) ===
 function registrarHistorico(dados) {
-  const hoje = new Date().toISOString().split("T")[0];
-  let historico = {};
+  let historico = [];
 
+  // Lê histórico existente (se existir)
   if (fs.existsSync(HIST_FILE)) {
     try {
       historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
     } catch {
-      historico = {};
+      historico = [];
     }
   }
 
-  if (!historico[hoje]) historico[hoje] = {};
+  // Adiciona nova leitura
+  historico.push(dados);
 
-  Object.entries(dados).forEach(([ref, valor]) => {
-    if (ref === "timestamp" || typeof valor !== "number") return;
-    if (!historico[hoje][ref]) {
-      historico[hoje][ref] = { min: valor, max: valor };
-    } else {
-      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
-      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
-    }
-  });
+  // Mantém apenas as últimas 24 horas
+  const agora = Date.now();
+  const LIMITE_24H = 24 * 60 * 60 * 1000;
+  historico = historico.filter(
+    (item) => agora - new Date(item.timestamp).getTime() <= LIMITE_24H
+  );
 
+  // Salva o histórico atualizado
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
@@ -110,6 +109,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       const { leituraVazio, leituraCheio, capacidade } = sensor;
       let leituraConvertida;
 
+      // Conversão: de leitura bruta para litros ou pressão
       if (capacidade > 1) {
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
@@ -123,8 +123,10 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
+
+    // Salva leitura atual e histórico
     salvarDados(dadosConvertidos);
-    registrarHistorico(dadosConvertidos); // ✅ histórico diário
+    registrarHistorico(dadosConvertidos);
 
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
@@ -133,7 +135,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoint para o dashboard ===
+// === Endpoint para o dashboard (leituras atuais) ===
 app.get("/dados", (req, res) => {
   console.log(`➡️ GET em ${req.url} de ${req.ip}`);
   if (!fs.existsSync(DATA_FILE)) return res.json({});
@@ -141,11 +143,17 @@ app.get("/dados", (req, res) => {
   res.json(dados);
 });
 
-// === Endpoint para histórico ===
+// === Endpoint para histórico (últimas 24 horas) ===
 app.get("/historico", (req, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json({});
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  res.json(historico);
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  try {
+    const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+    res.json(historico);
+  } catch (err) {
+    console.error("Erro ao ler histórico:", err);
+    res.status(500).json({ erro: "Falha ao ler histórico" });
+  }
 });
 
 // === Servir dashboard estático ===
