@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento de Reservatórios — HAG</title>
+  <title>Monitoramento de Reservatórios — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -19,21 +19,28 @@
         <h2>Reservatório Elevador</h2>
         <p class="value" id="elevadorValor">0 L</p>
         <p class="percent" id="elevadorPercent">0%</p>
+        <button class="historico-btn" onclick="verHistorico('Reservatorio_elevador')">Ver Histórico</button>
       </div>
+
       <div class="card">
         <h2>Reservatório Osmose</h2>
         <p class="value" id="osmoseValor">0 L</p>
         <p class="percent" id="osmosePercent">0%</p>
+        <button class="historico-btn" onclick="verHistorico('Reservatorio_Osmose')">Ver Histórico</button>
       </div>
+
       <div class="card">
         <h2>Reservatório CME</h2>
         <p class="value" id="cmeValor">0 L</p>
         <p class="percent" id="cmePercent">0%</p>
+        <button class="historico-btn" onclick="verHistorico('Reservatorio_CME')">Ver Histórico</button>
       </div>
+
       <div class="card">
         <h2>Água Abrandada</h2>
         <p class="value" id="abrandadaValor">0 L</p>
         <p class="percent" id="abrandadaPercent">0%</p>
+        <button class="historico-btn" onclick="verHistorico('Reservatorio_Abrandada')">Ver Histórico</button>
       </div>
     </section>
 
