@@ -1,125 +1,165 @@
-const API_BASE = "https://reservatorios-hag-dashboard.onrender.com"; // ✅ ajuste conforme seu domínio
-const API_DADOS = `${API_BASE}/dados`;
-const API_HIST = `${API_BASE}/historico`;
+// ======================= CONFIGURAÇÃO =======================
 
-async function carregarDados() {
-  try {
-    const [resDados, resHist] = await Promise.all([
-      fetch(API_DADOS + "?t=" + Date.now()),
-      fetch(API_HIST + "?t=" + Date.now())
-    ]);
-
-    const dados = await resDados.json();
-    const historico = await resHist.json();
-
-    atualizarDashboard(dados, historico);
-  } catch (err) {
-    console.error("Erro ao carregar dados:", err);
+// Configurações dos sensores
+const SENSOR_CONFIG = {
+  "Reservatorio_Elevador_current": {
+    nome: "Reservatório Elevador",
+    capacidade: 20000,
+    leituraVazio: 0.004168,
+    leituraCheio: 0.008056
+  },
+  "Reservatorio_Osmose_current": {
+    nome: "Reservatório Osmose",
+    capacidade: 200,
+    leituraVazio: 0.00505,
+    leituraCheio: 0.006533
+  },
+  "Reservatorio_CME_current": {
+    nome: "Reservatório CME",
+    capacidade: 1000,
+    leituraVazio: 0.004088,
+    leituraCheio: 0.004408
+  },
+  "Reservatorio_Abrandada_current": {
+    nome: "Água Abrandada",
+    capacidade: 9000,
+    leituraVazio: 0.004008,
+    leituraCheio: 0.004929
   }
+};
+
+// Histórico de mínimo e máximo do dia
+let historico = JSON.parse(localStorage.getItem("historicoReservatorios")) || {};
+
+// ======================= FUNÇÕES AUXILIARES =======================
+
+// Retorna data em formato YYYY-MM-DD
+function dataHoje() {
+  return new Date().toISOString().split("T")[0];
 }
 
-// === Atualiza os cards e os relógios ===
-function atualizarDashboard(dados, historico) {
-  const cardsContainer = document.querySelector(".cards-container");
-  if (!cardsContainer) {
-    console.error("⚠️ Elementos do dashboard não encontrados no DOM.");
-    return;
+// Atualiza o histórico de mínimo/máximo diário
+function atualizarHistorico(ref, litros) {
+  const dia = dataHoje();
+  if (!historico[dia]) historico = { [dia]: {} };
+
+  if (!historico[dia][ref]) {
+    historico[dia][ref] = { min: litros, max: litros };
+  } else {
+    historico[dia][ref].min = Math.min(historico[dia][ref].min, litros);
+    historico[dia][ref].max = Math.max(historico[dia][ref].max, litros);
   }
 
-  const hoje = new Date().toISOString().split("T")[0];
-  const histHoje = historico[hoje] || {};
+  localStorage.setItem("historicoReservatorios", JSON.stringify(historico));
+  return historico[dia][ref];
+}
 
-  const config = {
-    "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, gaugeId: "relogioElevador" },
-    "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, gaugeId: "relogioOsmose" },
-    "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, gaugeId: "relogioCME" },
-    "Agua_Abrandada_current": { nome: "Água Abrandada", capacidade: 9000, gaugeId: "relogioAbrandada" },
-  };
+// ======================= FUNÇÃO PRINCIPAL =======================
 
-  Object.entries(config).forEach(([ref, cfg]) => {
-    const valor = dados[ref] ?? 0;
-    const porcent = (valor / cfg.capacidade) * 100;
+async function atualizarDashboard() {
+  try {
+    const res = await fetch("/dados");
+    const dados = await res.json();
 
-    const hist = histHoje[ref] || { min: valor, max: valor };
-    const minP = ((hist.min ?? 0) / cfg.capacidade) * 100;
-    const maxP = ((hist.max ?? 0) / cfg.capacidade) * 100;
-
-    // Cores conforme nível
-    let cor = "#00c9a7";
-    if (porcent < 30) cor = "#e53935";
-    else if (porcent < 50) cor = "#fbc02d";
-
-    // Atualiza card
-    const valorEl = document.getElementById(cfg.nome.toLowerCase().split(" ")[1] + "Valor");
-    const percentEl = document.getElementById(cfg.nome.toLowerCase().split(" ")[1] + "Percent");
-    if (valorEl && percentEl) {
-      valorEl.textContent = `${valor.toFixed(0)} L`;
-      percentEl.innerHTML = `
-        <span style="color:${cor}; font-weight:bold">${porcent.toFixed(1)}%</span><br>
-        <small style="color:#6cf">Mín: ${hist.min.toFixed(0)}L (${minP.toFixed(1)}%)</small><br>
-        <small style="color:#f88">Máx: ${hist.max.toFixed(0)}L (${maxP.toFixed(1)}%)</small>
-      `;
+    if (!dados || Object.keys(dados).length === 0) {
+      console.warn("Nenhum dado recebido do servidor.");
+      return;
     }
 
-    // Atualiza gauge
-    desenharGauge(cfg.gaugeId, porcent, cor, cfg.nome);
-  });
+    document.getElementById("lastUpdate").textContent =
+      "Última atualização: " + new Date(dados.timestamp).toLocaleString();
 
-  document.getElementById("lastUpdate").textContent =
-    "Última atualização: " + new Date().toLocaleString("pt-BR");
-}
+    const ctxs = {
+      "Reservatório Elevador": document.getElementById("relogioElevador").getContext("2d"),
+      "Reservatório Osmose": document.getElementById("relogioOsmose").getContext("2d"),
+      "Reservatório CME": document.getElementById("relogioCME").getContext("2d"),
+      "Água Abrandada": document.getElementById("relogioAbrandada").getContext("2d"),
+    };
 
-// === Gauge (tipo relógio) ===
-function desenharGauge(canvasId, porcent, cor, titulo) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const size = 180;
-  canvas.width = size;
-  canvas.height = size;
+    Object.entries(SENSOR_CONFIG).forEach(([ref, cfg]) => {
+      const leitura = dados[ref] ?? cfg.leituraVazio;
+      let proporcao = (leitura - cfg.leituraVazio) / (cfg.leituraCheio - cfg.leituraVazio);
+      proporcao = Math.max(0, Math.min(1, proporcao));
+      const litros = cfg.capacidade * proporcao;
+      const porcent = proporcao * 100;
 
-  const center = size / 2;
-  const radius = size * 0.4;
-  ctx.clearRect(0, 0, size, size);
+      const hist = atualizarHistorico(ref, litros);
+      const minP = (hist.min / cfg.capacidade) * 100;
+      const maxP = (hist.max / cfg.capacidade) * 100;
 
-  // Fundo
-  ctx.beginPath();
-  ctx.arc(center, center, radius, Math.PI, 0);
-  ctx.strokeStyle = "#444";
-  ctx.lineWidth = 15;
-  ctx.stroke();
+      let cor = "#00c9a7";
+      if (porcent < 30) cor = "#e53935";
+      else if (porcent < 50) cor = "#fbc02d";
 
-  // Arco ativo
-  const endAngle = Math.PI + (Math.PI * porcent) / 100;
-  ctx.beginPath();
-  ctx.arc(center, center, radius, Math.PI, endAngle);
-  ctx.strokeStyle = cor;
-  ctx.lineWidth = 15;
-  ctx.stroke();
+      const idBase = cfg.nome.toLowerCase().split(" ")[1];
+      const valorEl = document.getElementById(idBase + "Valor");
+      const percentEl = document.getElementById(idBase + "Percent");
 
-  // Texto principal
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 18px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(`${porcent.toFixed(1)}%`, center, center + 10);
+      if (valorEl && percentEl) {
+        valorEl.textContent = `${litros.toFixed(0)} L`;
+        percentEl.innerHTML = `
+          <span style="color:${cor}; font-weight:bold">${porcent.toFixed(1)}%</span><br>
+          <small style="color:#6cf">Mín: ${hist.min.toFixed(0)}L (${minP.toFixed(1)}%)</small><br>
+          <small style="color:#f88">Máx: ${hist.max.toFixed(0)}L (${maxP.toFixed(1)}%)</small>
+        `;
+      }
 
-  // Nome do tanque
-  ctx.font = "12px sans-serif";
-  ctx.fillStyle = "#ccc";
-  ctx.fillText(titulo, center, size - 10);
-}
-
-// === Relógio no rodapé ===
-function atualizarRelogio() {
-  const now = new Date();
-  const clockEl = document.getElementById("clock");
-  if (clockEl) {
-    clockEl.textContent = now.toLocaleTimeString("pt-BR", { hour12: false });
+      desenharGauge(ctxs[cfg.nome], porcent, cor, cfg.nome);
+    });
+  } catch (err) {
+    console.error("Erro ao atualizar dashboard:", err);
   }
 }
 
-// Atualizações automáticas
-setInterval(carregarDados, 15000);
+// ======================= RELÓGIO =======================
+
+function atualizarRelogio() {
+  const agora = new Date();
+  const horas = String(agora.getHours()).padStart(2, "0");
+  const minutos = String(agora.getMinutes()).padStart(2, "0");
+  const segundos = String(agora.getSeconds()).padStart(2, "0");
+  const clockEl = document.getElementById("clock");
+  if (clockEl) clockEl.textContent = `${horas}:${minutos}:${segundos}`;
+}
 setInterval(atualizarRelogio, 1000);
-carregarDados();
 atualizarRelogio();
+
+// ======================= GAUGE =======================
+
+function desenharGauge(ctx, porcent, cor, nome) {
+  if (!ctx) return;
+  const chartExistente = Chart.getChart(ctx);
+  if (chartExistente) chartExistente.destroy();
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          data: [porcent, 100 - porcent],
+          backgroundColor: [cor, "#e0e0e0"],
+          borderWidth: 0,
+          cutout: "80%",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false },
+        title: {
+          display: true,
+          text: nome,
+          color: "#fff",
+          font: { size: 14 },
+        },
+      },
+    },
+  });
+}
+
+// ======================= LOOP DE ATUALIZAÇÃO =======================
+
+setInterval(atualizarDashboard, 10000);
+atualizarDashboard();
