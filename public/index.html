@@ -19,28 +19,28 @@
         <h2>Reservatório Elevador</h2>
         <p class="value" id="elevadorValor">0 L</p>
         <p class="percent" id="elevadorPercent">0%</p>
-        <button class="historico-btn" onclick="verHistorico('Reservatorio_elevador')">Ver Histórico</button>
+        <button class="historico-btn" onclick="abrirModal('Reservatorio_elevador')">Ver Histórico</button>
       </div>
 
       <div class="card">
         <h2>Reservatório Osmose</h2>
         <p class="value" id="osmoseValor">0 L</p>
         <p class="percent" id="osmosePercent">0%</p>
-        <button class="historico-btn" onclick="verHistorico('Reservatorio_Osmose')">Ver Histórico</button>
+        <button class="historico-btn" onclick="abrirModal('Reservatorio_Osmose')">Ver Histórico</button>
       </div>
 
       <div class="card">
         <h2>Reservatório CME</h2>
         <p class="value" id="cmeValor">0 L</p>
         <p class="percent" id="cmePercent">0%</p>
-        <button class="historico-btn" onclick="verHistorico('Reservatorio_CME')">Ver Histórico</button>
+        <button class="historico-btn" onclick="abrirModal('Reservatorio_CME')">Ver Histórico</button>
       </div>
 
       <div class="card">
         <h2>Água Abrandada</h2>
         <p class="value" id="abrandadaValor">0 L</p>
         <p class="percent" id="abrandadaPercent">0%</p>
-        <button class="historico-btn" onclick="verHistorico('Reservatorio_Abrandada')">Ver Histórico</button>
+        <button class="historico-btn" onclick="abrirModal('Reservatorio_Abrandada')">Ver Histórico</button>
       </div>
     </section>
 
@@ -56,6 +56,23 @@
     <p id="clock">—:—:—</p>
     <p>© Hospital Arnaldo Gavazza</p>
   </footer>
+
+  <!-- Modal do Histórico -->
+  <div id="historicoModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="fecharModal()">&times;</span>
+      <h2 id="modalTitulo">Histórico</h2>
+      <table id="tabelaHistorico">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Nível (%)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
   <script src="dashboard.js"></script>
 </body>
