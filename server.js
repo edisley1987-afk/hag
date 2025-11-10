@@ -1,5 +1,3 @@
-// ======= Servidor Universal HAG - compatível com Gateway ITG =======
-
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -8,162 +6,86 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// === Middleware universal: aceita QUALQUER tipo de requisição ===
+// === Configurações gerais ===
 app.use(cors());
-app.use(express.json({ limit: "10mb", strict: false }));
-app.use(express.text({ type: "*/*", limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.raw({ type: "*/*", limit: "10mb" }));
+app.use(express.json({ limit: "5mb" }));
 
-// === Pastas e arquivos ===
+// === Pastas e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const HIST_FILE = path.join(DATA_DIR, "historico.json");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+const DATA_FILE = path.join(DATA_DIR, "historico.json");
 
-// === Sensores configurados ===
-const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.007855, capacidade: 20000 },
-  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006533, capacidade: 200 },
-  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
-  "Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
-  "Pressao_Saida_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 },
-  "Pressao_Retorno_current": { leituraVazio: 0, leituraCheio: 1, capacidade: 1 }
-};
-
-// === Função para salvar leituras atuais ===
-function salvarDados(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
+// Cria a pasta /data se não existir
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
+  console.log("📁 Pasta 'data' criada.");
 }
 
-// === Função para registrar histórico (últimas 24h) ===
-function registrarHistorico(dados) {
-  let historico = [];
-
-  // Lê histórico existente (se existir)
-  if (fs.existsSync(HIST_FILE)) {
-    try {
-      historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-    } catch {
-      historico = [];
-    }
-  }
-
-  // Adiciona nova leitura
-  historico.push(dados);
-
-  // Mantém apenas as últimas 24 horas
-  const agora = Date.now();
-  const LIMITE_24H = 24 * 60 * 60 * 1000;
-  historico = historico.filter(
-    (item) => agora - new Date(item.timestamp).getTime() <= LIMITE_24H
-  );
-
-  // Salva o histórico atualizado
-  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+// Cria o arquivo de histórico se não existir
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, "[]");
+  console.log("🆕 Arquivo 'historico.json' criado.");
 }
 
-// === Endpoint universal do Gateway ===
-app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
-  console.log(`➡️ Recebido ${req.method} em ${req.path} de ${req.ip}`);
-
+// === Função auxiliar: grava nova leitura e limpa dados antigos ===
+function salvarLeitura(novaLeitura) {
   try {
-    let body = req.body;
+    const agora = new Date();
+    const limite = agora.getTime() - 24 * 60 * 60 * 1000; // 24 horas
+    let historico = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
 
-    if (Buffer.isBuffer(body)) body = body.toString("utf8");
-    if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {
-        console.log("⚠️ Corpo não-JSON, conteúdo bruto:", body.slice(0, 200));
-      }
-    }
+    // Remove leituras antigas
+    historico = historico.filter(item => new Date(item.timestamp).getTime() > limite);
 
-    let dataArray = [];
-    if (Array.isArray(body)) dataArray = body;
-    else if (body && Array.isArray(body.data)) dataArray = body.data;
-    else if (typeof body === "object" && body !== null) {
-      dataArray = Object.keys(body)
-        .filter((k) => k.includes("_current"))
-        .map((k) => ({ ref: k, value: Number(body[k]) }));
-    }
+    // Adiciona nova leitura
+    historico.push({
+      timestamp: agora.toISOString(),
+      ...novaLeitura
+    });
 
-    if (!dataArray.length) {
-      console.warn("⚠️ Nenhum dado válido encontrado:", body);
-      return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
-    }
-
-    const dadosConvertidos = {};
-    for (const item of dataArray) {
-      const ref = item.ref || item.name;
-      const valor = Number(item.value);
-      if (!ref || isNaN(valor)) continue;
-
-      const sensor = SENSORES[ref];
-      if (!sensor) {
-        dadosConvertidos[ref] = valor;
-        continue;
-      }
-
-      const { leituraVazio, leituraCheio, capacidade } = sensor;
-      let leituraConvertida;
-
-      // Conversão: de leitura bruta para litros ou pressão
-      if (capacidade > 1) {
-        leituraConvertida =
-          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
-        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
-        leituraConvertida = Math.round(leituraConvertida);
-      } else {
-        leituraConvertida = Number(valor.toFixed(5));
-      }
-
-      dadosConvertidos[ref] = leituraConvertida;
-    }
-
-    dadosConvertidos.timestamp = new Date().toISOString();
-
-    // Salva leitura atual e histórico
-    salvarDados(dadosConvertidos);
-    registrarHistorico(dadosConvertidos);
-
-    res.json({ status: "ok", dados: dadosConvertidos });
+    // Grava de volta no arquivo
+    fs.writeFileSync(DATA_FILE, JSON.stringify(historico, null, 2));
+    console.log("💾 Leitura salva com sucesso!");
   } catch (err) {
-    console.error("❌ Erro ao processar atualização:", err);
-    res.status(500).json({ erro: err.message });
+    console.error("❌ Erro ao salvar leitura:", err);
+  }
+}
+
+// === Rota: registrar novas leituras ===
+app.post("/api/leituras", (req, res) => {
+  const leitura = req.body;
+
+  if (!leitura) {
+    return res.status(400).json({ erro: "Nenhuma leitura enviada" });
+  }
+
+  salvarLeitura(leitura);
+  res.json({ status: "Leitura registrada com sucesso" });
+});
+
+// === Rota: obter histórico das últimas 24h ===
+app.get("/api/historico", (req, res) => {
+  try {
+    const historico = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    const limite = Date.now() - 24 * 60 * 60 * 1000;
+    const ultimas24h = historico.filter(
+      item => new Date(item.timestamp).getTime() > limite
+    );
+    res.json(ultimas24h);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao ler histórico" });
   }
 });
 
-// === Endpoint para o dashboard (leituras atuais) ===
-app.get("/dados", (req, res) => {
-  console.log(`➡️ GET em ${req.url} de ${req.ip}`);
-  if (!fs.existsSync(DATA_FILE)) return res.json({});
-  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  res.json(dados);
+// === Rota: verificar status do servidor ===
+app.get("/api/status", (req, res) => {
+  res.json({
+    status: "Servidor online",
+    hora: new Date().toISOString()
+  });
 });
 
-// === Endpoint para histórico (últimas 24 horas) ===
-app.get("/historico", (req, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json([]);
-
-  try {
-    const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-    res.json(historico);
-  } catch (err) {
-    console.error("Erro ao ler histórico:", err);
-    res.status(500).json({ erro: "Falha ao ler histórico" });
-  }
-});
-
-// === Servir dashboard estático ===
-app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
-
-// === Inicialização ===
-const PORT = process.env.PORT || 3000;
+// === Inicialização do servidor ===
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`✅ Servidor universal HAG ativo na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
