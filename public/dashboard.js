@@ -65,9 +65,20 @@ function atualizarDashboard(dados) {
       return;
     }
 
+    // Define cores conforme nível
+    let cor = "#2196f3"; // Azul padrão
+    if (porcentagem >= 90) cor = "#4caf50";       // Verde
+    else if (porcentagem >= 60) cor = "#ffeb3b";  // Amarelo
+    else if (porcentagem >= 30) cor = "#ff9800";  // Laranja
+    else cor = "#f44336";                         // Vermelho crítico
+
+    // Atualiza valores no HTML
     valorEl.textContent = `${litros.toFixed(0)} L`;
     percentEl.textContent = `${porcentagem.toFixed(1)}%`;
+
+    // Atualiza estilos dinâmicos do card
     cardEl.style.setProperty("--progress", `${porcentagem}%`);
+    cardEl.style.setProperty("--cor-barra", cor);
   });
 
   document.getElementById("lastUpdate").textContent =
