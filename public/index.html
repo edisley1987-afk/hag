@@ -3,64 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
-
-  <!-- Ícone do site (favicon) -->
-  <link rel="icon" type="image/png" href="https://gavazza.com.br/wp-content/uploads/2022/03/cropped-favicon-hag-32x32.png">
-
-  <!-- Fonte e estilo -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Monitoramento - Sistema de Água</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <div class="header-container">
-      <div class="logo-area">
-        <img src="https://gavazza.com.br/wp-content/uploads/2022/03/logo-hag.png" alt="Logo Hospital Arnaldo Gavazza" class="logo" />
-      </div>
-      <div class="title-area">
-        <h1>💧 Monitoramento dos Reservatórios</h1>
-        <h2>Hospital Arnaldo Gavazza</h2>
-        <p id="lastUpdate">Última atualização: --:--:--</p>
-      </div>
-    </div>
+    <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
+    <p id="lastUpdate">Atualizado em: --</p>
   </header>
 
-  <main id="dashboard">
-    <div class="card" id="cardElevador">
-      <h3>Reservatório Elevador</h3>
-      <p class="valor" id="elevadorValor">-- L</p>
-      <p class="percent" id="elevadorPercent">--%</p>
-      <button onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
-    </div>
-
-    <div class="card" id="cardOsmose">
-      <h3>Reservatório Osmose</h3>
-      <p class="valor" id="osmoseValor">-- L</p>
-      <p class="percent" id="osmosePercent">--%</p>
-      <button onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
-    </div>
-
-    <div class="card" id="cardCME">
-      <h3>Reservatório CME</h3>
-      <p class="valor" id="cmeValor">-- L</p>
-      <p class="percent" id="cmePercent">--%</p>
-      <button onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
-    </div>
-
-    <div class="card" id="cardAbrandada">
-      <h3>Água Abrandada</h3>
-      <p class="valor" id="abrandadaValor">-- L</p>
-      <p class="percent" id="abrandadaPercent">--%</p>
-      <button onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
-    </div>
-  </main>
+  <div class="cards-container" id="cards"></div>
 
   <footer>
-    <p id="clock">--:--:--</p>
-    <small>© Hospital Arnaldo Gavazza</small>
+    <p>© 2025 Sistema de Monitoramento Hospitalar</p>
   </footer>
 
-  <script src="dashboard.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
