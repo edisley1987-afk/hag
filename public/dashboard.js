@@ -1,106 +1,125 @@
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Página carregada, inicializando dashboard...");
-  atualizarDashboard();
-  setInterval(atualizarDashboard, 15000);
-  atualizarRelogio();
-  setInterval(atualizarRelogio, 1000);
-});
+const API_BASE = "https://reservatorios-hag-dashboard.onrender.com"; // ✅ ajuste conforme seu domínio
+const API_DADOS = `${API_BASE}/dados`;
+const API_HIST = `${API_BASE}/historico`;
 
-const API_URL = "https://reservatorios-hag-dashboard.onrender.com/dados";
+async function carregarDados() {
+  try {
+    const [resDados, resHist] = await Promise.all([
+      fetch(API_DADOS + "?t=" + Date.now()),
+      fetch(API_HIST + "?t=" + Date.now())
+    ]);
 
-// === Atualiza os valores dos reservatórios ===
-async function atualizarDashboard() {
-  const res = await fetch(API_URL + "?t=" + Date.now());
-  const dados = await res.json();
+    const dados = await resDados.json();
+    const historico = await resHist.json();
 
-  if (!dados || Object.keys(dados).length === 0) {
-    console.warn("⚠️ Nenhum dado recebido do servidor.");
+    atualizarDashboard(dados, historico);
+  } catch (err) {
+    console.error("Erro ao carregar dados:", err);
+  }
+}
+
+// === Atualiza os cards e os relógios ===
+function atualizarDashboard(dados, historico) {
+  const cardsContainer = document.querySelector(".cards-container");
+  if (!cardsContainer) {
+    console.error("⚠️ Elementos do dashboard não encontrados no DOM.");
     return;
   }
 
-  const sensores = [
-    { nome: "Elevador", ref: "Reservatorio_Elevador_current", capacidade: 20000 },
-    { nome: "Osmose", ref: "Reservatorio_Osmose_current", capacidade: 200 },
-    { nome: "CME", ref: "Reservatorio_CME_current", capacidade: 1000 },
-    { nome: "Abrandada", ref: "Agua_Abrandada_current", capacidade: 9000 },
-  ];
+  const hoje = new Date().toISOString().split("T")[0];
+  const histHoje = historico[hoje] || {};
 
-  sensores.forEach((s) => {
-    const valor = dados[s.ref] || 0;
-    const porcent = (valor / s.capacidade) * 100;
+  const config = {
+    "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000, gaugeId: "relogioElevador" },
+    "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200, gaugeId: "relogioOsmose" },
+    "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000, gaugeId: "relogioCME" },
+    "Agua_Abrandada_current": { nome: "Água Abrandada", capacidade: 9000, gaugeId: "relogioAbrandada" },
+  };
 
-    const valorElem = document.getElementById(`${s.nome.toLowerCase()}Valor`);
-    const percentElem = document.getElementById(`${s.nome.toLowerCase()}Percent`);
+  Object.entries(config).forEach(([ref, cfg]) => {
+    const valor = dados[ref] ?? 0;
+    const porcent = (valor / cfg.capacidade) * 100;
 
-    if (valorElem && percentElem) {
-      valorElem.textContent = `${valor.toFixed(0)} L`;
-      percentElem.textContent = `${porcent.toFixed(1)}%`;
+    const hist = histHoje[ref] || { min: valor, max: valor };
+    const minP = ((hist.min ?? 0) / cfg.capacidade) * 100;
+    const maxP = ((hist.max ?? 0) / cfg.capacidade) * 100;
 
-      // Mudar cor de alerta
-      let cor = "#00c9a7";
-      if (porcent < 30) cor = "#e53935";
-      else if (porcent < 50) cor = "#fbc02d";
-      percentElem.style.color = cor;
-      valorElem.style.color = cor;
+    // Cores conforme nível
+    let cor = "#00c9a7";
+    if (porcent < 30) cor = "#e53935";
+    else if (porcent < 50) cor = "#fbc02d";
+
+    // Atualiza card
+    const valorEl = document.getElementById(cfg.nome.toLowerCase().split(" ")[1] + "Valor");
+    const percentEl = document.getElementById(cfg.nome.toLowerCase().split(" ")[1] + "Percent");
+    if (valorEl && percentEl) {
+      valorEl.textContent = `${valor.toFixed(0)} L`;
+      percentEl.innerHTML = `
+        <span style="color:${cor}; font-weight:bold">${porcent.toFixed(1)}%</span><br>
+        <small style="color:#6cf">Mín: ${hist.min.toFixed(0)}L (${minP.toFixed(1)}%)</small><br>
+        <small style="color:#f88">Máx: ${hist.max.toFixed(0)}L (${maxP.toFixed(1)}%)</small>
+      `;
     }
 
-    // Atualiza o "reloginho" tipo gauge
-    const canvas = document.getElementById(`relogio${s.nome}`);
-    if (canvas) desenharGauge(canvas, porcent, s.nome);
+    // Atualiza gauge
+    desenharGauge(cfg.gaugeId, porcent, cor, cfg.nome);
   });
 
-  const last = document.getElementById("lastUpdate");
-  if (last && dados.timestamp) {
-    last.textContent = "Última atualização: " +
-      new Date(dados.timestamp).toLocaleString("pt-BR");
-  }
+  document.getElementById("lastUpdate").textContent =
+    "Última atualização: " + new Date().toLocaleString("pt-BR");
 }
 
-// === Relógio do rodapé ===
-function atualizarRelogio() {
-  const agora = new Date();
-  const clock = document.getElementById("clock");
-  if (clock) {
-    clock.textContent = agora.toLocaleTimeString("pt-BR", { hour12: false });
-  }
-}
-
-// === Gauge tipo relógio ===
-function desenharGauge(canvas, porcentagem, nome) {
+// === Gauge (tipo relógio) ===
+function desenharGauge(canvasId, porcent, cor, titulo) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  const largura = canvas.width = 200;
-  const altura = canvas.height = 200;
-  const centro = { x: largura / 2, y: altura / 2 };
-  const raio = 80;
+  const size = 180;
+  canvas.width = size;
+  canvas.height = size;
 
-  ctx.clearRect(0, 0, largura, altura);
+  const center = size / 2;
+  const radius = size * 0.4;
+  ctx.clearRect(0, 0, size, size);
 
   // Fundo
   ctx.beginPath();
-  ctx.arc(centro.x, centro.y, raio, 0.75 * Math.PI, 0.25 * Math.PI);
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.arc(center, center, radius, Math.PI, 0);
+  ctx.strokeStyle = "#444";
   ctx.lineWidth = 15;
   ctx.stroke();
 
-  // Cor do nível
-  let cor = "#00c9a7";
-  if (porcentagem < 30) cor = "#e53935";
-  else if (porcentagem < 50) cor = "#fbc02d";
-
-  const angulo = (0.75 + (porcentagem / 100) * 1.5) * Math.PI;
+  // Arco ativo
+  const endAngle = Math.PI + (Math.PI * porcent) / 100;
   ctx.beginPath();
-  ctx.arc(centro.x, centro.y, raio, 0.75 * Math.PI, angulo);
+  ctx.arc(center, center, radius, Math.PI, endAngle);
   ctx.strokeStyle = cor;
   ctx.lineWidth = 15;
-  ctx.lineCap = "round";
   ctx.stroke();
 
-  // Texto central
+  // Texto principal
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 18px Poppins, sans-serif";
+  ctx.font = "bold 18px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(`${porcentagem.toFixed(1)}%`, centro.x, centro.y + 10);
+  ctx.fillText(`${porcent.toFixed(1)}%`, center, center + 10);
 
-  ctx.font = "12px Poppins, sans-serif";
-  ctx.fillText(nome, centro.x, centro.y + 30);
+  // Nome do tanque
+  ctx.font = "12px sans-serif";
+  ctx.fillStyle = "#ccc";
+  ctx.fillText(titulo, center, size - 10);
 }
+
+// === Relógio no rodapé ===
+function atualizarRelogio() {
+  const now = new Date();
+  const clockEl = document.getElementById("clock");
+  if (clockEl) {
+    clockEl.textContent = now.toLocaleTimeString("pt-BR", { hour12: false });
+  }
+}
+
+// Atualizações automáticas
+setInterval(carregarDados, 15000);
+setInterval(atualizarRelogio, 1000);
+carregarDados();
+atualizarRelogio();
