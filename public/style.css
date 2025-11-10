@@ -1,100 +1,85 @@
 /* === ESTILO GERAL === */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
-
 :root {
-  --bg-color: #0e1a24;
-  --card-bg: #162635;
-  --text-color: #ffffff;
-  --accent-color: #1e88e5;
-  --success-color: #00c853;
-  --warning-color: #ffca28;
-  --danger-color: #e53935;
-  --progress: 0;
-  --progress-color: var(--accent-color);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Inter", sans-serif;
-  color: var(--text-color);
+  --fundo: #0a0f24;
+  --card: #1b233d;
+  --texto: #ffffff;
+  --azul: #2196f3;
+  --verde: #4caf50;
+  --amarelo: #ffeb3b;
+  --vermelho: #f44336;
 }
 
 body {
-  background: var(--bg-color);
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
+}
+
+header {
+  text-align: center;
   padding: 20px;
 }
 
-/* === CABEÇALHO === */
-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-header h1 {
-  font-size: 1.8rem;
-  color: var(--accent-color);
-  font-weight: 600;
+h1 {
+  margin-bottom: 5px;
+  color: var(--azul);
 }
 
 #lastUpdate {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  color: #aaa;
+  font-size: 14px;
 }
 
-/* === CONTAINER DE CARDS === */
+/* === GRID DE CARDS === */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
-  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  width: 90%;
   max-width: 1100px;
-  margin-bottom: 40px;
+  margin-top: 20px;
 }
 
 /* === CARD COM BORDA ANIMADA === */
 .card {
-  --progress: 0;
-  --progress-color: var(--accent-color);
-
   position: relative;
-  background: var(--card-bg);
-  border-radius: 18px;
+  background: var(--card);
+  border-radius: 20px;
   padding: 20px;
   text-align: center;
-  overflow: visible;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  transition: transform 0.3s ease, background 0.3s ease;
-}
-
-/* efeito de brilho do progresso */
-.card::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 22px;
-  padding: 6px;
-  background: conic-gradient(
-    var(--progress-color) calc(var(--progress) * 1turn),
-    rgba(255, 255, 255, 0.05) 0deg
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  transition: background 0.3s ease;
-  pointer-events: none;
-  z-index: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out;
 }
 
 .card:hover {
-  transform: scale(1.03);
-  background: rgba(30, 136, 229, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Borda circular animada com progress */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 3px;
+  background: conic-gradient(
+    var(--cor-barra, var(--azul)) calc(var(--progress, 0%) * 1%),
+    rgba(255, 255, 255, 0.1) 0%
+  );
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box, 
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 0;
+  transition: background 0.4s linear;
 }
 
 .card > * {
@@ -102,84 +87,51 @@ header h1 {
   z-index: 1;
 }
 
-/* === TEXTO DO CARD === */
+/* === CONTEÚDO DO CARD === */
 .card h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--accent-color);
-  margin-bottom: 10px;
+  margin-top: 0;
+  color: var(--texto);
+  font-size: 18px;
 }
 
 .value {
-  font-size: 1.6rem;
+  font-size: 22px;
   font-weight: bold;
-  color: #ffffff;
+  margin: 10px 0 5px;
 }
 
 .percent {
-  font-size: 1.2rem;
-  opacity: 0.85;
-  margin-bottom: 15px;
+  font-size: 16px;
+  color: #ccc;
 }
 
-/* === BOTÃO HISTÓRICO === */
 .historico-btn {
-  background: transparent;
-  border: 1px solid var(--accent-color);
+  background: var(--azul);
+  color: white;
+  border: none;
   border-radius: 8px;
-  padding: 8px 16px;
-  color: var(--accent-color);
+  padding: 8px 12px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: background 0.3s;
 }
 
 .historico-btn:hover {
-  background: var(--accent-color);
-  color: #fff;
-}
-
-/* === RELÓGIOS / GRÁFICOS === */
-.relogios-container {
-  display: none; /* desativado, substituído pela borda circular */
+  background: #1976d2;
 }
 
 /* === RODAPÉ === */
 footer {
   margin-top: auto;
+  padding: 20px;
   text-align: center;
-  font-size: 0.9rem;
-  opacity: 0.8;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #aaa;
 }
 
+/* === RELÓGIO === */
 #clock {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--accent-color);
-}
-
-/* === RESPONSIVIDADE === */
-@media (max-width: 600px) {
-  header h1 {
-    font-size: 1.3rem;
-  }
-
-  .cards-container {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-
-  .value {
-    font-size: 1.3rem;
-  }
-
-  .percent {
-    font-size: 1rem;
-  }
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--azul);
 }
