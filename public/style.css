@@ -1,42 +1,37 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #e6f4ea; /* Verde hospitalar suave */
-  color: #222;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #e9f7ef;
+  color: #1c1c1c;
   margin: 0;
-  padding: 0;
   text-align: center;
 }
 
 header {
   background-color: #3aa374;
   color: white;
-  padding: 20px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  padding: 15px 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-h1 {
-  margin: 0;
-  font-size: 1.6em;
-}
-
-.cards-container {
+.container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 25px;
   margin: 40px auto;
   max-width: 1300px;
-  padding: 0 20px;
 }
 
 .card {
   background: white;
   border-radius: 15px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  border: 6px solid #3aa374;
   width: 260px;
   padding: 20px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border 0.3s;
-  border: 5px solid transparent;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s ease, border 0.3s;
 }
 
 .card:hover {
@@ -44,36 +39,23 @@ h1 {
 }
 
 .card h2 {
+  color: #2c7a5a;
   margin-bottom: 15px;
-  color: #3aa374;
 }
 
-.value {
-  font-size: 1.4em;
+.valor {
+  font-size: 1.7em;
   font-weight: bold;
-  margin: 5px 0;
+  color: #1c1c1c;
 }
 
 .percent {
-  font-size: 1em;
-  color: #444;
-  margin-top: 10px;
+  color: #333;
+  margin-top: 5px;
 }
 
 footer {
-  margin-top: 40px;
-  background-color: #3aa374;
-  color: white;
-  padding: 10px;
-}
-
-/* ===== Cores conforme o nível ===== */
-.card.verde {
-  border-color: #3aa374;
-}
-.card.amarelo {
-  border-color: #f4c542;
-}
-.card.vermelho {
-  border-color: #e64a19;
+  margin-top: 30px;
+  font-size: 0.9em;
+  color: #555;
 }
