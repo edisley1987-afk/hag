@@ -1,35 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento de Reservatórios - HAG</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoramento de Reservatórios — Hospital Arnaldo Gavazza</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <header>
+    <h1>💧 Monitoramento de Reservatórios — Hospital Arnaldo Gavazza</h1>
+    <p id="lastUpdate">Carregando...</p>
+  </header>
 
-    <header>
-        <img src="logo-gavazza-top.png" alt="Logo Hospital Arnaldo Gavazza" class="logo">
-        <h1>Monitoramento de Reservatórios - Hospital Arnaldo Gavazza</h1>
-        <div id="lastUpdate">Última atualização: --/--/---- --:--:--</div>
-    </header>
+  <main>
+    <section id="cards" class="cards-container"></section>
 
-    <div class="main-content">
-        
-        <div class="cards" id="cards">
-            </div>
+    <!-- Seção dos gráficos tipo relógio -->
+    <section id="graficoContainer" class="gauge-container"></section>
+  </main>
 
-        <div class="chart-wrap">
-            <canvas id="chartCanvas"></canvas>
-        </div>
+  <footer>
+    <div id="relogio"></div>
+    <p>© Hospital Arnaldo Gavazza</p>
+  </footer>
 
-    </div>
-
-    <footer>
-        <p>&copy; 2025 HAG - Desenvolvido por Edisley</p>
-    </footer>
-
-    <script src="dashboard.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
