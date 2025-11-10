@@ -59,11 +59,19 @@ function criarGauge(nome, percentual) {
 }
 
 async function atualizarDashboard() {
+  const containerCards = document.getElementById("cards");
+  const containerGauges = document.getElementById("graficoContainer");
+  const updateEl = document.getElementById("lastUpdate");
+
+  // 🔒 Evita erro se algum elemento não existir
+  if (!containerCards || !containerGauges || !updateEl) {
+    console.warn("Elementos do dashboard não encontrados no DOM.");
+    return;
+  }
+
   const dados = await buscarDados();
   if (!dados) return;
 
-  const containerCards = document.getElementById("cards");
-  const containerGauges = document.getElementById("graficoContainer");
   containerCards.innerHTML = "";
   containerGauges.innerHTML = "";
 
@@ -82,18 +90,21 @@ async function atualizarDashboard() {
     containerGauges.appendChild(criarGauge(s.nome, percentual));
   });
 
-  const updateEl = document.getElementById("lastUpdate");
   updateEl.textContent = "Última atualização: " + new Date().toLocaleString("pt-BR");
 }
 
 function atualizarRelogio() {
   const relogio = document.getElementById("relogio");
-  relogio.textContent = new Date().toLocaleTimeString("pt-BR");
+  if (relogio) {
+    relogio.textContent = new Date().toLocaleTimeString("pt-BR");
+  }
 }
 
+// 🔧 Garante que só rode quando o DOM estiver pronto
 document.addEventListener("DOMContentLoaded", () => {
   atualizarDashboard();
   atualizarRelogio();
-  setInterval(atualizarDashboard, 10000);
-  setInterval(atualizarRelogio, 1000);
+
+  setInterval(atualizarDashboard, 10000); // atualiza dados a cada 10s
+  setInterval(atualizarRelogio, 1000); // atualiza relógio a cada 1s
 });
