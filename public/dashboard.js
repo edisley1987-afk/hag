@@ -65,7 +65,8 @@ setInterval(atualizarRelogio, 1000);
 
 async function carregarDados() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(`${API_URL}/dados`); // ✅ corrigido
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const dados = await res.json();
     atualizarDashboard(dados);
   } catch (e) {
