@@ -1,5 +1,5 @@
 /* === style.css === */
-/* Layout moderno e responsivo para o Dashboard HAG */
+/* Layout moderno horizontal com efeito visual de nível de água real */
 
 body {
   font-family: "Segoe UI", Arial, sans-serif;
@@ -20,74 +20,85 @@ header {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-header h1 {
-  font-size: 1.6rem;
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-
 #lastUpdate {
   font-size: 14px;
   opacity: 0.9;
   margin-top: 5px;
 }
 
-/* === Container dos cards === */
+/* === Cards lado a lado === */
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
   padding: 20px;
   justify-items: center;
-  align-content: start;
-  max-width: 1200px;
-  margin: 0 auto;
+  align-items: stretch;
   flex-grow: 1;
 }
 
-/* === Card geral === */
+/* === Card (caixa d'água) === */
 .card {
-  width: 100%;
-  max-width: 260px;
-  background: white;
-  border-radius: 14px;
-  border: 3px solid #ccc;
   position: relative;
-  padding: 14px;
-  text-align: center;
+  width: 100%;
+  max-width: 280px;
+  height: 320px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 4px solid #ccc;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.4s, box-shadow 0.3s;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: transform 0.25s, border-color 0.4s;
 }
 
 .card:hover {
   transform: scale(1.03);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
 
-/* === Barra lateral de nível === */
-.card::before {
+/* === Água subindo === */
+.card::after {
   content: "";
   position: absolute;
-  left: 0;
   bottom: 0;
-  width: 8px;
+  left: 0;
+  width: 100%;
   height: var(--nivel, 0%);
-  background: linear-gradient(to top, #2ecc71, #f1c40f, #e74c3c);
-  border-radius: 0 4px 4px 0;
-  transition: height 0.8s ease, background 0.8s ease;
+  background: var(--corNivel, linear-gradient(to top, #3498db, #2ecc71));
+  transition: height 1s ease, background 0.8s ease;
+  z-index: 0;
+  opacity: 0.5;
 }
 
-/* === Título e texto === */
+/* === Conteúdo acima da “água” === */
+.card h2,
+.card p,
+.card button {
+  position: relative;
+  z-index: 2;
+}
+
 .card h2 {
-  font-size: 1.1rem;
-  margin-bottom: 8px;
+  margin-top: 15px;
+  font-size: 1.2rem;
   color: #004d7a;
+  margin-bottom: 10px;
 }
 
 .card p {
-  margin: 5px 0;
   font-size: 1rem;
+  margin: 4px 0;
+}
+
+/* === Borda muda conforme nível === */
+.card[data-status="alto"] {
+  border-color: #2ecc71;
+}
+.card[data-status="medio"] {
+  border-color: #f1c40f;
+}
+.card[data-status="baixo"] {
+  border-color: #e74c3c;
 }
 
 /* === Botão histórico === */
@@ -95,25 +106,25 @@ header h1 {
   background: #004d7a;
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 0.9rem;
   margin-top: 10px;
-  transition: background 0.3s, transform 0.2s;
+  transition: background 0.3s;
 }
 
 .historico-btn:hover {
   background: #0074b1;
-  transform: scale(1.05);
 }
 
-/* === Card sem dados === */
+/* === Quando sem dados === */
 .card.sem-dados {
   opacity: 0.6;
   border-color: #aaa;
 }
-.card.sem-dados::before {
-  background: transparent;
+.card.sem-dados::after {
+  height: 0 !important;
 }
 
 /* === Rodapé fixo === */
@@ -123,28 +134,16 @@ footer {
   text-align: center;
   padding: 10px;
   font-size: 0.9rem;
-  margin-top: auto;
-  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  bottom: 0;
 }
 
-/* === Responsividade extra === */
-@media (max-width: 600px) {
-  header h1 {
-    font-size: 1.2rem;
-  }
-
+/* === Responsivo === */
+@media (max-width: 800px) {
   .cards-container {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
-
   .card {
-    max-width: 220px;
-    padding: 10px;
-  }
-
-  .historico-btn {
-    font-size: 0.9rem;
-    padding: 6px 10px;
+    height: 260px;
   }
 }
