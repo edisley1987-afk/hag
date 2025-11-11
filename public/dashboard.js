@@ -1,7 +1,5 @@
 // === dashboard.js ===
-// Exibe níveis e pressões em cards modernos com barra lateral colorida
-// Atualiza automaticamente a cada 5 segundos
-
+// URL da API
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000;
 
@@ -9,87 +7,119 @@ const UPDATE_INTERVAL = 5000;
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
-    capacidade: 20000
+    capacidade: 20000,
+    leituraVazio: 0.004168,
+    leituraCheio: 0.008056,
   },
   Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
-    capacidade: 200
+    capacidade: 200,
+    leituraVazio: 0.00505,
+    leituraCheio: 0.006693,
   },
   Reservatorio_CME_current: {
     nome: "Reservatório CME",
-    capacidade: 1000
+    capacidade: 1000,
+    leituraVazio: 0.004088,
+    leituraCheio: 0.004408,
   },
-  Reservatorio_Abrandada_current: {
+  Reservatorio_Agua_Abrandada_current: {
     nome: "Reservatório Água Abrandada",
-    capacidade: 2000
+    capacidade: 9000,
+    leituraVazio: 0.004008,
+    leituraCheio: 0.004929,
   },
-  Pressao_Saida_Osmose_current: { nome: "Pressão Saída Osmose", unidade: "bar" },
-  Pressao_Retorno_Osmose_current: { nome: "Pressão Retorno Osmose", unidade: "bar" },
-  Pressao_Saida_CME_current: { nome: "Pressão Saída CME", unidade: "bar" },
 };
 
-// === Função principal ===
-async function atualizarDados() {
+// Função auxiliar: normaliza o nome das chaves recebidas
+function normalizarNome(chave) {
+  return chave
+    .replace(/Pressao_saida_current/i, "Pressao_Saida_Osmose_current")
+    .replace(/Pressao_Saida_current/i, "Pressao_Saida_CME_current")
+    .replace(/Pressao_Retorno_current/i, "Pressao_Retorno_Osmose_current")
+    .replace(/Reservatorio_Agua_Abrandada_current/i, "Reservatorio_Agua_Abrandada_current");
+}
+
+// Função para calcular litros e porcentagem
+function calcularNivel(leitura, conf) {
+  if (!leitura || leitura <= 0) return { litros: 0, porcentagem: 0 };
+  const { leituraVazio, leituraCheio, capacidade } = conf;
+  let nivel = (leitura - leituraVazio) / (leituraCheio - leituraVazio);
+  nivel = Math.max(0, Math.min(1, nivel)); // limita entre 0% e 100%
+  const litros = Math.round(nivel * capacidade);
+  const porcentagem = (nivel * 100).toFixed(1);
+  return { litros, porcentagem };
+}
+
+// Atualiza os cards de reservatórios
+function atualizarCardNivel(id, leitura) {
+  const conf = RESERVATORIOS[id];
+  if (!conf) return;
+
+  const card = document.querySelector(`#card_${id}`);
+  if (!card) return;
+
+  const nivelElem = card.querySelector(".nivel");
+  const litrosElem = card.querySelector(".litros");
+  const barra = card.querySelector(".nivel-barra");
+
+  const { litros, porcentagem } = calcularNivel(leitura, conf);
+
+  nivelElem.textContent = `${porcentagem}%`;
+  litrosElem.textContent = `${litros.toLocaleString()} L`;
+
+  // Atualiza cor da borda/barra conforme o nível
+  let cor = "#28a745"; // verde
+  if (porcentagem < 30) cor = "#dc3545"; // vermelho
+  else if (porcentagem < 60) cor = "#ffc107"; // amarelo
+
+  barra.style.height = `${porcentagem}%`;
+  barra.style.background = cor;
+}
+
+// Atualiza as pressões
+function atualizarCardPressao(id, valor) {
+  const card = document.querySelector(`#card_${id}`);
+  if (!card) return;
+
+  const valorElem = card.querySelector(".pressao");
+  valorElem.textContent = valor ? valor.toFixed(2) + " bar" : "-- bar";
+}
+
+// Função principal: buscar dados do servidor
+async function atualizarLeituras() {
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    const response = await fetch(API_URL);
+    const data = await response.json();
 
-    const container = document.getElementById("cards-container");
-    container.innerHTML = "";
+    // Atualiza data/hora
+    document.getElementById("lastUpdate").textContent =
+      "Última atualização: " + new Date().toLocaleTimeString();
 
-    Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
-      const valor = data[key];
-      const card = document.createElement("div");
-      card.classList.add("card");
-
-      // Caso seja um reservatório (em litros)
-      if (cfg.capacidade) {
-        const litros = Number(valor) || 0;
-        const perc = Math.min((litros / cfg.capacidade) * 100, 100).toFixed(1);
-
-        // Define cor conforme nível
-        let nivel = "vazio";
-        if (perc >= 80) nivel = "alto";
-        else if (perc >= 50) nivel = "medio";
-        else if (perc > 5) nivel = "baixo";
-        card.setAttribute("data-nivel", nivel);
-
-        card.innerHTML = `
-          <h2>${cfg.nome}</h2>
-          <div class="valor">${perc}%</div>
-          <div class="subvalor">${litros.toLocaleString()} L</div>
-          <button onclick="abrirHistorico('${cfg.nome}')">Ver histórico</button>
-        `;
-
-      // Caso seja um sensor de pressão
-      } else {
-        const pressao = valor !== undefined && valor !== null ? valor.toFixed(2) : "--";
-        card.setAttribute("data-nivel", "vazio");
-        card.innerHTML = `
-          <h2>${cfg.nome}</h2>
-          <div class="valor">${pressao}</div>
-          <div class="subvalor">${cfg.unidade || ""}</div>
-        `;
-      }
-
-      container.appendChild(card);
+    // Atualiza reservatórios
+    Object.keys(RESERVATORIOS).forEach((id) => {
+      const keyServidor = Object.keys(data).find((k) =>
+        normalizarNome(k).includes(id)
+      );
+      const leitura = keyServidor ? data[keyServidor] : null;
+      atualizarCardNivel(id, leitura);
     });
 
-    document.getElementById("updateTime").textContent =
-      "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
-
+    // Atualiza pressões
+    atualizarCardPressao("Pressao_Saida_Osmose", data.Pressao_saida_current);
+    atualizarCardPressao("Pressao_Retorno_Osmose", data.Pressao_Retorno_current);
+    atualizarCardPressao("Pressao_Saida_CME", data.Pressao_Saida_current);
   } catch (err) {
-    console.error("Erro ao buscar dados:", err);
+    console.error("Erro ao atualizar leituras:", err);
   }
 }
 
-// === Botão de histórico ===
-function abrirHistorico(nome) {
-  // Aqui você pode alterar o link do histórico (HTML ou rota específica)
-  const url = "historico.html?reservatorio=" + encodeURIComponent(nome);
-  window.open(url, "_blank");
-}
+// Atualização automática
+setInterval(atualizarLeituras, UPDATE_INTERVAL);
+atualizarLeituras();
 
-// === Iniciar atualização automática ===
-setInterval(atualizarDados, UPDATE_INTERVAL);
-atualizarDados();
+// Função do botão “Ver histórico”
+function abrirHistorico(reservatorioId) {
+  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+}
+window.abrirHistorico = abrirHistorico;
