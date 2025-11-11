@@ -3,22 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Monitoramento — Hospital Arnaldo Gavazza</title>
+  <link rel="stylesheet" href="dashboard.css" />
 </head>
-
 <body>
   <header>
     <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <p id="updateTime">Última atualização: --:--:--</p>
+    <p id="lastUpdate">Última atualização: --:--:--</p>
   </header>
 
-  <main id="cards-container">
-    <!-- Os cards são criados automaticamente pelo dashboard.js -->
+  <main class="cards-container">
+    <!-- === Reservatórios === -->
+    <div class="card" id="card_Reservatorio_Elevador_current">
+      <h2>Reservatório Elevador</h2>
+      <div class="nivel">--%</div>
+      <div class="litros">-- L</div>
+      <div class="nivel-barra"></div>
+      <button onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver histórico</button>
+    </div>
+
+    <div class="card" id="card_Reservatorio_Osmose_current">
+      <h2>Reservatório Osmose</h2>
+      <div class="nivel">--%</div>
+      <div class="litros">-- L</div>
+      <div class="nivel-barra"></div>
+      <button onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver histórico</button>
+    </div>
+
+    <div class="card" id="card_Reservatorio_CME_current">
+      <h2>Reservatório CME</h2>
+      <div class="nivel">--%</div>
+      <div class="litros">-- L</div>
+      <div class="nivel-barra"></div>
+      <button onclick="abrirHistorico('Reservatorio_CME_current')">Ver histórico</button>
+    </div>
+
+    <div class="card" id="card_Reservatorio_Agua_Abrandada_current">
+      <h2>Reservatório Água Abrandada</h2>
+      <div class="nivel">--%</div>
+      <div class="litros">-- L</div>
+      <div class="nivel-barra"></div>
+      <button onclick="abrirHistorico('Reservatorio_Agua_Abrandada_current')">Ver histórico</button>
+    </div>
+
+    <!-- === Pressões === -->
+    <div class="card pressao-card" id="card_Pressao_Saida_Osmose">
+      <h2>Pressão Saída Osmose</h2>
+      <div class="pressao">-- bar</div>
+    </div>
+
+    <div class="card pressao-card" id="card_Pressao_Retorno_Osmose">
+      <h2>Pressão Retorno Osmose</h2>
+      <div class="pressao">-- bar</div>
+    </div>
+
+    <div class="card pressao-card" id="card_Pressao_Saida_CME">
+      <h2>Pressão Saída CME</h2>
+      <div class="pressao">-- bar</div>
+    </div>
   </main>
 
   <footer>
-    <p>© Hospital Arnaldo Gavazza — Sistema de Monitoramento</p>
+    © Hospital Arnaldo Gavazza — Sistema de Monitoramento
   </footer>
 
   <script src="dashboard.js"></script>
