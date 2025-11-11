@@ -3,101 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento — Hospital Arnaldo Gavazza</title>
+  <title>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
+  <header class="header">
     <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <div id="lastUpdate">Última atualização: --:--:--</div>
+    <p id="lastUpdate">Última atualização: --:--:--</p>
   </header>
 
-  <div class="cards-container">
-    <!-- Reservatório Elevador -->
+  <main class="dashboard">
+    <!-- === Reservatório Elevador === -->
     <div class="card" id="cardElevador">
-      <h2>Reservatório Elevador</h2>
-      <div class="progress-ring">
-        <svg width="120" height="120">
-          <circle class="progress-ring__background" cx="60" cy="60" r="50" />
-          <circle class="progress-ring__progress" id="ringElevador" cx="60" cy="60" r="50" />
-        </svg>
-      </div>
+      <div class="barra-circular"></div>
       <p id="nivelElevador">--%</p>
       <p id="litrosElevador">-- L</p>
-      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
     </div>
 
-    <!-- Reservatório Osmose -->
+    <!-- === Reservatório Osmose === -->
     <div class="card" id="cardOsmose">
-      <h2>Reservatório Osmose</h2>
-      <div class="progress-ring">
-        <svg width="120" height="120">
-          <circle class="progress-ring__background" cx="60" cy="60" r="50" />
-          <circle class="progress-ring__progress" id="ringOsmose" cx="60" cy="60" r="50" />
-        </svg>
-      </div>
+      <div class="barra-circular"></div>
       <p id="nivelOsmose">--%</p>
       <p id="litrosOsmose">-- L</p>
-      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
     </div>
 
-    <!-- Reservatório CME -->
+    <!-- === Reservatório CME === -->
     <div class="card" id="cardCME">
-      <h2>Reservatório CME</h2>
-      <div class="progress-ring">
-        <svg width="120" height="120">
-          <circle class="progress-ring__background" cx="60" cy="60" r="50" />
-          <circle class="progress-ring__progress" id="ringCME" cx="60" cy="60" r="50" />
-        </svg>
-      </div>
+      <div class="barra-circular"></div>
       <p id="nivelCME">--%</p>
       <p id="litrosCME">-- L</p>
-      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
     </div>
 
-    <!-- Água Abrandada -->
+    <!-- === Reservatório Água Abrandada === -->
     <div class="card" id="cardAbrandada">
-      <h2>Água Abrandada</h2>
-      <div class="progress-ring">
-        <svg width="120" height="120">
-          <circle class="progress-ring__background" cx="60" cy="60" r="50" />
-          <circle class="progress-ring__progress" id="ringAbrandada" cx="60" cy="60" r="50" />
-        </svg>
-      </div>
+      <div class="barra-circular"></div>
       <p id="nivelAbrandada">--%</p>
       <p id="litrosAbrandada">-- L</p>
-      <button class="historico-btn" onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
     </div>
 
-    <!-- Pressão Saída Osmose -->
-    <div class="card" id="cardPressaoSaida">
-      <h2>Pressão Saída Osmose</h2>
-      <p id="pressaoSaidaValor">-- bar</p>
+    <!-- === Pressões === -->
+    <div class="card" id="cardPressaoSaidaOsmose">
+      <h3>Pressão Saída Osmose</h3>
+      <div class="barra-circular"></div>
+      <p id="pressaoSaidaOsmose">-- bar</p>
     </div>
 
-    <!-- Pressão Retorno Osmose -->
-    <div class="card" id="cardPressaoRetorno">
-      <h2>Pressão Retorno Osmose</h2>
-      <p id="pressaoRetornoValor">-- bar</p>
+    <div class="card" id="cardPressaoRetornoOsmose">
+      <h3>Pressão Retorno Osmose</h3>
+      <div class="barra-circular"></div>
+      <p id="pressaoRetornoOsmose">-- bar</p>
     </div>
 
-    <!-- Pressão Saída CME -->
-    <div class="card" id="cardPressaoCME">
-      <h2>Pressão Saída CME</h2>
-      <p id="pressaoCMEValor">-- bar</p>
+    <div class="card" id="cardPressaoSaidaCME">
+      <h3>Pressão Saída CME</h3>
+      <div class="barra-circular"></div>
+      <p id="pressaoSaidaCME">-- bar</p>
     </div>
-  </div>
+  </main>
 
-  <footer>
+  <footer class="footer">
     © Hospital Arnaldo Gavazza — Sistema de Monitoramento
   </footer>
 
   <script src="dashboard.js"></script>
-  <script>
-    function abrirHistorico(reservatorioId) {
-      window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-    }
-    window.abrirHistorico = abrirHistorico;
-  </script>
 </body>
 </html>
