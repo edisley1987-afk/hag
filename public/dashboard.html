@@ -1,29 +1,23 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard - HAG</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard - Reservatórios HAG</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="header">
-    <img src="logo-gavazza-top.png" class="logo" alt="logo" />
-    <h1>Dashboard de Reservatórios - HAG</h1>
-    <div class="user-info">
-      <span id="userName"></span>
-      <button id="logoutBtn">Sair</button>
-    </div>
+    <img src="logo-gavazza-top.png" class="logo" alt="Logo HAG">
+    <h1>Monitoramento de Reservatórios - HAG</h1>
+    <button onclick="logout()" class="logout">Sair</button>
   </header>
 
-  <main>
-    <div id="cards-container" class="cards"></div>
-    <p id="ultima-atualizacao" class="atualizacao"></p>
+  <main class="dashboard">
+    <div id="cardsContainer" class="cards-grid"></div>
   </main>
 
-  <footer>
-    <button onclick="window.location.href='historico.html'">Ver Histórico</button>
-  </footer>
+  <footer>© 2025 — Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
 
   <script src="dashboard.js"></script>
 </body>
