@@ -1,130 +1,162 @@
-// === Dashboard.js ===
-// Atualiza leituras em tempo real, converte valores em litros e %
-// e ajusta as cores/níveis dinamicamente.
+// === dashboard.js ===
+// Versão: 11/11/2025 — Mantém último valor válido e atualiza automaticamente
 
 const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000; // atualização a cada 5s
+const UPDATE_INTERVAL = 5000; // Atualiza a cada 5 segundos
+const TIMEOUT_LEITURA = 600000; // 10 minutos de tolerância (em ms)
+let ultimoDadoValido = null;
+let ultimaAtualizacao = 0;
 
-// === Configuração dos reservatórios (calibração e capacidade) ===
-const RESERVATORIOS = {
+// === Configuração dos sensores ===
+const SENSORES = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
     capacidade: 20000,
-    leituraVazio: 0.004168,
-    leituraCheio: 0.008056,
+    tipo: "nivel",
+    cardId: "card-elevador",
+    valorId: "valor-elevador",
+    percentId: "percent-elevador",
   },
   Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
     capacidade: 200,
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006693,
+    tipo: "nivel",
+    cardId: "card-osmose",
+    valorId: "valor-osmose",
+    percentId: "percent-osmose",
   },
   Reservatorio_CME_current: {
     nome: "Reservatório CME",
     capacidade: 1000,
-    leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
+    tipo: "nivel",
+    cardId: "card-cme",
+    valorId: "valor-cme",
+    percentId: "percent-cme",
   },
   Reservatorio_Agua_Abrandada_current: {
     nome: "Água Abrandada",
     capacidade: 9000,
-    leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
+    tipo: "nivel",
+    cardId: "card-ablandada",
+    valorId: "valor-ablandada",
+    percentId: "percent-ablandada",
+  },
+  Pressao_Saida_current: {
+    nome: "Pressão Saída Osmose",
+    tipo: "pressao",
+    cardId: "card-psaida-osm",
+    valorId: "valor-psaida-osm",
+  },
+  Pressao_Retorno_current: {
+    nome: "Pressão Retorno Osmose",
+    tipo: "pressao",
+    cardId: "card-pretorno-osm",
+    valorId: "valor-pretorno-osm",
+  },
+  Pressao_saida_current: {
+    nome: "Pressão Saída CME",
+    tipo: "pressao",
+    cardId: "card-psaida-cme",
+    valorId: "valor-psaida-cme",
   },
 };
 
-// === Função para calcular litros e percentual ===
-function calcularLitros(leitura, config) {
-  if (typeof leitura !== "number" || leitura <= 0) return { litros: 0, percentual: 0 };
-
-  const { leituraVazio, leituraCheio, capacidade } = config;
-  const faixa = leituraCheio - leituraVazio;
-  const posicao = leitura - leituraVazio;
-  let percentual = (posicao / faixa) * 100;
-
-  percentual = Math.max(0, Math.min(100, percentual)); // limitar de 0 a 100%
-  const litros = (percentual / 100) * capacidade;
-
-  return { litros, percentual };
-}
-
-// === Atualiza card de reservatório ===
-function atualizarCard(id, leitura) {
-  const config = RESERVATORIOS[id];
-  if (!config) return;
-
-  const nomeId = config.nome.split(" ")[1];
-  const litrosElem = document.getElementById(`litros${nomeId}`);
-  const percElem = document.getElementById(`nivel${nomeId}`);
-  const barElem = document.getElementById(`nivel${nomeId}Bar`);
-  const cardElem = document.getElementById(`card${nomeId}`);
-
-  const { litros, percentual } = calcularLitros(leitura, config);
-
-  litrosElem.textContent = `${litros.toFixed(0)} L`;
-  percElem.textContent = `${percentual.toFixed(0)}%`;
-
-  // Atualiza barra lateral
-  if (barElem) barElem.style.height = `${percentual}%`;
-
-  // Define a cor conforme o nível
-  let cor = "#3aa374";
-  if (percentual < 20) cor = "#ff3b3b"; // vermelho
-  else if (percentual < 50) cor = "#ffb347"; // laranja
-  else if (percentual < 80) cor = "#5cb85c"; // verde
-  else cor = "#007bff"; // azul (cheio)
-
-  cardElem.style.borderLeftColor = cor;
-  if (barElem) barElem.style.background = cor;
-}
-
-// === Atualiza valores de pressão (formato bar) ===
-function atualizarPressao(idElem, valor) {
-  const elem = document.getElementById(idElem);
-  if (!elem) return;
-
-  // Conversão opcional se valor vier como leitura bruta (exemplo: 0.006 -> 1.20 bar)
-  const pressaoBar = valor > 0.02 ? valor : valor * 200; // converte se for sinal analógico
-  elem.textContent = pressaoBar ? `${pressaoBar.toFixed(2)} bar` : "0.00 bar";
-}
-
-// === Atualiza horário da última atualização ===
-function atualizarHorario() {
-  const agora = new Date();
-  document.getElementById("lastUpdate").textContent =
-    "Última atualização: " + agora.toLocaleTimeString("pt-BR");
-}
-
-// === Atualiza todos os dados do dashboard ===
-async function atualizarLeituras() {
+// === Função principal: busca dados do servidor ===
+async function carregarDados() {
   try {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Falha na requisição");
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
     const dados = await res.json();
 
-    // Atualiza reservatórios
-    for (const id in RESERVATORIOS) {
-      const leitura = dados[id];
-      atualizarCard(id, leitura);
+    // Se o servidor retornou dados válidos
+    if (dados && Object.keys(dados).length > 0) {
+      ultimoDadoValido = dados;
+      ultimaAtualizacao = Date.now();
+      atualizarDashboard(dados);
+    } else {
+      verificarTimeout();
     }
-
-    // Atualiza pressões (com nomes variados de chave)
-    atualizarPressao("pressaoSaida", dados.Pressao_Saida_Osmose || dados.Pressao_saida_current);
-    atualizarPressao("pressaoRetorno", dados.Pressao_Retorno_Osmose_current || dados.Pressao_Retorno_current);
-    atualizarPressao("pressaoCME", dados.Pressao_Saida_CME_current || dados.Pressao_Saida_current);
-
-    atualizarHorario();
   } catch (e) {
-    console.error("Erro ao buscar dados:", e);
-    for (const id in RESERVATORIOS) atualizarCard(id, 0);
+    console.warn("⚠ Falha ao buscar dados. Mantendo última leitura válida.");
+    verificarTimeout();
   }
 }
 
-// === Botão de histórico (placeholder) ===
-function abrirHistorico(nome) {
-  window.location.href = `historico.html?reservatorio=${nome}`;
+// === Verifica se o tempo sem atualização excede o limite ===
+function verificarTimeout() {
+  const tempoSemAtualizar = Date.now() - ultimaAtualizacao;
+  if (tempoSemAtualizar > TIMEOUT_LEITURA) {
+    console.warn("⏱ Nenhuma leitura há muito tempo. Zerar valores.");
+    atualizarDashboard(null);
+  } else if (ultimoDadoValido) {
+    atualizarDashboard(ultimoDadoValido);
+  }
 }
 
-// === Início automático ===
-setInterval(atualizarLeituras, UPDATE_INTERVAL);
-atualizarLeituras();
+// === Atualiza todos os cards ===
+function atualizarDashboard(dados) {
+  Object.entries(SENSORES).forEach(([chave, cfg]) => {
+    const cardEl = document.getElementById(cfg.cardId);
+    if (!cardEl) return;
+
+    let valor = dados ? dados[chave] : null;
+    let textoPrincipal = "--";
+    let textoSecundario = "--";
+    let cor = "#3aa374";
+    let nivel = 0;
+
+    // === Reservatórios ===
+    if (cfg.tipo === "nivel") {
+      if (valor != null && valor > 0) {
+        const porcentagem = Math.min(100, Math.max(0, (valor / cfg.capacidade) * 100));
+        textoPrincipal = `${porcentagem.toFixed(1)}%`;
+        textoSecundario = `${valor.toFixed(0)} L`;
+        nivel = porcentagem;
+
+        // Cores por faixa de nível
+        if (porcentagem < 30) cor = "#e53935"; // vermelho
+        else if (porcentagem < 60) cor = "#fbc02d"; // amarelo
+        else cor = "#43a047"; // verde
+      } else {
+        textoPrincipal = "0%";
+        textoSecundario = "0 L";
+        nivel = 0;
+        cor = "#999";
+      }
+    }
+
+    // === Pressões ===
+    else if (cfg.tipo === "pressao") {
+      if (valor != null && valor > 0) {
+        textoPrincipal = `${valor.toFixed(3)} bar`;
+        cor = valor < 0.004 ? "#e53935" : "#43a047";
+      } else {
+        textoPrincipal = "0.000 bar";
+        cor = "#999";
+      }
+    }
+
+    // === Atualiza elementos ===
+    cardEl.style.setProperty("--cor-nivel", cor);
+    cardEl.style.setProperty("--nivel", `${nivel}%`);
+
+    const valorEl = document.getElementById(cfg.valorId);
+    if (valorEl) valorEl.textContent = textoPrincipal;
+
+    const percentEl = document.getElementById(cfg.percentId);
+    if (percentEl) percentEl.textContent = textoSecundario;
+  });
+
+  // Atualiza o relógio no rodapé
+  const last = document.getElementById("lastUpdate");
+  if (last) {
+    const data = ultimaAtualizacao
+      ? new Date(ultimaAtualizacao).toLocaleTimeString("pt-BR", { hour12: false })
+      : "--:--:--";
+    last.textContent = "Última atualização: " + data;
+  }
+}
+
+// Atualiza periodicamente
+setInterval(carregarDados, UPDATE_INTERVAL);
+carregarDados();
