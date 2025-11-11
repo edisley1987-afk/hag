@@ -1,29 +1,24 @@
+// === historico.js ===
+// Exibe histórico de leituras com tabela e gráfico moderno
+
+const API_URL = window.location.origin + "/historico";
+
 async function carregarHistorico() {
   const container = document.getElementById("historico");
   const ctx = document.getElementById("graficoHistorico");
   container.innerHTML = "⏳ Carregando histórico...";
 
-  // 👉 Pega o reservatório da URL
-  const params = new URLSearchParams(window.location.search);
-  const reservatorio = params.get("reservatorio");
-
   try {
-    const res = await fetch("/historico");
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Erro ao buscar histórico");
     const historico = await res.json();
 
-    // Se tiver parâmetro, filtra só esse reservatório
-    let dadosFiltrados = historico;
-    if (reservatorio && historico[reservatorio]) {
-      dadosFiltrados = { [reservatorio]: historico[reservatorio] };
-    }
-
-    if (!Object.keys(dadosFiltrados).length) {
-      container.innerHTML = "<p>Nenhum dado de histórico encontrado.</p>";
+    if (!Object.keys(historico).length) {
+      container.innerHTML = `<p style="text-align:center; color:#555;">📭 Nenhum dado de histórico encontrado.</p>`;
       return;
     }
 
-    // === Montar tabela de histórico diário ===
+    // === Montar tabela ===
     let html = `
       <table class="tabela-historico">
         <thead>
@@ -37,39 +32,48 @@ async function carregarHistorico() {
         <tbody>
     `;
 
-    const labels = [];
-    const datasets = {};
+    const labels = []; // datas
+    const datasets = {}; // sensores e valores médios
 
-    Object.entries(dadosFiltrados).forEach(([nomeSensor, dias]) => {
-      Object.entries(dias).forEach(([data, valores]) => {
+    // Ordena as datas
+    const datasOrdenadas = Object.keys(historico).sort();
+
+    datasOrdenadas.forEach((data) => {
+      const sensores = historico[data];
+      labels.push(data);
+
+      Object.entries(sensores).forEach(([nome, valores]) => {
+        const media = (valores.max + valores.min) / 2;
+
         html += `
           <tr>
             <td>${data}</td>
-            <td>${nomeSensor}</td>
+            <td>${formatarNomeSensor(nome)}</td>
             <td>${valores.min}</td>
             <td>${valores.max}</td>
           </tr>
         `;
 
-        if (!datasets[nomeSensor]) datasets[nomeSensor] = { labels: [], values: [] };
-        datasets[nomeSensor].labels.push(data);
-        datasets[nomeSensor].values.push((valores.max + valores.min) / 2);
+        if (!datasets[nome]) datasets[nome] = [];
+        datasets[nome].push(media);
       });
     });
 
     html += "</tbody></table>";
     container.innerHTML = html;
 
-    // === Gerar gráfico ===
+    // === Montar gráfico ===
     const chartData = {
-      labels: Object.values(datasets)[0].labels,
-      datasets: Object.entries(datasets).map(([nome, info]) => ({
-        label: nome,
-        data: info.values,
-        borderColor: getRandomColor(),
+      labels,
+      datasets: Object.entries(datasets).map(([nome, valores]) => ({
+        label: formatarNomeSensor(nome),
+        data: valores,
+        borderColor: getCorSensor(nome),
+        backgroundColor: getCorSensor(nome),
         fill: false,
-        tension: 0.2
-      }))
+        tension: 0.2,
+        borderWidth: 2,
+      })),
     };
 
     new Chart(ctx, {
@@ -77,22 +81,49 @@ async function carregarHistorico() {
       data: chartData,
       options: {
         responsive: true,
-        plugins: { legend: { position: "bottom" } },
-        scales: { y: { beginAtZero: true } }
-      }
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+          title: { display: true, text: "Evolução das Leituras (Média Diária)" },
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: "Valor" } },
+          x: { title: { display: true, text: "Data" } },
+        },
+      },
     });
-
   } catch (err) {
-    container.innerHTML = `<p style="color:red;">Erro: ${err.message}</p>`;
+    container.innerHTML = `<p style="color:red;">❌ Erro: ${err.message}</p>`;
     console.error(err);
   }
 }
 
-function getRandomColor() {
-  const r = Math.floor(Math.random() * 200);
-  const g = Math.floor(Math.random() * 200);
-  const b = Math.floor(Math.random() * 200);
-  return `rgb(${r}, ${g}, ${b})`;
+// === Funções auxiliares ===
+function getCorSensor(nome) {
+  const cores = {
+    Reservatorio_Elevador_current: "#007bff",
+    Reservatorio_Osmose_current: "#00bcd4",
+    Reservatorio_CME_current: "#4caf50",
+    Agua_Abrandada_current: "#9c27b0",
+    Pressao_Saida_Osmose_current: "#ff9800",
+    Pressao_Retorno_Osmose_current: "#f44336",
+    Pressao_Saida_CME_current: "#3f51b5",
+  };
+  return cores[nome] || `hsl(${Math.random() * 360}, 70%, 50%)`;
 }
 
+function formatarNomeSensor(nome) {
+  return nome
+    .replace(/_/g, " ")
+    .replace("current", "")
+    .replace("Reservatorio", "Reservatório")
+    .replace("Pressao", "Pressão")
+    .replace("Agua", "Água")
+    .trim();
+}
+
+// Inicia o carregamento ao abrir a página
 carregarHistorico();
+
+// (Opcional) Atualiza automaticamente a cada 60s
+// setInterval(carregarHistorico, 60000);
