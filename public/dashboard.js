@@ -46,9 +46,6 @@ function criarCards() {
     card.id = id;
     card.innerHTML = `
       <h2>${RESERVATORIOS[id].nome}</h2>
-      <div class="nivel-container">
-        <div class="nivel-barra"></div>
-      </div>
       <p class="nivel">--%</p>
       <p class="litros">0 L</p>
       <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
@@ -88,24 +85,29 @@ async function atualizarLeituras() {
         card.classList.add("sem-dados");
         card.querySelector(".nivel").innerHTML = "--%";
         card.querySelector(".litros").innerHTML = "0 L";
-        card.querySelector(".nivel-barra").style.height = "0%";
+        card.style.setProperty("--nivel", "0%");
         return;
       }
 
       const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
       card.classList.remove("sem-dados");
 
-      // Define cores conforme o nível
-      let cor = "#2ecc71"; // verde
-      if (perc < 30) cor = "#e74c3c"; // vermelho
-      else if (perc < 70) cor = "#f1c40f"; // amarelo
+      // Define status e cores
+      let status = "alto";
+      let cor = "linear-gradient(to top, #3498db, #2ecc71)";
+      if (perc < 30) {
+        status = "baixo";
+        cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
+      } else if (perc < 70) {
+        status = "medio";
+        cor = "linear-gradient(to top, #f1c40f, #f39c12)";
+      }
 
-      const barra = card.querySelector(".nivel-barra");
-      barra.style.height = perc + "%";
-      barra.style.background = cor;
-
+      card.dataset.status = status;
       card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
       card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
+      card.style.setProperty("--nivel", perc + "%");
+      card.style.setProperty("--corNivel", cor);
     });
 
     // Atualiza pressões
@@ -117,21 +119,11 @@ async function atualizarLeituras() {
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".pressao").innerHTML = "-- bar";
-        card.style.borderColor = "#ccc";
         return;
       }
 
       card.classList.remove("sem-dados");
       card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
-
-      // 🔴 Muda cor se abaixo de 1 bar
-      if (valor < 1) {
-        card.style.borderColor = "#e74c3c";
-        card.style.background = "rgba(231,76,60,0.1)";
-      } else {
-        card.style.borderColor = "#ccc";
-        card.style.background = "white";
-      }
     });
 
     // Atualiza data/hora
@@ -154,8 +146,7 @@ setInterval(() => {
       if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
       if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
       if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
-      const barra = card.querySelector(".nivel-barra");
-      if (barra) barra.style.height = "0%";
+      card.style.setProperty("--nivel", "0%");
     });
   }
 }, 10000);
