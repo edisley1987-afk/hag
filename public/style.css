@@ -1,165 +1,135 @@
-/* ====== Estilo base ====== */
-:root {
-  --azul-claro: #0073cf;
-  --azul-escuro: #004b8d;
-  --cinza-fundo: #f2f6fa;
-  --verde: #2ecc71;
-  --amarelo: #f1c40f;
-  --vermelho: #e74c3c;
-  --cinza: #bdc3c7;
-  --branco: #fff;
-  --sombra-card: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --radius: 18px;
-}
-
-* {
-  box-sizing: border-box;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
+/* === ESTILO GERAL === */
 body {
-  background: var(--cinza-fundo);
-  color: #222;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  margin: 0;
+  background: #f4f8fc;
+  color: #002b5c;
 }
 
-/* ====== Cabeçalho ====== */
+/* Cabeçalho */
 header {
-  background: linear-gradient(135deg, var(--azul-claro), var(--azul-escuro));
-  color: var(--branco);
+  background: #0057a3;
+  color: white;
   text-align: center;
-  padding: 1.5rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 15px 0;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 header h1 {
-  font-size: 1.6rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: 1.4rem;
 }
 
 header p {
-  font-size: 0.95rem;
-  margin-top: 0.4rem;
-  opacity: 0.9;
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  color: #dce9f7;
 }
 
-/* ====== Container de cards ====== */
+/* Container principal */
 #cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 1.2rem;
-  padding: 2rem;
-  flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  justify-items: center;
 }
 
-/* ====== Cards ====== */
+/* === CARD PRINCIPAL === */
 .card {
-  background: var(--branco);
-  border-radius: var(--radius);
-  box-shadow: var(--sombra-card);
-  text-align: center;
-  padding: 1.2rem 1rem;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 200px;
+  min-height: 150px;
   position: relative;
-  transition: all 0.25s ease;
+  padding: 10px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border-left: 6px solid transparent;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
 
-/* Barra de nível colorida na lateral esquerda */
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 6px;
-  height: 100%;
-  border-radius: 6px 0 0 6px;
-  background: var(--cinza);
-  transition: background 0.3s ease;
-}
-
-/* Nome do reservatório */
 .card h2 {
-  font-size: 1rem;
-  color: var(--azul-escuro);
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-/* Valor principal (nível ou pressão) */
-.card .valor {
-  font-size: 1.4rem;
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
-/* Valor secundário */
-.card .subvalor {
   font-size: 0.95rem;
-  color: #555;
-  margin-bottom: 0.6rem;
+  margin: 6px 0 8px;
+  color: #004080;
 }
 
-/* Botão de histórico */
+.valor {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #000;
+}
+
+.subvalor {
+  font-size: 0.9rem;
+  color: #0057a3;
+  margin-top: 2px;
+}
+
+/* === BOTÃO HISTÓRICO === */
 .card button {
-  background: var(--azul-claro);
-  border: none;
+  background: #0078d7;
   color: white;
-  padding: 0.4rem 0.8rem;
+  border: none;
   border-radius: 8px;
+  padding: 5px 10px;
+  margin-top: 8px;
+  font-size: 0.8rem;
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.25s;
+  transition: 0.3s;
 }
 
 .card button:hover {
-  background: var(--azul-escuro);
+  background: #005fa3;
 }
 
-/* ====== Rodapé ====== */
+/* === BARRA LATERAL COLORIDA === */
+.card[data-nivel="alto"] {
+  border-left-color: #2ecc71; /* verde */
+}
+
+.card[data-nivel="medio"] {
+  border-left-color: #f1c40f; /* amarelo */
+}
+
+.card[data-nivel="baixo"] {
+  border-left-color: #e67e22; /* laranja */
+}
+
+.card[data-nivel="vazio"] {
+  border-left-color: #bdc3c7; /* cinza */
+}
+
+/* Rodapé */
 footer {
-  background: var(--azul-escuro);
+  background: #0057a3;
   color: white;
   text-align: center;
-  padding: 0.8rem 0;
-  font-size: 0.85rem;
+  padding: 8px 0;
+  font-size: 0.8rem;
+  margin-top: 20px;
 }
 
-/* ====== Cores dinâmicas ====== */
-.card[data-nivel="alto"]::before {
-  background: var(--verde);
-}
-
-.card[data-nivel="medio"]::before {
-  background: var(--amarelo);
-}
-
-.card[data-nivel="baixo"]::before {
-  background: var(--vermelho);
-}
-
-.card[data-nivel="vazio"]::before {
-  background: var(--cinza);
-}
-
-/* ====== Responsivo ====== */
+/* === RESPONSIVIDADE === */
 @media (max-width: 768px) {
   header h1 {
-    font-size: 1.2rem;
-  }
-
-  #cards-container {
-    padding: 1rem;
+    font-size: 1.1rem;
   }
 
   .card {
-    padding: 1rem;
+    max-width: 160px;
+    padding: 8px;
+  }
+
+  .valor {
+    font-size: 1.2rem;
   }
 }
