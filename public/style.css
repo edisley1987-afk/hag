@@ -1,135 +1,150 @@
-/* === ESTILO GERAL === */
+/* === Estilo geral === */
 body {
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f3f8fc;
   margin: 0;
-  background: #f4f8fc;
-  color: #002b5c;
+  padding: 0;
+  color: #003366;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* Cabeçalho */
+/* === Cabeçalho === */
 header {
-  background: #0057a3;
+  background-color: #005bac;
   color: white;
   text-align: center;
-  padding: 15px 0;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 1.2rem 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 header h1 {
+  font-size: 1.5rem;
   margin: 0;
-  font-size: 1.4rem;
 }
 
 header p {
-  margin: 5px 0 0;
   font-size: 0.9rem;
-  color: #dce9f7;
+  margin-top: 4px;
+  opacity: 0.9;
 }
 
-/* Container principal */
-#cards-container {
+/* === Container principal === */
+.cards-container {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  padding: 20px;
-  justify-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 1rem 2rem 3rem;
+  box-sizing: border-box;
 }
 
-/* === CARD PRINCIPAL === */
+/* === Card base === */
 .card {
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  max-width: 200px;
-  min-height: 150px;
-  position: relative;
-  padding: 10px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
-  transition: all 0.3s ease;
-  border-left: 6px solid transparent;
+  padding: 1rem;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .card h2 {
-  font-size: 0.95rem;
-  margin: 6px 0 8px;
-  color: #004080;
+  font-size: 1rem;
+  color: #003366;
+  margin-bottom: 0.6rem;
 }
 
-.valor {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #000;
+/* === Leituras === */
+.nivel {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #005bac;
 }
 
-.subvalor {
+.litros {
   font-size: 0.9rem;
-  color: #0057a3;
-  margin-top: 2px;
+  color: #333;
+  margin-bottom: 0.6rem;
 }
 
-/* === BOTÃO HISTÓRICO === */
-.card button {
-  background: #0078d7;
+/* === Barra de nível === */
+.nivel-barra {
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background-color: #e0e0e0;
+  margin-bottom: 0.8rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.nivel-barra::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  width: 0%;
+  background-color: #28a745;
+  transition: width 0.6s ease, background 0.3s ease;
+}
+
+/* Atualização dinâmica da barra */
+.card[data-nivel] .nivel-barra::after {
+  width: attr(data-nivel percentage);
+}
+
+/* === Botões === */
+button {
+  background-color: #007bff;
   color: white;
   border: none;
+  padding: 6px 12px;
   border-radius: 8px;
-  padding: 5px 10px;
-  margin-top: 8px;
-  font-size: 0.8rem;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 0.85rem;
+  transition: background-color 0.3s ease;
 }
 
-.card button:hover {
-  background: #005fa3;
+button:hover {
+  background-color: #0056b3;
 }
 
-/* === BARRA LATERAL COLORIDA === */
-.card[data-nivel="alto"] {
-  border-left-color: #2ecc71; /* verde */
+/* === Pressão === */
+.pressao {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #003366;
 }
 
-.card[data-nivel="medio"] {
-  border-left-color: #f1c40f; /* amarelo */
-}
-
-.card[data-nivel="baixo"] {
-  border-left-color: #e67e22; /* laranja */
-}
-
-.card[data-nivel="vazio"] {
-  border-left-color: #bdc3c7; /* cinza */
-}
-
-/* Rodapé */
+/* === Rodapé fixado === */
 footer {
-  background: #0057a3;
+  background-color: #005bac;
   color: white;
   text-align: center;
-  padding: 8px 0;
-  font-size: 0.8rem;
-  margin-top: 20px;
+  padding: 0.7rem;
+  font-size: 0.85rem;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* === RESPONSIVIDADE === */
+/* === Responsividade === */
 @media (max-width: 768px) {
   header h1 {
-    font-size: 1.1rem;
-  }
-
-  .card {
-    max-width: 160px;
-    padding: 8px;
-  }
-
-  .valor {
     font-size: 1.2rem;
+  }
+
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
