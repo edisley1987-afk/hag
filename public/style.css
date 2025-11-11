@@ -1,95 +1,127 @@
 :root {
-  --primary: #004d40;
-  --accent: #00acc1;
-  --danger: #e63946;
-  --bg: #f9f9f9;
+  --primary: #1a5c5c;
+  --accent: #22b8b0;
+  --danger: #e74c3c;
+  --background: #f5f8f8;
+  --text: #002b2b;
 }
 
 body {
-  font-family: "Segoe UI", sans-serif;
   margin: 0;
-  background: var(--bg);
-  color: #333;
+  background: var(--background);
+  font-family: "Segoe UI", sans-serif;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.header {
+header.header {
   background: var(--primary);
   color: white;
-  padding: 10px 20px;
+  padding: 15px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.logo {
-  height: 50px;
+header .logo {
+  height: 48px;
+}
+
+header h1 {
+  font-size: 20px;
+  flex: 1;
+  text-align: center;
+}
+
+.logout {
+  background: var(--accent);
+  border: none;
+  color: #012;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 footer {
-  background: #eee;
   text-align: center;
   padding: 10px;
-  font-size: 14px;
-  margin-top: 20px;
-}
-
-.login-form {
-  max-width: 400px;
-  margin: 50px auto;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  text-align: center;
-}
-
-.login-form input {
-  display: block;
-  width: 90%;
-  margin: 10px auto;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.login-form button {
-  background: var(--accent);
+  background: var(--primary);
   color: white;
-  padding: 10px 20px;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.login-form button:hover {
-  background: #0097a7;
+  margin-top: auto;
 }
 
-.erro {
-  color: var(--danger);
-  font-weight: bold;
-}
-
-.user-info {
+/* ===== Layout dos Cards ===== */
+.cards-grid {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 25px;
+}
+
+/* ===== Card Base ===== */
+.card {
+  background: white;
+  border-radius: 16px;
+  width: 220px;
+  height: 300px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
 }
 
-button#logoutBtn {
-  background: var(--danger);
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-button#logoutBtn:hover {
-  opacity: 0.8;
-}
-
-.atualizacao {
+.card h2 {
+  font-size: 18px;
   text-align: center;
-  font-size: 14px;
-  color: #666;
+  margin: 10px 0;
+  color: var(--primary);
+}
+
+/* ===== Nível visual ===== */
+.nivel-container {
+  position: relative;
+  width: 100%;
+  height: 70%;
+  background: #dfeff0;
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+
+.nivel {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  transition: height 1s ease, background 0.5s;
+  background: linear-gradient(to top, var(--accent), #a0f0ec);
+}
+
+.valor {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: bold;
+  color: var(--text);
+  font-size: 16px;
+}
+
+/* ===== Alerta de nível baixo ===== */
+.card.baixo .nivel {
+  background: linear-gradient(to top, var(--danger), #ffaaa7);
+}
+
+/* ===== Para sensores de pressão ===== */
+.card.pressao .nivel-container {
+  height: 50%;
+}
+
+.card.pressao.baixo .nivel {
+  background: linear-gradient(to top, #ff4d4d, #ffaaaa);
 }
