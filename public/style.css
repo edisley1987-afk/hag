@@ -1,128 +1,154 @@
-:root {
-  --bg-dark: #0b1e36;
-  --card-bg: #142b4a;
-  --text-light: #f0f0f0;
-  --accent: #007bff;
-  --verde: #3aa374;
-  --amarelo: #f4c542;
-  --vermelho: #e64a19;
-}
+/* === style-hag.css === */
+/* Tema hospitalar moderno — Azul e cinza com foco em clareza e contraste */
 
-/* ====== BASE ====== */
-body {
-  background: var(--bg-dark);
-  color: var(--text-light);
-  font-family: "Segoe UI", sans-serif;
+/* === RESET === */
+* {
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
+/* === BODY === */
+body {
+  background: #f5f7fa;
+  color: #1e2a3a;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* === CABEÇALHO === */
 header {
   text-align: center;
+  background: linear-gradient(90deg, #003d73, #0074b7);
+  color: #fff;
   padding: 20px;
-  background: #112b4a;
-  border-bottom: 3px solid var(--accent);
+  border-radius: 16px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 header h1 {
-  margin: 0;
-  font-size: clamp(1.4rem, 2vw, 2.2rem);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 600;
 }
 
 #lastUpdate {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  opacity: 0.9;
+  margin-top: 8px;
 }
 
-/* ====== GRID ====== */
-.grid-dashboard {
+/* === CONTAINER DE CARDS === */
+.cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  padding: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  width: 100%;
   flex: 1;
 }
 
-/* ====== CARD ====== */
+/* === CARDS === */
 .card {
-  background: var(--card-bg);
-  border-radius: 15px;
-  border: 3px solid var(--verde);
-  text-align: center;
+  background: #ffffff;
+  border: 3px solid #0074b7;
+  border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s, border-color 0.3s;
+  text-align: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s ease;
 }
 
 .card:hover {
-  transform: scale(1.03);
-  border-color: var(--accent);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
 }
 
+/* === TÍTULOS E TEXTOS === */
 .card h2 {
-  color: #aad4ff;
+  color: #003d73;
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
   margin-bottom: 10px;
-  font-size: clamp(1.2rem, 2vw, 1.6rem);
 }
 
-.valor {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: bold;
-  margin: 10px 0;
+.card p {
+  font-size: clamp(1rem, 2.5vw, 1.6rem);
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
-.sub {
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  color: #ccc;
-}
-
+/* === BOTÕES === */
 .historico-btn {
-  background: var(--accent);
-  color: white;
+  background: #0074b7;
+  color: #fff;
   border: none;
+  padding: 10px 18px;
   border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 1rem;
-  margin-top: 10px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s ease, transform 0.2s;
+  font-weight: 500;
 }
 
 .historico-btn:hover {
-  background: #005fcc;
+  background: #005f99;
+  transform: scale(1.05);
 }
 
-/* ====== FOOTER ====== */
+/* === CORES DE ALERTA AUTOMÁTICAS === */
+.card[data-status="baixo"] {
+  border-color: #e53935;
+  background: #ffe6e6;
+}
+
+.card[data-status="medio"] {
+  border-color: #f4c542;
+  background: #fff9e5;
+}
+
+.card[data-status="normal"] {
+  border-color: #3aa374;
+  background: #e8f8f1;
+}
+
+/* === ANIMAÇÃO DE ATUALIZAÇÃO === */
+@keyframes flashUpdate {
+  from {
+    box-shadow: 0 0 0px rgba(0, 255, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+  }
+}
+
+.card.atualizado {
+  animation: flashUpdate 0.6s ease;
+}
+
+/* === RODAPÉ === */
 footer {
   text-align: center;
-  padding: 10px;
-  background: #112b4a;
+  padding: 15px;
+  color: #888;
   font-size: 0.9rem;
-  color: #aaa;
+  margin-top: 25px;
 }
 
-/* ====== RESPONSIVIDADE ====== */
+/* === RESPONSIVIDADE === */
 @media (max-width: 768px) {
-  .grid-dashboard {
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+  body {
     padding: 15px;
   }
 
-  .card {
-    padding: 15px;
-  }
-}
-
-@media (max-width: 500px) {
-  .grid-dashboard {
+  .cards-container {
     grid-template-columns: 1fr;
   }
 
-  header h1 {
-    font-size: 1.2rem;
+  header {
+    padding: 15px;
   }
 }
