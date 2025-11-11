@@ -6,6 +6,8 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import session from "express-session";
+import { users } from "./users.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -16,6 +18,16 @@ app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
+
+// === Sessões (login) ===
+app.use(
+  session({
+    secret: "hag-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // use true se HTTPS
+  })
+);
 
 // === Pastas e arquivos ===
 const DATA_DIR = path.join(__dirname, "data");
@@ -34,13 +46,12 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" },
 };
 
-// === Função para salvar leituras ===
+// === Funções auxiliares ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
   console.log("💾 Leituras atualizadas:", dados);
 }
 
-// === Função para registrar histórico diário ===
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -66,6 +77,28 @@ function registrarHistorico(dados) {
   });
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+}
+
+// === Login e autenticação ===
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  const user = users.find((u) => u.username === username && u.password === password);
+  if (user) {
+    req.session.user = username;
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+app.post("/logout", (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+function requireLogin(req, res, next) {
+  if (req.session.user) next();
+  else res.redirect("/login.html");
 }
 
 // === Endpoint universal do Gateway ===
@@ -113,13 +146,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       let leituraConvertida;
 
       if (tipo === "pressao") {
-        // Converte 4–20 mA → 0–20 bar
         const corrente = valor;
         leituraConvertida = ((corrente - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(3));
       } else if (capacidade > 1) {
-        // Reservatórios: converte para litros
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
@@ -142,14 +173,14 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoints para dashboard e histórico ===
-app.get("/dados", (req, res) => {
+// === Endpoints protegidos ===
+app.get("/dados", requireLogin, (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   res.json(dados);
 });
 
-app.get("/historico", (req, res) => {
+app.get("/historico", requireLogin, (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json({});
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
   res.json(historico);
@@ -157,10 +188,17 @@ app.get("/historico", (req, res) => {
 
 // === Servir interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/historico-view", (req, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+
+app.get("/", (req, res) => res.redirect("/login.html"));
+app.get("/dashboard.html", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"))
+);
+app.get("/historico.html", requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "historico.html"))
+);
+app.get("/login.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
+);
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
