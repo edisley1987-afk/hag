@@ -5,7 +5,7 @@
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // atualização a cada 5s
 
-// === Configurações de cada reservatório ===
+// === Configuração dos reservatórios (calibração e capacidade) ===
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
@@ -33,29 +33,31 @@ const RESERVATORIOS = {
   },
 };
 
-// === Função para calcular litros ===
+// === Função para calcular litros e percentual ===
 function calcularLitros(leitura, config) {
-  if (!leitura || leitura <= 0) return 0;
+  if (typeof leitura !== "number" || leitura <= 0) return { litros: 0, percentual: 0 };
 
   const { leituraVazio, leituraCheio, capacidade } = config;
   const faixa = leituraCheio - leituraVazio;
   const posicao = leitura - leituraVazio;
   let percentual = (posicao / faixa) * 100;
 
-  percentual = Math.max(0, Math.min(100, percentual)); // limita entre 0 e 100
+  percentual = Math.max(0, Math.min(100, percentual)); // limitar de 0 a 100%
   const litros = (percentual / 100) * capacidade;
+
   return { litros, percentual };
 }
 
-// === Atualiza um card com os dados ===
+// === Atualiza card de reservatório ===
 function atualizarCard(id, leitura) {
   const config = RESERVATORIOS[id];
-  const litrosElem = document.getElementById(`litros${config.nome.split(" ")[1]}`);
-  const percElem = document.getElementById(`nivel${config.nome.split(" ")[1]}`);
-  const barElem = document.getElementById(`nivel${config.nome.split(" ")[1]}Bar`);
-  const cardElem = document.getElementById(`card${config.nome.split(" ")[1]}`);
+  if (!config) return;
 
-  if (!config || !litrosElem || !percElem) return;
+  const nomeId = config.nome.split(" ")[1];
+  const litrosElem = document.getElementById(`litros${nomeId}`);
+  const percElem = document.getElementById(`nivel${nomeId}`);
+  const barElem = document.getElementById(`nivel${nomeId}Bar`);
+  const cardElem = document.getElementById(`card${nomeId}`);
 
   const { litros, percentual } = calcularLitros(leitura, config);
 
@@ -65,47 +67,51 @@ function atualizarCard(id, leitura) {
   // Atualiza barra lateral
   if (barElem) barElem.style.height = `${percentual}%`;
 
-  // Muda a cor da lateral conforme nível
+  // Define a cor conforme o nível
   let cor = "#3aa374";
   if (percentual < 20) cor = "#ff3b3b"; // vermelho
   else if (percentual < 50) cor = "#ffb347"; // laranja
-  else if (percentual < 80) cor = "#5cb85c"; // verde médio
-  else cor = "#007bff"; // cheio (azul)
+  else if (percentual < 80) cor = "#5cb85c"; // verde
+  else cor = "#007bff"; // azul (cheio)
 
   cardElem.style.borderLeftColor = cor;
   if (barElem) barElem.style.background = cor;
 }
 
-// === Atualiza pressão ===
+// === Atualiza valores de pressão (formato bar) ===
 function atualizarPressao(idElem, valor) {
   const elem = document.getElementById(idElem);
-  if (elem) elem.textContent = valor ? `${valor.toFixed(3)} bar` : "-- bar";
+  if (!elem) return;
+
+  // Conversão opcional se valor vier como leitura bruta (exemplo: 0.006 -> 1.20 bar)
+  const pressaoBar = valor > 0.02 ? valor : valor * 200; // converte se for sinal analógico
+  elem.textContent = pressaoBar ? `${pressaoBar.toFixed(2)} bar` : "0.00 bar";
 }
 
-// === Atualiza o horário da última atualização ===
+// === Atualiza horário da última atualização ===
 function atualizarHorario() {
   const agora = new Date();
   document.getElementById("lastUpdate").textContent =
     "Última atualização: " + agora.toLocaleTimeString("pt-BR");
 }
 
-// === Requisição de dados ===
+// === Atualiza todos os dados do dashboard ===
 async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Falha na requisição");
     const dados = await res.json();
 
-    // Atualiza cada reservatório
+    // Atualiza reservatórios
     for (const id in RESERVATORIOS) {
       const leitura = dados[id];
       atualizarCard(id, leitura);
     }
 
-    // Atualiza pressões
-    atualizarPressao("pressaoSaida", dados.Pressao_saida_current || dados.Pressao_Saida_current);
-    atualizarPressao("pressaoRetorno", dados.Pressao_Retorno_current);
-    atualizarPressao("pressaoCME", dados.Pressao_Saida_current || 0);
+    // Atualiza pressões (com nomes variados de chave)
+    atualizarPressao("pressaoSaida", dados.Pressao_Saida_Osmose || dados.Pressao_saida_current);
+    atualizarPressao("pressaoRetorno", dados.Pressao_Retorno_Osmose_current || dados.Pressao_Retorno_current);
+    atualizarPressao("pressaoCME", dados.Pressao_Saida_CME_current || dados.Pressao_Saida_current);
 
     atualizarHorario();
   } catch (e) {
@@ -114,11 +120,11 @@ async function atualizarLeituras() {
   }
 }
 
-// === Botão de histórico (exemplo futuro) ===
+// === Botão de histórico (placeholder) ===
 function abrirHistorico(nome) {
-  alert(`(Em breve) Histórico de leituras de ${RESERVATORIOS[nome]?.nome || nome}`);
+  window.location.href = `historico.html?reservatorio=${nome}`;
 }
 
-// === Inicialização ===
+// === Início automático ===
 setInterval(atualizarLeituras, UPDATE_INTERVAL);
 atualizarLeituras();
