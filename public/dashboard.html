@@ -6,14 +6,14 @@
   <title>Monitoramento — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <body>
   <header>
     <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
     <div id="lastUpdate">Última atualização: --:--:--</div>
   </header>
 
-  <!-- ✅ Container que organiza os cards lado a lado -->
+  <!-- ✅ Container que organiza os cards -->
   <div class="cards-container">
     <!-- Reservatório Elevador -->
     <div class="card" id="cardElevador">
@@ -58,23 +58,19 @@
       <h2>Pressão Retorno Osmose</h2>
       <p id="pressaoRetorno">-- bar</p>
     </div>
+
+    <!-- ✅ Pressão Saída CME -->
+    <div class="card" id="cardPressaoCME">
+      <h2>Pressão Saída CME</h2>
+      <p id="pressaoCME">-- bar</p>
+    </div>
   </div>
 
   <footer>
     © Hospital Arnaldo Gavazza
   </footer>
 
+  <!-- ✅ Chama o script externo -->
   <script src="dashboard.js"></script>
 </body>
-  // === dashboard.js ===
-// ... seu código atual ...
-
-function abrirHistorico(reservatorioId) {
-  // Exemplo simples: abrir uma nova aba com o histórico
-  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-}
-
-// Torna acessível globalmente (caso o arquivo use módulo)
-window.abrirHistorico = abrirHistorico;
-
 </html>
