@@ -1,153 +1,104 @@
-// === dashboard.js ===
-// Exibe leituras em tempo real com barra de nível lateral e cores dinâmicas
+// === Dashboard HAG ===
+// Exibe leituras em tempo real, converte para litros/bar e mostra % corretamente
 
 const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000; // Atualiza a cada 5s
-const DATA_TIMEOUT = 240000; // 240s = 4 minutos
+const UPDATE_INTERVAL = 5000; // a cada 5 segundos
 
-let ultimaLeitura = 0;
-
-// === Configuração dos sensores ===
-const SENSORES = {
+// Configuração dos reservatórios
+const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
-    tipo: "nivel",
     capacidade: 20000,
-    leituraVazio: 0.004168,
-    leituraCheio: 0.008056,
-    cardId: "cardElevador",
-    valorId: "nivelElevador",
-    litrosId: "litrosElevador"
   },
   Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
-    tipo: "nivel",
     capacidade: 200,
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006693,
-    cardId: "cardOsmose",
-    valorId: "nivelOsmose",
-    litrosId: "litrosOsmose"
   },
   Reservatorio_CME_current: {
     nome: "Reservatório CME",
-    tipo: "nivel",
     capacidade: 1000,
-    leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
-    cardId: "cardCME",
-    valorId: "nivelCME",
-    litrosId: "litrosCME"
   },
   Reservatorio_Agua_Abrandada_current: {
     nome: "Água Abrandada",
-    tipo: "nivel",
     capacidade: 9000,
-    leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
-    cardId: "cardAbrandada",
-    valorId: "nivelAbrandada",
-    litrosId: "litrosAbrandada"
   },
-  Pressao_Saida_Osmose_current: {
-    nome: "Pressão Saída Osmose",
-    tipo: "pressao",
-    cardId: "cardPressaoSaida",
-    valorId: "pressaoSaida"
-  },
-  Pressao_Retorno_Osmose_current: {
-    nome: "Pressão Retorno Osmose",
-    tipo: "pressao",
-    cardId: "cardPressaoRetorno",
-    valorId: "pressaoRetorno"
-  },
-  Pressao_Saida_CME_current: {
-    nome: "Pressão Saída CME",
-    tipo: "pressao",
-    cardId: "cardPressaoCME",
-    valorId: "pressaoCME"
-  }
 };
 
-// === Função para buscar dados ===
-async function carregarDados() {
+// Pressões
+const PRESSOES = {
+  Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
+  Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
+  Pressao_Saida_CME_current: "Pressão Saída CME",
+};
+
+let ultimaAtualizacao = 0;
+
+async function atualizarLeituras() {
   try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(API_URL + "?t=" + Date.now());
     const dados = await res.json();
-    atualizarDashboard(dados);
+
+    if (!dados || !dados.timestamp) return;
+
+    const ts = new Date(dados.timestamp).getTime();
+    const agora = Date.now();
+
+    // Se a leitura for muito antiga, ignora (mais de 5 min)
+    if (agora - ts > 5 * 60 * 1000) {
+      console.warn("⏳ Dados antigos — aguardando nova leitura...");
+      return;
+    }
+
+    ultimaAtualizacao = ts;
+    document.getElementById("lastUpdate").innerText =
+      "Última atualização: " + new Date(ts).toLocaleString();
+
+    const container = document.getElementById("cards");
+    container.innerHTML = "";
+
+    // === Reservatórios ===
+    for (const [id, cfg] of Object.entries(RESERVATORIOS)) {
+      const valor = dados[id];
+      const temDado = typeof valor === "number" && valor > 0;
+
+      const nivel = temDado
+        ? Math.min(100, Math.round((valor / cfg.capacidade) * 100))
+        : 0;
+
+      const card = document.createElement("div");
+      card.className = "card" + (temDado ? "" : " sem-dados");
+      card.style.setProperty("--nivel", `${nivel}%`);
+
+      card.innerHTML = `
+        <h2>${cfg.nome}</h2>
+        <p><strong>${temDado ? nivel + "%" : "--"}</strong></p>
+        <p>${temDado ? valor.toLocaleString() + " L" : "Sem dados"}</p>
+        <button class="historico-btn">Ver Histórico</button>
+      `;
+
+      card.querySelector(".historico-btn").onclick = () =>
+        (window.location.href = "/historico-view?res=" + id);
+
+      container.appendChild(card);
+    }
+
+    // === Pressões ===
+    for (const [id, nome] of Object.entries(PRESSOES)) {
+      const valor = dados[id];
+      const temDado = typeof valor === "number" && valor > 0;
+
+      const card = document.createElement("div");
+      card.className = "card" + (temDado ? "" : " sem-dados");
+      card.innerHTML = `
+        <h2>${nome}</h2>
+        <p><strong>${temDado ? valor.toFixed(2) : "--"} bar</strong></p>
+      `;
+      container.appendChild(card);
+    }
   } catch (err) {
-    console.error("Erro ao buscar dados:", err);
+    console.error("Erro ao buscar leituras:", err);
   }
 }
 
-// === Atualiza cards ===
-function atualizarDashboard(dados) {
-  const agora = Date.now();
-  ultimaLeitura = new Date(dados.timestamp).getTime();
-
-  Object.entries(SENSORES).forEach(([chave, cfg]) => {
-    const valorBruto = dados[chave];
-    const card = document.getElementById(cfg.cardId);
-    const valorEl = document.getElementById(cfg.valorId);
-    const litrosEl = document.getElementById(cfg.litrosId);
-
-    if (!card) return;
-
-    // Verifica se os dados estão desatualizados
-    const tempoSemAtualizar = agora - ultimaLeitura;
-    if (tempoSemAtualizar > DATA_TIMEOUT || valorBruto == null) {
-      card.classList.add("sem-dados");
-      if (valorEl) valorEl.textContent = "Sem leitura";
-      if (litrosEl) litrosEl.textContent = "--";
-      card.style.setProperty("--nivel", "0%");
-      return;
-    } else {
-      card.classList.remove("sem-dados");
-    }
-
-    if (cfg.tipo === "nivel") {
-      // Converte leitura analógica para litros e %
-      const proporcao = Math.min(
-        1,
-        Math.max(
-          0,
-          (valorBruto - cfg.leituraVazio) /
-            (cfg.leituraCheio - cfg.leituraVazio)
-        )
-      );
-      const litros = proporcao * cfg.capacidade;
-      const porcentagem = proporcao * 100;
-
-      let cor =
-        porcentagem < 50 ? "#e74c3c" : porcentagem < 80 ? "#f1c40f" : "#2ecc71";
-
-      card.style.borderColor = cor;
-      card.style.setProperty("--nivel", `${porcentagem}%`);
-      if (valorEl) valorEl.textContent = `${porcentagem.toFixed(1)}%`;
-      if (litrosEl)
-        litrosEl.textContent = `${litros.toFixed(0)} L de ${cfg.capacidade.toLocaleString()} L`;
-    } else if (cfg.tipo === "pressao") {
-      const valor = parseFloat(valorBruto);
-      if (valorEl) valorEl.textContent = `${valor.toFixed(2)} bar`;
-      card.style.borderColor = valor < 1 ? "#e74c3c" : "#2ecc71";
-    }
-  });
-
-  // Atualiza hora da leitura
-  const last = document.getElementById("lastUpdate");
-  if (last)
-    last.textContent =
-      "Última atualização: " +
-      new Date().toLocaleTimeString("pt-BR", { hour12: false });
-}
-
-// === Timer automático ===
-setInterval(carregarDados, UPDATE_INTERVAL);
-carregarDados();
-
-// === Função de histórico ===
-function abrirHistorico(reservatorioId) {
-  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-}
-window.abrirHistorico = abrirHistorico;
+setInterval(atualizarLeituras, UPDATE_INTERVAL);
+window.onload = atualizarLeituras;
