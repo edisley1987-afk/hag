@@ -1,149 +1,95 @@
-/* === style.css === */
-/* Layout moderno horizontal com efeito visual de nível de água real */
+:root {
+  --primary: #004d40;
+  --accent: #00acc1;
+  --danger: #e63946;
+  --bg: #f9f9f9;
+}
 
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f7fa;
+  font-family: "Segoe UI", sans-serif;
   margin: 0;
-  padding: 0;
-  color: #222;
+  background: var(--bg);
+  color: #333;
+}
+
+.header {
+  background: var(--primary);
+  color: white;
+  padding: 10px 20px;
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  align-items: center;
+  justify-content: space-between;
 }
 
-header {
-  background: #004d7a;
-  color: white;
-  text-align: center;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+.logo {
+  height: 50px;
 }
 
-#lastUpdate {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-top: 5px;
-}
-
-/* === Cards lado a lado === */
-.cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
-  padding: 20px;
-  justify-items: center;
-  align-items: stretch;
-  flex-grow: 1;
-}
-
-/* === Card (caixa d'água) === */
-.card {
-  position: relative;
-  width: 100%;
-  max-width: 280px;
-  height: 320px;
-  background: #ffffff;
-  border-radius: 18px;
-  border: 4px solid #ccc;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  text-align: center;
-  transition: transform 0.25s, border-color 0.4s;
-}
-
-.card:hover {
-  transform: scale(1.03);
-}
-
-/* === Água subindo === */
-.card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: var(--nivel, 0%);
-  background: var(--corNivel, linear-gradient(to top, #3498db, #2ecc71));
-  transition: height 1s ease, background 0.8s ease;
-  z-index: 0;
-  opacity: 0.5;
-}
-
-/* === Conteúdo acima da “água” === */
-.card h2,
-.card p,
-.card button {
-  position: relative;
-  z-index: 2;
-}
-
-.card h2 {
-  margin-top: 15px;
-  font-size: 1.2rem;
-  color: #004d7a;
-  margin-bottom: 10px;
-}
-
-.card p {
-  font-size: 1rem;
-  margin: 4px 0;
-}
-
-/* === Borda muda conforme nível === */
-.card[data-status="alto"] {
-  border-color: #2ecc71;
-}
-.card[data-status="medio"] {
-  border-color: #f1c40f;
-}
-.card[data-status="baixo"] {
-  border-color: #e74c3c;
-}
-
-/* === Botão histórico === */
-.historico-btn {
-  background: #004d7a;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-top: 10px;
-  transition: background 0.3s;
-}
-
-.historico-btn:hover {
-  background: #0074b1;
-}
-
-/* === Quando sem dados === */
-.card.sem-dados {
-  opacity: 0.6;
-  border-color: #aaa;
-}
-.card.sem-dados::after {
-  height: 0 !important;
-}
-
-/* === Rodapé fixo === */
 footer {
-  background: #004d7a;
-  color: white;
+  background: #eee;
   text-align: center;
   padding: 10px;
-  font-size: 0.9rem;
-  position: sticky;
-  bottom: 0;
+  font-size: 14px;
+  margin-top: 20px;
 }
 
-/* === Responsivo === */
-@media (max-width: 800px) {
-  .cards-container {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-  .card {
-    height: 260px;
-  }
+.login-form {
+  max-width: 400px;
+  margin: 50px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.login-form input {
+  display: block;
+  width: 90%;
+  margin: 10px auto;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.login-form button {
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.login-form button:hover {
+  background: #0097a7;
+}
+
+.erro {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button#logoutBtn {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button#logoutBtn:hover {
+  opacity: 0.8;
+}
+
+.atualizacao {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
 }
