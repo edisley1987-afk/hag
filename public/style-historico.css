@@ -1,107 +1,107 @@
-/* === Estilo base === */
+/* === style-historico.css === */
+
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f7fb;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f5f7fa;
   margin: 0;
-  padding: 20px;
-  color: #333;
+  padding: 0;
+  color: #222;
 }
 
-/* === Cabeçalho === */
 header {
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  color: white;
+  padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #0056b3;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
 }
 
-/* === Botão voltar === */
 .voltar-btn {
   text-decoration: none;
-  color: white;
-  background: #007bff;
-  padding: 8px 16px;
+  background: white;
+  color: #0056b3;
+  padding: 10px 16px;
   border-radius: 8px;
-  transition: background 0.2s ease;
-  font-weight: bold;
+  font-weight: 600;
+  transition: 0.3s;
 }
 
 .voltar-btn:hover {
-  background: #339dff;
+  background: #e6ecff;
 }
 
-/* === Área principal === */
-.historico-main {
-  margin-top: 25px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 25px;
+main {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* === Gráfico === */
 canvas {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 20px;
-  max-width: 950px;
   width: 100%;
+  max-height: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
 }
 
 /* === Tabela === */
 .tabela-historico {
   width: 100%;
-  max-width: 950px;
   border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.tabela-historico th,
-.tabela-historico td {
-  border: 1px solid #ddd;
-  padding: 10px 8px;
-  text-align: center;
-  font-size: 0.95rem;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tabela-historico th {
-  background: #007bff;
+  background-color: #007bff;
   color: white;
+  text-transform: uppercase;
   font-weight: 600;
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.tabela-historico td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
 }
 
 .tabela-historico tr:nth-child(even) {
-  background: #f9f9f9;
+  background-color: #f9fbff;
+}
+
+.tabela-historico tr:hover {
+  background-color: #e6ecff;
+  transition: 0.2s;
 }
 
 /* === Responsividade === */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    text-align: center;
   }
 
-  .tabela-historico th,
-  .tabela-historico td {
-    font-size: 0.85rem;
-    padding: 6px;
+  .voltar-btn {
+    margin-top: 10px;
   }
 
-  canvas {
-    padding: 10px;
+  .tabela-historico th, .tabela-historico td {
+    font-size: 0.8rem;
+    padding: 8px;
   }
 }
