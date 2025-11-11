@@ -1,101 +1,165 @@
-/* === ESTILO PRINCIPAL === */
+/* ====== Estilo base ====== */
+:root {
+  --azul-claro: #0073cf;
+  --azul-escuro: #004b8d;
+  --cinza-fundo: #f2f6fa;
+  --verde: #2ecc71;
+  --amarelo: #f1c40f;
+  --vermelho: #e74c3c;
+  --cinza: #bdc3c7;
+  --branco: #fff;
+  --sombra-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: #f4f8fb;
-  color: #003366;
+  background: var(--cinza-fundo);
+  color: #222;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.header {
-  background-color: #005baa;
-  color: white;
+/* ====== Cabeçalho ====== */
+header {
+  background: linear-gradient(135deg, var(--azul-claro), var(--azul-escuro));
+  color: var(--branco);
   text-align: center;
-  padding: 15px 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  padding: 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.header h1 {
-  font-size: 1.4rem;
-  margin-bottom: 5px;
+header h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
 }
 
-#lastUpdate {
-  font-size: 0.9rem;
-  color: #cfe4ff;
+header p {
+  font-size: 0.95rem;
+  margin-top: 0.4rem;
+  opacity: 0.9;
 }
 
-.dashboard {
+/* ====== Container de cards ====== */
+#cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
-  padding: 25px;
+  gap: 1.2rem;
+  padding: 2rem;
+  flex: 1;
 }
 
-/* === CARDS === */
+/* ====== Cards ====== */
 .card {
+  background: var(--branco);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra-card);
+  text-align: center;
+  padding: 1.2rem 1rem;
   position: relative;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: row;
-  height: 130px;
-  transition: transform 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* === BARRA LATERAL DE NÍVEL === */
-.nivel-bar {
-  width: 12px;
-  background-color: #ccc;
-  transition: all 0.5s ease;
+/* Barra de nível colorida na lateral esquerda */
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  border-radius: 6px 0 0 6px;
+  background: var(--cinza);
+  transition: background 0.3s ease;
 }
 
-/* === CONTEÚDO DO CARD === */
-.card-content {
-  flex: 1;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10px;
-}
-
-.card h3 {
-  margin: 0 0 8px;
+/* Nome do reservatório */
+.card h2 {
   font-size: 1rem;
-  color: #005baa;
+  color: var(--azul-escuro);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
-.card p {
-  margin: 2px 0;
-  font-size: 1rem;
+/* Valor principal (nível ou pressão) */
+.card .valor {
+  font-size: 1.4rem;
   font-weight: bold;
+  margin-bottom: 0.25rem;
 }
 
-/* === CORES DE NÍVEL === */
-.nivel-alto {
-  background-color: #2ecc71; /* verde */
-}
-.nivel-medio {
-  background-color: #f1c40f; /* amarelo */
-}
-.nivel-baixo {
-  background-color: #e74c3c; /* vermelho */
-}
-.nivel-vazio {
-  background-color: #bdc3c7; /* cinza */
+/* Valor secundário */
+.card .subvalor {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 0.6rem;
 }
 
-.footer {
-  text-align: center;
-  padding: 12px;
-  background-color: #005baa;
+/* Botão de histórico */
+.card button {
+  background: var(--azul-claro);
+  border: none;
   color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
   font-size: 0.85rem;
+  transition: background 0.25s;
+}
+
+.card button:hover {
+  background: var(--azul-escuro);
+}
+
+/* ====== Rodapé ====== */
+footer {
+  background: var(--azul-escuro);
+  color: white;
+  text-align: center;
+  padding: 0.8rem 0;
+  font-size: 0.85rem;
+}
+
+/* ====== Cores dinâmicas ====== */
+.card[data-nivel="alto"]::before {
+  background: var(--verde);
+}
+
+.card[data-nivel="medio"]::before {
+  background: var(--amarelo);
+}
+
+.card[data-nivel="baixo"]::before {
+  background: var(--vermelho);
+}
+
+.card[data-nivel="vazio"]::before {
+  background: var(--cinza);
+}
+
+/* ====== Responsivo ====== */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.2rem;
+  }
+
+  #cards-container {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
 }
