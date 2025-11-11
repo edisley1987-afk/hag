@@ -1,6 +1,5 @@
-/* === Estilo moderno e responsivo para o Dashboard HAG === */
+/* === Estilo moderno e responsivo com barra circular === */
 
-/* Paleta inspirada nas cores do Hospital Arnaldo Gavazza */
 :root {
   --azul-principal: #005baa;
   --azul-claro: #2e8df5;
@@ -12,7 +11,6 @@
   --branco: #ffffff;
 }
 
-/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -41,7 +39,6 @@ header {
 header h1 {
   font-size: 1.6rem;
   margin-bottom: 10px;
-  letter-spacing: 0.5px;
 }
 
 #lastUpdate {
@@ -49,11 +46,11 @@ header h1 {
   color: #e0e0e0;
 }
 
-/* ===== CONTAINER DOS CARDS ===== */
+/* ===== CONTAINER ===== */
 .cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+  gap: 25px;
   padding: 30px;
   width: 100%;
   flex: 1;
@@ -62,33 +59,56 @@ header h1 {
 /* ===== CARD ===== */
 .card {
   background: var(--branco);
-  border: 4px solid var(--verde);
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 25px;
   text-align: center;
+  position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, border-color 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .card:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
-/* Título */
 .card h2 {
   color: var(--azul-principal);
   font-size: 1.2rem;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
-/* Leituras */
 .card p {
   font-size: 1.3rem;
   font-weight: bold;
   margin: 8px 0;
 }
 
-/* Botões */
+/* ===== BARRA CIRCULAR ===== */
+.progress-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.progress-ring__background {
+  stroke: #ddd;
+}
+
+.progress-ring__progress {
+  stroke: var(--verde);
+  transition: stroke-dashoffset 0.5s, stroke 0.5s;
+}
+
+/* Botão */
 .historico-btn {
   background: var(--azul-claro);
   color: var(--branco);
@@ -105,46 +125,19 @@ header h1 {
   background: var(--azul-principal);
 }
 
-/* ===== FOOTER ===== */
+/* Footer */
 footer {
   background: var(--azul-principal);
   color: var(--branco);
   text-align: center;
   padding: 10px;
   font-size: 0.9rem;
-  border-top: 3px solid var(--azul-claro);
 }
 
 /* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
-  header h1 {
-    font-size: 1.3rem;
-  }
-
-  .cards-container {
-    padding: 15px;
-    gap: 15px;
-  }
-
-  .card {
-    padding: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  header h1 {
-    font-size: 1.1rem;
-  }
-
-  .card h2 {
-    font-size: 1rem;
-  }
-
-  .card p {
-    font-size: 1.1rem;
-  }
-
-  .historico-btn {
-    font-size: 0.85rem;
+  .progress-ring {
+    width: 100px;
+    height: 100px;
   }
 }
