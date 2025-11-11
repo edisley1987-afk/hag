@@ -1,143 +1,166 @@
-/* === Estilo moderno e responsivo com barra circular === */
-
-:root {
-  --azul-principal: #005baa;
-  --azul-claro: #2e8df5;
-  --verde: #3aa374;
-  --amarelo: #f4c542;
-  --vermelho: #e64a19;
-  --cinza-claro: #f7f9fc;
-  --texto-escuro: #1a1a1a;
-  --branco: #ffffff;
-}
-
-* {
+/* === ESTILO GERAL === */
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f0f4f8;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-}
-
-body {
-  background: var(--cinza-claro);
-  color: var(--texto-escuro);
+  color: #333;
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-height: 100vh;
 }
 
-/* ===== HEADER ===== */
+/* === CABEÇALHO === */
 header {
-  background: var(--azul-principal);
-  color: var(--branco);
+  background: #005b96;
+  color: white;
+  width: 100%;
   padding: 20px;
   text-align: center;
-  border-bottom: 5px solid var(--azul-claro);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 header h1 {
-  font-size: 1.6rem;
-  margin-bottom: 10px;
+  margin: 0;
+  font-size: 1.8rem;
 }
 
 #lastUpdate {
-  font-size: 0.95rem;
-  color: #e0e0e0;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  opacity: 0.9;
 }
 
-/* ===== CONTAINER ===== */
+/* === CONTAINER DOS CARDS === */
 .cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 25px;
   padding: 30px;
-  width: 100%;
-  flex: 1;
+  max-width: 1600px;
 }
 
-/* ===== CARD ===== */
+/* === CARD PADRÃO === */
 .card {
-  background: var(--branco);
-  border-radius: 20px;
-  padding: 25px;
-  text-align: center;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-  transform: scale(1.02);
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(0, 123, 255, 0.3);
 }
 
 .card h2 {
-  color: var(--azul-principal);
-  font-size: 1.2rem;
-  margin-bottom: 15px;
+  margin: 10px 0 5px;
+  font-size: 1.1rem;
+  color: #005b96;
+  text-align: center;
 }
 
 .card p {
-  font-size: 1.3rem;
-  font-weight: bold;
-  margin: 8px 0;
-}
-
-/* ===== BARRA CIRCULAR ===== */
-.progress-ring {
+  margin: 2px 0;
+  z-index: 2;
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 10px;
+  font-weight: bold;
 }
 
-.progress-ring circle {
-  fill: none;
-  stroke-width: 10;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
+.card p:nth-child(2) {
+  font-size: 1.4rem;
+  color: #003f6b;
 }
 
-.progress-ring__background {
-  stroke: #ddd;
-}
-
-.progress-ring__progress {
-  stroke: var(--verde);
-  transition: stroke-dashoffset 0.5s, stroke 0.5s;
-}
-
-/* Botão */
-.historico-btn {
-  background: var(--azul-claro);
-  color: var(--branco);
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  margin-top: 10px;
+.card p:nth-child(3) {
   font-size: 0.95rem;
+  color: #555;
+}
+
+/* === BOTÃO DE HISTÓRICO === */
+.historico-btn {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 .historico-btn:hover {
-  background: var(--azul-principal);
+  background: #0056b3;
 }
 
-/* Footer */
+/* === BARRA CIRCULAR === */
+.barra-circular {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(#ddd 0deg, #ddd 360deg);
+  z-index: 1;
+  transition: background 0.6s ease;
+}
+
+/* === RODAPÉ === */
 footer {
-  background: var(--azul-principal);
-  color: var(--branco);
+  background: #005b96;
+  color: white;
   text-align: center;
-  padding: 10px;
+  width: 100%;
+  padding: 10px 0;
   font-size: 0.9rem;
+  margin-top: auto;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* === RESPONSIVIDADE === */
+@media (max-width: 1024px) {
+  header h1 {
+    font-size: 1.4rem;
+  }
+  .card {
+    width: 180px;
+    height: 180px;
+  }
+  .card h2 {
+    font-size: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
-  .progress-ring {
-    width: 100px;
-    height: 100px;
+  .cards-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  .card {
+    width: 160px;
+    height: 160px;
+  }
+  .card h2 {
+    font-size: 0.95rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .card {
+    width: 260px;
+    height: 260px;
+  }
+  header h1 {
+    font-size: 2.2rem;
   }
 }
