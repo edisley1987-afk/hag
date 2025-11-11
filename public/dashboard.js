@@ -1,42 +1,41 @@
-// === dashboard.js ===
+// === Dashboard.js ===
 // Exibe leituras de nível e pressão com cores dinâmicas e estilo hospitalar
 
-// URL da API que fornece os dados dos reservatórios e pressões
-const API_URL = "https://reservatorios-hag-dashboard.onrender.com/dados";
+const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // atualização a cada 5s
 
-// Configuração dos sensores
+// === Configuração dos sensores ===
 const SENSORES = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
     tipo: "nivel",
     capacidade: 20000,
-    valorId: "litrosElevador",
-    percentId: "nivelElevador",
+    valorId: "nivelElevador",
+    percentId: "litrosElevador",
     cardId: "cardElevador",
   },
   Reservatorio_Osmose_current: {
     nome: "Reservatório Osmose",
     tipo: "nivel",
     capacidade: 200,
-    valorId: "litrosOsmose",
-    percentId: "nivelOsmose",
+    valorId: "nivelOsmose",
+    percentId: "litrosOsmose",
     cardId: "cardOsmose",
   },
   Reservatorio_CME_current: {
     nome: "Reservatório CME",
     tipo: "nivel",
     capacidade: 1000,
-    valorId: "litrosCME",
-    percentId: "nivelCME",
+    valorId: "nivelCME",
+    percentId: "litrosCME",
     cardId: "cardCME",
   },
   Agua_Abrandada_current: {
     nome: "Água Abrandada",
     tipo: "nivel",
     capacidade: 9000,
-    valorId: "litrosAbrandada",
-    percentId: "nivelAbrandada",
+    valorId: "nivelAbrandada",
+    percentId: "litrosAbrandada",
     cardId: "cardAbrandada",
   },
   Pressao_Saida_Osmose_current: {
@@ -51,6 +50,7 @@ const SENSORES = {
     cardId: "cardPressaoRetorno",
     valorId: "pressaoRetorno",
   },
+  // ✅ Novo sensor adicionado
   Pressao_Saida_CME_current: {
     nome: "Pressão Saída CME",
     tipo: "pressao",
@@ -59,38 +59,23 @@ const SENSORES = {
   },
 };
 
-// === Função para abrir o histórico ===
-function abrirHistorico(reservatorioId) {
-  // Abre a página de histórico, passando o nome do reservatório na URL
-  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-}
-
-// Torna a função acessível globalmente (para uso no onclick do HTML)
-window.abrirHistorico = abrirHistorico;
-
 // === Função para buscar dados do servidor ===
 async function carregarDados() {
-  const last = document.getElementById("lastUpdate");
-  if (last) last.textContent = "⏳ Atualizando dados...";
-
   try {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const dados = await res.json();
-
     atualizarDashboard(dados);
   } catch (e) {
     console.error("Erro ao buscar dados:", e);
-    if (last)
-      last.textContent = "⚠️ Erro ao atualizar dados (" + e.message + ")";
   }
 }
 
-// === Atualiza todos os cards com os dados ===
+// === Atualiza todos os cards ===
 function atualizarDashboard(dados) {
   Object.entries(SENSORES).forEach(([chave, cfg]) => {
     const valor = dados[chave];
-    if (valor == null) return; // ignora sensores ausentes
+    if (valor == null) return;
 
     const cardEl = document.getElementById(cfg.cardId);
     if (!cardEl) return;
@@ -102,10 +87,8 @@ function atualizarDashboard(dados) {
     if (cfg.tipo === "nivel") {
       // Nível em litros e %
       const porcentagem = Math.min(100, Math.max(0, (valor / cfg.capacidade) * 100));
-
       if (porcentagem < 50) cor = "#e64a19"; // vermelho
       else if (porcentagem < 80) cor = "#f4c542"; // amarelo
-
       textoPrincipal = `${porcentagem.toFixed(1)}%`;
       textoSecundario = `${valor.toFixed(0)} L de ${cfg.capacidade.toLocaleString()} L`;
     } else if (cfg.tipo === "pressao") {
@@ -114,10 +97,8 @@ function atualizarDashboard(dados) {
       cor = valor < 1 ? "#e64a19" : "#3aa374";
     }
 
-    // Atualiza a cor da borda do card
-    cardEl.style.border = `3px solid ${cor}`;
-
-    // Atualiza textos
+    // Atualiza cor e texto do card
+    cardEl.style.borderColor = cor;
     const valorEl = document.getElementById(cfg.valorId);
     if (valorEl) valorEl.textContent = textoPrincipal;
 
@@ -125,7 +106,7 @@ function atualizarDashboard(dados) {
     if (percentEl) percentEl.textContent = textoSecundario;
   });
 
-  // Atualiza hora de atualização
+  // Atualiza hora
   const last = document.getElementById("lastUpdate");
   if (last)
     last.textContent =
@@ -133,6 +114,12 @@ function atualizarDashboard(dados) {
       new Date().toLocaleTimeString("pt-BR", { hour12: false });
 }
 
-// === Inicia atualização automática ===
+// === Atualização automática ===
 setInterval(carregarDados, UPDATE_INTERVAL);
 carregarDados();
+
+// === Abre histórico do reservatório ===
+function abrirHistorico(reservatorioId) {
+  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+}
+window.abrirHistorico = abrirHistorico;
