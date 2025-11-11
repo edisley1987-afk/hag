@@ -1,4 +1,4 @@
-// === Dashboard.js ===
+// === dashboard.js ===
 // Exibe leituras de nível e pressão com cores dinâmicas e estilo hospitalar
 
 // URL da API que fornece os dados dos reservatórios e pressões
@@ -51,13 +51,22 @@ const SENSORES = {
     cardId: "cardPressaoRetorno",
     valorId: "pressaoRetorno",
   },
+  Pressao_Saida_CME_current: {
+    nome: "Pressão Saída CME",
+    tipo: "pressao",
+    cardId: "cardPressaoCME",
+    valorId: "pressaoCME",
+  },
 };
 
-// === Função para abrir histórico ===
-function abrirHistorico(sensor) {
-  // Redireciona para a página de histórico com o sensor selecionado
-  window.location.href = `historico.html?sensor=${encodeURIComponent(sensor)}`;
+// === Função para abrir o histórico ===
+function abrirHistorico(reservatorioId) {
+  // Abre a página de histórico, passando o nome do reservatório na URL
+  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
 }
+
+// Torna a função acessível globalmente (para uso no onclick do HTML)
+window.abrirHistorico = abrirHistorico;
 
 // === Função para buscar dados do servidor ===
 async function carregarDados() {
