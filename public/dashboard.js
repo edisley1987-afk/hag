@@ -1,9 +1,11 @@
-// === dashboard.js ===
-// URL da API
-const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000;
+// === Dashboard.js ===
+// Atualiza leituras em tempo real, converte valores em litros e %
+// e ajusta as cores/níveis dinamicamente.
 
-// Configuração dos reservatórios
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000; // atualização a cada 5s
+
+// === Configurações de cada reservatório ===
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
@@ -24,102 +26,99 @@ const RESERVATORIOS = {
     leituraCheio: 0.004408,
   },
   Reservatorio_Agua_Abrandada_current: {
-    nome: "Reservatório Água Abrandada",
+    nome: "Água Abrandada",
     capacidade: 9000,
     leituraVazio: 0.004008,
     leituraCheio: 0.004929,
   },
 };
 
-// Função auxiliar: normaliza o nome das chaves recebidas
-function normalizarNome(chave) {
-  return chave
-    .replace(/Pressao_saida_current/i, "Pressao_Saida_Osmose_current")
-    .replace(/Pressao_Saida_current/i, "Pressao_Saida_CME_current")
-    .replace(/Pressao_Retorno_current/i, "Pressao_Retorno_Osmose_current")
-    .replace(/Reservatorio_Agua_Abrandada_current/i, "Reservatorio_Agua_Abrandada_current");
+// === Função para calcular litros ===
+function calcularLitros(leitura, config) {
+  if (!leitura || leitura <= 0) return 0;
+
+  const { leituraVazio, leituraCheio, capacidade } = config;
+  const faixa = leituraCheio - leituraVazio;
+  const posicao = leitura - leituraVazio;
+  let percentual = (posicao / faixa) * 100;
+
+  percentual = Math.max(0, Math.min(100, percentual)); // limita entre 0 e 100
+  const litros = (percentual / 100) * capacidade;
+  return { litros, percentual };
 }
 
-// Função para calcular litros e porcentagem
-function calcularNivel(leitura, conf) {
-  if (!leitura || leitura <= 0) return { litros: 0, porcentagem: 0 };
-  const { leituraVazio, leituraCheio, capacidade } = conf;
-  let nivel = (leitura - leituraVazio) / (leituraCheio - leituraVazio);
-  nivel = Math.max(0, Math.min(1, nivel)); // limita entre 0% e 100%
-  const litros = Math.round(nivel * capacidade);
-  const porcentagem = (nivel * 100).toFixed(1);
-  return { litros, porcentagem };
+// === Atualiza um card com os dados ===
+function atualizarCard(id, leitura) {
+  const config = RESERVATORIOS[id];
+  const litrosElem = document.getElementById(`litros${config.nome.split(" ")[1]}`);
+  const percElem = document.getElementById(`nivel${config.nome.split(" ")[1]}`);
+  const barElem = document.getElementById(`nivel${config.nome.split(" ")[1]}Bar`);
+  const cardElem = document.getElementById(`card${config.nome.split(" ")[1]}`);
+
+  if (!config || !litrosElem || !percElem) return;
+
+  const { litros, percentual } = calcularLitros(leitura, config);
+
+  litrosElem.textContent = `${litros.toFixed(0)} L`;
+  percElem.textContent = `${percentual.toFixed(0)}%`;
+
+  // Atualiza barra lateral
+  if (barElem) barElem.style.height = `${percentual}%`;
+
+  // Muda a cor da lateral conforme nível
+  let cor = "#3aa374";
+  if (percentual < 20) cor = "#ff3b3b"; // vermelho
+  else if (percentual < 50) cor = "#ffb347"; // laranja
+  else if (percentual < 80) cor = "#5cb85c"; // verde médio
+  else cor = "#007bff"; // cheio (azul)
+
+  cardElem.style.borderLeftColor = cor;
+  if (barElem) barElem.style.background = cor;
 }
 
-// Atualiza os cards de reservatórios
-function atualizarCardNivel(id, leitura) {
-  const conf = RESERVATORIOS[id];
-  if (!conf) return;
-
-  const card = document.querySelector(`#card_${id}`);
-  if (!card) return;
-
-  const nivelElem = card.querySelector(".nivel");
-  const litrosElem = card.querySelector(".litros");
-  const barra = card.querySelector(".nivel-barra");
-
-  const { litros, porcentagem } = calcularNivel(leitura, conf);
-
-  nivelElem.textContent = `${porcentagem}%`;
-  litrosElem.textContent = `${litros.toLocaleString()} L`;
-
-  // Atualiza cor da borda/barra conforme o nível
-  let cor = "#28a745"; // verde
-  if (porcentagem < 30) cor = "#dc3545"; // vermelho
-  else if (porcentagem < 60) cor = "#ffc107"; // amarelo
-
-  barra.style.height = `${porcentagem}%`;
-  barra.style.background = cor;
+// === Atualiza pressão ===
+function atualizarPressao(idElem, valor) {
+  const elem = document.getElementById(idElem);
+  if (elem) elem.textContent = valor ? `${valor.toFixed(3)} bar` : "-- bar";
 }
 
-// Atualiza as pressões
-function atualizarCardPressao(id, valor) {
-  const card = document.querySelector(`#card_${id}`);
-  if (!card) return;
-
-  const valorElem = card.querySelector(".pressao");
-  valorElem.textContent = valor ? valor.toFixed(2) + " bar" : "-- bar";
+// === Atualiza o horário da última atualização ===
+function atualizarHorario() {
+  const agora = new Date();
+  document.getElementById("lastUpdate").textContent =
+    "Última atualização: " + agora.toLocaleTimeString("pt-BR");
 }
 
-// Função principal: buscar dados do servidor
+// === Requisição de dados ===
 async function atualizarLeituras() {
   try {
-    const response = await fetch(API_URL);
-    const data = await response.json();
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Falha na requisição");
+    const dados = await res.json();
 
-    // Atualiza data/hora
-    document.getElementById("lastUpdate").textContent =
-      "Última atualização: " + new Date().toLocaleTimeString();
-
-    // Atualiza reservatórios
-    Object.keys(RESERVATORIOS).forEach((id) => {
-      const keyServidor = Object.keys(data).find((k) =>
-        normalizarNome(k).includes(id)
-      );
-      const leitura = keyServidor ? data[keyServidor] : null;
-      atualizarCardNivel(id, leitura);
-    });
+    // Atualiza cada reservatório
+    for (const id in RESERVATORIOS) {
+      const leitura = dados[id];
+      atualizarCard(id, leitura);
+    }
 
     // Atualiza pressões
-    atualizarCardPressao("Pressao_Saida_Osmose", data.Pressao_saida_current);
-    atualizarCardPressao("Pressao_Retorno_Osmose", data.Pressao_Retorno_current);
-    atualizarCardPressao("Pressao_Saida_CME", data.Pressao_Saida_current);
-  } catch (err) {
-    console.error("Erro ao atualizar leituras:", err);
+    atualizarPressao("pressaoSaida", dados.Pressao_saida_current || dados.Pressao_Saida_current);
+    atualizarPressao("pressaoRetorno", dados.Pressao_Retorno_current);
+    atualizarPressao("pressaoCME", dados.Pressao_Saida_current || 0);
+
+    atualizarHorario();
+  } catch (e) {
+    console.error("Erro ao buscar dados:", e);
+    for (const id in RESERVATORIOS) atualizarCard(id, 0);
   }
 }
 
-// Atualização automática
+// === Botão de histórico (exemplo futuro) ===
+function abrirHistorico(nome) {
+  alert(`(Em breve) Histórico de leituras de ${RESERVATORIOS[nome]?.nome || nome}`);
+}
+
+// === Inicialização ===
 setInterval(atualizarLeituras, UPDATE_INTERVAL);
 atualizarLeituras();
-
-// Função do botão “Ver histórico”
-function abrirHistorico(reservatorioId) {
-  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-}
-window.abrirHistorico = abrirHistorico;
