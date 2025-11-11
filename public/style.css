@@ -1,154 +1,150 @@
-/* === style-hag.css === */
-/* Tema hospitalar moderno — Azul e cinza com foco em clareza e contraste */
+/* === Estilo moderno e responsivo para o Dashboard HAG === */
 
-/* === RESET === */
+/* Paleta inspirada nas cores do Hospital Arnaldo Gavazza */
+:root {
+  --azul-principal: #005baa;
+  --azul-claro: #2e8df5;
+  --verde: #3aa374;
+  --amarelo: #f4c542;
+  --vermelho: #e64a19;
+  --cinza-claro: #f7f9fc;
+  --texto-escuro: #1a1a1a;
+  --branco: #ffffff;
+}
+
+/* Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
 }
 
-/* === BODY === */
 body {
-  background: #f5f7fa;
-  color: #1e2a3a;
-  padding: 20px;
+  background: var(--cinza-claro);
+  color: var(--texto-escuro);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* === CABEÇALHO === */
+/* ===== HEADER ===== */
 header {
-  text-align: center;
-  background: linear-gradient(90deg, #003d73, #0074b7);
-  color: #fff;
+  background: var(--azul-principal);
+  color: var(--branco);
   padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  text-align: center;
+  border-bottom: 5px solid var(--azul-claro);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
-  font-size: clamp(1.4rem, 3vw, 2.2rem);
-  font-weight: 600;
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
 }
 
 #lastUpdate {
-  font-size: clamp(0.9rem, 2vw, 1rem);
-  opacity: 0.9;
-  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #e0e0e0;
 }
 
-/* === CONTAINER DE CARDS === */
+/* ===== CONTAINER DOS CARDS ===== */
 .cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
+  padding: 30px;
   width: 100%;
   flex: 1;
 }
 
-/* === CARDS === */
+/* ===== CARD ===== */
 .card {
-  background: #ffffff;
-  border: 3px solid #0074b7;
-  border-radius: 20px;
+  background: var(--branco);
+  border: 4px solid var(--verde);
+  border-radius: 18px;
   padding: 20px;
   text-align: center;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-  transition: all 0.4s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, border-color 0.3s ease;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
+  transform: scale(1.03);
 }
 
-/* === TÍTULOS E TEXTOS === */
+/* Título */
 .card h2 {
-  color: #003d73;
-  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  color: var(--azul-principal);
+  font-size: 1.2rem;
   margin-bottom: 10px;
 }
 
+/* Leituras */
 .card p {
-  font-size: clamp(1rem, 2.5vw, 1.6rem);
-  margin-bottom: 8px;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 8px 0;
 }
 
-/* === BOTÕES === */
+/* Botões */
 .historico-btn {
-  background: #0074b7;
-  color: #fff;
+  background: var(--azul-claro);
+  color: var(--branco);
   border: none;
-  padding: 10px 18px;
+  padding: 10px 20px;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s;
-  font-weight: 500;
+  transition: background 0.2s ease;
+  margin-top: 10px;
+  font-size: 0.95rem;
 }
 
 .historico-btn:hover {
-  background: #005f99;
-  transform: scale(1.05);
+  background: var(--azul-principal);
 }
 
-/* === CORES DE ALERTA AUTOMÁTICAS === */
-.card[data-status="baixo"] {
-  border-color: #e53935;
-  background: #ffe6e6;
-}
-
-.card[data-status="medio"] {
-  border-color: #f4c542;
-  background: #fff9e5;
-}
-
-.card[data-status="normal"] {
-  border-color: #3aa374;
-  background: #e8f8f1;
-}
-
-/* === ANIMAÇÃO DE ATUALIZAÇÃO === */
-@keyframes flashUpdate {
-  from {
-    box-shadow: 0 0 0px rgba(0, 255, 255, 0.3);
-  }
-  to {
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-  }
-}
-
-.card.atualizado {
-  animation: flashUpdate 0.6s ease;
-}
-
-/* === RODAPÉ === */
+/* ===== FOOTER ===== */
 footer {
+  background: var(--azul-principal);
+  color: var(--branco);
   text-align: center;
-  padding: 15px;
-  color: #888;
+  padding: 10px;
   font-size: 0.9rem;
-  margin-top: 25px;
+  border-top: 3px solid var(--azul-claro);
 }
 
-/* === RESPONSIVIDADE === */
+/* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
-  body {
-    padding: 15px;
+  header h1 {
+    font-size: 1.3rem;
   }
 
   .cards-container {
-    grid-template-columns: 1fr;
+    padding: 15px;
+    gap: 15px;
   }
 
-  header {
+  .card {
     padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+  }
+
+  .card p {
+    font-size: 1.1rem;
+  }
+
+  .historico-btn {
+    font-size: 0.85rem;
   }
 }
