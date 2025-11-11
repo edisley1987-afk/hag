@@ -1,19 +1,22 @@
-// ======= Servidor Universal HAG - compatível com Gateway ITG e Render =======
+// ======= Servidor Universal HAG - versão otimizada (2025) =======
+// Compatível com Gateway ITG e Render (porta 443 ou 3000)
 
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import compression from "compression";
 
 const app = express();
 const __dirname = path.resolve();
 
-// === Middleware universal: aceita QUALQUER tipo de requisição ===
+// === Middleware universal: aceita qualquer tipo de requisição ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
+app.use(compression());
 
 // === Pastas e arquivos ===
 const DATA_DIR = path.join(__dirname, "data");
@@ -23,25 +26,29 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // === Sensores calibrados conforme planilha ===
 const SENSORES = {
-  // --- Reservatórios (litros e calibração real) ---
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008056, capacidade: 20000 },
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
 
-  // --- Pressões (Keller PR-21Y 4–20 mA → 0–20 bar) ---
+  // Pressões (4–20 mA → 0–20 bar)
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" },
 };
 
-// === Função para salvar leituras ===
+// === Funções auxiliares ===
+let ultimoHash = "";
+
 function salvarDados(dados) {
+  const novoHash = JSON.stringify(dados);
+  if (novoHash === ultimoHash) return; // ignora duplicatas
+  ultimoHash = novoHash;
+
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
+  console.log("📅", new Date().toLocaleString("pt-BR"), "💾 Leituras atualizadas:", dados);
 }
 
-// === Função para registrar histórico diário ===
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -56,15 +63,15 @@ function registrarHistorico(dados) {
 
   if (!historico[hoje]) historico[hoje] = {};
 
-  Object.entries(dados).forEach(([ref, valor]) => {
-    if (ref === "timestamp" || typeof valor !== "number") return;
+  for (const [ref, valor] of Object.entries(dados)) {
+    if (ref === "timestamp" || typeof valor !== "number") continue;
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = { min: valor, max: valor };
     } else {
       historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
       historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
     }
-  });
+  }
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
@@ -81,7 +88,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("⚠️ Corpo não-JSON, conteúdo bruto:", body.slice(0, 200));
+        console.log("⚠️ Corpo não-JSON:", body.slice(0, 150));
       }
     }
 
@@ -115,13 +122,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       let leituraConvertida;
 
       if (tipo === "pressao") {
-        // Converte 4–20 mA em 0–20 bar
-        const corrente = valor; // em Ampères
+        const corrente = valor;
         leituraConvertida = ((corrente - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(2));
       } else if (capacidade > 1) {
-        // Conversão em litros (reservatórios)
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
@@ -135,7 +140,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
     dadosConvertidos.timestamp = new Date().toISOString();
     salvarDados(dadosConvertidos);
-    registrarHistorico(dadosConvertidos); // ✅ histórico diário
+    registrarHistorico(dadosConvertidos);
 
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
@@ -144,7 +149,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoints para dashboard e histórico ===
+// === Endpoints do dashboard ===
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
@@ -160,10 +165,18 @@ app.get("/historico", (req, res) => {
 // === Servir interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/historico-view", (req, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+app.get("/dashboard", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"))
+);
+app.get("/historico-view", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "historico.html"))
+);
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
+);
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
