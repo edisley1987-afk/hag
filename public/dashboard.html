@@ -4,58 +4,77 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitoramento — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style-responsive.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>🏥 Monitoramento dos Reservatórios</h1>
+    <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
     <div id="lastUpdate">Última atualização: --:--:--</div>
   </header>
 
-  <main class="grid-dashboard">
+  <div class="cards-container">
+    <!-- Reservatório Elevador -->
     <div class="card" id="cardElevador">
       <h2>Reservatório Elevador</h2>
-      <div class="valor" id="nivelElevador">--%</div>
-      <div class="sub" id="litrosElevador">-- L</div>
+      <p id="nivelElevador">--%</p>
+      <p id="litrosElevador">-- L</p>
       <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
     </div>
 
+    <!-- Reservatório Osmose -->
     <div class="card" id="cardOsmose">
       <h2>Reservatório Osmose</h2>
-      <div class="valor" id="nivelOsmose">--%</div>
-      <div class="sub" id="litrosOsmose">-- L</div>
+      <p id="nivelOsmose">--%</p>
+      <p id="litrosOsmose">-- L</p>
       <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
     </div>
 
+    <!-- Reservatório CME -->
     <div class="card" id="cardCME">
       <h2>Reservatório CME</h2>
-      <div class="valor" id="nivelCME">--%</div>
-      <div class="sub" id="litrosCME">-- L</div>
+      <p id="nivelCME">--%</p>
+      <p id="litrosCME">-- L</p>
       <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
     </div>
 
+    <!-- Água Abrandada -->
     <div class="card" id="cardAbrandada">
       <h2>Água Abrandada</h2>
-      <div class="valor" id="nivelAbrandada">--%</div>
-      <div class="sub" id="litrosAbrandada">-- L</div>
+      <p id="nivelAbrandada">--%</p>
+      <p id="litrosAbrandada">-- L</p>
       <button class="historico-btn" onclick="abrirHistorico('Agua_Abrandada_current')">Ver Histórico</button>
     </div>
 
+    <!-- Pressão Saída Osmose -->
     <div class="card" id="cardPressaoSaida">
       <h2>Pressão Saída Osmose</h2>
-      <div class="valor" id="pressaoSaida">-- bar</div>
+      <p id="pressaoSaidaValor">-- bar</p>
     </div>
 
+    <!-- Pressão Retorno Osmose -->
+    <div class="card" id="cardPressaoRetorno">
+      <h2>Pressão Retorno Osmose</h2>
+      <p id="pressaoRetornoValor">-- bar</p>
+    </div>
+
+    <!-- Pressão Saída CME -->
     <div class="card" id="cardPressaoCME">
       <h2>Pressão Saída CME</h2>
-      <div class="valor" id="pressaoCME">-- bar</div>
+      <p id="pressaoCMEValor">-- bar</p>
     </div>
-  </main>
+  </div>
 
   <footer>
-    © Hospital Arnaldo Gavazza — Sistema de Monitoramento
+    © Hospital Arnaldo Gavazza — Sistema de Monitoramento de Reservatórios
   </footer>
 
   <script src="dashboard.js"></script>
+  <script>
+    // Torna a função global
+    function abrirHistorico(reservatorioId) {
+      window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+    }
+    window.abrirHistorico = abrirHistorico;
+  </script>
 </body>
 </html>
