@@ -1,31 +1,23 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Reservatórios HAG</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="header">
-    <img src="logo-gavazza-top.png" class="logo" alt="Hospital logo">
-    <h1>Monitoramento de Reservatórios - HAG</h1>
-  </header>
-  <main style="padding:20px">
-    <form id="loginForm" style="max-width:420px;margin:40px auto;background:#081a1a;padding:18px;border-radius:8px">
-      <h2 style="color:var(--primary);text-align:center">Entrar</h2>
-      <div style="margin:10px 0">
-        <input id="usuario" placeholder="Usuário" style="width:100%;padding:10px;border-radius:6px;border:0" />
-      </div>
-      <div style="margin:10px 0">
-        <input id="senha" type="password" placeholder="Senha" style="width:100%;padding:10px;border-radius:6px;border:0" />
-      </div>
-      <div style="text-align:center">
-        <button type="submit" style="background:var(--accent);color:#012;padding:10px 18px;border-radius:6px;border:0">Entrar</button>
-      </div>
+  <div class="login-container">
+    <img src="logo-gavazza-top.png" alt="Logo" class="logo" />
+    <h1>Reservatórios HAG</h1>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Usuário" required />
+      <input type="password" id="password" placeholder="Senha" required />
+      <button type="submit">Entrar</button>
     </form>
-  </main>
-  <footer>© 2025 — Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
+    <p id="errorMsg" class="erro"></p>
+  </div>
+  <footer>© 2025 — Hospital Arnaldo Gavazza</footer>
   <script src="login.js"></script>
 </body>
 </html>
