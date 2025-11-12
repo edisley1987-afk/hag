@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG =======
+// ======= Servidor Universal HAG (com histórico completo) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -7,80 +7,60 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// === Middleware ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
-
-// === 🟢 Servir os arquivos estáticos da pasta PUBLIC antes das rotas ===
 app.use(express.static(path.join(__dirname, "public")));
 
-// === Caminhos e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Sensores calibrados ===
+// === Calibração ===
 const SENSORES = {
-  // ✅ Calibração reajustada conforme solicitado:
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
-
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
-
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Funções utilitárias ===
-function salvarDados(dados) {
+// === Utilitários ===
+function salvarLeituraAtual(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
 }
 
-function registrarHistorico(dados) {
-  const hoje = new Date().toISOString().split("T")[0];
-  let historico = {};
+function adicionarAoHistorico(dados) {
+  let historico = [];
   if (fs.existsSync(HIST_FILE)) {
     try {
       historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
     } catch {
-      historico = {};
+      historico = [];
     }
   }
-  if (!historico[hoje]) historico[hoje] = {};
 
-  Object.entries(dados).forEach(([ref, valor]) => {
-    if (ref === "timestamp" || typeof valor !== "number") return;
-
-    // arredonda valores de pressão com 2 casas decimais
-    if (ref.includes("Pressao")) valor = parseFloat(valor.toFixed(2));
-
-    if (!historico[hoje][ref]) {
-      historico[hoje][ref] = { min: valor, max: valor };
-    } else {
-      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
-      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
-    }
+  // Adiciona registro com timestamp
+  historico.push({
+    timestamp: new Date().toISOString(),
+    ...dados
   });
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// === Endpoint universal do Gateway ===
+// === Endpoint para receber leituras ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
-      try {
-        body = JSON.parse(body);
-      } catch {}
+      try { body = JSON.parse(body); } catch {}
     }
 
     let dataArray = [];
@@ -88,8 +68,8 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     else if (Array.isArray(body?.data)) dataArray = body.data;
     else if (typeof body === "object" && body !== null)
       dataArray = Object.keys(body)
-        .filter((k) => k.includes("_current"))
-        .map((k) => ({ ref: k, value: Number(body[k]) }));
+        .filter(k => k.includes("_current"))
+        .map(k => ({ ref: k, value: Number(body[k]) }));
 
     if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido" });
 
@@ -112,17 +92,18 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = parseFloat(leituraConvertida.toFixed(2));
       } else {
-        leituraConvertida = Math.round(
-          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade
-        );
+        leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
+        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
       }
 
       dadosConvertidos[ref] = leituraConvertida;
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
-    salvarDados(dadosConvertidos);
-    registrarHistorico(dadosConvertidos);
+
+    salvarLeituraAtual(dadosConvertidos);
+    adicionarAoHistorico(dadosConvertidos);
+
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
@@ -130,33 +111,22 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === API de dados e histórico ===
+// === Endpoints ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
 app.get("/historico", (_, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json({});
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// === Rotas principais (frontend) ===
-app.get("/", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html"))
-);
-app.get("/dashboard", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"))
-);
-app.get("/historico-view", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "historico.html"))
-);
-app.get("/login", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "login.html"))
-);
+// === Frontend ===
+app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
-// === Inicialização ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`✅ Servidor HAG ativo na porta ${PORT}`)
-);
+app.listen(PORT, () => console.log(`✅ Servidor HAG rodando na porta ${PORT}`));
