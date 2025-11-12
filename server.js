@@ -1,3 +1,4 @@
+// ======= Servidor Universal HAG =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -6,17 +7,23 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
+// === Middleware ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
+// === 🟢 Servir os arquivos estáticos da pasta PUBLIC antes das rotas ===
+app.use(express.static(path.join(__dirname, "public")));
+
+// === Caminhos e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
+// === Sensores calibrados ===
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008056, capacidade: 20000 },
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
@@ -27,6 +34,7 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
+// === Funções utilitárias ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
   console.log("💾 Leituras atualizadas:", dados);
@@ -52,6 +60,7 @@ function registrarHistorico(dados) {
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
+// === Endpoint universal do Gateway ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
@@ -97,20 +106,23 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
+// === API de dados e histórico ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
+
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-app.use(express.static(path.join(__dirname, "public")));
+// === Rotas principais (frontend) ===
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
 app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
+// === Inicialização ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor ativo na porta ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Servidor universal HAG ativo na porta ${PORT}`));
