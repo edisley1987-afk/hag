@@ -1,10 +1,11 @@
 // ===== server.js =====
-// Servidor HAG - versão sem dependências externas além de Express/CORS
-import express from "express";
-import fs from "fs";
-import path from "path";
-import cors from "cors";
-import { users } from "./users.js";
+// Servidor HAG - versão compatível com Render e sem dependências extras
+
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+const { users } = require("./users");
 
 const app = express();
 const __dirname = path.resolve();
@@ -21,7 +22,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // Sessões simples em memória (sem jsonwebtoken)
 const sessions = {};
 
-// Função auxiliar para gerar tokens simples
+// Gera tokens simples
 function gerarToken() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
@@ -68,6 +69,6 @@ app.post("/dados", autenticar, (req, res) => {
   res.json({ success: true });
 });
 
-// === Servidor HTTPS opcional ===
+// === Inicializa servidor ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
