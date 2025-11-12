@@ -1,66 +1,73 @@
-// ===== Servidor HAG Universal com Login e Autenticação JWT =====
-
+// ===== server.js =====
+// Servidor HAG - versão sem dependências externas além de Express/CORS
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
-import jwt from "jsonwebtoken";
 import { users } from "./users.js";
 
 const app = express();
 const __dirname = path.resolve();
-const SECRET_KEY = "reservatorios_secret_key";
 
-// === Middleware base ===
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.static(path.join(__dirname, "public")));
-
-// === Arquivos de dados ===
+// Caminhos de dados
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Login (gera token JWT) ===
+// Middleware básico
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+// Sessões simples em memória (sem jsonwebtoken)
+const sessions = {};
+
+// Função auxiliar para gerar tokens simples
+function gerarToken() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// === LOGIN ===
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   const user = users.find(
     (u) => u.username === username && u.password === password
   );
-  if (!user) return res.status(401).json({ error: "Usuário ou senha inválidos" });
 
-  const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: "6h" });
-  res.json({ token });
+  if (!user) {
+    return res.status(401).json({ success: false, message: "Usuário ou senha inválidos" });
+  }
+
+  const token = gerarToken();
+  sessions[token] = { username, timestamp: Date.now() };
+
+  res.json({ success: true, token });
 });
 
 // === Middleware de autenticação ===
-function autenticarToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (!token) return res.sendStatus(401);
+function autenticar(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Não autorizado" });
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
+  const token = authHeader.replace("Bearer ", "");
+  if (!sessions[token]) return res.status(401).json({ error: "Sessão inválida" });
+
+  next();
 }
 
-// === Endpoint protegido: dados ===
-app.get("/dados", autenticarToken, (req, res) => {
+// === Rota protegida de dados ===
+app.get("/dados", autenticar, (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
-  try {
-    const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    res.json(dados);
-  } catch {
-    res.json({});
-  }
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE));
+  res.json(dados);
 });
 
-// === Outras páginas ===
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+// === Atualizar leituras ===
+app.post("/dados", autenticar, (req, res) => {
+  const dados = req.body;
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+  res.json({ success: true });
+});
 
-// === Inicialização ===
+// === Servidor HTTPS opcional ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("✅ Servidor HAG com login ativo na porta " + PORT));
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
