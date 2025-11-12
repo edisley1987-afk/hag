@@ -1,15 +1,15 @@
 // === dashboard.js ===
-// Mantém última leitura válida entre recarregamentos e só zera após 10 min sem dados
+// Mantém última leitura válida, alerta crítico e mostra "em manutenção" no card
 
 const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 30000; // 30 segundos
+const UPDATE_INTERVAL = 30000; // 30s
 let ultimaLeitura = 0;
 let alertando = false;
 let emManutencao = {};
 let audioBip;
-let dadosAntigos = {}; // cache local
+let dadosAntigos = {};
 
-// === Configuração ===
+// === Configurações ===
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
   Reservatorio_Osmose_current: { nome: "Reservatório Osmose", capacidade: 200 },
@@ -23,7 +23,7 @@ const PRESSOES = {
   Pressao_Saida_CME_current: "Pressão Saída CME"
 };
 
-// === Cria os cards ===
+// === Criação dos cards ===
 function criarCards() {
   const container = document.querySelector(".cards-container");
   if (!container) return;
@@ -33,11 +33,13 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
-    card.innerHTML =
-      "<h2>" + RESERVATORIOS[id].nome + "</h2>" +
-      '<p class="nivel">--%</p>' +
-      '<p class="litros">0 L</p>' +
-      '<button class="historico-btn" onclick="abrirHistorico(\'' + id + '\')">Ver Histórico</button>';
+    card.innerHTML = `
+      <h2>${RESERVATORIOS[id].nome}</h2>
+      <p class="nivel">--%</p>
+      <p class="litros">0 L</p>
+      <p class="status-manutencao" style="display:none; color:#f1c40f; font-weight:bold;">🛠️ Em manutenção</p>
+      <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
+    `;
     container.appendChild(card);
   });
 
@@ -45,60 +47,50 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
-    card.innerHTML =
-      "<h2>" + PRESSOES[id] + "</h2>" +
-      '<p class="pressao">-- bar</p>';
+    card.innerHTML = `
+      <h2>${PRESSOES[id]}</h2>
+      <p class="pressao">-- bar</p>
+    `;
     container.appendChild(card);
   });
 }
 
-// === Atualiza leituras (com cache localStorage) ===
+// === Atualização periódica ===
 async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
     if (!res.ok) throw new Error("Falha ao buscar dados");
     const dados = await res.json();
 
-    // se dados vierem vazios, não limpa o painel — usa cache
     if (!dados || Object.keys(dados).length === 0) {
-      console.warn("Sem novos dados do servidor. Usando cache local...");
       usarCacheLocal();
       return;
     }
 
-    // dados válidos → salva cache
     ultimaLeitura = Date.now();
     dadosAntigos = dados;
     salvarCacheLocal(dados);
     atualizarDisplay(dados);
-  } catch (err) {
-    console.error("Erro ao atualizar leituras:", err);
+  } catch {
     usarCacheLocal();
   }
 }
 
-// === Função: usar cache salvo ===
-function usarCacheLocal() {
-  const cache = localStorage.getItem("ultimaLeituraDados");
-  if (cache) {
-    const obj = JSON.parse(cache);
-    dadosAntigos = obj;
-    if (Date.now() - (obj.timestamp || 0) < 10 * 60 * 1000) {
-      atualizarDisplay(obj);
-    } else {
-      console.warn("Cache expirado há mais de 10 minutos");
-      verificarInatividade();
-    }
-  }
-}
-
-// === Função: salvar no localStorage ===
+// === Cache local ===
 function salvarCacheLocal(dados) {
   dados.timestamp = Date.now();
   localStorage.setItem("ultimaLeituraDados", JSON.stringify(dados));
 }
 
-// === Atualiza os cards ===
+function usarCacheLocal() {
+  const cache = localStorage.getItem("ultimaLeituraDados");
+  if (!cache) return;
+  const obj = JSON.parse(cache);
+  if (Date.now() - (obj.timestamp || 0) < 10 * 60 * 1000) atualizarDisplay(obj);
+  else verificarInatividade();
+}
+
+// === Atualização visual dos cards ===
 function atualizarDisplay(dados) {
   let reservatoriosCriticos = [];
 
@@ -110,6 +102,7 @@ function atualizarDisplay(dados) {
     const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
     card.classList.remove("sem-dados");
 
+    // === status do nível ===
     let status = "alto";
     let cor = "linear-gradient(to top, #3498db, #2ecc71)";
     if (perc < 30) {
@@ -121,16 +114,28 @@ function atualizarDisplay(dados) {
       cor = "linear-gradient(to top, #f1c40f, #f39c12)";
     }
 
-    if (perc >= 70 && emManutencao[id]) delete emManutencao[id];
+    // === manutenção: remove automaticamente se passar de 30% ===
+    if (emManutencao[id] && perc > 30) {
+      delete emManutencao[id];
+    }
 
+    // === aplica ao card ===
     card.dataset.status = status;
     card.querySelector(".nivel").textContent = Math.round(perc) + "%";
     card.querySelector(".litros").textContent = Math.round(valor).toLocaleString() + " L";
     card.style.setProperty("--nivel", perc + "%");
     card.style.setProperty("--corNivel", cor);
 
-    const aviso = card.querySelector(".aviso-inatividade");
-    if (aviso) aviso.remove();
+    // === exibe ou oculta aviso de manutenção ===
+    const aviso = card.querySelector(".status-manutencao");
+    if (emManutencao[id]) {
+      aviso.style.display = "block";
+    } else {
+      aviso.style.display = "none";
+    }
+
+    const avisoInat = card.querySelector(".aviso-inatividade");
+    if (avisoInat) avisoInat.remove();
   });
 
   Object.keys(PRESSOES).forEach(id => {
@@ -138,7 +143,7 @@ function atualizarDisplay(dados) {
     const valor = dados[id];
     if (!card || typeof valor !== "number" || isNaN(valor)) return;
     card.classList.remove("sem-dados");
-    card.querySelector(".pressao").textContent = Number(valor).toFixed(2) + " bar";
+    card.querySelector(".pressao").textContent = valor.toFixed(2) + " bar";
   });
 
   const last = document.getElementById("lastUpdate");
@@ -151,7 +156,7 @@ function atualizarDisplay(dados) {
   else ocultarAlerta();
 }
 
-// === Painel flutuante ===
+// === Painel de alerta ===
 function exibirAlerta(reservatorios) {
   let painel = document.getElementById("painelAlerta");
   if (!painel) {
@@ -164,12 +169,12 @@ function exibirAlerta(reservatorios) {
   const lista = reservatorios.map(r => {
     const emManut = emManutencao[r.id];
     const botao = emManut
-      ? '<button class="remover-btn" onclick="removerManutencao(\'' + r.id + '\')">Remover da manutenção</button>'
-      : '<button onclick="marcarManutencao(\'' + r.id + '\')">Marcar como em manutenção</button>';
-    return '<div class="alert-item">⚠️ <strong>' + r.nome + '</strong><br>Nível atual: <b>' + Math.round(r.perc) + '%</b><div>' + botao + '</div></div>';
+      ? `<button class="remover-btn" onclick="removerManutencao('${r.id}')">Remover da manutenção</button>`
+      : `<button onclick="marcarManutencao('${r.id}')">Marcar como em manutenção</button>`;
+    return `<div class="alert-item">⚠️ <strong>${r.nome}</strong><br>Nível atual: <b>${Math.round(r.perc)}%</b><div>${botao}</div></div>`;
   }).join("");
 
-  painel.innerHTML = '<h2>🚨 Alerta de Nível Crítico</h2>' + lista;
+  painel.innerHTML = `<h2>🚨 Alerta de Nível Crítico</h2>${lista}`;
   painel.style.display = "block";
 
   if (!alertando) {
@@ -188,23 +193,42 @@ function ocultarAlerta() {
   if (painel) painel.style.display = "none";
 }
 
-window.marcarManutencao = id => { emManutencao[id] = true; atualizarPainelAlerta(); };
-window.removerManutencao = id => { delete emManutencao[id]; atualizarPainelAlerta(); };
+window.marcarManutencao = id => {
+  emManutencao[id] = true;
+  const card = document.getElementById(id);
+  if (card) {
+    const aviso = card.querySelector(".status-manutencao");
+    if (aviso) aviso.style.display = "block";
+  }
+  atualizarPainelAlerta();
+};
+
+window.removerManutencao = id => {
+  delete emManutencao[id];
+  const card = document.getElementById(id);
+  if (card) {
+    const aviso = card.querySelector(".status-manutencao");
+    if (aviso) aviso.style.display = "none";
+  }
+  atualizarPainelAlerta();
+};
 
 function atualizarPainelAlerta() {
   const painel = document.getElementById("painelAlerta");
   if (painel && painel.style.display === "block") atualizarLeituras();
 }
 
+// === Som do alerta ===
 function tocarBip() {
   try {
-    if (!audioBip) audioBip = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    if (!audioBip)
+      audioBip = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
     audioBip.currentTime = 0;
     audioBip.play();
-  } catch (e) {}
+  } catch {}
 }
 
-// === Verifica inatividade ===
+// === Inatividade ===
 function verificarInatividade() {
   const tempoSemAtualizar = Date.now() - ultimaLeitura;
   const cards = document.querySelectorAll(".card");
@@ -212,26 +236,24 @@ function verificarInatividade() {
   if (tempoSemAtualizar > 10 * 60 * 1000) {
     cards.forEach(card => {
       card.classList.add("sem-dados");
-      const nivelEl = card.querySelector(".nivel");
-      const litrosEl = card.querySelector(".litros");
-      const pressaoEl = card.querySelector(".pressao");
-      if (nivelEl) nivelEl.textContent = "--%";
-      if (litrosEl) litrosEl.textContent = "0 L";
-      if (pressaoEl) pressaoEl.textContent = "-- bar";
-      card.style.setProperty("--nivel", "0%");
+      const nivel = card.querySelector(".nivel");
+      const litros = card.querySelector(".litros");
+      const pressao = card.querySelector(".pressao");
+      if (nivel) nivel.textContent = "--%";
+      if (litros) litros.textContent = "0 L";
+      if (pressao) pressao.textContent = "-- bar";
 
       let aviso = card.querySelector(".aviso-inatividade");
       if (!aviso) {
         aviso = document.createElement("p");
         aviso.className = "aviso-inatividade";
         aviso.textContent = "⚠ Sem atualização há mais de 10 minutos!";
+        aviso.style.color = "#e74c3c";
+        aviso.style.fontWeight = "bold";
+        aviso.style.textAlign = "center";
+        aviso.style.animation = "piscar 1s infinite";
         card.appendChild(aviso);
       }
-      aviso.style.color = "#e74c3c";
-      aviso.style.fontWeight = "bold";
-      aviso.style.marginTop = "5px";
-      aviso.style.textAlign = "center";
-      aviso.style.animation = "piscar 1s infinite";
     });
 
     const last = document.getElementById("lastUpdate");
@@ -244,9 +266,12 @@ function verificarInatividade() {
   }
 }
 
-// === CSS animação ===
+// === CSS ===
 const style = document.createElement("style");
-style.textContent = "@keyframes piscar { 0%, 50%, 100% { opacity: 1; } 25%, 75% { opacity: 0; } }";
+style.textContent = `
+@keyframes piscar { 0%, 50%, 100% {opacity:1;} 25%,75%{opacity:0;} }
+.status-manutencao { animation: piscar 2s infinite; }
+`;
 document.head.appendChild(style);
 
 // === Inicialização ===
