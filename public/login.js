@@ -1,34 +1,29 @@
-// === login.js ===
-// Autenticação simples com token localStorage
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+    const usuario = document.getElementById("usuario").value.trim();
+    const senha = document.getElementById("senha").value.trim();
 
-  const usuario = document.getElementById("usuario").value.trim();
-  const senha = document.getElementById("senha").value.trim();
-  const erro = document.getElementById("erro");
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, senha }),
+      });
 
-  erro.textContent = "";
+      const data = await res.json();
+      if (!res.ok || !data.sucesso) {
+        alert(data.erro || "Usuário ou senha inválidos");
+        return;
+      }
 
-  try {
-    const res = await fetch(window.location.origin + "/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usuario, senha }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      erro.textContent = data?.erro || "Usuário ou senha incorretos.";
-      return;
+      localStorage.setItem("authToken", data.token);
+      window.location.href = "/dashboard.html";
+    } catch (err) {
+      console.error("Erro:", err);
+      alert("Erro ao conectar ao servidor.");
     }
-
-    // Armazena token e redireciona para o dashboard
-    localStorage.setItem("authToken", data.token);
-    window.location.href = "index.html";
-  } catch (err) {
-    erro.textContent = "Erro de conexão. Tente novamente.";
-    console.error(err);
-  }
+  });
 });
