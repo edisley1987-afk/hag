@@ -146,4 +146,47 @@ footer {
   .card {
     height: 260px;
   }
+  .painel-alerta {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: rgba(255, 0, 0, 0.9);
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  z-index: 9999;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
+  display: none;
+  overflow-y: auto;
+  animation: slideIn 0.4s ease-out;
+}
+
+.painel-alerta h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.alert-item {
+  background: rgba(0, 0, 0, 0.3);
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.alert-item button {
+  background: #fff;
+  color: #d00;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@keyframes slideIn {
+  from { right: -350px; opacity: 0; }
+  to { right: 0; opacity: 1; }
+}
+
 }
