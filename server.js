@@ -1,9 +1,13 @@
-// ======= Servidor Universal HAG =======
+// ======= Servidor Universal HAG com Alertas =======
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import nodemailer from "nodemailer";
+import twilio from "twilio";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
 const __dirname = path.resolve();
 
@@ -14,10 +18,10 @@ app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
-// === 🟢 Servir os arquivos estáticos da pasta PUBLIC antes das rotas ===
+// === Servir arquivos estáticos ===
 app.use(express.static(path.join(__dirname, "public")));
 
-// === Caminhos e arquivos de dados ===
+// === Caminhos ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
@@ -34,33 +38,81 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Funções utilitárias ===
-function salvarDados(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
+// === Configuração de alertas ===
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+});
+
+const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
+
+// === Utilitário: ajustar casas decimais ===
+function ajustarCasas(sensor, valor) {
+  if (sensor.toLowerCase().includes("pressao")) return Number(valor.toFixed(2));
+  return Math.round(valor);
 }
 
+// === Envio de alertas ===
+async function enviarAlerta(tipo, mensagem) {
+  console.log("🚨 ALERTA:", mensagem);
+  try {
+    // E-mail
+    await transporter.sendMail({
+      from: `"Monitor HAG" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      subject: "🚨 Alerta do Sistema HAG",
+      text: mensagem
+    });
+
+    // WhatsApp (Twilio)
+    await twilioClient.messages.create({
+      from: `whatsapp:${process.env.TWILIO_PHONE}`,
+      to: `whatsapp:${process.env.DEST_PHONE}`,
+      body: mensagem
+    });
+  } catch (err) {
+    console.error("❌ Falha ao enviar alerta:", err.message);
+  }
+}
+
+// === Histórico ===
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
   if (fs.existsSync(HIST_FILE)) {
-    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); }
-    catch { historico = {}; }
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch {}
   }
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dados).forEach(([ref, valor]) => {
     if (ref === "timestamp" || typeof valor !== "number") return;
-    if (!historico[hoje][ref]) historico[hoje][ref] = { min: valor, max: valor };
+    const v = ajustarCasas(ref, valor);
+    if (!historico[hoje][ref]) historico[hoje][ref] = { min: v, max: v };
     else {
-      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
-      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
+      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, v);
+      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, v);
     }
   });
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// === Endpoint universal do Gateway ===
+// === Verifica condições críticas ===
+function checarAlertas(dados) {
+  Object.entries(dados).forEach(([ref, valor]) => {
+    if (ref.includes("Reservatorio")) {
+      const sensor = SENSORES[ref];
+      const perc = (valor / sensor.capacidade) * 100;
+      if (perc < 30)
+        enviarAlerta("baixo_nivel", `⚠️ ${ref.replaceAll("_", " ")} abaixo de 30% (${valor} L)`);
+    }
+    if (ref.includes("Pressao")) {
+      if (valor < 0.5 || valor > 5)
+        enviarAlerta("pressao_fora_faixa", `⚠️ ${ref.replaceAll("_", " ")} fora da faixa (${valor.toFixed(2)} bar)`);
+    }
+  });
+}
+
+// === Endpoint principal ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
@@ -91,22 +143,27 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
-      } else leituraConvertida =
-        Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
-
-      dadosConvertidos[ref] = leituraConvertida;
+      } else {
+        leituraConvertida = ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
+      }
+      dadosConvertidos[ref] = ajustarCasas(ref, leituraConvertida);
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
-    salvarDados(dadosConvertidos);
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dadosConvertidos, null, 2));
     registrarHistorico(dadosConvertidos);
+    checarAlertas(dadosConvertidos);
+
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
+    console.error("❌ Erro no /atualizar:", err);
     res.status(500).json({ erro: err.message });
   }
 });
 
-// === API de dados e histórico ===
+// === Endpoints auxiliares ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
@@ -117,7 +174,7 @@ app.get("/historico", (_, res) => {
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// === Rotas principais (frontend) ===
+// === Rotas principais ===
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
