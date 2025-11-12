@@ -25,10 +25,13 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // === Sensores calibrados ===
 const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008056, capacidade: 20000 },
+  // ✅ Calibração reajustada conforme solicitado:
+  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
+
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
+
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
