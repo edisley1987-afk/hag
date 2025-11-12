@@ -1,37 +1,34 @@
-// login.js
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("loginForm");
+// === login.js ===
+// Autenticação simples com token localStorage
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+  const usuario = document.getElementById("usuario").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const erro = document.getElementById("erro");
 
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
+  erro.textContent = "";
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Erro" }));
-        alert(err.message || "Usuário ou senha inválidos");
-        return;
-      }
+  try {
+    const res = await fetch(window.location.origin + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, senha }),
+    });
 
-      const data = await res.json();
-      if (data.success) {
-        localStorage.setItem("user", data.user);
-        window.location.href = "/dashboard.html";
-      } else {
-        alert("Usuário ou senha inválidos");
-      }
+    const data = await res.json();
 
-    } catch (err) {
-      console.error("Erro no login:", err);
-      alert("Erro ao conectar com o servidor.");
+    if (!res.ok) {
+      erro.textContent = data?.erro || "Usuário ou senha incorretos.";
+      return;
     }
-  });
+
+    // Armazena token e redireciona para o dashboard
+    localStorage.setItem("authToken", data.token);
+    window.location.href = "index.html";
+  } catch (err) {
+    erro.textContent = "Erro de conexão. Tente novamente.";
+    console.error(err);
+  }
 });
