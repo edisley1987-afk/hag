@@ -1,29 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
+  const msg = document.getElementById("errorMsg");
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const usuario = document.getElementById("usuario").value.trim();
-    const senha = document.getElementById("senha").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
 
     try {
       const res = await fetch("/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, senha }),
+        body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.sucesso) {
-        alert(data.erro || "Usuário ou senha inválidos");
+      if (!res.ok) {
+        msg.textContent = "Usuário ou senha inválidos.";
         return;
       }
 
-      localStorage.setItem("authToken", data.token);
-      window.location.href = "/dashboard.html";
+      const data = await res.json();
+      localStorage.setItem("token", data.token);
+      window.location.href = "dashboard.html";
     } catch (err) {
-      console.error("Erro:", err);
-      alert("Erro ao conectar ao servidor.");
+      msg.textContent = "Erro de conexão com o servidor.";
+      console.error(err);
     }
   });
 });
