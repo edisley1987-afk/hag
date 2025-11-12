@@ -2,7 +2,7 @@
 // Exibe leituras em tempo real com nível visual (caixa d'água)
 
 const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000; // atualização a cada 5s
+const UPDATE_INTERVAL = 30000; // atualização a cada 0,30 minuto
 let ultimaLeitura = 0;
 
 // Configuração dos reservatórios (em litros)
@@ -70,10 +70,11 @@ function criarCards() {
 async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
+    if (!res.ok) throw new Error("Falha ao buscar dados");
     const dados = await res.json();
     if (!dados || Object.keys(dados).length === 0) return;
 
-    ultimaLeitura = Date.now();
+    ultimaLeitura = Date.now(); // salva timestamp da última leitura
 
     // Atualiza reservatórios
     Object.entries(RESERVATORIOS).forEach(([id, conf]) => {
@@ -81,13 +82,7 @@ async function atualizarLeituras() {
       if (!card) return;
 
       const valor = dados[id];
-      if (typeof valor !== "number" || isNaN(valor)) {
-        card.classList.add("sem-dados");
-        card.querySelector(".nivel").innerHTML = "--%";
-        card.querySelector(".litros").innerHTML = "0 L";
-        card.style.setProperty("--nivel", "0%");
-        return;
-      }
+      if (typeof valor !== "number" || isNaN(valor)) return;
 
       const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
       card.classList.remove("sem-dados");
@@ -116,11 +111,7 @@ async function atualizarLeituras() {
       if (!card) return;
 
       const valor = dados[id];
-      if (typeof valor !== "number" || isNaN(valor)) {
-        card.classList.add("sem-dados");
-        card.querySelector(".pressao").innerHTML = "-- bar";
-        return;
-      }
+      if (typeof valor !== "number" || isNaN(valor)) return;
 
       card.classList.remove("sem-dados");
       card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
@@ -137,10 +128,10 @@ async function atualizarLeituras() {
   }
 }
 
-// === Exibe 0% apenas se passar muito tempo sem atualização ===
-setInterval(() => {
-  const tempo = Date.now() - ultimaLeitura;
-  if (tempo > 240000) {
+// === Zera os cards após 10 minutos sem dados ===
+function verificarInatividade() {
+  const tempoSemAtualizar = Date.now() - ultimaLeitura;
+  if (tempoSemAtualizar > 10 * 60 * 1000) { // 10 minutos
     document.querySelectorAll(".card").forEach((card) => {
       card.classList.add("sem-dados");
       if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
@@ -148,14 +139,17 @@ setInterval(() => {
       if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
       card.style.setProperty("--nivel", "0%");
     });
+    const last = document.getElementById("lastUpdate");
+    if (last) last.innerHTML = "Sem atualização há mais de 10 minutos!";
   }
-}, 10000);
+}
 
 // === Inicializa dashboard ===
 window.addEventListener("DOMContentLoaded", () => {
   criarCards();
   atualizarLeituras();
-  setInterval(atualizarLeituras, UPDATE_INTERVAL);
+  setInterval(atualizarLeituras, UPDATE_INTERVAL); // a cada 1 min
+  setInterval(verificarInatividade, 30000); // verifica a cada 30s
 });
 
 // === Função global para abrir histórico ===
