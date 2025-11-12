@@ -1,5 +1,5 @@
 // === dashboard.js ===
-// Monitoramento em tempo real com alerta flutuante e manutenção dinâmica
+// Monitoramento em tempo real com alerta flutuante e aviso de inatividade
 
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 30000; // Atualização a cada 30s
@@ -92,6 +92,10 @@ async function atualizarLeituras() {
       card.querySelector(".litros").textContent = valor.toLocaleString() + " L";
       card.style.setProperty("--nivel", perc + "%");
       card.style.setProperty("--corNivel", cor);
+
+      // Remove aviso de inatividade, se existir
+      const aviso = card.querySelector(".aviso-inatividade");
+      if (aviso) aviso.remove();
     });
 
     // --- Pressões ---
@@ -199,18 +203,52 @@ function tocarBip() {
 // === Verifica inatividade ===
 function verificarInatividade() {
   const tempoSemAtualizar = Date.now() - ultimaLeitura;
+  const cards = document.querySelectorAll(".card");
+
   if (tempoSemAtualizar > 10 * 60 * 1000) {
-    document.querySelectorAll(".card").forEach((card) => {
+    cards.forEach((card) => {
       card.classList.add("sem-dados");
+
       if (card.querySelector(".nivel")) card.querySelector(".nivel").textContent = "--%";
       if (card.querySelector(".litros")) card.querySelector(".litros").textContent = "0 L";
       if (card.querySelector(".pressao")) card.querySelector(".pressao").textContent = "-- bar";
       card.style.setProperty("--nivel", "0%");
+
+      // Mensagem de inatividade piscando
+      let aviso = card.querySelector(".aviso-inatividade");
+      if (!aviso) {
+        aviso = document.createElement("p");
+        aviso.className = "aviso-inatividade";
+        aviso.textContent = "⚠ Sem atualização há mais de 10 minutos!";
+        card.appendChild(aviso);
+      }
+      aviso.style.color = "#e74c3c";
+      aviso.style.fontWeight = "bold";
+      aviso.style.marginTop = "5px";
+      aviso.style.textAlign = "center";
+      aviso.style.animation = "piscar 1s infinite";
     });
+
     const last = document.getElementById("lastUpdate");
     if (last) last.innerHTML = "Sem atualização há mais de 10 minutos!";
+  } else {
+    // Remove aviso quando voltar a atualizar
+    cards.forEach((card) => {
+      const aviso = card.querySelector(".aviso-inatividade");
+      if (aviso) aviso.remove();
+    });
   }
 }
+
+// === CSS da animação ===
+const style = document.createElement("style");
+style.textContent = `
+@keyframes piscar {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+`;
+document.head.appendChild(style);
 
 // === Inicialização ===
 window.addEventListener("DOMContentLoaded", () => {
@@ -221,5 +259,5 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 window.abrirHistorico = function (id) {
-  window.location.href = `historico.html?reservatorio=${id}`;
+  window.location.href = \`historico.html?reservatorio=\${id}\`;
 };
