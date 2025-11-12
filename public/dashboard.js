@@ -1,11 +1,3 @@
-// === Controle de acesso ===
-document.addEventListener("DOMContentLoaded", () => {
-  const user = localStorage.getItem("user");
-  if (!user) {
-    alert("Por favor, faça login para acessar o painel.");
-    window.location.href = "/login.html";
-  }
-});
 // === dashboard.js ===
 // Exibe leituras em tempo real com nível visual (caixa d'água)
 
@@ -39,6 +31,27 @@ const PRESSOES = {
   Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
   Pressao_Saida_CME_current: "Pressão Saída CME",
 };
+
+// === Função para verificar login antes de carregar dashboard ===
+async function verificarLogin() {
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    window.location.href = "login.html";
+    return false;
+  }
+
+  try {
+    const res = await fetch(window.location.origin + "/verificar", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Sessão inválida");
+    return true;
+  } catch {
+    localStorage.removeItem("authToken");
+    window.location.href = "login.html";
+    return false;
+  }
+}
 
 // === Cria os cards dinamicamente ===
 function criarCards() {
@@ -76,8 +89,20 @@ function criarCards() {
 
 // === Atualiza as leituras do servidor ===
 async function atualizarLeituras() {
+  const token = localStorage.getItem("authToken");
+  if (!token) return (window.location.href = "login.html");
+
   try {
-    const res = await fetch(API_URL + "?t=" + Date.now());
+    const res = await fetch(API_URL + "?t=" + Date.now(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem("authToken");
+      window.location.href = "login.html";
+      return;
+    }
+
     const dados = await res.json();
     if (!dados || Object.keys(dados).length === 0) return;
 
@@ -160,7 +185,9 @@ setInterval(() => {
 }, 10000);
 
 // === Inicializa dashboard ===
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  const ok = await verificarLogin();
+  if (!ok) return;
   criarCards();
   atualizarLeituras();
   setInterval(atualizarLeituras, UPDATE_INTERVAL);
