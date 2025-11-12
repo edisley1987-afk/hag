@@ -1,6 +1,6 @@
 {
   "name": "reservatorios-hag",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sistema de monitoramento de reservatórios do Hospital Arnaldo Gavazza (HAG)",
   "main": "server.js",
   "type": "module",
@@ -12,7 +12,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "nodemailer": "^6.9.15",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "twilio": "^4.22.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
@@ -26,7 +27,8 @@
     "reservatorios",
     "hospital",
     "express",
-    "nodemailer"
+    "nodemailer",
+    "twilio"
   ],
   "author": "Hospital Arnaldo Gavazza",
   "license": "MIT"
