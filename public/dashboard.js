@@ -1,11 +1,11 @@
 // === dashboard.js ===
-// Exibe leituras em tempo real com nível visual (caixa d'água)
+// Exibe leituras em tempo real com autenticação via login
 
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // atualização a cada 5s
 let ultimaLeitura = 0;
 
-// Configuração dos reservatórios (em litros)
+// === Configuração dos reservatórios (em litros) ===
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
     nome: "Reservatório Elevador",
@@ -25,33 +25,12 @@ const RESERVATORIOS = {
   },
 };
 
-// Pressões
+// === Pressões ===
 const PRESSOES = {
   Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
   Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
   Pressao_Saida_CME_current: "Pressão Saída CME",
 };
-
-// === Função para verificar login antes de carregar dashboard ===
-async function verificarLogin() {
-  const token = localStorage.getItem("authToken");
-  if (!token) {
-    window.location.href = "login.html";
-    return false;
-  }
-
-  try {
-    const res = await fetch(window.location.origin + "/verificar", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error("Sessão inválida");
-    return true;
-  } catch {
-    localStorage.removeItem("authToken");
-    window.location.href = "login.html";
-    return false;
-  }
-}
 
 // === Cria os cards dinamicamente ===
 function criarCards() {
@@ -89,16 +68,21 @@ function criarCards() {
 
 // === Atualiza as leituras do servidor ===
 async function atualizarLeituras() {
-  const token = localStorage.getItem("authToken");
-  if (!token) return (window.location.href = "login.html");
-
   try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("Sem token, redirecionando para login...");
+      window.location.href = "login.html";
+      return;
+    }
+
     const res = await fetch(API_URL + "?t=" + Date.now(), {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     if (res.status === 401) {
-      localStorage.removeItem("authToken");
+      console.warn("Sessão expirada ou token inválido");
+      localStorage.removeItem("token");
       window.location.href = "login.html";
       return;
     }
@@ -108,7 +92,7 @@ async function atualizarLeituras() {
 
     ultimaLeitura = Date.now();
 
-    // Atualiza reservatórios
+    // === Atualiza reservatórios ===
     Object.entries(RESERVATORIOS).forEach(([id, conf]) => {
       const card = document.getElementById(id);
       if (!card) return;
@@ -126,25 +110,21 @@ async function atualizarLeituras() {
       card.classList.remove("sem-dados");
 
       // Define status e cores
-      let status = "alto";
       let cor = "linear-gradient(to top, #3498db, #2ecc71)";
       if (perc < 30) {
-        status = "baixo";
         cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
       } else if (perc < 70) {
-        status = "medio";
         cor = "linear-gradient(to top, #f1c40f, #f39c12)";
       }
 
-      card.dataset.status = status;
       card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
       card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
       card.style.setProperty("--nivel", perc + "%");
       card.style.setProperty("--corNivel", cor);
     });
 
-    // Atualiza pressões
-    Object.entries(PRESSOES).forEach(([id, nome]) => {
+    // === Atualiza pressões ===
+    Object.entries(PRESSOES).forEach(([id]) => {
       const card = document.getElementById(id);
       if (!card) return;
 
@@ -152,14 +132,22 @@ async function atualizarLeituras() {
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".pressao").innerHTML = "-- bar";
+        card.style.background = "";
         return;
       }
 
       card.classList.remove("sem-dados");
       card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
+
+      // Muda cor se abaixo de 1 bar
+      if (valor < 1) {
+        card.style.background = "linear-gradient(to top, #ff4c4c, #ff9966)";
+      } else {
+        card.style.background = "";
+      }
     });
 
-    // Atualiza data/hora
+    // === Atualiza data/hora ===
     const last = document.getElementById("lastUpdate");
     if (last) {
       const dt = new Date(dados.timestamp || Date.now());
@@ -170,7 +158,7 @@ async function atualizarLeituras() {
   }
 }
 
-// === Exibe 0% apenas se passar muito tempo sem atualização ===
+// === Se ficar muito tempo sem atualização, zera os dados ===
 setInterval(() => {
   const tempo = Date.now() - ultimaLeitura;
   if (tempo > 240000) {
@@ -185,9 +173,7 @@ setInterval(() => {
 }, 10000);
 
 // === Inicializa dashboard ===
-window.addEventListener("DOMContentLoaded", async () => {
-  const ok = await verificarLogin();
-  if (!ok) return;
+window.addEventListener("DOMContentLoaded", () => {
   criarCards();
   atualizarLeituras();
   setInterval(atualizarLeituras, UPDATE_INTERVAL);
