@@ -1,5 +1,6 @@
-// === Usuários autorizados ===
-export const users = [
-  { username: "admin", password: "1234" },
-  { username: "operador", password: "senha123" }
+// users.js
+const users = [
+  { username: "hag", password: "1234" },
+  { username: "admin", password: "hag2025" }
 ];
+module.exports = { users };
