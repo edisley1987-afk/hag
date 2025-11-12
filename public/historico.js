@@ -1,129 +1,75 @@
-// === historico.js ===
-// Exibe histórico de leituras com tabela e gráfico moderno
-
 const API_URL = window.location.origin + "/historico";
 
 async function carregarHistorico() {
-  const container = document.getElementById("historico");
-  const ctx = document.getElementById("graficoHistorico");
-  container.innerHTML = "⏳ Carregando histórico...";
-
   try {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Erro ao buscar histórico");
     const historico = await res.json();
 
-    if (!Object.keys(historico).length) {
-      container.innerHTML = `<p style="text-align:center; color:#555;">📭 Nenhum dado de histórico encontrado.</p>`;
-      return;
-    }
+    const ctx = document.getElementById("grafico").getContext("2d");
+    const labels = [];
+    const datasets = [];
+    const tabelaBody = document.querySelector("#tabela tbody");
+    tabelaBody.innerHTML = "";
 
-    // === Montar tabela ===
-    let html = `
-      <table class="tabela-historico">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Sensor</th>
-            <th>Leitura Mínima</th>
-            <th>Leitura Máxima</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+    const cores = [
+      "#007bff", "#ff3d00", "#00c853", "#ff9800", "#9c27b0", "#009688", "#8bc34a"
+    ];
 
-    const labels = []; // datas
-    const datasets = {}; // sensores e valores médios
+    Object.entries(historico).forEach(([data, sensores]) => {
+      Object.entries(sensores).forEach(([sensor, leituras], i) => {
+        if (!Array.isArray(leituras)) return; // ignora formato antigo
+        const valores = leituras.map(l => l.valor);
+        const horas = leituras.map(l => l.hora);
+        const cor = cores[i % cores.length];
 
-    // Ordena as datas
-    const datasOrdenadas = Object.keys(historico).sort();
+        // Adiciona no gráfico
+        datasets.push({
+          label: sensor.replace(/_/g, " "),
+          data: valores,
+          borderColor: cor,
+          backgroundColor: cor + "33",
+          fill: false,
+          tension: 0.2
+        });
 
-    datasOrdenadas.forEach((data) => {
-      const sensores = historico[data];
-      labels.push(data);
+        if (horas.length > labels.length) labels.splice(0, labels.length, ...horas);
 
-      Object.entries(sensores).forEach(([nome, valores]) => {
-        const media = (valores.max + valores.min) / 2;
-
-        html += `
-          <tr>
-            <td>${data}</td>
-            <td>${formatarNomeSensor(nome)}</td>
-            <td>${valores.min}</td>
-            <td>${valores.max}</td>
-          </tr>
+        // Tabela resumo (mínimo e máximo do dia)
+        const min = Math.min(...valores);
+        const max = Math.max(...valores);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${data}</td>
+          <td>${sensor.replace(/_/g, " ")}</td>
+          <td>${min.toLocaleString()}</td>
+          <td>${max.toLocaleString()}</td>
         `;
-
-        if (!datasets[nome]) datasets[nome] = [];
-        datasets[nome].push(media);
+        tabelaBody.appendChild(row);
       });
     });
 
-    html += "</tbody></table>";
-    container.innerHTML = html;
-
-    // === Montar gráfico ===
-    const chartData = {
-      labels,
-      datasets: Object.entries(datasets).map(([nome, valores]) => ({
-        label: formatarNomeSensor(nome),
-        data: valores,
-        borderColor: getCorSensor(nome),
-        backgroundColor: getCorSensor(nome),
-        fill: false,
-        tension: 0.2,
-        borderWidth: 2,
-      })),
-    };
-
+    // Renderiza o gráfico
     new Chart(ctx, {
       type: "line",
-      data: chartData,
+      data: { labels, datasets },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        stacked: false,
         plugins: {
           legend: { position: "bottom" },
-          title: { display: true, text: "Evolução das Leituras (Média Diária)" },
+          title: { display: true, text: "Evolução das Leituras Durante o Dia" }
         },
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: "Valor" } },
-          x: { title: { display: true, text: "Data" } },
-        },
-      },
+          y: { beginAtZero: true },
+          x: { title: { display: true, text: "Horário" } }
+        }
+      }
     });
   } catch (err) {
-    container.innerHTML = `<p style="color:red;">❌ Erro: ${err.message}</p>`;
-    console.error(err);
+    console.error("Erro ao carregar histórico:", err);
   }
 }
 
-// === Funções auxiliares ===
-function getCorSensor(nome) {
-  const cores = {
-    Reservatorio_Elevador_current: "#007bff",
-    Reservatorio_Osmose_current: "#00bcd4",
-    Reservatorio_CME_current: "#4caf50",
-    Agua_Abrandada_current: "#9c27b0",
-    Pressao_Saida_Osmose_current: "#ff9800",
-    Pressao_Retorno_Osmose_current: "#f44336",
-    Pressao_Saida_CME_current: "#3f51b5",
-  };
-  return cores[nome] || `hsl(${Math.random() * 360}, 70%, 50%)`;
-}
-
-function formatarNomeSensor(nome) {
-  return nome
-    .replace(/_/g, " ")
-    .replace("current", "")
-    .replace("Reservatorio", "Reservatório")
-    .replace("Pressao", "Pressão")
-    .replace("Agua", "Água")
-    .trim();
-}
-
-// Inicia o carregamento ao abrir a página
-carregarHistorico();
-
-// (Opcional) Atualiza automaticamente a cada 60s
-// setInterval(carregarHistorico, 60000);
+window.addEventListener("DOMContentLoaded", carregarHistorico);
