@@ -1,14 +1,33 @@
 {
-  "name": "hag-9ki9-render",
+  "name": "reservatorios-hag",
   "version": "1.0.0",
-  "description": "Servidor universal HAG - integração Render + GitHub Pages",
+  "description": "Sistema de monitoramento de reservatórios do Hospital Arnaldo Gavazza (HAG)",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
-    "cors": "^2.8.5"
-  }
+    "nodemailer": "^6.9.15",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "monitoramento",
+    "iot",
+    "reservatorios",
+    "hospital",
+    "express",
+    "nodemailer"
+  ],
+  "author": "Hospital Arnaldo Gavazza",
+  "license": "MIT"
 }
