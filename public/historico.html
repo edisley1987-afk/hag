@@ -3,21 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style-historico.css" />
+  <title>📊 Histórico — Reservatórios</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="historico.js"></script>
+  <style>
+    body {
+      background: #f7f9fb;
+      font-family: "Segoe UI", sans-serif;
+    }
+    .container {
+      width: 90%;
+      max-width: 1100px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: left;
+      color: #0056a6;
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 14px;
+      background: #0056a6;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+    .back-btn:hover {
+      background: #0078d4;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 8px;
+    }
+    th {
+      background: #0056a6;
+      color: #fff;
+    }
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>📊 Histórico — Reservatórios</h1>
-    <a href="dashboard.html" class="voltar-btn">⬅ Voltar ao Painel</a>
-  </header>
-
-  <main class="historico-main">
-    <canvas id="graficoHistorico"></canvas>
-    <div id="historico"></div>
-  </main>
-
-  <script src="historico.js"></script>
+  <div class="container">
+    <a href="dashboard.html" class="back-btn">← Voltar ao Painel</a>
+    <h1>📈 Histórico — Reservatórios</h1>
+    <canvas id="grafico"></canvas>
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>DATA</th>
+          <th>SENSOR</th>
+          <th>LEITURA MÍNIMA</th>
+          <th>LEITURA MÁXIMA</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </body>
 </html>
