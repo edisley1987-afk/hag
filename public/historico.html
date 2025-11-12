@@ -1,30 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Histórico - HAG</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style-historico.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <header class="header">
-    <img src="logo-gavazza-top.png" class="logo" alt="logo" />
-    <h1>Histórico de Leituras - HAG</h1>
-    <button onclick="window.location.href='dashboard.html'">Voltar</button>
+  <header>
+    <h1>📊 Histórico — Reservatórios</h1>
+    <a href="dashboard.html" class="voltar-btn">⬅ Voltar ao Painel</a>
   </header>
 
-  <main>
-    <table id="tabela-historico">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Sensor</th>
-          <th>Leitura Mínima</th>
-          <th>Leitura Máxima</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <main class="historico-main">
+    <canvas id="graficoHistorico"></canvas>
+    <div id="historico"></div>
   </main>
 
   <script src="historico.js"></script>

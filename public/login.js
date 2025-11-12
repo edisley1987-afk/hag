@@ -1,36 +1,31 @@
 // login.js
-const API_URL = window.location.origin;
-
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const erro = document.getElementById("loginError");
-  erro.textContent = "";
-
-  if (!username || !password) {
-    erro.textContent = "Preencha todos os campos.";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!res.ok) {
-      erro.textContent = "Usuário ou senha inválidos.";
-      return;
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({message:"Erro"}));
+        alert(err.message || "Usuário ou senha inválidos");
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("user", data.user);
+        window.location.href = "/dashboard.html";
+      } else {
+        alert("Usuário ou senha inválidos");
+      }
+    } catch (err) {
+      console.error("Erro no login:", err);
+      alert("Erro ao conectar com o servidor.");
     }
-
-    const data = await res.json();
-    localStorage.setItem("authToken", data.token);
-    localStorage.setItem("authUser", username);
-    window.location.href = "dashboard.html";
-  } catch {
-    erro.textContent = "Erro ao conectar ao servidor.";
-  }
+  });
 });
