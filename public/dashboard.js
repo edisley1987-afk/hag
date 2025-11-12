@@ -1,3 +1,11 @@
+// === Controle de acesso ===
+document.addEventListener("DOMContentLoaded", () => {
+  const user = localStorage.getItem("user");
+  if (!user) {
+    alert("Por favor, faça login para acessar o painel.");
+    window.location.href = "/login.html";
+  }
+});
 // === dashboard.js ===
 // Exibe leituras em tempo real com nível visual (caixa d'água)
 
