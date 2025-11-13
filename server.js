@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico completo) =======
+// ======= Servidor Universal HAG (com histórico completo e logs Render) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -45,7 +45,6 @@ function adicionarAoHistorico(dados) {
     }
   }
 
-  // Adiciona registro com timestamp
   historico.push({
     timestamp: new Date().toISOString(),
     ...dados
@@ -71,7 +70,10 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
 
-    if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido" });
+    if (!dataArray.length) {
+      console.log("⚠️ Nenhum dado válido recebido:", body);
+      return res.status(400).json({ erro: "Nenhum dado válido" });
+    }
 
     const dadosConvertidos = {};
     for (const item of dataArray) {
@@ -103,6 +105,12 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
+
+    // === Log no Render ===
+    console.log(`📡 [${new Date().toLocaleTimeString()}] Leituras recebidas:`);
+    for (const [chave, valor] of Object.entries(dadosConvertidos)) {
+      if (chave !== "timestamp") console.log(`   🔹 ${chave}: ${valor}`);
+    }
 
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
