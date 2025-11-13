@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico completo e bloqueio de IP) =======
+// ======= Servidor Universal HAG (com histórico completo e lista de IPs permitidos) =======
 
 import express from "express";
 import fs from "fs";
@@ -15,23 +15,23 @@ app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ======= Proteção: apenas o Gateway pode enviar dados =======
-const IP_GATEWAY = "192.168.1.71";
+// ======= Proteção: apenas IPs autorizados podem enviar dados =======
+const IPS_PERMITIDOS = ["189.40.84.43", "172.71.146.130", "10.16.47.164", "127.0.0.1"];
 
 app.use("/dados", (req, res, next) => {
-  // Detecta o IP real de quem faz a requisição
+  // Detecta o IP de origem
   const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
     .replace("::ffff:", "")
     .replace("::1", "127.0.0.1");
 
   console.log("🔍 IP detectado:", ip);
 
-  // Permite apenas o Gateway e localhost (para testes)
-  if (ip === IP_GATEWAY || ip === "127.0.0.1") {
+  // Verifica se o IP está na lista
+  if (IPS_PERMITIDOS.includes(ip)) {
     return next();
   }
 
-  console.warn(`🚫 Acesso bloqueado de IP: ${ip}`);
+  console.warn(`🚫 Acesso bloqueado de IP não autorizado: ${ip}`);
   return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
 });
 
@@ -121,4 +121,5 @@ app.delete("/historico", (req, res) => {
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log("✅ IPs liberados:", IPS_PERMITIDOS.join(", "));
 });
