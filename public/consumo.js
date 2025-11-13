@@ -1,121 +1,114 @@
-const API_URL = window.location.origin + "/historico";
+// ======= consumo.js =======
+// Página de gráfico de consumo diário (Elevador e Osmose)
 
 async function carregarConsumo() {
   try {
-    const res = await fetch(API_URL);
-    const historico = await res.json();
+    const resp = await fetch("/historico");
+    const historico = await resp.json();
 
-    // Calcular consumo dos últimos 5 dias para os reservatórios Elevador e Osmose
-    const consumoDiario = calcularConsumoDiario(historico);
-    exibirGrafico(consumoDiario);
+    if (!historico.length) {
+      document.getElementById("graficoContainer").innerHTML =
+        "<p style='text-align:center; color:gray;'>Ainda não há dados suficientes para gerar o gráfico de consumo diário.</p>";
+      return;
+    }
+
+    const consumoPorDia = calcularConsumoDiario(historico);
+    exibirGrafico(consumoPorDia);
   } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar dados de consumo diário.");
+    console.error("Erro ao carregar consumo:", err);
   }
 }
 
 function calcularConsumoDiario(historico) {
-  const CAPACIDADES = {
-    "Reservatorio_Elevador_current": 20000,
-    "Reservatorio_Osmose_current": 200
-  };
+  const consumo = {};
 
-  // Agrupar por dia
-  const dias = {};
-  historico.forEach(h => {
-    const data = new Date(h.timestamp);
-    const dia = data.toLocaleDateString("pt-BR");
+  historico.forEach(entry => {
+    const data = new Date(entry.timestamp).toLocaleDateString("pt-BR");
+    if (!consumo[data]) consumo[data] = { elevador: 0, osmose: 0 };
 
-    for (const key of Object.keys(CAPACIDADES)) {
-      if (h[key] !== undefined) {
-        if (!dias[dia]) dias[dia] = {};
-        if (!dias[dia][key]) dias[dia][key] = [];
-        dias[dia][key].push(h[key]);
-      }
-    }
+    if (entry.Reservatorio_Elevador_current !== undefined)
+      consumo[data].elevador = Math.max(consumo[data].elevador, entry.Reservatorio_Elevador_current);
+    if (entry.Reservatorio_Osmose_current !== undefined)
+      consumo[data].osmose = Math.max(consumo[data].osmose, entry.Reservatorio_Osmose_current);
   });
 
-  // Calcular consumo (diferença entre máximo e mínimo do dia)
-  const resultado = [];
-  Object.keys(dias).forEach(dia => {
-    const elevador = dias[dia]["Reservatorio_Elevador_current"] || [];
-    const osmose = dias[dia]["Reservatorio_Osmose_current"] || [];
+  // Calcula consumo (diferença entre dias consecutivos)
+  const dias = Object.keys(consumo).sort(
+    (a, b) =>
+      new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
+  );
 
-    const consumoElevador = elevador.length > 1 ? Math.max(...elevador) - Math.min(...elevador) : 0;
-    const consumoOsmose = osmose.length > 1 ? Math.max(...osmose) - Math.min(...osmose) : 0;
-
-    resultado.push({
-      dia,
-      elevador: consumoElevador,
-      osmose: consumoOsmose
+  const consumoFinal = [];
+  for (let i = 1; i < dias.length; i++) {
+    const dAnt = consumo[dias[i - 1]];
+    const dAt = consumo[dias[i]];
+    consumoFinal.push({
+      dia: dias[i],
+      elevador: Math.max(0, dAnt.elevador - dAt.elevador),
+      osmose: Math.max(0, dAnt.osmose - dAt.osmose),
     });
-  });
+  }
 
-  // Ordena por data (mais recente por último)
-  return resultado.slice(-5);
+  return consumoFinal.slice(-5); // mostra últimos 5 dias
 }
 
 function exibirGrafico(consumo) {
   const ctx = document.getElementById("graficoConsumo").getContext("2d");
-  if (window.graficoConsumo) window.graficoConsumo.destroy();
 
-  const labels = consumo.map(c => c.dia);
-  const elevador = consumo.map(c => c.elevador);
-  const osmose = consumo.map(c => c.osmose);
+  // ✅ Corrigido: destruir gráfico anterior apenas se for instância de Chart
+  if (window.graficoConsumo instanceof Chart) {
+    window.graficoConsumo.destroy();
+  }
 
   window.graficoConsumo = new Chart(ctx, {
     type: "bar",
     data: {
-      labels,
+      labels: consumo.map(d => d.dia),
       datasets: [
         {
-          label: "Elevador (L)",
-          data: elevador,
-          backgroundColor: "rgba(20,108,96,0.6)",
-          borderColor: "#146C60",
-          borderWidth: 1,
-          borderRadius: 6
+          label: "Reservatório Elevador (L)",
+          data: consumo.map(d => d.elevador),
+          backgroundColor: "#2c8b7d",
         },
         {
-          label: "Osmose (L)",
-          data: osmose,
-          backgroundColor: "rgba(83,178,168,0.6)",
-          borderColor: "#53B2A8",
-          borderWidth: 1,
-          borderRadius: 6
-        }
-      ]
+          label: "Reservatório Osmose (L)",
+          data: consumo.map(d => d.osmose),
+          backgroundColor: "#57b3a0",
+        },
+      ],
     },
     options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: "Consumo de Água (Litros)"
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: "Dia"
-          }
-        }
-      },
+      responsive: true,
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#146C60", font: { size: 13 } }
-        },
         title: {
           display: true,
-          text: "Consumo Diário de Água — Últimos 5 dias",
-          color: "#146C60",
-          font: { size: 20, weight: "bold" }
-        }
-      }
-    }
+          text: "Consumo Diário de Água — Últimos 5 Dias",
+          font: { size: 18 },
+        },
+        legend: { position: "top" },
+      },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "Litros Consumidos" } },
+        x: { title: { display: true, text: "Dia" } },
+      },
+    },
   });
 }
 
-window.addEventListener("DOMContentLoaded", carregarConsumo);
+// Atualiza o gráfico automaticamente à meia-noite
+function atualizarMeiaNoite() {
+  const agora = new Date();
+  const prox = new Date();
+  prox.setHours(24, 0, 0, 0);
+  const ms = prox - agora;
+  setTimeout(() => {
+    carregarConsumo();
+    atualizarMeiaNoite();
+  }, ms);
+}
+
+// Inicializa
+window.addEventListener("load", () => {
+  carregarConsumo();
+  atualizarMeiaNoite();
+});
