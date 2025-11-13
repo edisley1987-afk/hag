@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com manutenção persistente e histórico por hora) =======
+// ======= Servidor Universal HAG (com logs e histórico por hora) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -20,7 +20,7 @@ const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUTENCAO_FILE = path.join(DATA_DIR, "manutencao.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Calibração ===
+// === Calibração dos sensores ===
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
@@ -31,12 +31,11 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Utilitários ===
+// === Funções utilitárias ===
 function salvarLeituraAtual(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
 
-// === Histórico: grava 1 vez por hora ===
 function adicionarAoHistorico(dados) {
   let historico = [];
   if (fs.existsSync(HIST_FILE)) {
@@ -48,14 +47,14 @@ function adicionarAoHistorico(dados) {
   const ultima = historico.length ? historico[historico.length - 1] : null;
   const chaveUltima = ultima ? ultima.timestamp.slice(0, 13) : null;
 
-  // Salva só uma vez por hora
+  // Só grava uma vez por hora
   if (chaveAtual !== chaveUltima) {
     historico.push({ timestamp: agora.toISOString(), ...dados });
     fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
   }
 }
 
-// === Endpoint principal: receber leituras do gateway ===
+// === Receber leituras do Gateway ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
@@ -101,7 +100,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     // === Controle de manutenção ===
-    const LIMITE_MANUTENCAO = 30; // %
+    const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
     if (fs.existsSync(MANUTENCAO_FILE)) {
       try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
@@ -122,6 +121,9 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     dadosConvertidos.timestamp = new Date().toISOString();
     dadosConvertidos.manutencao = manutencaoAtiva;
 
+    // === Log no console do Render ===
+    console.log("📩 Dados recebidos do gateway:", JSON.stringify(dadosConvertidos, null, 2));
+
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
@@ -132,7 +134,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoint manual para manutenção ===
+// === Endpoint manual de manutenção ===
 app.post("/manutencao", (req, res) => {
   try {
     const { ref, ativo } = req.body;
