@@ -53,7 +53,6 @@ function exibirHistorico(historico) {
     return;
   }
 
-  // === GRÁFICO (mantém estilo horizontal anterior, apenas menor) ===
   const ctx = document.getElementById("grafico").getContext("2d");
   if (window.meuGrafico) window.meuGrafico.destroy();
 
@@ -65,7 +64,7 @@ function exibirHistorico(historico) {
         label: "Leitura (L)",
         data: registros.map(r => r.litros),
         borderColor: "#004b8d",
-        backgroundColor: "rgba(0,75,141,0.2)",
+        backgroundColor: "rgba(0,75,141,0.25)",
         borderWidth: 2,
         tension: 0.3,
         fill: true,
@@ -75,9 +74,7 @@ function exibirHistorico(historico) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
+      plugins: { legend: { display: false } },
       scales: {
         x: { title: { display: true, text: "Hora" } },
         y: {
@@ -88,7 +85,6 @@ function exibirHistorico(historico) {
     }
   });
 
-  // === TABELA compacta ===
   container.innerHTML = `
     <table>
       <thead>
