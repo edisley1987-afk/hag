@@ -1,48 +1,111 @@
-const API_URL = window.location.origin + "/historico";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico - Hospital Arnaldo Gavazza</title>
+  <link rel="icon" href="logo.png" type="image/png" />
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #f4f8fb;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
 
-async function carregarHistorico() {
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Erro ao carregar histórico");
-    const historico = await res.json();
-    exibirHistorico(historico);
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar histórico");
-  }
-}
+    header {
+      display: flex;
+      align-items: center;
+      background-color: #005ca8; /* azul institucional */
+      color: white;
+      padding: 12px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-function exibirHistorico(historico) {
-  const params = new URLSearchParams(window.location.search);
-  const reservatorio = params.get("reservatorio");
+    header img {
+      height: 40px;
+      margin-right: 12px;
+    }
 
-  const container = document.getElementById("historicoContainer");
-  container.innerHTML = `<h2>Histórico — ${reservatorio}</h2>`;
+    header h1 {
+      font-size: 1.3rem;
+      margin: 0;
+      font-weight: 500;
+    }
 
-  const registros = historico
-    .filter(h => h.dados && h.dados[reservatorio])
-    .map(h => ({
-      data: new Date(h.timestamp).toLocaleString("pt-BR"),
-      valor: h.dados[reservatorio]
-    }));
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
 
-  if (registros.length === 0) {
-    container.innerHTML += `<p>Nenhum dado encontrado.</p>`;
-    return;
-  }
+    h2 {
+      text-align: center;
+      color: #005ca8;
+      margin-bottom: 20px;
+    }
 
-  const tabela = document.createElement("table");
-  tabela.innerHTML = `
-    <thead>
-      <tr><th>Data/Hora</th><th>Leitura (L)</th></tr>
-    </thead>
-    <tbody>
-      ${registros
-        .map(r => `<tr><td>${r.data}</td><td>${r.valor.toLocaleString()}</td></tr>`)
-        .join("")}
-    </tbody>
-  `;
-  container.appendChild(tabela);
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-window.addEventListener("DOMContentLoaded", carregarHistorico);
+    th {
+      background-color: #005ca8;
+      color: white;
+      text-align: left;
+      padding: 8px 10px;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:hover {
+      background-color: #f2f7fb;
+    }
+
+    button {
+      display: inline-block;
+      background-color: #005ca8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    button:hover {
+      background-color: #0073d0;
+    }
+
+    #historicoContainer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="Hospital Arnaldo Gavazza" />
+    <h1>Hospital Arnaldo Gavazza — Histórico de Leituras</h1>
+  </header>
+
+  <main>
+    <button onclick="window.location.href='dashboard.html'">⬅ Voltar ao Painel</button>
+    <div id="historicoContainer">
+      <h2>Carregando histórico...</h2>
+    </div>
+  </main>
+
+  <script src="historico.js"></script>
+</body>
+</html>
