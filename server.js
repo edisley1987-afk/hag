@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com logs e histórico por hora) =======
+// ======= Servidor Universal HAG (com histórico otimizado por variação > 5%) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -39,18 +39,39 @@ function salvarLeituraAtual(dados) {
 function adicionarAoHistorico(dados) {
   let historico = [];
   if (fs.existsSync(HIST_FILE)) {
-    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch { historico = []; }
+    try {
+      historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+    } catch {
+      historico = [];
+    }
   }
 
   const agora = new Date();
-  const chaveAtual = agora.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
   const ultima = historico.length ? historico[historico.length - 1] : null;
-  const chaveUltima = ultima ? ultima.timestamp.slice(0, 13) : null;
 
-  // Só grava uma vez por hora
-  if (chaveAtual !== chaveUltima) {
+  // Só adiciona se diferença > 5% para qualquer reservatório
+  let mudou = false;
+  if (ultima) {
+    for (const ref of Object.keys(SENSORES)) {
+      if (!ref.includes("Reservatorio")) continue;
+      const atual = dados[ref];
+      const anterior = ultima[ref];
+      const capacidade = SENSORES[ref].capacidade;
+      if (capacidade && anterior !== undefined) {
+        const diffPercent = Math.abs(((atual - anterior) / capacidade) * 100);
+        if (diffPercent >= 5) {
+          mudou = true;
+          break;
+        }
+      }
+    }
+  } else {
+    mudou = true; // sempre grava o primeiro
+  }
+
+  if (mudou) {
     historico.push({ timestamp: agora.toISOString(), ...dados });
-    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico.slice(-1000), null, 2)); // mantém últimas 1000 leituras
   }
 }
 
@@ -103,7 +124,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
     if (fs.existsSync(MANUTENCAO_FILE)) {
-      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
+      try {
+        manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8"));
+      } catch {
+        manutencaoAtiva = {};
+      }
     }
 
     for (const ref of Object.keys(SENSORES)) {
@@ -121,7 +146,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     dadosConvertidos.timestamp = new Date().toISOString();
     dadosConvertidos.manutencao = manutencaoAtiva;
 
-    // === Log no console do Render ===
     console.log("📩 Dados recebidos do gateway:", JSON.stringify(dadosConvertidos, null, 2));
 
     salvarLeituraAtual(dadosConvertidos);
