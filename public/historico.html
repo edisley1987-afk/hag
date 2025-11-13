@@ -1,23 +1,48 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Histórico de Leituras</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header>
-    <h1>Histórico de Leituras</h1>
-  </header>
+const API_URL = window.location.origin + "/historico";
 
-  <main id="historicoContainer">
-    Carregando...
-  </main>
+async function carregarHistorico() {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Erro ao carregar histórico");
+    const historico = await res.json();
+    exibirHistorico(historico);
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar histórico");
+  }
+}
 
-  <footer>
-    <a href="dashboard.html">← Voltar ao painel</a>
-  </footer>
+function exibirHistorico(historico) {
+  const params = new URLSearchParams(window.location.search);
+  const reservatorio = params.get("reservatorio");
 
-  <script src="historico.js"></script>
-</body>
-</html>
+  const container = document.getElementById("historicoContainer");
+  container.innerHTML = `<h2>Histórico — ${reservatorio}</h2>`;
+
+  const registros = historico
+    .filter(h => h.dados && h.dados[reservatorio])
+    .map(h => ({
+      data: new Date(h.timestamp).toLocaleString("pt-BR"),
+      valor: h.dados[reservatorio]
+    }));
+
+  if (registros.length === 0) {
+    container.innerHTML += `<p>Nenhum dado encontrado.</p>`;
+    return;
+  }
+
+  const tabela = document.createElement("table");
+  tabela.innerHTML = `
+    <thead>
+      <tr><th>Data/Hora</th><th>Leitura (L)</th></tr>
+    </thead>
+    <tbody>
+      ${registros
+        .map(r => `<tr><td>${r.data}</td><td>${r.valor.toLocaleString()}</td></tr>`)
+        .join("")}
+    </tbody>
+  `;
+  container.appendChild(tabela);
+}
+
+window.addEventListener("DOMContentLoaded", carregarHistorico);
