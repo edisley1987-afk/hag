@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico completo e lista de IPs permitidos) =======
+// ======= Servidor Universal HAG (com histórico completo e verificação de múltiplos IPs) =======
 
 import express from "express";
 import fs from "fs";
@@ -19,20 +19,25 @@ app.use(express.static(path.join(__dirname, "public")));
 const IPS_PERMITIDOS = ["189.40.84.43", "172.71.146.130", "10.16.47.164", "127.0.0.1"];
 
 app.use("/dados", (req, res, next) => {
-  // Detecta o IP de origem
-  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
-    .replace("::ffff:", "")
+  // Captura todos os IPs possíveis
+  const ipHeader = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
+    .replace(/::ffff:/g, "")
     .replace("::1", "127.0.0.1");
 
-  console.log("🔍 IP detectado:", ip);
+  // Divide caso venha múltiplos IPs separados por vírgula
+  const ips = ipHeader.split(",").map(i => i.trim());
 
-  // Verifica se o IP está na lista
-  if (IPS_PERMITIDOS.includes(ip)) {
-    return next();
+  console.log("🔍 IPs detectados:", ips);
+
+  // Verifica se pelo menos um IP está na lista
+  const autorizado = ips.some(ip => IPS_PERMITIDOS.includes(ip));
+
+  if (!autorizado) {
+    console.warn(`🚫 Acesso bloqueado de IPs: ${ips.join(", ")}`);
+    return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
   }
 
-  console.warn(`🚫 Acesso bloqueado de IP não autorizado: ${ip}`);
-  return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
+  next();
 });
 
 // ======= Pastas e arquivos =======
@@ -118,7 +123,7 @@ app.delete("/historico", (req, res) => {
 });
 
 // ======= Inicia servidor =======
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log("✅ IPs liberados:", IPS_PERMITIDOS.join(", "));
