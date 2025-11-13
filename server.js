@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico otimizado por variação > 5%) =======
+// ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -9,9 +9,7 @@ const __dirname = path.resolve();
 
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
-app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.raw({ type: "*/*", limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const DATA_DIR = path.join(__dirname, "data");
@@ -39,18 +37,12 @@ function salvarLeituraAtual(dados) {
 function adicionarAoHistorico(dados) {
   let historico = [];
   if (fs.existsSync(HIST_FILE)) {
-    try {
-      historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-    } catch {
-      historico = [];
-    }
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch { historico = []; }
   }
 
-  const agora = new Date();
   const ultima = historico.length ? historico[historico.length - 1] : null;
-
-  // Só adiciona se diferença > 5% para qualquer reservatório
   let mudou = false;
+
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
@@ -58,20 +50,18 @@ function adicionarAoHistorico(dados) {
       const anterior = ultima[ref];
       const capacidade = SENSORES[ref].capacidade;
       if (capacidade && anterior !== undefined) {
-        const diffPercent = Math.abs(((atual - anterior) / capacidade) * 100);
+        const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
         if (diffPercent >= 5) {
           mudou = true;
           break;
         }
       }
     }
-  } else {
-    mudou = true; // sempre grava o primeiro
-  }
+  } else mudou = true;
 
   if (mudou) {
-    historico.push({ timestamp: agora.toISOString(), ...dados });
-    fs.writeFileSync(HIST_FILE, JSON.stringify(historico.slice(-1000), null, 2)); // mantém últimas 1000 leituras
+    historico.push({ timestamp: new Date().toISOString(), ...dados });
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
   }
 }
 
@@ -101,13 +91,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       if (!ref || isNaN(valor)) continue;
 
       const sensor = SENSORES[ref];
-      if (!sensor) {
-        dadosConvertidos[ref] = valor;
-        continue;
-      }
+      if (!sensor) continue;
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
       let leituraConvertida;
+
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
@@ -120,15 +108,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
-    // === Controle de manutenção ===
+    // Controle de manutenção
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
     if (fs.existsSync(MANUTENCAO_FILE)) {
-      try {
-        manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8"));
-      } catch {
-        manutencaoAtiva = {};
-      }
+      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
     }
 
     for (const ref of Object.keys(SENSORES)) {
@@ -146,7 +130,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     dadosConvertidos.timestamp = new Date().toISOString();
     dadosConvertidos.manutencao = manutencaoAtiva;
 
-    console.log("📩 Dados recebidos do gateway:", JSON.stringify(dadosConvertidos, null, 2));
+    console.log("📩 Dados recebidos:", JSON.stringify(dadosConvertidos, null, 2));
 
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
@@ -158,28 +142,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoint manual de manutenção ===
-app.post("/manutencao", (req, res) => {
-  try {
-    const { ref, ativo } = req.body;
-    if (!ref) return res.status(400).json({ erro: "Reservatório não informado" });
-
-    let manutencaoAtiva = {};
-    if (fs.existsSync(MANUTENCAO_FILE)) {
-      manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8"));
-    }
-
-    if (ativo) manutencaoAtiva[ref] = true;
-    else delete manutencaoAtiva[ref];
-
-    fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencaoAtiva, null, 2));
-    res.json({ status: "ok", manutencaoAtiva });
-  } catch (err) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-// === Endpoints de dados ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
@@ -190,11 +152,9 @@ app.get("/historico", (_, res) => {
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// === Frontend ===
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor HAG rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
