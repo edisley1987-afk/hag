@@ -1,5 +1,4 @@
-// ======= Servidor Universal HAG (com histórico completo e verificação de múltiplos IPs) =======
-
+// ======= Servidor Universal HAG (com autenticação do ITG-200) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -8,123 +7,99 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// ======= Middlewares =======
+// ======= Middlewares padrão =======
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
 
-// ======= Proteção: apenas IPs autorizados podem enviar dados =======
-const IPS_PERMITIDOS = ["189.40.84.43", "172.71.146.130", "10.16.47.164", "127.0.0.1"];
+// ======= Caminhos =======
+const DATA_DIR = path.join(__dirname, "data");
+const DATA_FILE = path.join(DATA_DIR, "readings.json");
 
-app.use("/dados", (req, res, next) => {
-  // Captura todos os IPs possíveis
-  const ipHeader = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
-    .replace(/::ffff:/g, "")
-    .replace("::1", "127.0.0.1");
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
-  // Divide caso venha múltiplos IPs separados por vírgula
-  const ips = ipHeader.split(",").map(i => i.trim());
+// ======= Autenticação BASIC (ITG-200) =======
+app.use("/atualizar", (req, res, next) => {
+  const auth = req.headers["authorization"] || "";
+  const validUser = "118582";
+  const validPass = "HAG-CHAVE-123";
+  const expected = "Basic " + Buffer.from(`${validUser}:${validPass}`).toString("base64");
 
-  console.log("🔍 IPs detectados:", ips);
-
-  // Verifica se pelo menos um IP está na lista
-  const autorizado = ips.some(ip => IPS_PERMITIDOS.includes(ip));
-
-  if (!autorizado) {
-    console.warn(`🚫 Acesso bloqueado de IPs: ${ips.join(", ")}`);
-    return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
+  if (auth !== expected) {
+    console.warn("🚫 Acesso negado: credenciais inválidas");
+    return res.status(403).json({ error: "Acesso negado. Credenciais inválidas." });
   }
 
   next();
 });
 
-// ======= Pastas e arquivos =======
-const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const HISTORICO_FILE = path.join(DATA_DIR, "historico.json");
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
-if (!fs.existsSync(HISTORICO_FILE)) fs.writeFileSync(HISTORICO_FILE, "[]");
-
-// ======= Rota principal (dashboard) =======
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ======= Recebe dados do Gateway =======
-app.post("/dados", (req, res) => {
+// ======= Rota para receber dados do Gateway =======
+app.post("/atualizar", (req, res) => {
   try {
-    let data = {};
-    if (typeof req.body === "string") {
+    const data = req.body;
+    let jsonData = {};
+
+    // Suporte a diferentes formatos de corpo
+    if (typeof data === "string") {
       try {
-        data = JSON.parse(req.body);
+        jsonData = JSON.parse(data);
       } catch {
-        data = {};
+        jsonData = { leitura: data };
       }
     } else {
-      data = req.body;
+      jsonData = data;
     }
 
-    if (!data || Object.keys(data).length === 0) {
+    if (!jsonData || Object.keys(jsonData).length === 0) {
       return res.status(400).json({ error: "Dados inválidos ou vazios." });
     }
 
-    // Salva dados atuais
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    // Lê dados anteriores
+    let existingData = [];
+    if (fs.existsSync(DATA_FILE)) {
+      existingData = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    }
 
-    // Salva histórico
-    const historico = JSON.parse(fs.readFileSync(HISTORICO_FILE, "utf8"));
-    historico.push({ data: new Date().toISOString(), valores: data });
-    fs.writeFileSync(HISTORICO_FILE, JSON.stringify(historico, null, 2));
+    // Adiciona novo registro com data/hora
+    const registro = {
+      timestamp: new Date().toISOString(),
+      dados: jsonData,
+    };
 
-    console.log("💾 Dados atualizados:", data);
-    res.json({ status: "OK", mensagem: "Dados recebidos com sucesso." });
+    existingData.push(registro);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(existingData, null, 2));
+
+    console.log("✅ Dados recebidos e salvos:", registro);
+    res.json({ success: true });
   } catch (err) {
     console.error("❌ Erro ao salvar dados:", err);
-    res.status(500).json({ error: "Erro interno ao salvar dados." });
+    res.status(500).json({ error: "Erro interno no servidor." });
   }
 });
 
-// ======= Envia dados atuais =======
+// ======= Rota para o Dashboard / Histórico =======
 app.get("/dados", (req, res) => {
   try {
-    const data = fs.readFileSync(DATA_FILE, "utf8");
-    res.json(JSON.parse(data));
+    if (!fs.existsSync(DATA_FILE)) {
+      return res.json([]);
+    }
+    const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    res.json(dados);
   } catch (err) {
     console.error("❌ Erro ao ler dados:", err);
     res.status(500).json({ error: "Erro ao ler dados." });
   }
 });
 
-// ======= Histórico =======
-app.get("/historico", (req, res) => {
-  try {
-    const historico = fs.readFileSync(HISTORICO_FILE, "utf8");
-    res.json(JSON.parse(historico));
-  } catch (err) {
-    console.error("❌ Erro ao ler histórico:", err);
-    res.status(500).json({ error: "Erro ao ler histórico." });
-  }
-});
+// ======= Servir arquivos estáticos =======
+app.use(express.static(path.join(__dirname, "public")));
 
-// ======= Limpar histórico =======
-app.delete("/historico", (req, res) => {
-  try {
-    fs.writeFileSync(HISTORICO_FILE, "[]");
-    console.log("🧹 Histórico limpo.");
-    res.json({ status: "OK", mensagem: "Histórico apagado com sucesso." });
-  } catch (err) {
-    console.error("❌ Erro ao limpar histórico:", err);
-    res.status(500).json({ error: "Erro ao limpar histórico." });
-  }
-});
-
-// ======= Inicia servidor =======
-const PORT = process.env.PORT || 3000;
+// ======= Inicialização =======
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log("✅ IPs liberados:", IPS_PERMITIDOS.join(", "));
+  console.log("🔒 Autenticação BASIC ativada para /atualizar");
+  console.log("👤 Usuário:", "118582");
+  console.log("🔑 Senha:", "HAG-CHAVE-123");
 });
