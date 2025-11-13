@@ -1,4 +1,4 @@
-/* === style.css === */
+/* === style.css (atualizado com cores do hospital) === */
 /* Layout moderno horizontal com efeito visual de nível de água real */
 
 body {
@@ -12,8 +12,9 @@ body {
   min-height: 100vh;
 }
 
+/* === Cabeçalho com cor institucional === */
 header {
-  background: #004d7a;
+  background: #146C60; /* Verde escuro hospital */
   color: white;
   text-align: center;
   padding: 20px;
@@ -64,7 +65,7 @@ header {
   left: 0;
   width: 100%;
   height: var(--nivel, 0%);
-  background: var(--corNivel, linear-gradient(to top, #3498db, #2ecc71));
+  background: var(--corNivel, linear-gradient(to top, #53B2A8, #146C60)); /* tons hospitalares */
   transition: height 1s ease, background 0.8s ease;
   z-index: 0;
   opacity: 0.5;
@@ -81,7 +82,7 @@ header {
 .card h2 {
   margin-top: 15px;
   font-size: 1.2rem;
-  color: #004d7a;
+  color: #146C60; /* mesmo tom do cabeçalho */
   margin-bottom: 10px;
 }
 
@@ -103,7 +104,7 @@ header {
 
 /* === Botão histórico === */
 .historico-btn {
-  background: #004d7a;
+  background: #53B2A8; /* verde claro hospital */
   color: white;
   border: none;
   padding: 8px 14px;
@@ -115,7 +116,7 @@ header {
 }
 
 .historico-btn:hover {
-  background: #0074b1;
+  background: #146C60; /* tom mais escuro no hover */
 }
 
 /* === Quando sem dados === */
@@ -127,9 +128,9 @@ header {
   height: 0 !important;
 }
 
-/* === Rodapé fixo === */
+/* === Rodapé fixo com cor do hospital === */
 footer {
-  background: #004d7a;
+  background: #146C60; /* mesma do cabeçalho */
   color: white;
   text-align: center;
   padding: 10px;
@@ -147,46 +148,45 @@ footer {
     height: 260px;
   }
   .painel-alerta {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 320px;
-  height: 100%;
-  background: rgba(255, 0, 0, 0.9);
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  z-index: 9999;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
-  display: none;
-  overflow-y: auto;
-  animation: slideIn 0.4s ease-out;
-}
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100%;
+    background: rgba(255, 0, 0, 0.9);
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    z-index: 9999;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
+    display: none;
+    overflow-y: auto;
+    animation: slideIn 0.4s ease-out;
+  }
 
-.painel-alerta h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
+  .painel-alerta h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
 
-.alert-item {
-  background: rgba(0, 0, 0, 0.3);
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 6px;
-}
+  .alert-item {
+    background: rgba(0, 0, 0, 0.3);
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 6px;
+  }
 
-.alert-item button {
-  background: #fff;
-  color: #d00;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
+  .alert-item button {
+    background: #fff;
+    color: #d00;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
 
-@keyframes slideIn {
-  from { right: -350px; opacity: 0; }
-  to { right: 0; opacity: 1; }
-}
-
+  @keyframes slideIn {
+    from { right: -350px; opacity: 0; }
+    to { right: 0; opacity: 1; }
+  }
 }
