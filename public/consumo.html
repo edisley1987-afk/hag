@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Consumo Diário — HAG</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      background-color: #f5f9f8;
+      color: #1a3d36;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header {
+      background-color: #2c8b7d;
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    #tituloConsumo {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      background-color: #2c8b7d;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #256f64;
+      transform: translateY(-2px);
+    }
+
+    canvas {
+      background-color: #fefefe;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 10px;
+      width: 100%;
+      height: 400px;
+    }
+
+    footer {
+      background-color: #2c8b7d;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h2 id="tituloConsumo">Consumo Diário de Água</h2>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <button onclick="window.location.href='historico.html'">⬅️ Voltar ao Histórico</button>
+    </div>
+
+    <div style="max-width: 900px; margin:auto;">
+      <canvas id="graficoConsumo"></canvas>
+    </div>
+
+    <div id="infoConsumo" style="margin-top: 30px; text-align: center; font-size: 16px;">
+      <p>Exibindo consumo dos últimos <strong>5 dias</strong> dos reservatórios <strong>Elevador</strong> e <strong>Osmose</strong>.</p>
+    </div>
+  </main>
+
+  <footer>
+    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
+  </footer>
+
+  <script src="consumo.js"></script>
+</body>
+</html>
