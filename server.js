@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) =======
+// ======= Servidor Universal HAG (com histórico otimizado + página Consumo Diário) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -142,6 +142,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
+// === Rotas de dados ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
@@ -152,9 +153,12 @@ app.get("/historico", (_, res) => {
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
+// === Rotas de páginas ===
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+app.get("/consumo", (_, res) => res.sendFile(path.join(__dirname, "public", "consumo.html"))); // ✅ nova rota
 
+// === Inicialização ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
