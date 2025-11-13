@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com histórico completo e logs Render) =======
+// ======= Servidor Universal HAG (Histórico otimizado - 1 leitura/hora) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -30,7 +30,7 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Utilitários ===
+// === Funções utilitárias ===
 function salvarLeituraAtual(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
@@ -45,15 +45,33 @@ function adicionarAoHistorico(dados) {
     }
   }
 
-  historico.push({
-    timestamp: new Date().toISOString(),
-    ...dados
-  });
+  const agora = new Date();
+  const horaAtual = agora.toISOString().slice(0, 13); // Ex: 2025-11-13T15
 
-  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+  const ultima = historico.length > 0 ? historico[historico.length - 1] : null;
+  const horaUltima = ultima ? ultima.timestamp.slice(0, 13) : null;
+
+  // Verifica se houve mudança de leitura
+  const mudou = !ultima || Object.keys(dados).some(
+    (k) => k !== "timestamp" && dados[k] !== ultima[k]
+  );
+
+  // Adiciona apenas se for nova hora ou se algo mudou
+  if (horaAtual !== horaUltima && mudou) {
+    historico.push({
+      timestamp: agora.toISOString(),
+      ...dados
+    });
+
+    // Remove registros com mais de 7 dias (para não crescer demais)
+    const limite = agora.getTime() - 7 * 24 * 60 * 60 * 1000;
+    historico = historico.filter(item => new Date(item.timestamp).getTime() > limite);
+
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+  }
 }
 
-// === Endpoint para receber leituras ===
+// === Endpoint de atualização ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
@@ -70,10 +88,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
 
-    if (!dataArray.length) {
-      console.log("⚠️ Nenhum dado válido recebido:", body);
-      return res.status(400).json({ erro: "Nenhum dado válido" });
-    }
+    if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido recebido" });
 
     const dadosConvertidos = {};
     for (const item of dataArray) {
@@ -89,6 +104,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
       let leituraConvertida;
+
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
@@ -106,12 +122,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
-    // === Log no Render ===
-    console.log(`📡 [${new Date().toLocaleTimeString()}] Leituras recebidas:`);
-    for (const [chave, valor] of Object.entries(dadosConvertidos)) {
-      if (chave !== "timestamp") console.log(`   🔹 ${chave}: ${valor}`);
-    }
-
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
@@ -119,7 +129,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoints ===
+// === Endpoints de dados ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
