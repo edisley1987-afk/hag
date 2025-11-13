@@ -1,122 +1,141 @@
 const API_URL = window.location.origin + "/historico";
+const NOME_RESERVATORIOS = {
+  "Reservatorio_Elevador_current": "Reservatório Elevador",
+  "Reservatorio_Osmose_current": "Reservatório Osmose",
+  "Reservatorio_CME_current": "Reservatório CME",
+  "Reservatorio_Agua_Abrandada_current": "Reservatório Água Abrandada"
+};
 const CAPACIDADES = {
   "Reservatorio_Elevador_current": 20000,
   "Reservatorio_Osmose_current": 200,
   "Reservatorio_CME_current": 1000,
-  "Reservatorio_Agua_Abrandada_current": 9000,
+  "Reservatorio_Agua_Abrandada_current": 9000
 };
 
-const NOMES = {
-  "Reservatorio_Elevador_current": "Reservatório Elevador",
-  "Reservatorio_Osmose_current": "Reservatório Osmose",
-  "Reservatorio_CME_current": "Reservatório CME",
-  "Reservatorio_Agua_Abrandada_current": "Água Abrandada",
-};
-
-let chart;
-
-document.addEventListener("DOMContentLoaded", () => {
-  const select = document.getElementById("reservatorioSelect");
-  select.addEventListener("change", () => carregarHistorico(select.value));
-
-  carregarHistorico(select.value);
-});
-
-async function carregarHistorico(reservatorio) {
+async function carregarHistorico() {
   try {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Erro ao carregar histórico");
     const historico = await res.json();
-
-    const ultimas24h = filtrarUltimas24h(historico);
-    const registros = ultimas24h
-      .filter(h => h[reservatorio] !== undefined)
-      .map(h => ({
-        data: new Date(h.timestamp),
-        litros: h[reservatorio]
-      }));
-
-    exibirHistorico(reservatorio, registros);
+    atualizarReservatorioSelect(historico);
   } catch (err) {
     console.error(err);
     alert("Erro ao carregar histórico");
   }
 }
 
-function filtrarUltimas24h(dados) {
-  const agora = Date.now();
-  return dados.filter(d => agora - new Date(d.timestamp).getTime() <= 24 * 60 * 60 * 1000);
+function atualizarReservatorioSelect(historico) {
+  const select = document.getElementById("reservatorioSelect");
+  select.innerHTML = Object.entries(NOME_RESERVATORIOS)
+    .map(([k, v]) => `<option value="${k}">${v}</option>`)
+    .join("");
+
+  const params = new URLSearchParams(window.location.search);
+  const reservatorio = params.get("reservatorio") || Object.keys(NOME_RESERVATORIOS)[0];
+  select.value = reservatorio;
+  exibirHistorico(historico, reservatorio);
+
+  select.addEventListener("change", () => {
+    exibirHistorico(historico, select.value);
+  });
 }
 
-function exibirHistorico(reservatorio, registros) {
-  const container = document.getElementById("historicoContainer");
-  const nome = NOMES[reservatorio] || reservatorio;
-  const capacidade = CAPACIDADES[reservatorio] || 1;
+function filtrarUltimas24h(historico) {
+  const agora = new Date();
+  return historico.filter(h => (agora - new Date(h.timestamp)) / 3600000 <= 24);
+}
 
-  document.getElementById("tituloHistorico").textContent = `Histórico — ${nome}`;
+function exibirHistorico(historico, reservatorio) {
+  const nomeReservatorio = NOME_RESERVATORIOS[reservatorio];
+  const capacidade = CAPACIDADES[reservatorio];
+  document.getElementById("tituloHistorico").textContent = `Histórico — ${nomeReservatorio}`;
+
+  const container = document.getElementById("historicoContainer");
+  const ultimas24h = filtrarUltimas24h(historico);
+
+  const registros = ultimas24h
+    .filter(h => h[reservatorio] !== undefined)
+    .map(h => ({
+      data: new Date(h.timestamp),
+      litros: h[reservatorio],
+      ocupacao: ((h[reservatorio] / capacidade) * 100).toFixed(1)
+    }));
 
   if (registros.length === 0) {
     container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
     return;
   }
 
-  // === GRAFICO ===
+  // === GERA GRÁFICO ===
   const ctx = document.getElementById("grafico").getContext("2d");
-  if (chart) chart.destroy();
+  if (window.meuGrafico) window.meuGrafico.destroy();
 
-  chart = new Chart(ctx, {
+  const labels = registros.map(r =>
+    r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  );
+
+  window.meuGrafico = new Chart(ctx, {
     type: "line",
     data: {
-      labels: registros.map(r => r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })),
-      datasets: [{
-        label: `${nome} (L)`,
-        data: registros.map(r => r.litros),
-        borderColor: "#004b8d",
-        backgroundColor: "rgba(0, 75, 141, 0.15)",
-        tension: 0.3,
-        fill: true
-      }]
+      labels,
+      datasets: [
+        {
+          label: "Volume (L)",
+          data: registros.map(r => r.litros),
+          borderColor: "#004b8d",
+          backgroundColor: "rgba(0,75,141,0.2)",
+          tension: 0.35,
+          yAxisID: "litros"
+        },
+        {
+          label: "Ocupação (%)",
+          data: registros.map(r => r.ocupacao),
+          borderColor: "#00b894",
+          backgroundColor: "rgba(0,184,148,0.2)",
+          tension: 0.35,
+          yAxisID: "porcentagem"
+        }
+      ]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: {
-        y: {
+        litros: {
+          type: "linear",
+          position: "left",
           beginAtZero: true,
-          max: capacidade
+          max: capacidade,
+          title: { display: true, text: "Litros" }
+        },
+        porcentagem: {
+          type: "linear",
+          position: "right",
+          min: 0,
+          max: 100,
+          title: { display: true, text: "%" }
         }
       },
       plugins: {
-        legend: { display: false }
+        legend: { position: "bottom" },
+        tooltip: { mode: "index", intersect: false }
       }
     }
   });
 
-  // === TABELA (apenas mudanças >5%) ===
-  let linhas = [];
-  let anterior = registros[0].litros;
-  linhas.push(gerarLinha(registros[0], capacidade));
-
-  for (let i = 1; i < registros.length; i++) {
-    const diff = Math.abs(((registros[i].litros - anterior) / capacidade) * 100);
-    if (diff >= 5) {
-      linhas.push(gerarLinha(registros[i], capacidade));
-      anterior = registros[i].litros;
-    }
-  }
-
+  // === TABELA ===
   container.innerHTML = `
     <table>
       <thead>
         <tr><th>Data/Hora</th><th>Leitura (L)</th><th>Ocupação (%)</th></tr>
       </thead>
-      <tbody>${linhas.join("")}</tbody>
-    </table>`;
-}
-
-function gerarLinha(registro, capacidade) {
-  const ocupacao = ((registro.litros / capacidade) * 100).toFixed(1);
-  return `<tr>
-    <td>${registro.data.toLocaleString("pt-BR")}</td>
-    <td>${registro.litros.toLocaleString("pt-BR")}</td>
-    <td>${ocupacao}%</td>
-  </tr>`;
-}
+      <tbody>
+        ${registros
+          .map(
+            r => `
+          <tr>
+            <td>${r.data.toLocaleString("pt-BR")}</td>
+            <td>${r.litros.toLocaleString()}</td>
+            <td>${r.ocupacao}</td>
+          </tr>`
+          )
+          .join("")
