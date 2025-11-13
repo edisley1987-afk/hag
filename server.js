@@ -1,4 +1,4 @@
-// ======= Servidor Universal HAG (com bloqueio de IP do Gateway) =======
+// ======= Servidor Universal HAG (com histórico completo e bloqueio de IP) =======
 
 import express from "express";
 import fs from "fs";
@@ -8,108 +8,117 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
+// ======= Middlewares =======
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-
-// ====== PASTAS PÚBLICAS ======
 app.use(express.static(path.join(__dirname, "public")));
-
-const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const HISTORICO_FILE = path.join(DATA_DIR, "historico.json");
-
-// Cria a pasta data se não existir
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 
 // ======= Proteção: apenas o Gateway pode enviar dados =======
 const IP_GATEWAY = "192.168.1.71";
 
 app.use("/dados", (req, res, next) => {
-  const ip = req.ip.replace("::ffff:", ""); // remove prefixo IPv6
+  // Detecta o IP real de quem faz a requisição
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "")
+    .replace("::ffff:", "")
+    .replace("::1", "127.0.0.1");
 
-  if (ip !== IP_GATEWAY) {
-    console.warn(`Tentativa de acesso não autorizada do IP: ${ip}`);
-    return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
+  console.log("🔍 IP detectado:", ip);
+
+  // Permite apenas o Gateway e localhost (para testes)
+  if (ip === IP_GATEWAY || ip === "127.0.0.1") {
+    return next();
   }
 
-  // se o IP for o Gateway, continua
-  next();
+  console.warn(`🚫 Acesso bloqueado de IP: ${ip}`);
+  return res.status(403).json({ error: "Acesso negado. IP não autorizado." });
 });
 
-// ======= ROTA DE RECEBIMENTO DE DADOS DO GATEWAY =======
+// ======= Pastas e arquivos =======
+const DATA_DIR = path.join(__dirname, "data");
+const DATA_FILE = path.join(DATA_DIR, "readings.json");
+const HISTORICO_FILE = path.join(DATA_DIR, "historico.json");
+
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
+if (!fs.existsSync(HISTORICO_FILE)) fs.writeFileSync(HISTORICO_FILE, "[]");
+
+// ======= Rota principal (dashboard) =======
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ======= Recebe dados do Gateway =======
 app.post("/dados", (req, res) => {
   try {
-    const dados = req.body;
-
-    // Garante que existe o arquivo de histórico
-    if (!fs.existsSync(HISTORICO_FILE)) {
-      fs.writeFileSync(HISTORICO_FILE, "[]");
+    let data = {};
+    if (typeof req.body === "string") {
+      try {
+        data = JSON.parse(req.body);
+      } catch {
+        data = {};
+      }
+    } else {
+      data = req.body;
     }
 
-    // Salva leitura atual
-    fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+    if (!data || Object.keys(data).length === 0) {
+      return res.status(400).json({ error: "Dados inválidos ou vazios." });
+    }
 
-    // Adiciona ao histórico (com data/hora)
-    const historico = JSON.parse(fs.readFileSync(HISTORICO_FILE));
-    historico.push({
-      data: new Date().toLocaleString("pt-BR"),
-      ...dados,
-    });
-    fs.writeFileSync(HISTORICO_FILE, JSON.stringify(historico.slice(-2000), null, 2));
+    // Salva dados atuais
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
+    // Salva histórico
+    const historico = JSON.parse(fs.readFileSync(HISTORICO_FILE, "utf8"));
+    historico.push({ data: new Date().toISOString(), valores: data });
+    fs.writeFileSync(HISTORICO_FILE, JSON.stringify(historico, null, 2));
+
+    console.log("💾 Dados atualizados:", data);
     res.json({ status: "OK", mensagem: "Dados recebidos com sucesso." });
   } catch (err) {
-    console.error("Erro ao processar dados:", err);
-    res.status(500).json({ error: "Erro ao salvar dados." });
+    console.error("❌ Erro ao salvar dados:", err);
+    res.status(500).json({ error: "Erro interno ao salvar dados." });
   }
 });
 
-// ======= ROTA DE LEITURA (Dashboard) =======
+// ======= Envia dados atuais =======
 app.get("/dados", (req, res) => {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const dados = JSON.parse(fs.readFileSync(DATA_FILE));
-      res.json(dados);
-    } else {
-      res.status(404).json({ error: "Sem dados disponíveis." });
-    }
+    const data = fs.readFileSync(DATA_FILE, "utf8");
+    res.json(JSON.parse(data));
   } catch (err) {
-    console.error("Erro ao ler dados:", err);
-    res.status(500).json({ error: "Erro no servidor." });
+    console.error("❌ Erro ao ler dados:", err);
+    res.status(500).json({ error: "Erro ao ler dados." });
   }
 });
 
-// ======= ROTA HISTÓRICO =======
+// ======= Histórico =======
 app.get("/historico", (req, res) => {
   try {
-    if (fs.existsSync(HISTORICO_FILE)) {
-      const historico = JSON.parse(fs.readFileSync(HISTORICO_FILE));
-      res.json(historico);
-    } else {
-      res.json([]);
-    }
+    const historico = fs.readFileSync(HISTORICO_FILE, "utf8");
+    res.json(JSON.parse(historico));
   } catch (err) {
-    console.error("Erro ao carregar histórico:", err);
-    res.status(500).json({ error: "Erro ao carregar histórico." });
+    console.error("❌ Erro ao ler histórico:", err);
+    res.status(500).json({ error: "Erro ao ler histórico." });
   }
 });
 
-// ======= ROTA PARA LIMPAR HISTÓRICO =======
+// ======= Limpar histórico =======
 app.delete("/historico", (req, res) => {
   try {
     fs.writeFileSync(HISTORICO_FILE, "[]");
-    res.json({ status: "OK", mensagem: "Histórico apagado." });
+    console.log("🧹 Histórico limpo.");
+    res.json({ status: "OK", mensagem: "Histórico apagado com sucesso." });
   } catch (err) {
-    console.error("Erro ao limpar histórico:", err);
+    console.error("❌ Erro ao limpar histórico:", err);
     res.status(500).json({ error: "Erro ao limpar histórico." });
   }
 });
 
-// ======= INICIA O SERVIDOR =======
-const PORT = process.env.PORT || 3000;
+// ======= Inicia servidor =======
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Servidor HAG rodando na porta ${PORT}`);
-  console.log(`🔒 Aceitando dados apenas do Gateway em: ${IP_GATEWAY}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
