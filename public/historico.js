@@ -1,10 +1,12 @@
 const API_URL = window.location.origin + "/historico";
+
 const NOME_RESERVATORIOS = {
   "Reservatorio_Elevador_current": "Reservatório Elevador",
   "Reservatorio_Osmose_current": "Reservatório Osmose",
   "Reservatorio_CME_current": "Reservatório CME",
-  "Reservatorio_Agua_Abrandada_current": "Reservatório Água Abrandada"
+  "Reservatorio_Agua_Abrandada_current": "Água Abrandada"
 };
+
 const CAPACIDADES = {
   "Reservatorio_Elevador_current": 20000,
   "Reservatorio_Osmose_current": 200,
@@ -46,7 +48,6 @@ function filtrarUltimas24h(historico) {
 
 function exibirHistorico(historico, reservatorio) {
   const nomeReservatorio = NOME_RESERVATORIOS[reservatorio];
-  const capacidade = CAPACIDADES[reservatorio];
   document.getElementById("tituloHistorico").textContent = `Histórico — ${nomeReservatorio}`;
 
   const container = document.getElementById("historicoContainer");
@@ -57,15 +58,16 @@ function exibirHistorico(historico, reservatorio) {
     .map(h => ({
       data: new Date(h.timestamp),
       litros: h[reservatorio],
-      ocupacao: ((h[reservatorio] / capacidade) * 100).toFixed(1)
+      ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
     }));
 
   if (registros.length === 0) {
     container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
+    if (window.meuGrafico) window.meuGrafico.destroy();
     return;
   }
 
-  // === GERA GRÁFICO ===
+  // === Gráfico ===
   const ctx = document.getElementById("grafico").getContext("2d");
   if (window.meuGrafico) window.meuGrafico.destroy();
 
@@ -97,45 +99,51 @@ function exibirHistorico(historico, reservatorio) {
       ]
     },
     options: {
-      responsive: true,
       maintainAspectRatio: false,
       scales: {
         litros: {
           type: "linear",
           position: "left",
-          beginAtZero: true,
-          max: capacidade,
-          title: { display: true, text: "Litros" }
+          title: { display: true, text: "Litros" },
+          min: 0,
+          max: CAPACIDADES[reservatorio]
         },
         porcentagem: {
           type: "linear",
           position: "right",
+          title: { display: true, text: "%" },
           min: 0,
           max: 100,
-          title: { display: true, text: "%" }
+          grid: { drawOnChartArea: false }
         }
       },
       plugins: {
-        legend: { position: "bottom" },
-        tooltip: { mode: "index", intersect: false }
+        legend: { position: "bottom" }
       }
     }
   });
 
-  // === TABELA ===
+  // === Tabela ===
   container.innerHTML = `
-    <table>
+    <table border="1" style="margin-top:20px; width:100%; border-collapse:collapse;">
       <thead>
-        <tr><th>Data/Hora</th><th>Leitura (L)</th><th>Ocupação (%)</th></tr>
+        <tr>
+          <th>Data/Hora</th>
+          <th>Leitura (L)</th>
+          <th>Ocupação (%)</th>
+        </tr>
       </thead>
       <tbody>
-        ${registros
-          .map(
-            r => `
+        ${registros.map(r => `
           <tr>
             <td>${r.data.toLocaleString("pt-BR")}</td>
-            <td>${r.litros.toLocaleString()}</td>
-            <td>${r.ocupacao}</td>
-          </tr>`
-          )
-          .join("")
+            <td>${r.litros.toLocaleString("pt-BR")}</td>
+            <td>${r.ocupacao}%</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+window.addEventListener("DOMContentLoaded", carregarHistorico);
