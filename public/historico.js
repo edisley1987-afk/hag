@@ -64,7 +64,7 @@ function exibirHistorico(historico, reservatorio) {
     return;
   }
 
-  // === GERA GRÁFICO ===
+  // === GERA GRÁFICO (tamanho ajustado) ===
   const ctx = document.getElementById("grafico").getContext("2d");
   if (window.meuGrafico) window.meuGrafico.destroy();
 
@@ -79,29 +79,46 @@ function exibirHistorico(historico, reservatorio) {
           label: "Volume (L)",
           data: registros.map(r => r.litros),
           borderColor: "#004b8d",
-          backgroundColor: "rgba(0,75,141,0.2)",
-          yAxisID: "litros"
+          backgroundColor: "rgba(0,75,141,0.15)",
+          yAxisID: "litros",
+          tension: 0.3
         },
         {
           label: "Ocupação (%)",
           data: registros.map(r => r.ocupacao),
           borderColor: "#00b894",
-          backgroundColor: "rgba(0,184,148,0.2)",
-          yAxisID: "porcentagem"
+          backgroundColor: "rgba(0,184,148,0.15)",
+          yAxisID: "porcentagem",
+          tension: 0.3
         }
       ]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
       scales: {
-        litros: { type: "linear", position: "left", title: { display: true, text: "Litros" } },
-        porcentagem: { type: "linear", position: "right", title: { display: true, text: "%" }, min: 0, max: 100 }
+        litros: {
+          type: "linear",
+          position: "left",
+          title: { display: true, text: "Litros" },
+          ticks: { color: "#004b8d" }
+        },
+        porcentagem: {
+          type: "linear",
+          position: "right",
+          title: { display: true, text: "%" },
+          min: 0,
+          max: 100,
+          ticks: { color: "#00b894" }
+        }
       }
     }
   });
 
   // === TABELA ===
   container.innerHTML = `
-    <table border="1" style="margin-top:20px; width:100%; border-collapse:collapse;">
+    <table>
       <thead>
         <tr><th>Data/Hora</th><th>Leitura (L)</th><th>Ocupação (%)</th></tr>
       </thead>
