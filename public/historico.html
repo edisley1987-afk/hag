@@ -5,68 +5,21 @@
   <title>Histórico — HAG</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-      background: #f5f8fa;
-      color: #333;
-    }
-    h2 {
-      color: #004b8d;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    button {
-      background: #004b8d;
-      color: #fff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #0066cc;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
-    th {
-      background: #004b8d;
-      color: white;
-    }
-    canvas {
-      width: 1000px !important;
-      height: 360px !important;
-      display: block;
-      margin: 0 auto;
-    }
-  </style>
 </head>
 <body>
-  <h2>
-    <span id="tituloHistorico">Histórico</span>
-    <button onclick="window.location.href='/dashboard'">Voltar à Página Principal</button>
-  </h2>
+  <h2 id="tituloHistorico">Histórico</h2>
 
   <div style="margin-bottom: 20px;">
+    <button onclick="window.location.href='dashboard.html'" style="margin-right:15px;">⬅️ Voltar</button>
     <label for="reservatorioSelect"><strong>Selecionar Reservatório:</strong></label>
     <select id="reservatorioSelect"></select>
   </div>
 
-  <canvas id="grafico"></canvas>
-  <div id="historicoContainer"></div>
+  <div style="max-width:1000px; margin:auto;">
+    <canvas id="grafico" width="1000" height="360"></canvas>
+  </div>
+
+  <div id="historicoContainer" style="max-width:1000px; margin:30px auto;"></div>
 
   <script src="historico.js"></script>
 </body>
