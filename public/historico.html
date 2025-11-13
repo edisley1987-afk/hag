@@ -1,129 +1,156 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico de Reservatórios — HAG</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f5f8fa;
-      color: #002b5c;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
+const API_URL = window.location.origin + "/historico";
+const CAPACIDADES = {
+  "Reservatorio_Elevador_current": 20000,
+  "Reservatorio_Osmose_current": 200,
+  "Reservatorio_CME_current": 1000,
+  "Reservatorio_Agua_Abrandada_current": 9000,
+};
 
-    header {
-      background-color: #004b8d;
-      color: white;
-      padding: 15px;
-      font-size: 1.5rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+const NOMES = {
+  "Reservatorio_Elevador_current": "Reservatório Elevador",
+  "Reservatorio_Osmose_current": "Reservatório Osmose",
+  "Reservatorio_CME_current": "Reservatório CME",
+  "Reservatorio_Agua_Abrandada_current": "Água Abrandada",
+};
 
-    main {
-      margin: 30px auto;
-      max-width: 1100px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 30px;
-    }
+let chart;
+let historicoGlobal = [];
 
-    #voltarBtn {
-      background-color: #004b8d;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-bottom: 20px;
-    }
+document.addEventListener("DOMContentLoaded", async () => {
+  const select = document.getElementById("reservatorioSelect");
+  select.addEventListener("change", () => atualizarHistorico(select.value));
+  await carregarHistoricoInicial();
+});
 
-    #voltarBtn:hover {
-      background-color: #003b73;
-    }
+async function carregarHistoricoInicial() {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Erro ao carregar histórico");
+    historicoGlobal = await res.json();
 
-    select {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      font-size: 1rem;
-      color: #002b5c;
-    }
+    const select = document.getElementById("reservatorioSelect");
+    atualizarHistorico(select.value);
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar histórico");
+  }
+}
 
-    #graficoContainer {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
+function atualizarHistorico(reservatorio) {
+  const ultimas24h = filtrarUltimas24h(historicoGlobal);
+  const registros = ultimas24h
+    .filter(h => h[reservatorio] !== undefined)
+    .map(h => ({
+      data: new Date(h.timestamp),
+      litros: h[reservatorio]
+    }));
 
-    #grafico {
-      width: 1000px;
-      height: 360px;
-      background: #fafafa;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      padding: 15px;
-    }
+  exibirHistorico(reservatorio, registros);
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
+function filtrarUltimas24h(dados) {
+  const agora = Date.now();
+  return dados.filter(d => agora - new Date(d.timestamp).getTime() <= 24 * 60 * 60 * 1000);
+}
 
-    th, td {
-      padding: 10px;
-      text-align: center;
-      border-bottom: 1px solid #ddd;
-    }
+function exibirHistorico(reservatorio, registros) {
+  const container = document.getElementById("historicoContainer");
+  const nome = NOMES[reservatorio] || reservatorio;
+  const capacidade = CAPACIDADES[reservatorio] || 1;
 
-    th {
-      background-color: #004b8d;
-      color: white;
-    }
+  document.getElementById("tituloHistorico").textContent = `Histórico — ${nome}`;
 
-    tr:nth-child(even) {
-      background-color: #f2f6fa;
-    }
+  if (registros.length === 0) {
+    container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
+    if (chart) chart.destroy();
+    return;
+  }
 
-    @media (max-width: 1100px) {
-      #grafico {
-        width: 95%;
+  const ctx = document.getElementById("grafico").getContext("2d");
+  if (chart) chart.destroy();
+
+  const labels = registros.map(r =>
+    r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  );
+  const data = registros.map(r => r.litros);
+  const nivelAtual = data[data.length - 1];
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `${nome} (L)`,
+          data,
+          borderColor: "#004b8d",
+          backgroundColor: "rgba(0, 75, 141, 0.1)",
+          tension: 0.35,
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: "#004b8d"
+        },
+        {
+          label: "Nível Atual",
+          data: Array(data.length).fill(nivelAtual),
+          borderColor: "#ff6600",
+          borderDash: [6, 6],
+          pointRadius: 0,
+          tension: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: capacidade,
+          title: { display: true, text: "Litros" }
+        },
+        x: {
+          title: { display: true, text: "Horário" }
+        }
+      },
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: { mode: "index", intersect: false }
+      },
+      interaction: {
+        mode: "nearest",
+        intersect: false
       }
     }
-  </style>
-</head>
-<body>
-  <header>Histórico de Reservatórios — HAG</header>
+  });
 
-  <main>
-    <button id="voltarBtn" onclick="window.location.href='dashboard.html'">⬅ Voltar ao Painel</button>
+  // === TABELA (mudança >5%) ===
+  let linhas = [];
+  let anterior = registros[0].litros;
+  linhas.push(gerarLinha(registros[0], capacidade));
 
-    <div>
-      <label for="reservatorioSelect"><strong>Selecionar reservatório:</strong></label>
-      <select id="reservatorioSelect">
-        <option value="Reservatorio_Elevador_current">Reservatório Elevador</option>
-        <option value="Reservatorio_Osmose_current">Reservatório Osmose</option>
-        <option value="Reservatorio_CME_current">Reservatório CME</option>
-        <option value="Reservatorio_Agua_Abrandada_current">Água Abrandada</option>
-      </select>
-    </div>
+  for (let i = 1; i < registros.length; i++) {
+    const diff = Math.abs(((registros[i].litros - anterior) / capacidade) * 100);
+    if (diff >= 5) {
+      linhas.push(gerarLinha(registros[i], capacidade));
+      anterior = registros[i].litros;
+    }
+  }
 
-    <div id="graficoContainer">
-      <canvas id="grafico"></canvas>
-    </div>
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr><th>Data/Hora</th><th>Leitura (L)</th><th>Ocupação (%)</th></tr>
+      </thead>
+      <tbody>${linhas.join("")}</tbody>
+    </table>`;
+}
 
-    <h2 id="tituloHistorico"></h2>
-    <div id="historicoContainer"></div>
-  </main>
-
-  <script src="historico.js"></script>
-</body>
-</html>
+function gerarLinha(registro, capacidade) {
+  const ocupacao = ((registro.litros / capacidade) * 100).toFixed(1);
+  return `<tr>
+    <td>${registro.data.toLocaleString("pt-BR")}</td>
+    <td>${registro.litros.toLocaleString("pt-BR")}</td>
+    <td>${ocupacao}%</td>
+  </tr>`;
+}
