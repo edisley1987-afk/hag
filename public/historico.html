@@ -5,16 +5,77 @@
   <title>Histórico — HAG</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f7fb;
+      color: #222;
+      padding: 20px;
+      text-align: center;
+    }
+    h2 {
+      color: #004b8d;
+      margin-bottom: 10px;
+    }
+    #voltarBtn {
+      background-color: #004b8d;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 20px;
+      transition: 0.2s;
+    }
+    #voltarBtn:hover {
+      background-color: #0066cc;
+    }
+    #grafico {
+      max-width: 900px;
+      height: 300px;
+      margin: 0 auto 20px auto;
+      display: block;
+    }
+    table {
+      width: 90%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th {
+      background-color: #004b8d;
+      color: white;
+      padding: 10px;
+    }
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    select {
+      padding: 5px 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+  </style>
 </head>
 <body>
+  <button id="voltarBtn" onclick="window.location.href='dashboard.html'">⬅ Voltar ao Painel</button>
   <h2 id="tituloHistorico">Histórico</h2>
 
-  <div style="margin-bottom: 20px;">
+  <div>
     <label for="reservatorioSelect"><strong>Selecionar Reservatório:</strong></label>
     <select id="reservatorioSelect"></select>
   </div>
 
-  <canvas id="grafico" height="120"></canvas>
+  <canvas id="grafico"></canvas>
   <div id="historicoContainer"></div>
 
   <script src="historico.js"></script>
