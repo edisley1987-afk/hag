@@ -53,13 +53,17 @@ function exibirHistorico(historico, reservatorio) {
   const container = document.getElementById("historicoContainer");
   const ultimas24h = filtrarUltimas24h(historico);
 
-  const registros = ultimas24h
+  // Mapeia os dados do reservatório
+  let registros = ultimas24h
     .filter(h => h[reservatorio] !== undefined)
     .map(h => ({
       data: new Date(h.timestamp),
       litros: h[reservatorio],
       ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
     }));
+
+  // 🔄 Exibe a leitura mais recente primeiro
+  registros = registros.reverse();
 
   if (registros.length === 0) {
     container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
