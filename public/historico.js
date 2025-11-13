@@ -83,18 +83,30 @@ function exibirHistorico(historico, reservatorio) {
         {
           label: "Volume (L)",
           data: registros.map(r => r.litros),
-          borderColor: "#004b8d",
-          backgroundColor: "rgba(0,75,141,0.2)",
-          tension: 0.35,
-          yAxisID: "litros"
+          borderColor: "#146C60",
+          backgroundColor: "rgba(20,108,96,0.15)",
+          tension: 0.4,
+          yAxisID: "litros",
+          fill: true
         },
         {
           label: "Ocupação (%)",
           data: registros.map(r => r.ocupacao),
-          borderColor: "#00b894",
-          backgroundColor: "rgba(0,184,148,0.2)",
-          tension: 0.35,
-          yAxisID: "porcentagem"
+          borderColor: "#53B2A8",
+          backgroundColor: "rgba(83,178,168,0.15)",
+          tension: 0.4,
+          yAxisID: "porcentagem",
+          fill: false,
+          borderDash: [4, 4]
+        },
+        {
+          label: "Nível Máximo",
+          data: Array(registros.length).fill(CAPACIDADES[reservatorio]),
+          borderColor: "rgba(255,99,132,0.7)",
+          borderDash: [8, 6],
+          pointRadius: 0,
+          borderWidth: 2,
+          yAxisID: "litros"
         }
       ]
     },
@@ -104,28 +116,43 @@ function exibirHistorico(historico, reservatorio) {
         litros: {
           type: "linear",
           position: "left",
-          title: { display: true, text: "Litros" },
+          title: { display: true, text: "Litros", color: "#146C60" },
           min: 0,
-          max: CAPACIDADES[reservatorio]
+          max: CAPACIDADES[reservatorio],
+          ticks: { color: "#146C60" }
         },
         porcentagem: {
           type: "linear",
           position: "right",
-          title: { display: true, text: "%" },
+          title: { display: true, text: "Ocupação (%)", color: "#53B2A8" },
           min: 0,
           max: 100,
-          grid: { drawOnChartArea: false }
+          grid: { drawOnChartArea: false },
+          ticks: { color: "#53B2A8" }
+        },
+        x: {
+          title: { display: true, text: "Horário", color: "#555" },
+          ticks: { color: "#555" }
         }
       },
       plugins: {
-        legend: { position: "bottom" }
+        legend: {
+          position: "bottom",
+          labels: { color: "#146C60", font: { size: 13 } }
+        },
+        title: {
+          display: true,
+          text: nomeReservatorio,
+          color: "#146C60",
+          font: { size: 20, weight: "bold" }
+        }
       }
     }
   });
 
   // === Tabela ===
   container.innerHTML = `
-    <table border="1" style="margin-top:20px; width:100%; border-collapse:collapse;">
+    <table class="tabela-historico">
       <thead>
         <tr>
           <th>Data/Hora</th>
