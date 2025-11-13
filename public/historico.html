@@ -1,93 +1,128 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Histórico — HAG</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico de Reservatórios — HAG</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      background-color: #f4f7fb;
-      color: #222;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f8fa;
+      color: #002b5c;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
     }
+
     header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #004b8d;
+      background-color: #004b8d;
       color: white;
-      padding: 10px 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 15px;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    header h2 {
-      margin: 0;
-      font-size: 1.2rem;
+
+    main {
+      margin: 30px auto;
+      max-width: 1100px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 30px;
     }
+
     #voltarBtn {
-      background: #0073e6;
+      background-color: #004b8d;
       color: white;
       border: none;
-      border-radius: 6px;
-      padding: 8px 14px;
+      border-radius: 8px;
+      padding: 10px 20px;
       cursor: pointer;
-      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 20px;
     }
-    #voltarBtn:hover { background: #005bb5; }
+
+    #voltarBtn:hover {
+      background-color: #003b73;
+    }
+
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      color: #002b5c;
+    }
 
     #graficoContainer {
-      width: 100%;
       display: flex;
       justify-content: center;
-      margin-top: 20px;
+      margin-bottom: 20px;
     }
+
     #grafico {
-      width: 90%;
-      max-width: 500px;
-      height: 180px !important;
+      width: 1000px;
+      height: 360px;
+      background: #fafafa;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 15px;
     }
 
     table {
-      width: 90%;
-      max-width: 850px;
-      margin-top: 20px;
+      width: 100%;
       border-collapse: collapse;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      font-size: 0.9rem;
+      margin-top: 10px;
     }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
     th {
       background-color: #004b8d;
       color: white;
-      padding: 10px;
     }
-    td {
-      padding: 8px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
+
+    tr:nth-child(even) {
+      background-color: #f2f6fa;
     }
-    tr:nth-child(even) { background-color: #f9f9f9; }
+
+    @media (max-width: 1100px) {
+      #grafico {
+        width: 95%;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h2 id="tituloHistorico">Histórico</h2>
-    <button id="voltarBtn" onclick="window.location.href='dashboard.html'">⬅ Voltar</button>
-  </header>
+  <header>Histórico de Reservatórios — HAG</header>
 
-  <div id="graficoContainer">
-    <canvas id="grafico"></canvas>
-  </div>
+  <main>
+    <button id="voltarBtn" onclick="window.location.href='dashboard.html'">⬅ Voltar ao Painel</button>
 
-  <div id="historicoContainer"></div>
+    <div>
+      <label for="reservatorioSelect"><strong>Selecionar reservatório:</strong></label>
+      <select id="reservatorioSelect">
+        <option value="Reservatorio_Elevador_current">Reservatório Elevador</option>
+        <option value="Reservatorio_Osmose_current">Reservatório Osmose</option>
+        <option value="Reservatorio_CME_current">Reservatório CME</option>
+        <option value="Reservatorio_Agua_Abrandada_current">Água Abrandada</option>
+      </select>
+    </div>
+
+    <div id="graficoContainer">
+      <canvas id="grafico"></canvas>
+    </div>
+
+    <h2 id="tituloHistorico"></h2>
+    <div id="historicoContainer"></div>
+  </main>
 
   <script src="historico.js"></script>
 </body>
