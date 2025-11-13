@@ -36,24 +36,26 @@ function salvarLeituraAtual(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
 
+// === Histórico: grava 1 vez por hora ===
 function adicionarAoHistorico(dados) {
   let historico = [];
   if (fs.existsSync(HIST_FILE)) {
     try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch { historico = []; }
   }
 
+  const agora = new Date();
+  const chaveAtual = agora.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
   const ultima = historico.length ? historico[historico.length - 1] : null;
-  const ultimaHora = ultima ? new Date(ultima.timestamp).getHours() : null;
-  const agoraHora = new Date().getHours();
+  const chaveUltima = ultima ? ultima.timestamp.slice(0, 13) : null;
 
-  // Só grava uma entrada nova a cada hora
-  if (!ultimaHora || ultimaHora !== agoraHora) {
-    historico.push({ timestamp: new Date().toISOString(), ...dados });
+  // Salva só uma vez por hora
+  if (chaveAtual !== chaveUltima) {
+    historico.push({ timestamp: agora.toISOString(), ...dados });
     fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
   }
 }
 
-// === Endpoint principal: receber leituras ===
+// === Endpoint principal: receber leituras do gateway ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
@@ -99,7 +101,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     // === Controle de manutenção ===
-    const LEITURA_MANUTENCAO = 30; // %
+    const LIMITE_MANUTENCAO = 30; // %
     let manutencaoAtiva = {};
     if (fs.existsSync(MANUTENCAO_FILE)) {
       try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
@@ -110,8 +112,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       const valor = dadosConvertidos[ref];
       const capacidade = SENSORES[ref].capacidade;
       const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
-
-      if (manutencaoAtiva[ref] && porcentagem > LEITURA_MANUTENCAO) {
+      if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO) {
         delete manutencaoAtiva[ref];
       }
     }
@@ -152,7 +153,7 @@ app.post("/manutencao", (req, res) => {
   }
 });
 
-// === Endpoints ===
+// === Endpoints de dados ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
