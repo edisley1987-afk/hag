@@ -1,94 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Histórico — HAG</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background-color: #f4f7fa;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background: #004b8d;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    #graficoContainer {
-      max-width: 900px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-
-    #historicoContainer {
-      max-width: 900px;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      border-bottom: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background-color: #004b8d;
-      color: white;
-    }
-
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-
-    a.voltar {
-      display: inline-block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      text-decoration: none;
-      background-color: #004b8d;
-      color: white;
-      border-radius: 8px;
-    }
-
-    h1 {
-      margin: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1 id="tituloHistorico">Histórico — Reservatório</h1>
-  </header>
+  <h2 id="tituloHistorico">Histórico</h2>
 
-  <div id="graficoContainer">
-    <canvas id="grafico"></canvas>
+  <div style="margin-bottom: 20px;">
+    <label for="reservatorioSelect"><strong>Selecionar Reservatório:</strong></label>
+    <select id="reservatorioSelect"></select>
   </div>
 
+  <canvas id="grafico" height="120"></canvas>
   <div id="historicoContainer"></div>
-
-  <div style="text-align:center;">
-    <a class="voltar" href="/dashboard">← Voltar ao Dashboard</a>
-  </div>
 
   <script src="historico.js"></script>
 </body>
