@@ -5,11 +5,9 @@ const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 30000; // 30s
 let ultimaLeitura = 0;
 let alertando = false;
+let emManutencao = {};
 let audioBip;
 let dadosAntigos = {};
-
-// Recupera manutenção salva no navegador
-let emManutencao = JSON.parse(localStorage.getItem("emManutencao") || "{}");
 
 // === Configurações ===
 const RESERVATORIOS = {
@@ -104,6 +102,7 @@ function atualizarDisplay(dados) {
     const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
     card.classList.remove("sem-dados");
 
+    // === status do nível ===
     let status = "alto";
     let cor = "linear-gradient(to top, #3498db, #2ecc71)";
     if (perc < 30) {
@@ -118,9 +117,9 @@ function atualizarDisplay(dados) {
     // === manutenção: remove automaticamente se passar de 30% ===
     if (emManutencao[id] && perc > 30) {
       delete emManutencao[id];
-      salvarManutencao();
     }
 
+    // === aplica ao card ===
     card.dataset.status = status;
     card.querySelector(".nivel").textContent = Math.round(perc) + "%";
     card.querySelector(".litros").textContent = Math.round(valor).toLocaleString() + " L";
@@ -129,11 +128,7 @@ function atualizarDisplay(dados) {
 
     // === exibe ou oculta aviso de manutenção ===
     const aviso = card.querySelector(".status-manutencao");
-    if (emManutencao[id]) {
-      aviso.style.display = "block";
-    } else {
-      aviso.style.display = "none";
-    }
+    aviso.style.display = emManutencao[id] ? "block" : "none";
 
     const avisoInat = card.querySelector(".aviso-inatividade");
     if (avisoInat) avisoInat.remove();
@@ -194,22 +189,25 @@ function ocultarAlerta() {
   if (painel) painel.style.display = "none";
 }
 
-// === Manutenção persistente ===
-function salvarManutencao() {
-  localStorage.setItem("emManutencao", JSON.stringify(emManutencao));
-}
-
+// === Manutenção ===
 window.marcarManutencao = id => {
   emManutencao[id] = true;
-  salvarManutencao();
-  atualizarLeituras();
+  const card = document.getElementById(id);
+  if (card) card.querySelector(".status-manutencao").style.display = "block";
+  atualizarPainelAlerta();
 };
 
 window.removerManutencao = id => {
   delete emManutencao[id];
-  salvarManutencao();
-  atualizarLeituras();
+  const card = document.getElementById(id);
+  if (card) card.querySelector(".status-manutencao").style.display = "none";
+  atualizarPainelAlerta();
 };
+
+function atualizarPainelAlerta() {
+  const painel = document.getElementById("painelAlerta");
+  if (painel && painel.style.display === "block") atualizarLeituras();
+}
 
 // === Som do alerta ===
 function tocarBip() {
@@ -228,6 +226,7 @@ function verificarInatividade() {
 
   if (tempoSemAtualizar > 10 * 60 * 1000) {
     cards.forEach(card => {
+      card.classList.add("sem-dados");
       const nivel = card.querySelector(".nivel");
       const litros = card.querySelector(".litros");
       const pressao = card.querySelector(".pressao");
@@ -263,8 +262,19 @@ const style = document.createElement("style");
 style.textContent = `
 @keyframes piscar { 0%, 50%, 100% {opacity:1;} 25%,75%{opacity:0;} }
 .status-manutencao { animation: piscar 2s infinite; }
-.painel-alerta {
-  position: fixed;
-  top: 10px; right: 10px;
-  background: rgba(255,0,0,0.9);
-  color: white
+`;
+document.head.appendChild(style);
+
+// === Inicialização ===
+window.addEventListener("DOMContentLoaded", () => {
+  criarCards();
+  usarCacheLocal();
+  atualizarLeituras();
+  setInterval(atualizarLeituras, UPDATE_INTERVAL);
+  setInterval(verificarInatividade, 30000);
+});
+
+// === Função global para abrir histórico ===
+window.abrirHistorico = id => {
+  window.location.href = "historico.html?reservatorio=" + id;
+};
