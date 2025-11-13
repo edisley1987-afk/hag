@@ -1,107 +1,68 @@
-/* === style-historico.css === */
-
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background-color: #f5f7fa;
+  background-color: #DFF3F1;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #333;
   margin: 0;
   padding: 0;
-  color: #222;
 }
 
-header {
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  color: white;
-  padding: 20px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.voltar-btn {
-  text-decoration: none;
-  background: white;
-  color: #0056b3;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: 0.3s;
-}
-
-.voltar-btn:hover {
-  background: #e6ecff;
-}
-
-main {
+.container {
+  max-width: 1100px;
+  margin: 30px auto;
+  background: #fff;
   padding: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+  border-radius: 15px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
 }
 
-/* === Gráfico === */
-canvas {
+h2 {
+  color: #146C60;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+select {
+  background-color: #53B2A8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 15px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+select:hover {
+  background-color: #146C60;
+}
+
+#grafico {
   width: 100%;
-  max-height: 400px;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  height: 420px;
+  margin-top: 20px;
 }
 
-/* === Tabela === */
 .tabela-historico {
   width: 100%;
   border-collapse: collapse;
-  border-radius: 12px;
+  margin-top: 25px;
+  border-radius: 8px;
   overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tabela-historico th {
-  background-color: #007bff;
-  color: white;
-  text-transform: uppercase;
-  font-weight: 600;
-  padding: 12px;
-  font-size: 0.9rem;
+  background-color: #146C60;
+  color: #fff;
+  padding: 8px;
 }
 
 .tabela-historico td {
-  padding: 10px;
   text-align: center;
-  border-bottom: 1px solid #eee;
-  font-size: 0.95rem;
+  padding: 8px;
+  border-bottom: 1px solid #E8E8E8;
 }
 
 .tabela-historico tr:nth-child(even) {
-  background-color: #f9fbff;
-}
-
-.tabela-historico tr:hover {
-  background-color: #e6ecff;
-  transition: 0.2s;
-}
-
-/* === Responsividade === */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .voltar-btn {
-    margin-top: 10px;
-  }
-
-  .tabela-historico th, .tabela-historico td {
-    font-size: 0.8rem;
-    padding: 8px;
-  }
+  background-color: #F6FBFB;
 }
