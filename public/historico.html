@@ -24,6 +24,7 @@
       background: #004b8d;
       color: white;
       padding: 10px 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     header h2 {
       margin: 0;
@@ -40,16 +41,22 @@
     }
     #voltarBtn:hover { background: #005bb5; }
 
+    #graficoContainer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
     #grafico {
-      max-width: 800px;
-      height: 250px;
-      margin-top: 15px;
+      width: 90%;
+      max-width: 500px;
+      height: 180px !important;
     }
 
     table {
       width: 90%;
       max-width: 850px;
-      margin-top: 15px;
+      margin-top: 20px;
       border-collapse: collapse;
       background: white;
       border-radius: 8px;
@@ -76,7 +83,10 @@
     <button id="voltarBtn" onclick="window.location.href='dashboard.html'">⬅ Voltar</button>
   </header>
 
-  <canvas id="grafico"></canvas>
+  <div id="graficoContainer">
+    <canvas id="grafico"></canvas>
+  </div>
+
   <div id="historicoContainer"></div>
 
   <script src="historico.js"></script>
