@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico - Hospital Arnaldo Gavazza</title>
+  <title>Histórico — Hospital Arnaldo Gavazza</title>
   <link rel="icon" href="logo.png" type="image/png" />
   <style>
     body {
@@ -17,7 +17,7 @@
     header {
       display: flex;
       align-items: center;
-      background-color: #005ca8; /* azul institucional */
+      background-color: #005ca8;
       color: white;
       padding: 12px 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -35,7 +35,7 @@
     }
 
     main {
-      max-width: 900px;
+      max-width: 950px;
       margin: 30px auto;
       background: white;
       border-radius: 12px;
@@ -54,6 +54,7 @@
       border-collapse: collapse;
       border-radius: 8px;
       overflow: hidden;
+      margin-top: 20px;
     }
 
     th {
@@ -91,6 +92,15 @@
     #historicoContainer {
       margin-top: 20px;
     }
+
+    #graficoContainer {
+      margin-top: 30px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
   </style>
 </head>
 <body>
@@ -104,8 +114,124 @@
     <div id="historicoContainer">
       <h2>Carregando histórico...</h2>
     </div>
+    <div id="graficoContainer">
+      <canvas id="grafico"></canvas>
+    </div>
   </main>
 
-  <script src="historico.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const API_URL = window.location.origin + "/historico";
+
+    // === Nomes iguais aos cards ===
+    const NOMES_RESERVATORIOS = {
+      "Reservatorio_Elevador_current": "Reservatório Elevador",
+      "Reservatorio_Osmose_current": "Reservatório Osmose",
+      "Reservatorio_CME_current": "Reservatório CME",
+      "Reservatorio_Agua_Abrandada_current": "Reservatório Água Abrandada",
+      "Pressao_Saida_Osmose_current": "Pressão Saída Osmose",
+      "Pressao_Retorno_Osmose_current": "Pressão Retorno Osmose",
+      "Pressao_Saida_CME_current": "Pressão Saída CME"
+    };
+
+    // === Capacidades iguais ao dashboard ===
+    const CAPACIDADES = {
+      "Reservatorio_Elevador_current": 20000,
+      "Reservatorio_Osmose_current": 200,
+      "Reservatorio_CME_current": 1000,
+      "Reservatorio_Agua_Abrandada_current": 3000
+    };
+
+    async function carregarHistorico() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error("Erro ao carregar histórico");
+        const historico = await res.json();
+        exibirHistorico(historico);
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao carregar histórico");
+      }
+    }
+
+    function exibirHistorico(historico) {
+      const params = new URLSearchParams(window.location.search);
+      const reservatorio = params.get("reservatorio");
+      const nomeReservatorio = NOMES_RESERVATORIOS[reservatorio] || reservatorio;
+      const capacidade = CAPACIDADES[reservatorio] || 0;
+      const container = document.getElementById("historicoContainer");
+      container.innerHTML = `<h2>${nomeReservatorio}</h2>`;
+
+      const registros = historico
+        .filter(h => h[reservatorio] !== undefined)
+        .map(h => ({
+          data: new Date(h.timestamp),
+          litros: h[reservatorio],
+          percentual: capacidade ? (h[reservatorio] / capacidade * 100).toFixed(1) : "-"
+        }));
+
+      if (registros.length === 0) {
+        container.innerHTML += `<p>Nenhum dado encontrado.</p>`;
+        return;
+      }
+
+      // === Tabela ===
+      const tabela = document.createElement("table");
+      tabela.innerHTML = `
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Leitura (L)</th>
+            <th>Ocupação (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${registros.map(r => `
+            <tr>
+              <td>${r.data.toLocaleString("pt-BR")}</td>
+              <td>${r.litros.toLocaleString()}</td>
+              <td>${r.percentual}</td>
+            </tr>
+          `).join("")}
+        </tbody>`;
+      container.appendChild(tabela);
+
+      // === Gráfico ===
+      const ctx = document.getElementById("grafico").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: registros.map(r => r.data.toLocaleString("pt-BR")),
+          datasets: [{
+            label: "Litros",
+            data: registros.map(r => r.litros),
+            borderColor: "#005ca8",
+            backgroundColor: "rgba(0,92,168,0.1)",
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: "#005ca8",
+            tension: 0.25,
+            fill: true
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: "Data/Hora" } },
+            y: { title: { display: true, text: "Litros" }, beginAtZero: true }
+          },
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: `Histórico — ${nomeReservatorio}`
+            }
+          }
+        }
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarHistorico);
+  </script>
 </body>
 </html>
