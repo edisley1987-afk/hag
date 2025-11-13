@@ -1,3 +1,5 @@
+// === public/historico.js ===
+
 const API_URL = window.location.origin + "/historico";
 
 const NOME_RESERVATORIOS = {
@@ -27,6 +29,8 @@ async function carregarHistorico() {
 
 function atualizarReservatorioSelect(historico) {
   const select = document.getElementById("reservatorioSelect");
+  const botaoConsumo = document.getElementById("botaoConsumo");
+
   select.innerHTML = Object.entries(NOME_RESERVATORIOS)
     .map(([k, v]) => `<option value="${k}">${v}</option>`)
     .join("");
@@ -38,6 +42,11 @@ function atualizarReservatorioSelect(historico) {
 
   select.addEventListener("change", () => {
     exibirHistorico(historico, select.value);
+  });
+
+  // 🔹 Botão "Ver Consumo Diário"
+  botaoConsumo.addEventListener("click", () => {
+    window.location.href = "consumo.html";
   });
 }
 
@@ -53,7 +62,6 @@ function exibirHistorico(historico, reservatorio) {
   const container = document.getElementById("historicoContainer");
   const ultimas24h = filtrarUltimas24h(historico);
 
-  // Mapeia os dados do reservatório
   let registros = ultimas24h
     .filter(h => h[reservatorio] !== undefined)
     .map(h => ({
@@ -62,7 +70,7 @@ function exibirHistorico(historico, reservatorio) {
       ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
     }));
 
-  // 🔄 Exibe a leitura mais recente primeiro
+  // 🔄 Exibe leitura mais recente primeiro
   registros = registros.reverse();
 
   if (registros.length === 0) {
