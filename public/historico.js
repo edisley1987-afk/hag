@@ -1,7 +1,7 @@
 // ========================
 // CONFIGURAÇÕES
 // ========================
-const API_URL = "/api/historico"; // ajuste se seu endpoint for diferente
+const API_URL = "/historico"; // ajuste se seu endpoint for diferente
 
 // Capacidade total dos reservatórios
 const CAPACIDADES = {
