@@ -1,169 +1,147 @@
-// === public/historico.js ===
+// ========================
+// CONFIGURAÇÕES
+// ========================
+const API_URL = "/api/historico"; // ajuste se seu endpoint for diferente
 
-const API_URL = window.location.origin + "/historico";
-
-const NOME_RESERVATORIOS = {
-  "Reservatorio_Elevador_current": "Reservatório Elevador",
-  "Reservatorio_Osmose_current": "Reservatório Osmose",
-  "Reservatorio_CME_current": "Reservatório CME",
-  "Reservatorio_Agua_Abrandada_current": "Água Abrandada"
-};
-
+// Capacidade total dos reservatórios
 const CAPACIDADES = {
-  "Reservatorio_Elevador_current": 20000,
-  "Reservatorio_Osmose_current": 200,
-  "Reservatorio_CME_current": 1000,
-  "Reservatorio_Agua_Abrandada_current": 9000
+  Reservatorio_Elevador_current: 20000,
+  Reservatorio_Osmose_current: 200
 };
 
-async function carregarHistorico() {
+// Nome mostrado no gráfico e na página
+const NOME_RESERVATORIOS = {
+  Reservatorio_Elevador_current: "Reservatório Elevador",
+  Reservatorio_Osmose_current: "Reservatório Osmose"
+};
+
+// ========================
+// FUNÇÃO PRINCIPAL
+// ========================
+async function carregarConsumo() {
   try {
-    const res = await fetch(API_URL);
-    const historico = await res.json();
-    atualizarReservatorioSelect(historico);
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar histórico");
+    const url = new URL(window.location.href);
+    const reservatorio = url.searchParams.get("reservatorio");
+
+    if (!reservatorio || !CAPACIDADES[reservatorio]) {
+      alert("Reservatório inválido.");
+      return;
+    }
+
+    const titulo = document.getElementById("tituloConsumo");
+    if (titulo) titulo.innerHTML = `Consumo Diário — ${NOME_RESERVATORIOS[reservatorio]}`;
+
+    const resposta = await fetch(API_URL);
+    const dados = await resposta.json();
+
+    exibirConsumo(dados, reservatorio);
+
+  } catch (erro) {
+    console.error("Erro ao carregar consumo diário:", erro);
   }
 }
 
-function atualizarReservatorioSelect(historico) {
-  const select = document.getElementById("reservatorioSelect");
-  const botaoConsumo = document.getElementById("botaoConsumo");
-
-  select.innerHTML = Object.entries(NOME_RESERVATORIOS)
-    .map(([k, v]) => `<option value="${k}">${v}</option>`)
-    .join("");
-
-  const params = new URLSearchParams(window.location.search);
-  const reservatorio = params.get("reservatorio") || Object.keys(NOME_RESERVATORIOS)[0];
-  select.value = reservatorio;
-  exibirHistorico(historico, reservatorio);
-
-  select.addEventListener("change", () => {
-    exibirHistorico(historico, select.value);
-  });
-
-  // 🔹 Botão "Ver Consumo Diário"
-  botaoConsumo.addEventListener("click", () => {
-    window.location.href = "consumo.html";
-  });
+// ========================
+// FILTRAR ÚLTIMOS 5 DIAS
+// ========================
+function filtrarUltimos5Dias(lista) {
+  const agora = Date.now();
+  const limite = 5 * 24 * 60 * 60 * 1000;
+  return lista.filter(r => agora - new Date(r.timestamp).getTime() <= limite);
 }
 
-function filtrarUltimas24h(historico) {
-  const agora = new Date();
-  return historico.filter(h => (agora - new Date(h.timestamp)) / 3600000 <= 24);
-}
+// ========================
+// EXIBIR DADOS
+// ========================
+function exibirConsumo(historico, reservatorio) {
+  const historicoDiv = document.getElementById("infoConsumo");
+  const ctx = document.getElementById("graficoConsumo");
 
-function exibirHistorico(historico, reservatorio) {
-  const nomeReservatorio = NOME_RESERVATORIOS[reservatorio];
-  document.getElementById("tituloHistorico").textContent = `Histórico — ${nomeReservatorio}`;
-
-  const container = document.getElementById("historicoContainer");
-  const ultimas24h = filtrarUltimas24h(historico);
-
-  let registros = ultimas24h
-    .filter(h => h[reservatorio] !== undefined)
-    .map(h => ({
-      data: new Date(h.timestamp),
-      litros: h[reservatorio],
-      ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
-    }));
-
-  // 🔍 Ordenar do mais antigo → mais recente
-  registros.sort((a, b) => a.data - b.data);
-
-  if (registros.length === 0) {
-    container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
-    if (window.meuGrafico) window.meuGrafico.destroy();
+  if (!ctx) {
+    console.error("Canvas do gráfico não encontrado.");
     return;
   }
 
-  // === Gráfico ===
-  const ctx = document.getElementById("grafico").getContext("2d");
-  if (window.meuGrafico) window.meuGrafico.destroy();
+  // Filtrar últimos 5 dias
+  let registros = filtrarUltimos5Dias(historico)
+    .filter(item => item[reservatorio] !== undefined)
+    .map(item => ({
+      data: new Date(item.timestamp),
+      litros: item[reservatorio],
+      ocupacao: ((item[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
+    }));
 
-  const labels = registros.map(r =>
+  if (registros.length === 0) {
+    historicoDiv.innerHTML = "Nenhum registro nos últimos 5 dias.";
+    return;
+  }
+
+  // =============================
+  // ORDENAÇÃO PARA O GRÁFICO
+  // Tempo: da esquerda → direita
+  // antigo → novo
+  // =============================
+  const registrosGrafico = [...registros].sort((a, b) => a.data - b.data);
+
+  // =============================
+  // ORDENAÇÃO PARA A TABELA
+  // Última atualização no topo
+  // novo → antigo
+  // =============================
+  const registrosTabela = [...registros].sort((a, b) => b.data - a.data);
+
+  // Atualiza texto de info
+  historicoDiv.innerHTML = `
+      Última atualização: <strong>${registrosTabela[0].data.toLocaleString("pt-BR")}</strong>
+  `;
+
+  // =============================
+  // MONTAR GRÁFICO
+  // =============================
+  if (window.graficoConsumo) window.graficoConsumo.destroy();
+
+  const labels = registrosGrafico.map(r =>
     r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
   );
 
-  window.meuGrafico = new Chart(ctx, {
+  window.graficoConsumo = new Chart(ctx, {
     type: "line",
     data: {
       labels,
       datasets: [
         {
-          label: "Volume (L)",
-          data: registros.map(r => r.litros),
-          borderColor: "#146C60",
-          backgroundColor: "rgba(20,108,96,0.15)",
+          label: "Consumo (L)",
+          data: registrosGrafico.map(r => r.litros),
+          borderColor: "#2c8b7d",
+          backgroundColor: "rgba(44,139,125,0.3)",
           tension: 0.4,
-          yAxisID: "litros",
           fill: true
-        },
-        {
-          label: "Ocupação (%)",
-          data: registros.map(r => r.ocupacao),
-          borderColor: "#53B2A8",
-          backgroundColor: "rgba(83,178,168,0.15)",
-          tension: 0.4,
-          yAxisID: "porcentagem",
-          fill: false,
-          borderDash: [4, 4]
-        },
-        {
-          label: "Nível Máximo",
-          data: Array(registros.length).fill(CAPACIDADES[reservatorio]),
-          borderColor: "rgba(255,99,132,0.7)",
-          borderDash: [8, 6],
-          pointRadius: 0,
-          borderWidth: 2,
-          yAxisID: "litros"
         }
       ]
     },
     options: {
-      maintainAspectRatio: false,
+      responsive: true,
       scales: {
-        litros: {
-          type: "linear",
-          position: "left",
-          title: { display: true, text: "Litros", color: "#146C60" },
-          min: 0,
-          max: CAPACIDADES[reservatorio],
-          ticks: { color: "#146C60" }
-        },
-        porcentagem: {
-          type: "linear",
-          position: "right",
-          title: { display: true, text: "Ocupação (%)", color: "#53B2A8" },
-          min: 0,
-          max: 100,
-          grid: { drawOnChartArea: false },
-          ticks: { color: "#53B2A8" }
-        },
-        x: {
-          title: { display: true, text: "Horário", color: "#555" },
-          ticks: { color: "#555" }
-        }
-      },
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#146C60", font: { size: 13 } }
-        },
-        title: {
-          display: true,
-          text: nomeReservatorio,
-          color: "#146C60",
-          font: { size: 20, weight: "bold" }
-        }
+        y: { beginAtZero: true }
       }
     }
   });
 
-  // === Tabela ===
-  container.innerHTML = `
+  // =============================
+  // GERAR TABELA COM ÚLTIMO NO TOPO
+  // =============================
+  gerarTabela(registrosTabela);
+}
+
+// ========================
+// GERAR TABELA NO HTML
+// ========================
+function gerarTabela(lista) {
+  const tabelaDiv = document.getElementById("tabelaConsumo");
+
+  if (!tabelaDiv) return;
+
+  tabelaDiv.innerHTML = `
     <table class="tabela-historico">
       <thead>
         <tr>
@@ -173,16 +151,20 @@ function exibirHistorico(historico, reservatorio) {
         </tr>
       </thead>
       <tbody>
-        ${registros.map(r => `
+        ${lista
+          .map(
+            r => `
           <tr>
             <td>${r.data.toLocaleString("pt-BR")}</td>
-            <td>${r.litros.toLocaleString("pt-BR")}</td>
+            <td>${r.litros}</td>
             <td>${r.ocupacao}%</td>
-          </tr>
-        `).join("")}
+          </tr>`
+          )
+          .join("")}
       </tbody>
     </table>
   `;
 }
 
-window.addEventListener("DOMContentLoaded", carregarHistorico);
+// Iniciar
+carregarConsumo();
