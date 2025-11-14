@@ -8,86 +8,33 @@
 
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="style-historico.css">
-
-  <style>
-    #graficoHistorico {
-      width: 100%;
-      max-width: 900px;
-      height: 350px;
-      margin: 20px auto;
-      display: block;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 25px;
-      font-size: 16px;
-    }
-
-    table th {
-      background: #e8f1ff;
-      padding: 8px;
-    }
-
-    table td {
-      padding: 6px;
-      border: 1px solid #d0d0d0;
-      text-align: center;
-    }
-
-    .conteudo {
-      width: 95%;
-      max-width: 950px;
-      margin: auto;
-    }
-
-    .menu-botoes {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .menu-botoes button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 6px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-    }
-
-    .menu-botoes button:hover {
-      background-color: #005fcc;
-    }
-  </style>
 </head>
 <body>
 
-  <h2 id="tituloHistorico">📅 Histórico</h2>
+  <h2 id="tituloHistorico">📅 Histórico de Reservatórios</h2>
 
   <div class="menu-botoes">
     <button onclick="window.location.href='dashboard.html'">🏠 Página Principal</button>
-    <button id="botaoConsumo">📊 Consumo Diário</button>
+    <button onclick="window.location.href='consumo.html'">📊 Consumo Diário</button>
   </div>
 
   <div class="conteudo">
-    <label for="selectReservatorio">Selecionar reservatório:</label>
+
+    <label for="selectReservatorio"><b>Selecionar reservatório:</b></label><br>
     <select id="selectReservatorio">
       <option value="">Carregando...</option>
     </select>
 
     <canvas id="graficoHistorico"></canvas>
 
-    <h3 style="text-align:center; margin-top:20px;">Tabela de Histórico</h3>
+    <h3 style="margin-top:25px;">📋 Tabela de Histórico</h3>
 
     <table id="tabelaHistorico">
       <thead>
         <tr>
           <th>Data / Hora</th>
           <th>Litros</th>
-          <th>Percentual (%)</th>
+          <th>%</th>
         </tr>
       </thead>
       <tbody></tbody>
