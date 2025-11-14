@@ -17,7 +17,8 @@ async function carregarListaReservatorios() {
   const select = document.getElementById("selectReservatorio");
 
   try {
-    const resp = await fetch("/historico/lista");
+    // 🔵 ROTA CORRETA
+    const resp = await fetch("/lista");
     const lista = await resp.json();
 
     select.innerHTML = "";
