@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // SERVE A PASTA PUBLIC CORRETAMENTE
 // ===============================
 app.use(express.static(path.join(__dirname, "public"), {
-  extensions: ["html"],   // permite acessar sem .html
+  extensions: ["html"],
 }));
 
 // ===============================
@@ -46,6 +46,26 @@ const HISTORICO_FILE = path.join(DATA_DIR, "historico.json");
 const CONSUMO_FILE = path.join(DATA_DIR, "consumo.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+
+// ===============================
+// DADOS ATUAIS (USADO PELO DASHBOARD)  <<<<<< AQUI FOI CORRIGIDO
+// ===============================
+let dadosAtuais = {};
+
+// Recebe dados do ESP32 / Arduino
+app.post("/dados", (req, res) => {
+  try {
+    dadosAtuais = req.body;
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ erro: "Falha ao registrar dados" });
+  }
+});
+
+// Envia dados atuais para o dashboard
+app.get("/dados", (req, res) => {
+  res.json(dadosAtuais);
+});
 
 // ===============================
 // SALVAR HISTÓRICO DE LEITURAS
