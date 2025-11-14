@@ -1,170 +1,91 @@
-// ========================
-// CONFIGURAÇÕES
-// ========================
-const API_URL = "/historico"; // ajuste se seu endpoint for diferente
+const API_URL = window.location.origin;
 
-// Capacidade total dos reservatórios
-const CAPACIDADES = {
-  Reservatorio_Elevador_current: 20000,
-  Reservatorio_Osmose_current: 200
-};
+async function carregarHistorico() {
+    try {
+        const resp = await fetch(`${API_URL}/historico`);
+        const historico = await resp.json();
 
-// Nome mostrado no gráfico e na página
-const NOME_RESERVATORIOS = {
-  Reservatorio_Elevador_current: "Reservatório Elevador",
-  Reservatorio_Osmose_current: "Reservatório Osmose"
-};
+        if (!Array.isArray(historico)) return;
 
-// ========================
-// FUNÇÃO PRINCIPAL
-// ========================
-async function carregarConsumo() {
-  try {
-    const url = new URL(window.location.href);
-    const reservatorio = url.searchParams.get("reservatorio");
+        const select = document.getElementById("selectReservatorio");
+        const ref = select.value;
 
-    if (!reservatorio || !CAPACIDADES[reservatorio]) {
-      alert("Reservatório inválido.");
-      return;
+        const dadosSensor = historico
+            .map(h => ({
+                hora: new Date(h.timestamp).toLocaleString(),
+                valor: h[ref],
+                ocupacao: h[ref] ? ((h[ref] / capacidade(ref)) * 100).toFixed(1) : 0
+            }))
+            .filter(e => e.valor !== undefined);
+
+        atualizarTabela(dadosSensor);
+        atualizarGrafico(dadosSensor);
+
+    } catch (err) {
+        console.error("Erro ao carregar histórico:", err);
     }
-
-    const titulo = document.getElementById("tituloConsumo");
-    if (titulo) titulo.innerHTML = `Consumo Diário — ${NOME_RESERVATORIOS[reservatorio]}`;
-
-    const resposta = await fetch(API_URL);
-    const dados = await resposta.json();
-
-    exibirConsumo(dados, reservatorio);
-
-  } catch (erro) {
-    console.error("Erro ao carregar consumo diário:", erro);
-  }
 }
 
-// ========================
-// FILTRAR ÚLTIMOS 5 DIAS
-// ========================
-function filtrarUltimos5Dias(lista) {
-  const agora = Date.now();
-  const limite = 5 * 24 * 60 * 60 * 1000;
-  return lista.filter(r => agora - new Date(r.timestamp).getTime() <= limite);
+function capacidade(ref) {
+    const mapa = {
+        "Reservatorio_Elevador_current": 20000,
+        "Reservatorio_Osmose_current": 200,
+        "Reservatorio_CME_current": 1000,
+        "Reservatorio_Agua_Abrandada_current": 9000
+    };
+    return mapa[ref] || 1;
 }
 
-// ========================
-// EXIBIR DADOS
-// ========================
-function exibirConsumo(historico, reservatorio) {
-  const historicoDiv = document.getElementById("infoConsumo");
-  const ctx = document.getElementById("graficoConsumo");
+function atualizarTabela(lista) {
+    const tbody = document.querySelector("#tabelaHistorico tbody");
+    tbody.innerHTML = "";
 
-  if (!ctx) {
-    console.error("Canvas do gráfico não encontrado.");
-    return;
-  }
+    const dadosOrdenados = [...lista].reverse(); // ⬅ último no topo
 
-  // Filtrar últimos 5 dias
-  let registros = filtrarUltimos5Dias(historico)
-    .filter(item => item[reservatorio] !== undefined)
-    .map(item => ({
-      data: new Date(item.timestamp),
-      litros: item[reservatorio],
-      ocupacao: ((item[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
-    }));
+    for (const item of dadosOrdenados) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${item.hora}</td>
+            <td>${item.valor}</td>
+            <td>${item.ocupacao}%</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
 
-  if (registros.length === 0) {
-    historicoDiv.innerHTML = "Nenhum registro nos últimos 5 dias.";
-    return;
-  }
+let grafico = null;
 
-  // =============================
-  // ORDENAÇÃO PARA O GRÁFICO
-  // Tempo: da esquerda → direita
-  // antigo → novo
-  // =============================
-  const registrosGrafico = [...registros].sort((a, b) => a.data - b.data);
+function atualizarGrafico(lista) {
+    const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-  // =============================
-  // ORDENAÇÃO PARA A TABELA
-  // Última atualização no topo
-  // novo → antigo
-  // =============================
-  const registrosTabela = [...registros].sort((a, b) => b.data - a.data);
+    if (grafico) grafico.destroy();
 
-  // Atualiza texto de info
-  historicoDiv.innerHTML = `
-      Última atualização: <strong>${registrosTabela[0].data.toLocaleString("pt-BR")}</strong>
-  `;
+    const horas = lista.map(e => e.hora);
+    const valores = lista.map(e => e.valor);
 
-  // =============================
-  // MONTAR GRÁFICO
-  // =============================
-  if (window.graficoConsumo) window.graficoConsumo.destroy();
-
-  const labels = registrosGrafico.map(r =>
-    r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  );
-
-  window.graficoConsumo = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Consumo (L)",
-          data: registrosGrafico.map(r => r.litros),
-          borderColor: "#2c8b7d",
-          backgroundColor: "rgba(44,139,125,0.3)",
-          tension: 0.4,
-          fill: true
+    grafico = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: horas,
+            datasets: [{
+                label: "Consumo / Leitura",
+                data: valores,
+                fill: false,
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    reverse: true   // HORAS da direita para a esquerda
+                }
+            }
         }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-
-  // =============================
-  // GERAR TABELA COM ÚLTIMO NO TOPO
-  // =============================
-  gerarTabela(registrosTabela);
+    });
 }
 
-// ========================
-// GERAR TABELA NO HTML
-// ========================
-function gerarTabela(lista) {
-  const tabelaDiv = document.getElementById("tabelaConsumo");
+document.getElementById("selectReservatorio").addEventListener("change", carregarHistorico);
 
-  if (!tabelaDiv) return;
-
-  tabelaDiv.innerHTML = `
-    <table class="tabela-historico">
-      <thead>
-        <tr>
-          <th>Data/Hora</th>
-          <th>Leitura (L)</th>
-          <th>Ocupação (%)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${lista
-          .map(
-            r => `
-          <tr>
-            <td>${r.data.toLocaleString("pt-BR")}</td>
-            <td>${r.litros}</td>
-            <td>${r.ocupacao}%</td>
-          </tr>`
-          )
-          .join("")}
-      </tbody>
-    </table>
-  `;
-}
-
-// Iniciar
-carregarConsumo();
+carregarHistorico();
+setInterval(carregarHistorico, 10000);
