@@ -1,111 +1,117 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Consumo Diário — HAG</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css">
+// ======= consumo.js =======
+// Página de gráfico de consumo diário (Elevador e Osmose)
 
-  <style>
-    body {
-      font-family: "Poppins", Arial, sans-serif;
-      background-color: #f5f9f8;
-      color: #1a3d36;
-      margin: 0;
-      padding: 0;
-      text-align: center;
+async function carregarConsumo() {
+  try {
+    const resp = await fetch("/historico");
+    const historico = await resp.json();
+
+    if (!historico.length) {
+      document.getElementById("graficoContainer").innerHTML =
+        "<p style='text-align:center; color:gray;'>Ainda não há dados suficientes para gerar o gráfico de consumo diário.</p>";
+      return;
     }
 
-    header {
-      background-color: #2c8b7d;
-      color: white;
-      padding: 15px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+    const consumoPorDia = calcularConsumoDiario(historico);
+    exibirGrafico(consumoPorDia);
+  } catch (err) {
+    console.error("Erro ao carregar consumo:", err);
+  }
+}
 
-    #tituloConsumo {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 600;
-    }
+function calcularConsumoDiario(historico) {
+  const consumo = {};
 
-    main {
-      max-width: 1000px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      padding: 30px;
-    }
+  historico.forEach(entry => {
+    const data = new Date(entry.timestamp).toLocaleDateString("pt-BR");
+    if (!consumo[data]) consumo[data] = { elevador: 0, osmose: 0 };
 
-    .toolbar {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 25px;
-    }
+    if (entry.Reservatorio_Elevador_current !== undefined)
+      consumo[data].elevador = Math.max(consumo[data].elevador, entry.Reservatorio_Elevador_current);
+    if (entry.Reservatorio_Osmose_current !== undefined)
+      consumo[data].osmose = Math.max(consumo[data].osmose, entry.Reservatorio_Osmose_current);
+  });
 
-    button {
-      background-color: #2c8b7d;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background-color 0.3s, transform 0.2s;
-    }
+  // Calcula consumo (diferença entre dias consecutivos)
+  const dias = Object.keys(consumo).sort(
+    (a, b) =>
+      new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
+  );
 
-    button:hover {
-      background-color: #256f64;
-      transform: translateY(-2px);
-    }
+  const consumoFinal = [];
+  for (let i = 1; i < dias.length; i++) {
+    const dAnt = consumo[dias[i - 1]];
+    const dAt = consumo[dias[i]];
+    consumoFinal.push({
+      dia: dias[i],
+      elevador: Math.max(0, dAnt.elevador - dAt.elevador),
+      osmose: Math.max(0, dAnt.osmose - dAt.osmose),
+    });
+  }
 
-    canvas {
-      background-color: #fefefe;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      padding: 10px;
-      width: 100%;
-      height: 400px;
-    }
+  return consumoFinal.slice(-5); // mostra últimos 5 dias
+}
 
-    footer {
-      background-color: #2c8b7d;
-      color: white;
-      text-align: center;
-      padding: 10px;
-      margin-top: 40px;
-      font-size: 14px;
-    }
-  </style>
-</head>
+function exibirGrafico(consumo) {
+  const ctx = document.getElementById("graficoConsumo").getContext("2d");
 
-<body>
-  <header>
-    <h2 id="tituloConsumo">Consumo Diário de Água</h2>
-  </header>
+  // ✅ Corrigido: destruir gráfico anterior apenas se for instância de Chart
+  if (window.graficoConsumo instanceof Chart) {
+    window.graficoConsumo.destroy();
+  }
 
-  <main>
-    <div class="toolbar">
-      <button onclick="window.location.href='historico.html'">⬅️ Voltar ao Histórico</button>
-    </div>
+  window.graficoConsumo = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: consumo.map(d => d.dia),
+      datasets: [
+        {
+          label: "Reservatório Elevador (L)",
+          data: consumo.map(d => d.elevador),
+          backgroundColor: "#2c8b7d",
+        },
+        {
+          label: "Reservatório Osmose (L)",
+          data: consumo.map(d => d.osmose),
+          backgroundColor: "#57b3a0",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Consumo Diário de Água — Últimos 5 Dias",
+          font: { size: 18 },
+        },
+        legend: { position: "top" },
+      },
+      scales: {
+        y: { 
+          min: 10000,  // Definir o valor mínimo do eixo Y para 10.000 (10k)
+          title: { display: true, text: "Litros Consumidos" },
+        },
+        x: { title: { display: true, text: "Dia" } },
+      },
+    },
+  });
+}
 
-    <div style="max-width: 900px; margin:auto;">
-      <canvas id="graficoConsumo"></canvas>
-    </div>
+// Atualiza o gráfico automaticamente à meia-noite
+function atualizarMeiaNoite() {
+  const agora = new Date();
+  const prox = new Date();
+  prox.setHours(24, 0, 0, 0);
+  const ms = prox - agora;
+  setTimeout(() => {
+    carregarConsumo();
+    atualizarMeiaNoite();
+  }, ms);
+}
 
-    <div id="infoConsumo" style="margin-top: 30px; text-align: center; font-size: 16px;">
-      <p>Exibindo consumo dos últimos <strong>5 dias</strong> dos reservatórios <strong>Elevador</strong> e <strong>Osmose</strong>.</p>
-    </div>
-  </main>
-
-  <footer>
-    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
-  </footer>
-
-  <script src="consumo.js"></script>
-</body>
-</html>
+// Inicializa
+window.addEventListener("load", () => {
+  carregarConsumo();
+  atualizarMeiaNoite();
+});
