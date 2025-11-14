@@ -30,7 +30,7 @@ async function carregarHistorico() {
 
     atualizarReservatorioSelect(historico);
 
-    // Seleciona automaticamente o primeiro reservatório disponível
+    // Seleciona o primeiro reservatório válido
     if (!selectReservatorio.value) {
       selectReservatorio.selectedIndex = 1;
     }
@@ -47,25 +47,24 @@ async function carregarHistorico() {
 // =========================
 
 function atualizarReservatorioSelect(historico) {
-  if (!selectReservatorio) return;
-
   selectReservatorio.innerHTML = "";
-  const opcaoPadrao = document.createElement("option");
-  opcaoPadrao.value = "";
-  opcaoPadrao.textContent = "Selecione um reservatório...";
-  selectReservatorio.appendChild(opcaoPadrao);
 
-  const opcoes = new Set();
+  const optDefault = document.createElement("option");
+  optDefault.value = "";
+  optDefault.textContent = "Selecione um reservatório...";
+  selectReservatorio.appendChild(optDefault);
+
+  const nomes = new Set();
 
   historico.forEach(item => {
     Object.keys(item).forEach(key => {
       if (key.includes("_current") && typeof item[key] === "number") {
-        opcoes.add(key);
+        nomes.add(key);
       }
     });
   });
 
-  opcoes.forEach(ref => {
+  nomes.forEach(ref => {
     const option = document.createElement("option");
     option.value = ref;
     option.textContent = ref.replace("_current", "").replace(/_/g, " ");
@@ -74,7 +73,7 @@ function atualizarReservatorioSelect(historico) {
 }
 
 // =========================
-//  ATUALIZAR GRÁFICO
+//  ATUALIZAR GRÁFICO + TABELA
 // =========================
 
 function atualizarGrafico(historico, ref) {
@@ -82,31 +81,58 @@ function atualizarGrafico(historico, ref) {
 
   const labels = historico.map(item =>
     new Date(item.timestamp).toLocaleString("pt-BR", {
-      day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
     })
   );
 
   const valores = historico.map(item => item[ref] ?? 0);
 
+  // ===== ATUALIZAR TABELA =====
+  const corpo = document.querySelector("#tabelaHistorico tbody");
+  corpo.innerHTML = "";
+
+  historico.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${new Date(item.timestamp).toLocaleString("pt-BR")}</td>
+      <td>${item[ref] ?? 0}</td>
+    `;
+
+    corpo.appendChild(tr);
+  });
+
+  // ===== GRÁFICO =====
   if (grafico) grafico.destroy();
 
   grafico = new Chart(ctx, {
     type: "line",
     data: {
       labels,
-      datasets: [{
-        label: ref.replace("_current", "").replace(/_/g, " "),
-        data: valores,
-        borderWidth: 2,
-        tension: 0.3,
-      }]
+      datasets: [
+        {
+          label: ref.replace("_current", "").replace(/_/g, " "),
+          data: valores,
+          borderColor: "rgba(0, 123, 255, 1)",
+          backgroundColor: "rgba(0, 123, 255, 0.2)",
+          pointBackgroundColor: "rgba(0, 123, 255, 0.8)",
+          pointBorderColor: "rgba(0, 123, 255, 1)",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3,
+          tension: 0.3
+        }
+      ]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true },
+        x: {}
       }
     }
   });
