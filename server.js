@@ -1,4 +1,5 @@
-/ ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) =======
+/* ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) ======= */
+
 import express from "express";
 import fs from "fs";
 import path from "path";
