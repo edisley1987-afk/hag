@@ -1,5 +1,4 @@
-// ======= Servidor Universal HAG =======
-
+// ======= Servidor Universal HAG (com histórico otimizado + CONSUMO DIÁRIO SALVO) =======
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -8,194 +7,221 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// ===========================
-// CONFIGURAÇÕES
-// ===========================
 app.use(cors());
-app.use(express.json({ limit: "20mb" }));
+app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.urlencoded({ extended: true }));
-
-// === Servir toda a pasta PUBLIC automaticamente ===
 app.use(express.static(path.join(__dirname, "public")));
 
-
-// ==================================
-// PASTA E ARQUIVOS PRINCIPAIS
-// ==================================
+// ====== Arquivos de dados ======
 const DATA_DIR = path.join(__dirname, "data");
-const READINGS_FILE = path.join(DATA_DIR, "readings.json");
+const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
-const CONSUMO_FILE = path.join(DATA_DIR, "consumo.json");
+const MANUTENCAO_FILE = path.join(DATA_DIR, "manutencao.json");
+const CONSUMO_FILE = path.join(DATA_DIR, "consumo_diario.json");
 
-// Criar pasta data se não existir
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
+// ======= Calibração dos sensores =======
+const SENSORES = {
+  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
+  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
+  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
+  "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
 
-// ===========================
-// CONFIGURAÇÃO DOS RESERVATÓRIOS
-// ===========================
-const RESERVATORIOS = {
-  "Reservatorio_Elevador_current": {
-    nome: "Reservatório Elevador",
-    leituraVazio: 0.004168,
-    leituraCheio: 0.007855,
-    capacidade: 20000
-  },
-  "Reservatorio_Osmose_current": {
-    nome: "Reservatório Osmose",
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006533,
-    capacidade: 200
-  },
-  "Reservatorio_CME_current": {
-    nome: "Reservatório CME",
-    leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
-    capacidade: 1000
-  },
-  "Reservatorio_Agua_Abrandada_current": {
-    nome: "Reservatório Água Abrandada",
-    leituraVazio: 0.144,
-    leituraCheio: 1.37,
-    capacidade: 5000
-  }
+  // Pressão
+  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
+  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
+  "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-
-// =========================================
-// FUNÇÃO: Calcular litros a partir da leitura
-// =========================================
-function calcularLitros(id, leitura) {
-  const cfg = RESERVATORIOS[id];
-  if (!cfg) return null;
-
-  const { leituraVazio, leituraCheio, capacidade } = cfg;
-
-  // Proteção
-  if (leitura <= leituraVazio) return 0;
-  if (leitura >= leituraCheio) return capacidade;
-
-  const perc = (leitura - leituraVazio) / (leituraCheio - leituraVazio);
-  return Math.round(capacidade * perc);
+// ========= FUNÇÕES UTILITÁRIAS =========
+function salvarLeituraAtual(dados) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
 
+function adicionarAoHistorico(dados) {
+  let historico = [];
+  if (fs.existsSync(HIST_FILE)) {
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); }
+    catch { historico = []; }
+  }
 
-// =========================================
-// ROTA: RECEBER LEITURAS DO GATEWAY
-// =========================================
-app.post("/gateway", (req, res) => {
+  const ultima = historico.length ? historico[historico.length - 1] : null;
+  let mudou = false;
+
+  if (ultima) {
+    for (const ref of Object.keys(SENSORES)) {
+      if (!ref.includes("Reservatorio")) continue;
+
+      const atual = dados[ref];
+      const anterior = ultima[ref];
+      const capacidade = SENSORES[ref].capacidade;
+
+      if (capacidade && anterior !== undefined) {
+        const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
+
+        // Salva apenas alterações de 5% (para compactar histórico)
+        if (diffPercent >= 5) {
+          mudou = true;
+          break;
+        }
+      }
+    }
+  } else mudou = true;
+
+  if (mudou) {
+    historico.push({ timestamp: new Date().toISOString(), ...dados });
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+  }
+}
+
+// ======== SALVAR CONSUMO DIÁRIO ========
+function calcularConsumoDiario() {
+  if (!fs.existsSync(HIST_FILE)) return;
+  let historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+
+  if (historico.length < 2) return;
+
+  const consumo = {};
+
+  historico.forEach(entry => {
+    const data = entry.timestamp.split("T")[0]; // yyyy-mm-dd
+
+    if (!consumo[data]) consumo[data] = { elevadorMax: 0, osmoseMax: 0 };
+
+    if (entry.Reservatorio_Elevador_current !== undefined)
+      consumo[data].elevadorMax = Math.max(consumo[data].elevadorMax, entry.Reservatorio_Elevador_current);
+
+    if (entry.Reservatorio_Osmose_current !== undefined)
+      consumo[data].osmoseMax = Math.max(consumo[data].osmoseMax, entry.Reservatorio_Osmose_current);
+  });
+
+  const dias = Object.keys(consumo).sort();
+  const consumoFinal = [];
+
+  for (let i = 1; i < dias.length; i++) {
+    const ant = consumo[dias[i - 1]];
+    const atual = consumo[dias[i]];
+
+    consumoFinal.push({
+      dia: dias[i],
+      elevador: Math.max(0, ant.elevadorMax - atual.elevadorMax),
+      osmose: Math.max(0, ant.osmoseMax - atual.osmoseMax)
+    });
+  }
+
+  fs.writeFileSync(CONSUMO_FILE, JSON.stringify(consumoFinal, null, 2));
+}
+
+// Atualiza a cada 1 hora
+setInterval(calcularConsumoDiario, 60 * 60 * 1000);
+calcularConsumoDiario();
+
+// ======== API: receber dados do gateway ========
+app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
-    const data = req.body;
+    let body = req.body;
+    if (Buffer.isBuffer(body)) body = body.toString("utf8");
 
-    if (!data || typeof data !== "object") {
-      return res.status(400).json({ erro: "JSON inválido" });
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch {}
     }
 
-    // Corrigir nome dos reservatórios recebidos
-    const leiturasProcessadas = {};
+    let dataArray = [];
+    if (Array.isArray(body)) dataArray = body;
+    else if (Array.isArray(body?.data)) dataArray = body.data;
+    else if (typeof body === "object" && body !== null)
+      dataArray = Object.keys(body)
+        .filter(k => k.includes("_current"))
+        .map(k => ({ ref: k, value: Number(body[k]) }));
 
-    Object.keys(data).forEach((id) => {
-      if (!RESERVATORIOS[id]) return;
+    if (!dataArray.length)
+      return res.status(400).json({ erro: "Nenhum dado válido" });
 
-      const leituraBruta = Number(data[id]);
-      const litros = calcularLitros(id, leituraBruta);
+    const dadosConvertidos = {};
 
-      leiturasProcessadas[id] = {
-        leitura: leituraBruta,
-        litros,
-        atualizado: new Date().toISOString()
-      };
-    });
+    for (const item of dataArray) {
+      const ref = item.ref || item.name;
+      const valor = Number(item.value);
+      if (!ref || isNaN(valor)) continue;
 
-    // Salvar último estado completo
-    fs.writeFileSync(READINGS_FILE, JSON.stringify(leiturasProcessadas, null, 2));
+      const sensor = SENSORES[ref];
+      if (!sensor) continue;
 
-    // Registrar no histórico
-    const historico = fs.existsSync(HIST_FILE)
-      ? JSON.parse(fs.readFileSync(HIST_FILE))
-      : [];
+      const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
+      let leituraConvertida;
 
-    historico.push({
-      timestamp: new Date().toISOString(),
-      dados: leiturasProcessadas
-    });
+      if (tipo === "pressao") {
+        leituraConvertida = ((valor - 0.004) / 0.016) * 20;
+        leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
+        leituraConvertida = parseFloat(leituraConvertida.toFixed(2));
+      } else {
+        leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
+        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
+      }
 
-    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+      dadosConvertidos[ref] = leituraConvertida;
+    }
 
-    // Registrar consumo por dia
-    const consumo = fs.existsSync(CONSUMO_FILE)
-      ? JSON.parse(fs.readFileSync(CONSUMO_FILE))
-      : {};
+    // Controle de manutenção
+    const LIMITE_MANUT = 30;
+    let manutencao = {};
 
-    const dia = new Date().toISOString().slice(0, 10);
+    if (fs.existsSync(MANUTENCAO_FILE)) {
+      try { manutencao = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); }
+      catch { manutencao = {}; }
+    }
 
-    if (!consumo[dia]) consumo[dia] = {};
+    for (const ref of Object.keys(SENSORES)) {
+      if (!ref.includes("Reservatorio")) continue;
 
-    Object.keys(leiturasProcessadas).forEach((id) => {
-      consumo[dia][id] = leiturasProcessadas[id].litros;
-    });
+      const valor = dadosConvertidos[ref];
+      const cap = SENSORES[ref].capacidade;
+      const pct = cap ? (valor / cap) * 100 : 0;
 
-    fs.writeFileSync(CONSUMO_FILE, JSON.stringify(consumo, null, 2));
+      if (manutencao[ref] && pct > LIMITE_MANUT) delete manutencao[ref];
+    }
 
-    return res.json({ status: "ok", atualizado: leiturasProcessadas });
+    fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencao, null, 2));
+
+    dadosConvertidos.timestamp = new Date().toISOString();
+    dadosConvertidos.manutencao = manutencao;
+
+    salvarLeituraAtual(dadosConvertidos);
+    adicionarAoHistorico(dadosConvertidos);
+
+    res.json({ status: "ok", dados: dadosConvertidos });
 
   } catch (err) {
-    console.error("Erro no gateway:", err);
-    return res.status(500).json({ erro: "Falha interna no servidor" });
+    console.error("❌ Erro atualização:", err);
+    res.status(500).json({ erro: err.message });
   }
 });
 
-
-// =========================================
-// ROTA: LER ÚLTIMOS DADOS
-// =========================================
-app.get("/dados", (req, res) => {
-  if (!fs.existsSync(READINGS_FILE)) return res.json({});
-  res.sendFile(READINGS_FILE);
+// ======== Rotas API ========
+app.get("/dados", (_, res) => {
+  if (!fs.existsSync(DATA_FILE)) return res.json({});
+  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-
-// =========================================
-// ROTA: HISTÓRICO COMPLETO
-// =========================================
-app.get("/historico", (req, res) => {
+app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
-  res.sendFile(HIST_FILE);
+  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-
-// =========================================
-// ROTA: CONSUMO DIÁRIO
-// =========================================
-app.get("/consumo-diario", (req, res) => {
-  if (!fs.existsSync(CONSUMO_FILE)) return res.json({});
-  res.sendFile(CONSUMO_FILE);
+app.get("/consumo-diario", (_, res) => {
+  if (!fs.existsSync(CONSUMO_FILE)) return res.json([]);
+  res.json(JSON.parse(fs.readFileSync(CONSUMO_FILE, "utf-8")));
 });
 
+// ======== Rotas páginas ========
+app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+app.get("/consumo", (_, res) => res.sendFile(path.join(__dirname, "public", "consumo.html")));
 
-// =========================================
-// LOGIN SIMPLES
-// =========================================
-const USERS = {
-  admin: "1234",
-  hag: "hospital123"
-};
-
-app.post("/login", (req, res) => {
-  const { usuario, senha } = req.body;
-
-  if (USERS[usuario] && USERS[usuario] === senha) {
-    return res.json({ autorizado: true });
-  }
-
-  res.status(401).json({ autorizado: false });
-});
-
-
-// =========================================
-// INICIAR SERVIDOR
-// =========================================
+// ======== Inicialização ========
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Servidor HAG rodando na porta " + PORT);
-});
+app.listen(PORT, () =>
+  console.log(`✅ Servidor rodando na porta ${PORT}`)
+);
