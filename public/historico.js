@@ -1,5 +1,5 @@
 // =========================
-//  HISTÓRICO — HAG (VERSÃO CORRETA)
+//  HISTÓRICO — HAG (VERSÃO CORRIGIDA)
 // =========================
 
 const API_URL = window.location.origin;
@@ -8,6 +8,9 @@ const API_URL = window.location.origin;
 const select = document.getElementById("selectReservatorio");
 const tabela = document.querySelector("#tabelaHistorico tbody");
 const canvas = document.getElementById("graficoHistorico");
+
+// 🔥 LIMITE DO TAMANHO DO GRÁFICO — impede ficar gigante
+canvas.style.height = "350px";
 
 let grafico = null;
 
@@ -34,7 +37,7 @@ async function carregarLista() {
 }
 
 // =========================
-//  2) Carregar histórico de 1 reservatório
+//  2) Carregar histórico
 // =========================
 async function carregarHistorico(reservatorio) {
   if (!reservatorio) return;
@@ -97,7 +100,7 @@ function atualizarGrafico(dados, ref) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: false  // ESSENCIAL para respeitar a altura definida
     }
   });
 }
@@ -110,6 +113,6 @@ select.addEventListener("change", () => {
 });
 
 // =========================
-//  6) Iniciar página
+//  6) Início
 // =========================
 carregarLista();
