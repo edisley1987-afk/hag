@@ -143,16 +143,57 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
+// === Fornecer últimas leituras ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
+// === Fornecer histórico completo (cru) ===
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
+// ==============================================================
+//  NOVAS ROTAS — COMPATÍVEIS com historico.js (FUNCIONA AGORA)
+// ==============================================================
+
+// Lista de reservatórios
+app.get("/historico/lista", (req, res) => {
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const reservatorios = new Set();
+
+  historico.forEach(registro => {
+    Object.keys(registro).forEach(chave => {
+      if (chave.includes("_current")) reservatorios.add(chave);
+    });
+  });
+
+  res.json([...reservatorios]);
+});
+
+// Histórico individual
+app.get("/historico/:reservatorio", (req, res) => {
+  const ref = req.params.reservatorio;
+
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+
+  const resposta = historico
+    .filter(r => r[ref] !== undefined)
+    .map(r => ({
+      horario: r.timestamp,
+      valor: r[ref]
+    }));
+
+  res.json(resposta);
+});
+
+// === Páginas estáticas ===
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
