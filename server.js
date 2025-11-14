@@ -11,12 +11,16 @@ const __dirname = path.resolve();
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.urlencoded({ extended: true }));
+
+// === Arquivos públicos ===
 app.use(express.static(path.join(__dirname, "public")));
 
+// === Diretórios e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUTENCAO_FILE = path.join(DATA_DIR, "manutencao.json");
+
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // === Calibração dos sensores ===
@@ -37,19 +41,24 @@ function salvarLeituraAtual(dados) {
 
 function adicionarAoHistorico(dados) {
   let historico = [];
+
   if (fs.existsSync(HIST_FILE)) {
-    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch { historico = []; }
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); }
+    catch { historico = []; }
   }
 
   const ultima = historico.length ? historico[historico.length - 1] : null;
   let mudou = false;
 
+  // Verificar variação maior que 5% para reservar espaço
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
+
       const atual = dados[ref];
       const anterior = ultima[ref];
       const capacidade = SENSORES[ref].capacidade;
+
       if (capacidade && anterior !== undefined) {
         const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
         if (diffPercent >= 5) {
@@ -58,7 +67,9 @@ function adicionarAoHistorico(dados) {
         }
       }
     }
-  } else mudou = true;
+  } else {
+    mudou = true;
+  }
 
   if (mudou) {
     historico.push({ timestamp: new Date().toISOString(), ...dados });
@@ -70,12 +81,14 @@ function adicionarAoHistorico(dados) {
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
+
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
       try { body = JSON.parse(body); } catch {}
     }
 
     let dataArray = [];
+
     if (Array.isArray(body)) dataArray = body;
     else if (Array.isArray(body?.data)) dataArray = body.data;
     else if (typeof body === "object" && body !== null)
@@ -83,24 +96,29 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
 
-    if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido" });
+    if (!dataArray.length) {
+      return res.status(400).json({ erro: "Nenhum dado válido" });
+    }
 
     const dadosConvertidos = {};
+
     for (const item of dataArray) {
       const ref = item.ref || item.name;
       const valor = Number(item.value);
+
       if (!ref || isNaN(valor)) continue;
 
       const sensor = SENSORES[ref];
       if (!sensor) continue;
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
-      let leituraConvertida;
+
+      let leituraConvertida = 0;
 
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
-        leituraConvertida = parseFloat(leituraConvertida.toFixed(2));
+        leituraConvertida = Number(leituraConvertida.toFixed(2));
       } else {
         leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
@@ -109,17 +127,23 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
+    // Atualizar manutenção
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
+
     if (fs.existsSync(MANUTENCAO_FILE)) {
-      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
+      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); }
+      catch { manutencaoAtiva = {}; }
     }
 
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
+
       const valor = dadosConvertidos[ref];
       const capacidade = SENSORES[ref].capacidade;
+
       const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
+
       if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO) {
         delete manutencaoAtiva[ref];
       }
@@ -130,32 +154,31 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     dadosConvertidos.timestamp = new Date().toISOString();
     dadosConvertidos.manutencao = manutencaoAtiva;
 
-    console.log("📩 Dados recebidos:", JSON.stringify(dadosConvertidos, null, 2));
-
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
     res.json({ status: "ok", dados: dadosConvertidos });
+
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
     res.status(500).json({ erro: err.message });
   }
 });
 
-// === Fornecer últimas leituras ===
+// === Últimos dados ===
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// === Fornecer histórico completo ===
+// === Histórico ===
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
 // =====================================================================
-//  🔵 NOVA ROTA — /lista (compatível com historico.js)
+//  🔵 ROTA CORRIGIDA — Lista SOMENTE de reservatórios (sem pressão)
 // =====================================================================
 app.get("/lista", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
@@ -165,7 +188,12 @@ app.get("/lista", (req, res) => {
 
   historico.forEach(registro => {
     Object.keys(registro).forEach(chave => {
-      if (chave.includes("_current")) reservatorios.add(chave);
+
+      // Somente reservatórios, ignorar pressão
+      if (chave.includes("Reservatorio") && chave.endsWith("_current")) {
+        reservatorios.add(chave);
+      }
+
     });
   });
 
