@@ -1,68 +1,98 @@
 body {
-  background-color: #DFF3F1;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  color: #333;
+  background-color: #f5f9f8;
+  font-family: "Poppins", Arial, sans-serif;
+  color: #1a3d36;
   margin: 0;
   padding: 0;
-}
-
-.container {
-  max-width: 1100px;
-  margin: 30px auto;
-  background: #fff;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
 h2 {
-  color: #146C60;
-  text-align: center;
-  font-weight: 600;
-  margin-bottom: 25px;
+  margin-top: 25px;
+  color: #256f64;
+  font-size: 30px;
+}
+
+.menu-botoes {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.menu-botoes button {
+  background-color: #2c8b7d;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.menu-botoes button:hover {
+  background-color: #256f64;
+  transform: translateY(-2px);
+}
+
+.conteudo {
+  width: 95%;
+  max-width: 1000px;
+  background: white;
+  padding: 25px;
+  margin: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 select {
-  background-color: #53B2A8;
-  color: #fff;
+  background-color: #2c8b7d;
+  color: white;
+  padding: 8px 15px;
   border: none;
   border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 15px;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
+  margin-bottom: 25px;
 }
 
 select:hover {
-  background-color: #146C60;
+  background-color: #256f64;
 }
 
 #graficoHistorico {
   width: 100%;
-  height: 350px !important;   /* 🔥 impede gráfico gigante */
-  margin-top: 20px;
+  max-width: 900px;
+  height: 380px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.tabela-historico {
+table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 25px;
+  background: white;
   border-radius: 8px;
   overflow: hidden;
+  font-size: 16px;
 }
 
-.tabela-historico th {
-  background-color: #146C60;
-  color: #fff;
+table th {
+  background: #2c8b7d;
+  color: white;
   padding: 10px;
 }
 
-.tabela-historico td {
-  text-align: center;
-  padding: 10px;
-  border-bottom: 1px solid #E8E8E8;
+table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
 }
 
-.tabela-historico tr:nth-child(even) {
-  background-color: #F6FBFB;
+table tr:nth-child(even) {
+  background-color: #f3f7f7;
 }
