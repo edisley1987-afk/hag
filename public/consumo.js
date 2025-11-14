@@ -1,4 +1,3 @@
-
 // ======= consumo.js =======
 // Página de gráfico de consumo diário (Elevador e Osmose)
 
@@ -29,11 +28,11 @@ function calcularConsumoDiario(historico) {
 
     if (entry.Reservatorio_Elevador_current !== undefined)
       consumo[data].elevador = Math.max(consumo[data].elevador, entry.Reservatorio_Elevador_current);
+
     if (entry.Reservatorio_Osmose_current !== undefined)
       consumo[data].osmose = Math.max(consumo[data].osmose, entry.Reservatorio_Osmose_current);
   });
 
-  // Calcula consumo (diferença entre dias consecutivos)
   const dias = Object.keys(consumo).sort(
     (a, b) =>
       new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
@@ -50,16 +49,25 @@ function calcularConsumoDiario(historico) {
     });
   }
 
-  return consumoFinal.slice(-5); // mostra últimos 5 dias
+  return consumoFinal.slice(-5);
 }
 
 function exibirGrafico(consumo) {
   const ctx = document.getElementById("graficoConsumo").getContext("2d");
 
-  // ✅ Corrigido: destruir gráfico anterior apenas se for instância de Chart
   if (window.graficoConsumo instanceof Chart) {
     window.graficoConsumo.destroy();
   }
+
+  // ========= NOVO: Ajuste automático da escala ==========
+  const valores = [
+    ...consumo.map(d => d.elevador),
+    ...consumo.map(d => d.osmose)
+  ];
+
+  const maxValor = Math.max(...valores, 1);  
+  const margem = maxValor * 0.30; // margem de 30%
+  const limiteY = Math.ceil(maxValor + margem);
 
   window.graficoConsumo = new Chart(ctx, {
     type: "bar",
@@ -89,8 +97,9 @@ function exibirGrafico(consumo) {
         legend: { position: "top" },
       },
       scales: {
-        y: { 
-          min: 10000,  // Definir o valor mínimo do eixo Y para 10.000 (10k)
+        y: {
+          beginAtZero: true,
+          suggestedMax: limiteY, // <<< AJUSTE AUTOMÁTICO
           title: { display: true, text: "Litros Consumidos" },
         },
         x: { title: { display: true, text: "Dia" } },
