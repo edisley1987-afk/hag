@@ -1,3 +1,4 @@
+
 // ======= consumo.js =======
 // Página de gráfico de consumo diário (Elevador e Osmose)
 
@@ -88,7 +89,10 @@ function exibirGrafico(consumo) {
         legend: { position: "top" },
       },
       scales: {
-        y: { beginAtZero: true, title: { display: true, text: "Litros Consumidos" } },
+        y: { 
+          min: 10000,  // Definir o valor mínimo do eixo Y para 10.000 (10k)
+          title: { display: true, text: "Litros Consumidos" },
+        },
         x: { title: { display: true, text: "Dia" } },
       },
     },
