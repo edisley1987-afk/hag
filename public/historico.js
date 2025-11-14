@@ -70,8 +70,8 @@ function exibirHistorico(historico, reservatorio) {
       ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
     }));
 
-  // 🔄 Exibe leitura mais recente primeiro
-  registros = registros.reverse();
+  // 🔍 Ordenar do mais antigo → mais recente
+  registros.sort((a, b) => a.data - b.data);
 
   if (registros.length === 0) {
     container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
