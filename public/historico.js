@@ -1,118 +1,96 @@
-// =========================
-//  HISTÓRICO — HAG (VERSÃO CORRIGIDA)
-// =========================
+// === CONFIGURAÇÃO DOS RESERVATÓRIOS ===
+const RESERVATORIOS = {
+  Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
+  Reservatorio_Osmose_current: { nome: "Reservatório Osmose", capacidade: 200 },
+  Reservatorio_CME_current: { nome: "Reservatório CME", capacidade: 1000 },
+  Reservatorio_Abrandada_current: { nome: "Reservatório Abrandada", capacidade: 9000 }
+};
 
-const API_URL = window.location.origin;
+async function carregarHistorico() {
+  const resposta = await fetch("/historico");
+  const dados = await resposta.json();
 
-// Elementos do DOM
-const select = document.getElementById("selectReservatorio");
-const tabela = document.querySelector("#tabelaHistorico tbody");
-const canvas = document.getElementById("graficoHistorico");
+  const tabela = document.getElementById("tabelaHistorico");
+  tabela.innerHTML = `
+    <tr>
+      <th>Data</th>
+      <th>Reservatório</th>
+      <th>Litros</th>
+      <th>Percentual (%)</th>
+    </tr>
+  `;
 
-// 🔥 LIMITE DO TAMANHO DO GRÁFICO — impede ficar gigante
-canvas.style.height = "350px";
+  let labelsGrafico = [];
+  let valoresGrafico = [];
+  let percentuaisGrafico = [];
 
-let grafico = null;
+  for (const item of dados) {
+    const config = RESERVATORIOS[item.nomeReservatorio];
+    if (!config) continue;
 
-// =========================
-//  1) Carregar lista de reservatórios
-// =========================
-async function carregarLista() {
-  try {
-    const resp = await fetch(`${API_URL}/historico/lista`);
-    const lista = await resp.json();
+    const percentual = ((item.valor / config.capacidade) * 100).toFixed(1);
 
-    select.innerHTML = `<option value="">Selecione...</option>`;
-
-    lista.forEach(r => {
-      const op = document.createElement("option");
-      op.value = r;
-      op.textContent = r.replace("_current", "").replace(/_/g, " ");
-      select.appendChild(op);
-    });
-
-  } catch (err) {
-    console.error("Erro ao carregar lista:", err);
-  }
-}
-
-// =========================
-//  2) Carregar histórico
-// =========================
-async function carregarHistorico(reservatorio) {
-  if (!reservatorio) return;
-
-  try {
-    const resp = await fetch(`${API_URL}/historico/${reservatorio}`);
-    const dados = await resp.json();
-
-    atualizarTabela(dados);
-    atualizarGrafico(dados, reservatorio);
-
-  } catch (err) {
-    console.error("Erro ao carregar histórico:", err);
-  }
-}
-
-// =========================
-//  3) Atualizar tabela
-// =========================
-function atualizarTabela(dados) {
-  tabela.innerHTML = "";
-
-  dados.forEach(item => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${new Date(item.horario).toLocaleString("pt-BR")}</td>
-      <td>${item.valor}</td>
+    tabela.innerHTML += `
+      <tr>
+        <td>${item.data}</td>
+        <td>${config.nome}</td>
+        <td>${item.valor} L</td>
+        <td>${percentual}%</td>
+      </tr>
     `;
 
-    tabela.appendChild(tr);
-  });
+    // Dados para o gráfico
+    labelsGrafico.push(item.data + " - " + config.nome);
+    valoresGrafico.push(item.valor);
+    percentuaisGrafico.push(percentual);
+  }
+
+  atualizarGrafico(labelsGrafico, valoresGrafico, percentuaisGrafico);
 }
 
-// =========================
-//  4) Atualizar gráfico
-// =========================
-function atualizarGrafico(dados, ref) {
-  const labels = dados.map(i =>
-    new Date(i.horario).toLocaleString("pt-BR")
-  );
+// === GRÁFICO ===
+let grafico;
 
-  const valores = dados.map(i => i.valor);
+function atualizarGrafico(labels, valores, percentuais) {
+  const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-  const ctx = canvas.getContext("2d");
-
-  // Destruir gráfico anterior
   if (grafico) grafico.destroy();
 
   grafico = new Chart(ctx, {
-    type: "line",
+    type: "bar",
     data: {
-      labels,
-      datasets: [{
-        label: ref.replace("_current", "").replace(/_/g, " "),
-        data: valores,
-        borderWidth: 3,
-        pointRadius: 3
-      }]
+      labels: labels,
+      datasets: [
+        {
+          label: "Litros",
+          data: valores,
+          borderWidth: 1
+        },
+        {
+          label: "Percentual (%)",
+          data: percentuais,
+          type: "line",
+          borderWidth: 2,
+          yAxisID: "percent"
+        }
+      ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false  // ESSENCIAL para respeitar a altura definida
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Litros" }
+        },
+        percent: {
+          beginAtZero: true,
+          max: 100,
+          position: "right",
+          title: { display: true, text: "%" }
+        }
+      }
     }
   });
 }
 
-// =========================
-//  5) Evento de troca
-// =========================
-select.addEventListener("change", () => {
-  carregarHistorico(select.value);
-});
-
-// =========================
-//  6) Início
-// =========================
-carregarLista();
+carregarHistorico();
