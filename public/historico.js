@@ -17,7 +17,6 @@ async function carregarListaReservatorios() {
   const select = document.getElementById("selectReservatorio");
 
   try {
-    // 🔵 ROTA CORRETA
     const resp = await fetch("/lista");
     const lista = await resp.json();
 
@@ -30,10 +29,13 @@ async function carregarListaReservatorios() {
 
     select.innerHTML = `<option value="">Selecione um reservatório...</option>`;
 
-    lista.forEach(ref => {
-      const nome = RESERVATORIOS_INFO[ref]?.nome || ref;
-      select.innerHTML += `<option value="${ref}">${nome}</option>`;
-    });
+    // CORREÇÃO ⬇⬇⬇
+    lista
+      .filter(ref => RESERVATORIOS_INFO[ref])   // só reservatórios
+      .forEach(ref => {
+        const nome = RESERVATORIOS_INFO[ref].nome;
+        select.innerHTML += `<option value="${ref}">${nome}</option>`;
+      });
 
   } catch (err) {
     console.error("Erro ao carregar lista:", err);
@@ -59,7 +61,6 @@ async function carregarHistoricoReservatorio(ref) {
       return;
     }
 
-    // Processa dados para gráfico
     const dadosGrafico = historico.map(reg => ({
       horario: new Date(reg.horario).toLocaleString("pt-BR"),
       litros: reg.valor,
@@ -160,12 +161,10 @@ document.getElementById("selectReservatorio").addEventListener("change", (e) => 
   carregarHistoricoReservatorio(e.target.value);
 });
 
-// Botão Consumo Diário
 document.getElementById("botaoConsumo").addEventListener("click", () => {
   window.location.href = "consumo.html";
 });
 
-// Inicialização
 window.addEventListener("load", () => {
   carregarListaReservatorios();
 });
