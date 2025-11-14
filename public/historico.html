@@ -3,9 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <title>Histórico — HAG</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="style-historico.css">
+
+  <style>
+    #graficoHistorico {
+      width: 100%;
+      max-width: 900px;
+      height: 350px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      font-size: 16px;
+    }
+
+    table th {
+      background: #e8f1ff;
+      padding: 8px;
+    }
+
+    table td {
+      padding: 6px;
+      border: 1px solid #d0d0d0;
+      text-align: center;
+    }
+
+    .conteudo {
+      width: 95%;
+      max-width: 950px;
+      margin: auto;
+    }
+  </style>
 </head>
 <body>
 
@@ -23,6 +59,18 @@
     </select>
 
     <canvas id="graficoHistorico"></canvas>
+
+    <h3 style="text-align:center; margin-top:20px;">Tabela de Histórico</h3>
+
+    <table id="tabelaHistorico">
+      <thead>
+        <tr>
+          <th>Data / Hora</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
   <script src="historico.js"></script>
