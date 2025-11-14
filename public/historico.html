@@ -41,6 +41,26 @@
       max-width: 950px;
       margin: auto;
     }
+
+    .menu-botoes {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .menu-botoes button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+    }
+
+    .menu-botoes button:hover {
+      background-color: #005fcc;
+    }
   </style>
 </head>
 <body>
@@ -48,7 +68,7 @@
   <h2 id="tituloHistorico">📅 Histórico</h2>
 
   <div class="menu-botoes">
-    <button onclick="window.location.href='dashboard.html'">🏠 Dashboard</button>
+    <button onclick="window.location.href='dashboard.html'">🏠 Página Principal</button>
     <button id="botaoConsumo">📊 Consumo Diário</button>
   </div>
 
@@ -66,7 +86,8 @@
       <thead>
         <tr>
           <th>Data / Hora</th>
-          <th>Valor</th>
+          <th>Litros</th>
+          <th>Percentual (%)</th>
         </tr>
       </thead>
       <tbody></tbody>
