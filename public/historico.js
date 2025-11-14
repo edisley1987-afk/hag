@@ -1,161 +1,170 @@
-// ================================
-// HISTÓRICO — HAG (COMPLETO)
-// ================================
+// ======= historico.js =======
+// Página de histórico com porcentagem no gráfico e na tabela
 
-const API_URL = window.location.origin;
-
-// Capacidades dos reservatórios
-const CAPACIDADES = {
-  "Reservatorio_Elevador_current": 20000,
-  "Reservatorio_Osmose_current": 200,
-  "Reservatorio_CME_current": 1000,
-  "Reservatorio_Abrandada_current": 9000
+const RESERVATORIOS_INFO = {
+  "Reservatorio_Elevador_current": { nome: "Reservatório Elevador", capacidade: 20000 },
+  "Reservatorio_Osmose_current": { nome: "Reservatório Osmose", capacidade: 200 },
+  "Reservatorio_CME_current": { nome: "Reservatório CME", capacidade: 1000 },
+  "Reservatorio_Agua_Abrandada_current": { nome: "Água Abrandada", capacidade: 9000 }
 };
 
-// Elementos do DOM
-const select = document.getElementById("selectReservatorio");
-const tabela = document.querySelector("#tabelaHistorico tbody");
-const canvas = document.getElementById("graficoHistorico");
+let graficoHistorico = null;
 
-let grafico = null;
+// =========================================
+// CARREGAR LISTA DE RESERVATÓRIOS
+// =========================================
+async function carregarListaReservatorios() {
+  const select = document.getElementById("selectReservatorio");
 
-
-// ================================
-// 1) Carregar lista
-// ================================
-async function carregarLista() {
   try {
-    const resp = await fetch(`${API_URL}/historico/lista`);
+    const resp = await fetch("/historico/lista");
     const lista = await resp.json();
 
-    select.innerHTML = `<option value="">Selecione...</option>`;
+    select.innerHTML = "";
 
-    lista.forEach(r => {
-      const op = document.createElement("option");
-      op.value = r;
-      op.textContent = r.replace("_current", "").replace(/_/g, " ");
-      select.appendChild(op);
+    if (!lista.length) {
+      select.innerHTML = `<option value="">Nenhum reservatório encontrado</option>`;
+      return;
+    }
+
+    select.innerHTML = `<option value="">Selecione um reservatório...</option>`;
+
+    lista.forEach(ref => {
+      const nome = RESERVATORIOS_INFO[ref]?.nome || ref;
+      select.innerHTML += `<option value="${ref}">${nome}</option>`;
     });
 
   } catch (err) {
     console.error("Erro ao carregar lista:", err);
+    select.innerHTML = `<option value="">Erro ao carregar</option>`;
   }
 }
 
+// =========================================
+// CARREGAR HISTÓRICO INDIVIDUAL
+// =========================================
+async function carregarHistoricoReservatorio(ref) {
+  if (!ref) return;
 
-// ================================
-// 2) Carregar histórico
-// ================================
-async function carregarHistorico(res) {
-  if (!res) return;
+  const capacidade = RESERVATORIOS_INFO[ref]?.capacidade || 100;
 
   try {
-    const resp = await fetch(`${API_URL}/historico/${res}`);
-    const dados = await resp.json();
+    const resp = await fetch(`/historico/${ref}`);
+    const historico = await resp.json();
 
-    atualizarTabela(dados, res);
-    atualizarGrafico(dados, res);
+    if (!historico.length) {
+      montarTabela([]);
+      exibirGrafico([], capacidade);
+      return;
+    }
+
+    // Processa dados para gráfico
+    const dadosGrafico = historico.map(reg => ({
+      horario: new Date(reg.horario).toLocaleString("pt-BR"),
+      litros: reg.valor,
+      porcentagem: ((reg.valor / capacidade) * 100).toFixed(1)
+    }));
+
+    exibirGrafico(dadosGrafico, capacidade);
+    montarTabela(dadosGrafico);
 
   } catch (err) {
     console.error("Erro ao carregar histórico:", err);
   }
 }
 
+// =========================================
+// EXIBIR GRÁFICO
+// =========================================
+function exibirGrafico(dados, capacidade) {
+  const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-// ================================
-// 3) Atualizar tabela
-// ================================
-function atualizarTabela(dados, ref) {
-  tabela.innerHTML = "";
+  if (graficoHistorico instanceof Chart) {
+    graficoHistorico.destroy();
+  }
 
-  const capacidade = CAPACIDADES[ref] || 1;
-
-  dados.forEach(item => {
-    const pct = ((item.valor / capacidade) * 100).toFixed(1);
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${new Date(item.horario).toLocaleString("pt-BR")}</td>
-      <td>${item.valor} L</td>
-      <td>${pct}%</td>
-    `;
-
-    tabela.appendChild(tr);
-  });
-}
-
-
-// ================================
-// 4) Atualizar gráfico
-// ================================
-function atualizarGrafico(dados, ref) {
-  const capacidade = CAPACIDADES[ref] || 1;
-
-  const labels = dados.map(i => new Date(i.horario).toLocaleString("pt-BR"));
-  const litros = dados.map(i => i.valor);
-  const porcentagem = dados.map(i => ((i.valor / capacidade) * 100).toFixed(1));
-
-  const ctx = canvas.getContext("2d");
-
-  if (grafico) grafico.destroy();
-
-  grafico = new Chart(ctx, {
+  graficoHistorico = new Chart(ctx, {
     type: "line",
     data: {
-      labels,
+      labels: dados.map(d => d.horario),
       datasets: [
         {
           label: "Litros",
-          data: litros,
+          data: dados.map(d => d.litros),
           borderColor: "#2c8b7d",
-          backgroundColor: "rgba(44,139,125,0.25)",
           borderWidth: 3,
-          pointRadius: 3,
-          yAxisID: "yLitros"
+          tension: 0.3
         },
         {
-          label: "Porcentagem (%)",
-          data: porcentagem,
-          borderColor: "#256f64",
-          backgroundColor: "rgba(37,111,100,0.25)",
-          borderWidth: 3,
-          pointRadius: 3,
-          yAxisID: "yPct"
+          label: "% do Reservatório",
+          data: dados.map(d => d.porcentagem),
+          borderColor: "#57b3a0",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          tension: 0.3,
+          yAxisID: "percentual"
         }
       ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
       scales: {
-        yLitros: {
+        litros: {
           type: "linear",
           position: "left",
-          title: { display: true, text: "Litros" },
-          suggestedMax: capacidade
+          beginAtZero: true,
+          max: capacidade,
+          title: { display: true, text: "Litros" }
         },
-        yPct: {
+        percentual: {
           type: "linear",
           position: "right",
-          min: 0,
+          beginAtZero: true,
           max: 100,
-          title: { display: true, text: "Percentual (%)" },
-          grid: { drawOnChartArea: false }
+          title: { display: true, text: "Porcentagem (%)" }
         }
       }
     }
   });
 }
 
+// =========================================
+// MONTAR TABELA
+// =========================================
+function montarTabela(dados) {
+  const tbody = document.querySelector("#tabelaHistorico tbody");
+  tbody.innerHTML = "";
 
-// ================================
-// 5) Mudança de seleção
-// ================================
-select.addEventListener("change", () => {
-  carregarHistorico(select.value);
+  if (!dados.length) {
+    tbody.innerHTML = "<tr><td colspan='3'>Nenhum dado disponível</td></tr>";
+    return;
+  }
+
+  dados.forEach(d => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${d.horario}</td>
+        <td>${d.litros} L</td>
+        <td>${d.porcentagem}%</td>
+      </tr>
+    `;
+  });
+}
+
+// =========================================
+// EVENTOS
+// =========================================
+document.getElementById("selectReservatorio").addEventListener("change", (e) => {
+  carregarHistoricoReservatorio(e.target.value);
 });
 
-// ================================
-// 6) Inicialização
-// ================================
-carregarLista();
+// Botão Consumo Diário
+document.getElementById("botaoConsumo").addEventListener("click", () => {
+  window.location.href = "consumo.html";
+});
+
+// Inicialização
+window.addEventListener("load", () => {
+  carregarListaReservatorios();
+});
