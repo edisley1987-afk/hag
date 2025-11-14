@@ -109,7 +109,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
-    // Controle de manutenção
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
     if (fs.existsSync(MANUTENCAO_FILE)) {
@@ -149,18 +148,16 @@ app.get("/dados", (_, res) => {
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// === Fornecer histórico completo (cru) ===
+// === Fornecer histórico completo ===
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// ==============================================================
-//  NOVAS ROTAS — COMPATÍVEIS com historico.js (FUNCIONA AGORA)
-// ==============================================================
-
-// Lista de reservatórios
-app.get("/historico/lista", (req, res) => {
+// =====================================================================
+//  🔵 NOVA ROTA — /lista (compatível com historico.js)
+// =====================================================================
+app.get("/lista", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
@@ -175,7 +172,7 @@ app.get("/historico/lista", (req, res) => {
   res.json([...reservatorios]);
 });
 
-// Histórico individual
+// === Histórico individual ===
 app.get("/historico/:reservatorio", (req, res) => {
   const ref = req.params.reservatorio;
 
