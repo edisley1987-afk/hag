@@ -1,129 +1,116 @@
-// === server.js ===
-
+// server.js
 import express from "express";
-import cors from "cors";
+import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Diretório /public
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "public")));
 
-// ===== BANCO EM MEMÓRIA ===== //
-let historico = [];
+const app = express();
+const PORT = process.env.PORT || 10000;
 
-// Capacidade individual
-const capacidade = {
-  Reservatorio_Osmose: 10000,
-  Reservatorio_Elevador: 9000,
-  Reservatorio_CME: 6000,
-  Reservatorio_Agua_Abrandada: 8000
+// ------------------------------
+// BANCO DE DADOS
+// ------------------------------
+const db = new sqlite3.Database("dados.db");
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS registros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT,
+    valor REAL,
+    datahora TEXT
+  )
+`);
+
+// ------------------------------
+// LISTA DOS DISPOSITIVOS VÁLIDOS
+// ------------------------------
+const dispositivos = {
+  "Reservatorio_Osmose": { tipo: "litros" },
+  "Reservatorio_Elevador": { tipo: "litros" },
+  "Reservatorio_CME": { tipo: "litros" },
+  "Reservatorio_Agua_Abrandada": { tipo: "litros" },
+
+  "Pressao_Saida_Osmose": { tipo: "pressao" },
+  "Pressao_Retorno_Osmose": { tipo: "pressao" },
+  "Pressao_Saida_CME": { tipo: "pressao" }
 };
 
-// ===== FUNÇÃO PARA CALCULAR % ===== //
-function calcPercent(name, litros) {
-  if (!capacidade[name]) return 0;
-  return Math.min(100, Math.max(0, (litros / capacidade[name]) * 100));
+const dadosAtuais = {};
+
+// Remove sufixos como "_A"
+function limparNome(nome) {
+  return nome.replace(/_A$/i, "");
 }
 
-// ===== ROTA DE UPDATE ===== //
+// ------------------------------
+// ROTA DE ATUALIZAÇÃO
+// ------------------------------
 app.get("/update", (req, res) => {
-  const { name, litros, pressao } = req.query;
+  let { name, litros, pressao } = req.query;
 
-  if (!name) {
-    return res.status(400).send("Erro: name é obrigatório.");
+  if (!name) return res.status(400).send("Nome inválido");
+
+  name = limparNome(name);
+
+  if (!dispositivos[name]) {
+    console.log("⚠ Dispositivo ignorado:", name);
+    return res.status(400).send("Dispositivo não reconhecido");
   }
 
-  let litrosFinal = null;
-  let pressaoFinal = null;
+  const valor = litros ?? pressao ?? null;
+  if (valor === null) return res.status(400).send("Valor ausente");
 
-  if (litros !== undefined) {
-    const n = Number(litros);
-    litrosFinal = Number((n * 10000).toFixed(0));
-  }
+  const datahora = new Date().toLocaleString("pt-BR");
 
-  if (pressao !== undefined) {
-    const p = Number(pressao);
-    pressaoFinal = Number((p * 10).toFixed(2));
-  }
-
-  const registro = {
-    name,
-    litros: litrosFinal,
-    pressao: pressaoFinal,
-    porcentagem: litrosFinal ? calcPercent(name, litrosFinal) : null,
-    dataHora: new Date().toLocaleString("pt-BR")
+  dadosAtuais[name] = {
+    valor: Number(valor),
+    datahora
   };
 
-  historico.push(registro);
-  console.log("Novo registro:", registro);
+  db.run(
+    "INSERT INTO registros (nome, valor, datahora) VALUES (?, ?, ?)",
+    [name, valor, datahora]
+  );
 
-  return res.send("OK");
+  console.log("Novo registro:", name, valor, datahora);
+  res.send("OK");
 });
 
-// ===== ROTA PARA LISTAR DISPOSITIVOS ===== //
-app.get("/dispositivos", (req, res) => {
-  const lista = [
-    "Reservatorio_Osmose",
-    "Pressao_Saida_Osmose",
-    "Pressao_Retorno_Osmose",
-    "Reservatorio_Elevador",
-    "Reservatorio_CME",
-    "Pressao_Saida_CME",
-    "Reservatorio_Agua_Abrandada"
-  ];
-  res.json(lista);
+// ------------------------------
+// ROTAS DO DASHBOARD
+// ------------------------------
+app.get("/current", (req, res) => {
+  res.json(dadosAtuais);
 });
 
-// ===== ÚLTIMAS LEITURAS ===== //
-app.get("/ultimos", (req, res) => {
-  const ultimos = {};
+app.get("/history", (req, res) => {
+  const { nome } = req.query;
 
-  for (let item of historico) {
-    ultimos[item.name] = item;
-  }
+  if (!nome) return res.status(400).send("Nome requerido.");
 
-  res.json(ultimos);
+  db.all(
+    "SELECT * FROM registros WHERE nome=? ORDER BY id DESC LIMIT 200",
+    [nome],
+    (err, rows) => {
+      if (err) return res.status(500).send("Erro no banco.");
+      res.json(rows);
+    }
+  );
 });
 
-// ===== HISTÓRICO POR DISPOSITIVO ===== //
-app.get("/historico/:name", (req, res) => {
-  const { name } = req.params;
-  const dados = historico.filter(x => x.name === name);
-  res.json(dados);
+// ------------------------------
+// SERVIR ARQUIVOS DO FRONTEND
+// ------------------------------
+app.use(express.static(__dirname + "/public"));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "/public/dashboard.html"));
 });
 
-// ===== CONSUMO DIÁRIO ===== //
-app.get("/consumo", (req, res) => {
-  const { name } = req.query;
-  if (!name) return res.status(400).send("name obrigatório");
-
-  const registros = historico.filter(x => x.name === name);
-
-  const mapa = {};
-
-  for (let r of registros) {
-    const dia = r.dataHora.split(" ")[0];
-    if (!mapa[dia]) mapa[dia] = 0;
-    if (r.litros) mapa[dia] += r.litros;
-  }
-
-  res.json(mapa);
+// ------------------------------
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta " + PORT);
 });
-
-// ===== SERVIR HTML ===== //
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ===== INICIAR SERVIDOR ===== //
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () =>
-  console.log("Servidor rodando na porta " + PORT)
-);
