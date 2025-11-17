@@ -11,13 +11,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         "Reservatorio_Abrandada": 9000
     };
 
-    // Nomes amigáveis para exibição
     const nomesAmigaveis = {
-        "Reservatorio_Elevador_current": "Reservatório Elevador",
-        "Reservatorio_Osmose_current": "Reservatório Osmose",
-        "Reservatorio_CME_current": "Reservatório CME",
-        "Reservatorio_Abrandada_current": "Reservatório Abrandada"
-    };
+    "Reservatorio_Elevador_current": "Reservatório Elevador",
+    "Reservatorio_Osmose_current": "Reservatório Osmose",
+    "Reservatorio_CME_current": "Reservatório CME",
+    "Reservatorio_Abrandada_current": "Reservatório Abrandada",
+    "Reservatorio_Agua_Abrandada_current": "Reservatório Abrandada"
+};
+
 
     // --- 1) Buscar histórico completo e extrair nomes automaticamente ---
     async function carregarListaReservatorios() {
