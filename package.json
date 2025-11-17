@@ -3,7 +3,6 @@
   "version": "1.0.2",
   "description": "Sistema de monitoramento de reservatórios do Hospital Arnaldo Gavazza (HAG)",
   "main": "server.js",
-  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
