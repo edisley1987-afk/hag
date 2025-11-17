@@ -1,26 +1,23 @@
 // ======= consumo.js =======
-// Página de gráfico de consumo diário (Elevador e Osmose)
+// Consumo diário REAL baseado em MIN/MAX do dia
 
 async function carregarConsumo() {
   try {
     const resp = await fetch("/historico");
     const historico = await resp.json();
 
-    // ---- Se não houver dados ----
     if (!historico.length) {
-      const canvas = document.getElementById("graficoConsumo");
-
-      if (window.graficoConsumo instanceof Chart) {
-        window.graficoConsumo.destroy();
-      }
-
-      canvas.parentElement.innerHTML =
-        "<p style='text-align:center; color:gray; font-size:18px;'>Ainda não há dados suficientes para gerar o gráfico de consumo diário.</p>";
-
+      mostrarAvisoSemDados();
       return;
     }
 
     const consumoPorDia = calcularConsumoDiario(historico);
+
+    if (!consumoPorDia.length) {
+      mostrarAvisoSemDados();
+      return;
+    }
+
     exibirGrafico(consumoPorDia);
 
   } catch (err) {
@@ -28,40 +25,70 @@ async function carregarConsumo() {
   }
 }
 
-// ======= CALCULAR CONSUMO =======
+// ======= MOSTRAR AVISO =======
+function mostrarAvisoSemDados() {
+  const canvas = document.getElementById("graficoConsumo");
+
+  if (window.graficoConsumo instanceof Chart) {
+    window.graficoConsumo.destroy();
+  }
+
+  canvas.parentElement.innerHTML =
+    "<p style='text-align:center; color:gray; font-size:18px;'>Ainda não há dados suficientes para gerar o gráfico de consumo diário.</p>";
+}
+
+// ======= CALCULAR CONSUMO REAL =======
 function calcularConsumoDiario(historico) {
-  const consumo = {};
+  const dias = {};
 
   historico.forEach(entry => {
     const data = new Date(entry.timestamp).toLocaleDateString("pt-BR");
 
-    if (!consumo[data]) consumo[data] = { elevador: 0, osmose: 0 };
+    if (!dias[data]) {
+      dias[data] = {
+        elevadorMin: Infinity,
+        elevadorMax: 0,
+        osmoseMin: Infinity,
+        osmoseMax: 0
+      };
+    }
 
-    if (entry.Reservatorio_Elevador_current !== undefined)
-      consumo[data].elevador = Math.max(consumo[data].elevador, entry.Reservatorio_Elevador_current);
+    // ----- Elevador -----
+    if (typeof entry.Reservatorio_Elevador_current === "number") {
+      const v = entry.Reservatorio_Elevador_current;
+      dias[data].elevadorMin = Math.min(dias[data].elevadorMin, v);
+      dias[data].elevadorMax = Math.max(dias[data].elevadorMax, v);
+    }
 
-    if (entry.Reservatorio_Osmose_current !== undefined)
-      consumo[data].osmose = Math.max(consumo[data].osmose, entry.Reservatorio_Osmose_current);
+    // ----- Osmose -----
+    if (typeof entry.Reservatorio_Osmose_current === "number") {
+      const v = entry.Reservatorio_Osmose_current;
+      dias[data].osmoseMin = Math.min(dias[data].osmoseMin, v);
+      dias[data].osmoseMax = Math.max(dias[data].osmoseMax, v);
+    }
   });
 
-  const dias = Object.keys(consumo).sort(
-    (a, b) =>
-      new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
+  // ordenar dias corretamente
+  const listaDias = Object.keys(dias).sort(
+    (a, b) => new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
   );
 
-  const consumoFinal = [];
-  for (let i = 1; i < dias.length; i++) {
-    const dAnt = consumo[dias[i - 1]];
-    const dAt = consumo[dias[i]];
+  const resultado = [];
 
-    consumoFinal.push({
-      dia: dias[i],
-      elevador: Math.max(0, dAnt.elevador - dAt.elevador),
-      osmose: Math.max(0, dAnt.osmose - dAt.osmose),
-    });
-  }
+  listaDias.forEach(dia => {
+    const dado = dias[dia];
 
-  return consumoFinal.slice(-5); // últimos 5 dias
+    // evita valores inválidos (ex: Infinity quando não houve leitura)
+    const elevador =
+      dado.elevadorMin === Infinity ? 0 : Math.max(0, dado.elevadorMax - dado.elevadorMin);
+
+    const osmose =
+      dado.osmoseMin === Infinity ? 0 : Math.max(0, dado.osmoseMax - dado.osmoseMin);
+
+    resultado.push({ dia, elevador, osmose });
+  });
+
+  return resultado.slice(-5); // últimos 5 dias
 }
 
 // ======= EXIBIR GRÁFICO =======
@@ -72,7 +99,6 @@ function exibirGrafico(consumo) {
     window.graficoConsumo.destroy();
   }
 
-  // Ajuste automático da escala
   const valores = [
     ...consumo.map(d => d.elevador),
     ...consumo.map(d => d.osmose),
@@ -127,7 +153,6 @@ function atualizarMeiaNoite() {
   const agora = new Date();
   const prox = new Date();
   prox.setHours(24, 0, 0, 0);
-
   const ms = prox - agora;
 
   setTimeout(() => {
