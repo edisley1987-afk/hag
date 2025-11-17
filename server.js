@@ -1,4 +1,4 @@
-/* ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) ======= */
+/* ======= Servidor Universal HAG (com histórico otimizado + LOGS de origem) ======= */
 
 import express from "express";
 import fs from "fs";
@@ -8,32 +8,45 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
+// ===============================
+//  MIDDLEWARES
+// ===============================
 app.use(cors());
-app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.json({ limit: "20mb", strict: false }));
 app.use(express.urlencoded({ extended: true }));
 
-// 🔵 GARANTE QUE O RENDER ENCONTRE A PASTA PUBLIC
+// 🔵 GARANTE QUE O RENDER ENCONTRE /public
 const PUBLIC_DIR = path.join(__dirname, "public");
 app.use(express.static(PUBLIC_DIR));
 
+// ===============================
+//  DIRETÓRIOS DE DADOS
+// ===============================
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUTENCAO_FILE = path.join(DATA_DIR, "manutencao.json");
+
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Calibração dos sensores ===
+// ===============================
+//  SENSOR CONFIGURAÇÃO
+// ===============================
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
+
+  // Pressões
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Funções utilitárias ===
+// ===============================
+// UTILITARIOS
+// ===============================
 function salvarLeituraAtual(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
@@ -41,7 +54,7 @@ function salvarLeituraAtual(dados) {
 function adicionarAoHistorico(dados) {
   let historico = [];
   if (fs.existsSync(HIST_FILE)) {
-    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch { historico = []; }
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch {}
   }
 
   const ultima = historico.length ? historico[historico.length - 1] : null;
@@ -50,9 +63,11 @@ function adicionarAoHistorico(dados) {
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
+
       const atual = dados[ref];
       const anterior = ultima[ref];
       const capacidade = SENSORES[ref].capacidade;
+
       if (capacidade && anterior !== undefined) {
         const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
         if (diffPercent >= 5) {
@@ -69,16 +84,32 @@ function adicionarAoHistorico(dados) {
   }
 }
 
-// === Receber leituras do Gateway ===
+// ===============================
+// 🔵 ROTA UNIVERSAL RECEBIMENTO DO GATEWAY
+// ===============================
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
+    console.log("\n\n=========================");
+    console.log("📩 REQUISIÇÃO RECEBIDA EM /atualizar");
+    console.log("=========================");
+    console.log("Método:", req.method);
+    console.log("IP:", req.ip);
+    console.log("Headers:", req.headers);
+
+    console.log("BODY CRU:", req.body);
 
     let body = req.body;
+
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
+
     if (typeof body === "string") {
-      try { body = JSON.parse(body); } catch {}
+      try { body = JSON.parse(body); }
+      catch { console.log("⚠ Body não era JSON válido"); }
     }
 
+    console.log("BODY PARSEADO:", body);
+
+    // Extrair possíveis formas de array
     let dataArray = [];
     if (Array.isArray(body)) dataArray = body;
     else if (Array.isArray(body?.data)) dataArray = body.data;
@@ -87,9 +118,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
 
-    if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido" });
+    if (!dataArray.length)
+      return res.status(400).json({ erro: "Nenhum dado válido recebido", recebido: body });
 
     const dadosConvertidos = {};
+
     for (const item of dataArray) {
       const ref = item.ref || item.name;
       const valor = Number(item.value);
@@ -99,6 +132,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       if (!sensor) continue;
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
+
       let leituraConvertida;
 
       if (tipo === "pressao") {
@@ -113,11 +147,14 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
+    // ================================
+    // MANUTENÇÃO AUTOMÁTICA
+    // ================================
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
 
     if (fs.existsSync(MANUTENCAO_FILE)) {
-      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch { manutencaoAtiva = {}; }
+      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch {}
     }
 
     for (const ref of Object.keys(SENSORES)) {
@@ -125,9 +162,9 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       const valor = dadosConvertidos[ref];
       const capacidade = SENSORES[ref].capacidade;
       const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
-      if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO) {
+
+      if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO)
         delete manutencaoAtiva[ref];
-      }
     }
 
     fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencaoAtiva, null, 2));
@@ -138,28 +175,33 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
+    console.log("✔ DADOS FINAL SALVO:", dadosConvertidos);
+
     res.json({ status: "ok", dados: dadosConvertidos });
 
   } catch (err) {
+    console.log("❌ ERRO GRAVE:", err);
     res.status(500).json({ erro: err.message });
   }
 });
 
-// === Fornecer últimas leituras ===
+// ===============================
+// API: últimas leituras
+// ===============================
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// === Fornecer histórico completo ===
+// ===============================
+// API: histórico completo
+// ===============================
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// ======================================================
-//  🔵 ROTA CERTA para o seu historico.js
-// ======================================================
+// ===============================
 app.get("/historico/lista", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
@@ -175,7 +217,6 @@ app.get("/historico/lista", (req, res) => {
   res.json([...reservatorios]);
 });
 
-// === Histórico individual ===
 app.get("/historico/:reservatorio", (req, res) => {
   const ref = req.params.reservatorio;
 
@@ -193,14 +234,19 @@ app.get("/historico/:reservatorio", (req, res) => {
   res.json(resposta);
 });
 
-// === Páginas estáticas ===
+// ===============================
+// PÁGINAS
+// ===============================
 app.get("/", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
 app.get("/dashboard.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "dashboard.html")));
 app.get("/historico.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "historico.html")));
 app.get("/consumo.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "consumo.html")));
 
-// 🔵 Fallback universal — caso o Render quebre caminhos
+// Fallback — Render SPA
 app.get("*", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
 
+// ===============================
+// RUN SERVER
+// ===============================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
