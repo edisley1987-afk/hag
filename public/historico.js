@@ -1,117 +1,90 @@
-// =========================
-//  CAPACIDADES DOS RESERVATÓRIOS
-// =========================
-const capacidades = {
-    "elevador": 20000,
-    "osmose": 200,
-    "cme": 1000,
-    "abrandada": 9000
-};
-
-// =========================
-//  BUSCAR LISTA DE RESERVATÓRIOS
-// =========================
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
     const select = document.getElementById("reservatorioSelect");
-
-    try {
-        const response = await fetch("https://hag-9ki9.onrender.com/reservatorios");
-        const reservatorios = await response.json();
-
-        select.innerHTML = "";
-
-        reservatorios.forEach(res => {
-            const option = document.createElement("option");
-            option.value = res.id.toLowerCase();  
-            option.textContent = res.nome;
-            select.appendChild(option);
-        });
-
-        // Seleciona o primeiro da lista automaticamente
-        if (reservatorios.length > 0) {
-            carregarHistorico(reservatorios[0].id.toLowerCase());
-        }
-
-        select.addEventListener("change", () => {
-            carregarHistorico(select.value);
-        });
-
-    } catch (error) {
-        console.error("Erro ao carregar reservatórios:", error);
-    }
-});
-
-// =========================
-//  CARREGAR HISTÓRICO
-// =========================
-let grafico = null;
-
-async function carregarHistorico(reservatorioId) {
-
-    const tabela = document.getElementById("historicoTabela");
-    const corpoTabela = document.getElementById("tabelaBody");
     const ctx = document.getElementById("historicoChart").getContext("2d");
+    let chart;
 
-    // Limpar antes de atualizar
-    corpoTabela.innerHTML = "";
+    // CAPACIDADES REAIS DOS RESERVATÓRIOS
+    const capacidades = {
+        "osmose": 200,
+        "evento": 200,
+        "hemodialise": 500,
+        "torre": 1000
+    };
 
-    try {
-        const response = await fetch(`https://hag-9ki9.onrender.com/historico/${reservatorioId}`);
-        const data = await response.json();
+    async function carregarHistorico(reservatorio) {
+        try {
+            const resposta = await fetch(`https://hag-9ki9.onrender.com/historico/${reservatorio}`);
+            const dados = await resposta.json();
 
-        if (!data || data.length === 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="3">Nenhum registro encontrado.</td></tr>`;
-            if (grafico) grafico.destroy();
-            return;
-        }
+            if (!dados || dados.length === 0) {
+                alert("Nenhum registro encontrado.");
+                return;
+            }
 
-        // Preparar dados do gráfico
-        const labels = data.map(item => item.data_hora);
-        const litros = data.map(item => item.litros);
+            const capacidade = capacidades[reservatorio];
+            const datas = dados.map(item => formatarData(item.data_hora));
+            const litros = dados.map(item => Number(item.litros));
+            const percentuais = dados.map(item => ((item.litros / capacidade) * 100).toFixed(1));
 
-        // Destruir gráfico anterior
-        if (grafico) grafico.destroy();
+            // ====== AJUSTE AUTOMÁTICO DO EIXO Y ======
+            const maxValor = Math.max(...litros, 1);     // maior valor recebido
+            const margem = maxValor * 0.30;              // 30% de espaço visual
+            const limiteY = Math.ceil(maxValor + margem);
 
-        grafico = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: reservatorioId.toUpperCase(),
-                    data: litros,
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: false
+            // ====== GRÁFICO ======
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: datas,
+                    datasets: [{
+                        label: reservatorio.charAt(0).toUpperCase() + reservatorio.slice(1),
+                        data: litros,
+                        borderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: limiteY
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        // Preencher tabela
-        const capacidade = capacidades[reservatorioId] || 1;
+            // ====== TABELA ======
+            const tbody = document.querySelector("#historicoTable tbody");
+            tbody.innerHTML = "";
 
-        data.forEach(item => {
-            const percentual = ((item.litros / capacidade) * 100).toFixed(1);
+            dados.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${formatarData(item.data_hora)}</td>
+                        <td>${litros[index]} L</td>
+                        <td>${percentuais[index]}%</td>
+                    </tr>
+                `;
+            });
 
-            const row = `
-                <tr>
-                    <td>${item.data_hora}</td>
-                    <td>${item.litros}</td>
-                    <td>${percentual}%</td>
-                </tr>
-            `;
-            corpoTabela.insertAdjacentHTML("beforeend", row);
-        });
-
-    } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-        corpoTabela.innerHTML = `<tr><td colspan="3">Erro ao carregar histórico.</td></tr>`;
+        } catch (erro) {
+            console.log("Erro:", erro);
+        }
     }
-}
+
+    function formatarData(dataISO) {
+        const d = new Date(dataISO);
+        return d.toLocaleString("pt-BR");
+    }
+
+    // Evento de troca no select
+    select.addEventListener("change", () => {
+        carregarHistorico(select.value);
+    });
+
+    // Carrega Osmose como padrão
+    carregarHistorico("osmose");
+});
