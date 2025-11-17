@@ -1,37 +1,63 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const select = document.getElementById("reservatorioSelect");
-    const ctx = document.getElementById("historicoChart").getContext("2d");
+document.addEventListener("DOMContentLoaded", async () => {
+    const select = document.getElementById("selectReservatorio");
+    const ctx = document.getElementById("graficoHistorico").getContext("2d");
     let chart;
 
-    // CAPACIDADES REAIS DOS RESERVATÓRIOS
+    // Capacidades corretas informadas por você
     const capacidades = {
-        "osmose": 200,
-        "evento": 200,
-        "hemodialise": 500,
-        "torre": 1000
+        "Reservatorio_elevador": 20000,
+        "RESERVATORIO_Osmose": 200,
+        "RESERVATORIO_CME": 1000,
+        "RESERVATORIO_Abrandada": 9000
     };
 
-    async function carregarHistorico(reservatorio) {
+    // --- 1) Buscar histórico completo e extrair nomes automaticamente ---
+    async function carregarListaReservatorios() {
         try {
-            const resposta = await fetch(`https://hag-9ki9.onrender.com/historico/${reservatorio}`);
+            const resposta = await fetch("/historico");
             const dados = await resposta.json();
 
             if (!dados || dados.length === 0) {
-                alert("Nenhum registro encontrado.");
+                alert("Nenhum dado encontrado.");
                 return;
             }
 
-            const capacidade = capacidades[reservatorio];
-            const datas = dados.map(item => formatarData(item.data_hora));
-            const litros = dados.map(item => Number(item.litros));
-            const percentuais = dados.map(item => ((item.litros / capacidade) * 100).toFixed(1));
+            // Extrair nomes dos campos terminados em "_current"
+            const nomes = Object.keys(dados[0])
+                .filter(k => k.includes("_current"));
 
-            // ====== AJUSTE AUTOMÁTICO DO EIXO Y ======
-            const maxValor = Math.max(...litros, 1);     // maior valor recebido
-            const margem = maxValor * 0.30;              // 30% de espaço visual
-            const limiteY = Math.ceil(maxValor + margem);
+            // Preencher SELECT
+            select.innerHTML = "";
+            nomes.forEach(nome => {
+                select.innerHTML += `<option value="${nome}">${nome}</option>`;
+            });
 
-            // ====== GRÁFICO ======
+            // Carregar o primeiro reservatório automaticamente
+            carregarHistorico(nomes[0]);
+
+        } catch (erro) {
+            console.error("Erro ao carregar lista:", erro);
+        }
+    }
+
+    // --- 2) Carregar histórico do reservatório selecionado ---
+    async function carregarHistorico(reservatorio) {
+        try {
+            const resposta = await fetch("/historico");
+            const dados = await resposta.json();
+
+            const registros = dados.map(item => ({
+                data: item.timestamp,
+                litros: item[reservatorio]
+            })).filter(r => r.litros !== undefined);
+
+            const capacidade = capacidades[reservatorio] || 100; // padrão
+
+            const datas = registros.map(r => formatarData(r.data));
+            const litros = registros.map(r => Number(r.litros));
+            const percentuais = litros.map(v => ((v / capacidade) * 100).toFixed(1));
+
+            // --- gráfico ---
             if (chart) chart.destroy();
 
             chart = new Chart(ctx, {
@@ -39,52 +65,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 data: {
                     labels: datas,
                     datasets: [{
-                        label: reservatorio.charAt(0).toUpperCase() + reservatorio.slice(1),
+                        label: reservatorio,
                         data: litros,
+                        borderColor: "#2c8b7d",
                         borderWidth: 2,
                         tension: 0.3
                     }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: limiteY
-                        }
-                    }
                 }
             });
 
-            // ====== TABELA ======
-            const tbody = document.querySelector("#historicoTable tbody");
+            // --- tabela ---
+            const tbody = document.querySelector("#tabelaHistorico tbody");
             tbody.innerHTML = "";
 
-            dados.forEach((item, index) => {
+            registros.forEach((registro, i) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td>${formatarData(item.data_hora)}</td>
-                        <td>${litros[index]} L</td>
-                        <td>${percentuais[index]}%</td>
+                        <td>${datas[i]}</td>
+                        <td>${litros[i]} L</td>
+                        <td>${percentuais[i]}%</td>
                     </tr>
                 `;
             });
 
         } catch (erro) {
-            console.log("Erro:", erro);
+            console.error("Erro ao carregar histórico:", erro);
         }
     }
 
-    function formatarData(dataISO) {
-        const d = new Date(dataISO);
-        return d.toLocaleString("pt-BR");
+    function formatarData(dt) {
+        return new Date(dt).toLocaleString("pt-BR");
     }
 
-    // Evento de troca no select
+    // Troca no SELECT
     select.addEventListener("change", () => {
         carregarHistorico(select.value);
     });
 
-    // Carrega Osmose como padrão
-    carregarHistorico("osmose");
+    // Inicializa o sistema
+    carregarListaReservatorios();
 });
