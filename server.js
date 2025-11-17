@@ -1,83 +1,81 @@
-// ======= SERVIDOR UNIVERSAL HAG (FUNCIONAL, ACEITA /atualizar) ======= //
+// ======= SERVIDOR UNIVERSAL HAG (ACEITA QUALQUER CONTEÚDO) ======= //
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
 
-// ==== CONFIGURAÇÕES BÁSICAS ==== //
 const app = express();
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
-
-// ====== PASTAS DE DADOS ====== //
 const __dirname = path.resolve();
+
+app.use(cors());
+
+// aceita QUALQUER tipo de dado vindo do gateway
+app.use(express.text({ limit: "10mb", type: "*/*" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// ========== ARQUIVOS DE DADOS ========== //
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
+if (!fs.existsSync(HIST_FILE)) fs.writeFileSync(HIST_FILE, "[]");
 
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify({}));
-if (!fs.existsSync(HIST_FILE)) fs.writeFileSync(HIST_FILE, JSON.stringify([]));
-
-// ====== AUTENTICAÇÃO DO GATEWAY ===== //
+// ========== AUTENTICAÇÃO BÁSICA ========== //
 const USER = "118582";
-const PASS = "SEU_PASSWORD_AQUI";  // <- COLOQUE A SENHA DO GATEWAY
+const PASS = "SUA_SENHA_AQUI";
 
 function authMiddleware(req, res, next) {
-    const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-    const [user, pass] = Buffer.from(b64auth, "base64").toString().split(":");
+    const header = req.headers.authorization || "";
+    const token = header.split(" ")[1] || "";
+    const [user, pass] = Buffer.from(token, "base64").toString().split(":");
 
     if (user === USER && pass === PASS) return next();
 
     return res.status(401).json({ erro: "Acesso não autorizado" });
 }
 
-// ====== ROTA PARA RECEBER ENVIO DO GATEWAY ====== //
+// ========== ROTA DE ATUALIZAÇÃO DO GATEWAY ========== //
 app.post("/atualizar", authMiddleware, (req, res) => {
+    let body = req.body;
+
+    // se vier texto simples → tentar converter para JSON
     try {
-        const dados = req.body;
-
-        // Salvar leitura atual
-        fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-
-        // Adicionar ao histórico
-        const historico = JSON.parse(fs.readFileSync(HIST_FILE));
-        historico.push({
-            timestamp: Date.now(),
-            dados
-        });
-        fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
-
-        console.log("📥 Recebido do Gateway:", dados);
-
-        return res.json({ status: "OK", recebido: dados });
-
-    } catch (err) {
-        return res.status(500).json({ erro: err.message });
+        if (typeof body === "string") body = JSON.parse(body);
+    } catch (e) {
+        console.log("⚠ Body não era JSON. Body recebido:", req.body);
+        return res.status(400).json({ erro: "Body inválido (não é JSON)" });
     }
+
+    body.timestamp = new Date().toISOString();
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(body, null, 2));
+
+    const historico = JSON.parse(fs.readFileSync(HIST_FILE));
+    historico.push(body);
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+
+    console.log("📩 Dados recebidos:", body);
+
+    return res.json({ status: "OK", recebido: body });
 });
 
-// ====== Rotas do Dashboard ======= //
+// ========== ROTAS DO DASHBOARD ========== //
 app.get("/dados", (req, res) => {
-    const dados = JSON.parse(fs.readFileSync(DATA_FILE));
-    res.json(dados);
+    res.json(JSON.parse(fs.readFileSync(DATA_FILE)));
 });
 
 app.get("/historico", (req, res) => {
-    const historico = JSON.parse(fs.readFileSync(HIST_FILE));
-    res.json(historico);
+    res.json(JSON.parse(fs.readFileSync(HIST_FILE)));
 });
 
-// ====== SERVIR A PASTA PUBLIC ====== //
+// ========== PASTA PUBLIC ========== //
 app.use(express.static(path.join(__dirname, "public")));
 
-// ====== RENDER PORT ====== //
+// ========== START ========== //
 const PORT = process.env.PORT || 10000;
-
 app.listen(PORT, () => {
-    console.log("🚀 Servidor ativo na porta:", PORT);
-    console.log("📁 DATA_FILE:", DATA_FILE);
-    console.log("📁 HIST_FILE:", HIST_FILE);
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
