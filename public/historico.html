@@ -3,46 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <title>Histórico — HAG</title>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
 
-  <!-- Caminhos corrigidos -->
-  <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/style-historico.css">
+  <style>
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      background-color: #f5f9f8;
+      color: #1a3d36;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header {
+      background-color: #2c8b7d;
+      color: white;
+      padding: 15px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    #tituloHistorico {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      background-color: #2c8b7d;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #256f64;
+      transform: translateY(-2px);
+    }
+
+    select {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    canvas {
+      background-color: #fefefe;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 10px;
+      width: 100%;
+      max-width: 1000px;
+      height: 360px;
+    }
+
+    #historicoContainer {
+      max-width: 1000px;
+      margin: 35px auto;
+      text-align: left;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #2c8b7d;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f8f7;
+    }
+
+    footer {
+      background-color: #2c8b7d;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
+  <header>
+    <h2 id="tituloHistorico">Histórico</h2>
+  </header>
 
-  <h2 id="tituloHistorico">📅 Histórico de Reservatórios</h2>
+  <main>
+    <div class="toolbar">
+      <button onclick="window.location.href='dashboard.html'">⬅️ Voltar</button>
+      <label for="reservatorioSelect"><strong>Selecionar Reservatório:</strong></label>
+      <select id="reservatorioSelect"></select>
+    </div>
 
-  <div class="menu-botoes">
-    <button onclick="window.location.href='dashboard.html'">🏠 Página Principal</button>
-    <button onclick="window.location.href='consumo.html'">📊 Consumo Diário</button>
-  </div>
+    <div style="max-width:1000px; margin:auto;">
+      <canvas id="grafico"></canvas>
+    </div>
 
-  <div class="conteudo">
+    <div id="historicoContainer"></div>
+  </main>
 
-    <label for="selectReservatorio"><b>Selecionar reservatório:</b></label><br>
-    <select id="selectReservatorio">
-      <option value="">Carregando...</option>
-    </select>
+  <footer>
+    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
+  </footer>
 
-    <canvas id="graficoHistorico"></canvas>
-
-    <h3 style="margin-top:25px;">📋 Tabela de Histórico</h3>
-
-    <table id="tabelaHistorico">
-      <thead>
-        <tr>
-          <th>Data / Hora</th>
-          <th>Litros</th>
-          <th>%</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Caminho corrigido -->
-  <script src="/historico.js"></script>
+  <script src="historico.js"></script>
 </body>
 </html>
