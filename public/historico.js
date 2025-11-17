@@ -12,13 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     const nomesAmigaveis = {
-    "Reservatorio_Elevador_current": "Reservatório Elevador",
-    "Reservatorio_Osmose_current": "Reservatório Osmose",
-    "Reservatorio_CME_current": "Reservatório CME",
-    "Reservatorio_Abrandada_current": "Reservatório Abrandada",
-    "Reservatorio_Agua_Abrandada_current": "Reservatório Abrandada"
-};
-
+        "Reservatorio_Elevador_current": "Reservatório Elevador",
+        "Reservatorio_Osmose_current": "Reservatório Osmose",
+        "Reservatorio_CME_current": "Reservatório CME",
+        "Reservatorio_Abrandada_current": "Reservatório Abrandada",
+        "Reservatorio_Agua_Abrandada_current": "Reservatório Abrandada"
+    };
 
     // --- 1) Buscar histórico completo e extrair nomes automaticamente ---
     async function carregarListaReservatorios() {
@@ -45,8 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 select.innerHTML += `<option value="${nome}">${label}</option>`;
             });
 
-            // Carregar primeiro reservatório automaticamente
-            carregarHistorico(nomes[0]);
+            carregarHistorico(nomes[0]); // Carrega o primeiro reservatório
 
         } catch (erro) {
             console.error("Erro ao carregar lista:", erro);
@@ -72,6 +70,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const litros = registros.map(r => Number(r.litros));
             const percentuais = litros.map(v => ((v / capacidade) * 100).toFixed(1));
 
+            // Valor máximo atingido no período
+            const maximo = Math.max(...litros);
+
             // --- gráfico ---
             if (chart) chart.destroy();
 
@@ -79,13 +80,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                 type: "line",
                 data: {
                     labels: datas,
-                    datasets: [{
-                        label: nomesAmigaveis[reservatorio] || reservatorio,
-                        data: litros,
-                        borderColor: "#2c8b7d",
-                        borderWidth: 2,
-                        tension: 0.3
-                    }]
+                    datasets: [
+                        {
+                            label: nomesAmigaveis[reservatorio] || reservatorio,
+                            data: litros,
+                            borderColor: "#2c8b7d",
+                            borderWidth: 2,
+                            tension: 0.3
+                        },
+                        {
+                            label: "Nível Máximo",
+                            data: new Array(litros.length).fill(maximo),
+                            borderColor: "red",
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0
+                        }
+                    ]
                 }
             });
 
@@ -117,6 +129,5 @@ document.addEventListener("DOMContentLoaded", async () => {
         carregarHistorico(select.value);
     });
 
-    // Inicializa o sistema
-    carregarListaReservatorios();
+    carregarListaReservatorios(); // Inicializa
 });
