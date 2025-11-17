@@ -1,188 +1,129 @@
-// === public/historico.js ===
+// === historico.js ===
+// Exibe histórico de leituras com tabela e gráfico moderno
 
 const API_URL = window.location.origin + "/historico";
 
-const NOME_RESERVATORIOS = {
-  "Reservatorio_Elevador_current": "Reservatório Elevador",
-  "Reservatorio_Osmose_current": "Reservatório Osmose",
-  "Reservatorio_CME_current": "Reservatório CME",
-  "Reservatorio_Agua_Abrandada_current": "Água Abrandada"
-};
-
-const CAPACIDADES = {
-  "Reservatorio_Elevador_current": 20000,
-  "Reservatorio_Osmose_current": 200,
-  "Reservatorio_CME_current": 1000,
-  "Reservatorio_Agua_Abrandada_current": 9000
-};
-
 async function carregarHistorico() {
+  const container = document.getElementById("historico");
+  const ctx = document.getElementById("graficoHistorico");
+  container.innerHTML = "⏳ Carregando histórico...";
+
   try {
     const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Erro ao buscar histórico");
     const historico = await res.json();
-    atualizarReservatorioSelect(historico);
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar histórico");
-  }
-}
 
-function atualizarReservatorioSelect(historico) {
-  const select = document.getElementById("reservatorioSelect");
-  const botaoConsumo = document.getElementById("botaoConsumo");
-
-  select.innerHTML = Object.entries(NOME_RESERVATORIOS)
-    .map(([k, v]) => `<option value="${k}">${v}</option>`)
-    .join("");
-
-  const params = new URLSearchParams(window.location.search);
-  const reservatorio = params.get("reservatorio") || Object.keys(NOME_RESERVATORIOS)[0];
-  select.value = reservatorio;
-  exibirHistorico(historico, reservatorio);
-
-  select.addEventListener("change", () => {
-    exibirHistorico(historico, select.value);
-  });
-
-  // 🔹 Botão "Ver Consumo Diário"
-  botaoConsumo.addEventListener("click", () => {
-    window.location.href = "consumo.html";
-  });
-}
-
-function filtrarUltimas24h(historico) {
-  const agora = new Date();
-  return historico.filter(h => (agora - new Date(h.timestamp)) / 3600000 <= 24);
-}
-
-function exibirHistorico(historico, reservatorio) {
-  const nomeReservatorio = NOME_RESERVATORIOS[reservatorio];
-  document.getElementById("tituloHistorico").textContent = `Histórico — ${nomeReservatorio}`;
-
-  const container = document.getElementById("historicoContainer");
-  const ultimas24h = filtrarUltimas24h(historico);
-
-  let registros = ultimas24h
-    .filter(h => h[reservatorio] !== undefined)
-    .map(h => ({
-      data: new Date(h.timestamp),
-      litros: h[reservatorio],
-      ocupacao: ((h[reservatorio] / CAPACIDADES[reservatorio]) * 100).toFixed(1)
-    }));
-
-  // 🔄 Exibe leitura mais recente primeiro
-  registros = registros.reverse();
-
-  if (registros.length === 0) {
-    container.innerHTML = `<p>Nenhum dado encontrado nas últimas 24 horas.</p>`;
-    if (window.meuGrafico) window.meuGrafico.destroy();
-    return;
-  }
-
-  // === Gráfico ===
-  const ctx = document.getElementById("grafico").getContext("2d");
-  if (window.meuGrafico) window.meuGrafico.destroy();
-
-  const labels = registros.map(r =>
-    r.data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  );
-
-  window.meuGrafico = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Volume (L)",
-          data: registros.map(r => r.litros),
-          borderColor: "#146C60",
-          backgroundColor: "rgba(20,108,96,0.15)",
-          tension: 0.4,
-          yAxisID: "litros",
-          fill: true
-        },
-        {
-          label: "Ocupação (%)",
-          data: registros.map(r => r.ocupacao),
-          borderColor: "#53B2A8",
-          backgroundColor: "rgba(83,178,168,0.15)",
-          tension: 0.4,
-          yAxisID: "porcentagem",
-          fill: false,
-          borderDash: [4, 4]
-        },
-        {
-          label: "Nível Máximo",
-          data: Array(registros.length).fill(CAPACIDADES[reservatorio]),
-          borderColor: "rgba(255,99,132,0.7)",
-          borderDash: [8, 6],
-          pointRadius: 0,
-          borderWidth: 2,
-          yAxisID: "litros"
-        }
-      ]
-    },
-    options: {
-      maintainAspectRatio: false,
-      scales: {
-        litros: {
-          type: "linear",
-          position: "left",
-          title: { display: true, text: "Litros", color: "#146C60" },
-          min: 0,
-          max: CAPACIDADES[reservatorio],
-          ticks: { color: "#146C60" }
-        },
-        porcentagem: {
-          type: "linear",
-          position: "right",
-          title: { display: true, text: "Ocupação (%)", color: "#53B2A8" },
-          min: 0,
-          max: 100,
-          grid: { drawOnChartArea: false },
-          ticks: { color: "#53B2A8" }
-        },
-        x: {
-          title: { display: true, text: "Horário", color: "#555" },
-          ticks: { color: "#555" }
-        }
-      },
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#146C60", font: { size: 13 } }
-        },
-        title: {
-          display: true,
-          text: nomeReservatorio,
-          color: "#146C60",
-          font: { size: 20, weight: "bold" }
-        }
-      }
+    if (!Object.keys(historico).length) {
+      container.innerHTML = `<p style="text-align:center; color:#555;">📭 Nenhum dado de histórico encontrado.</p>`;
+      return;
     }
-  });
 
-  // === Tabela ===
-  container.innerHTML = `
-    <table class="tabela-historico">
-      <thead>
-        <tr>
-          <th>Data/Hora</th>
-          <th>Leitura (L)</th>
-          <th>Ocupação (%)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${registros.map(r => `
+    // === Montar tabela ===
+    let html = `
+      <table class="tabela-historico">
+        <thead>
           <tr>
-            <td>${r.data.toLocaleString("pt-BR")}</td>
-            <td>${r.litros.toLocaleString("pt-BR")}</td>
-            <td>${r.ocupacao}%</td>
+            <th>Data</th>
+            <th>Sensor</th>
+            <th>Leitura Mínima</th>
+            <th>Leitura Máxima</th>
           </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
+        </thead>
+        <tbody>
+    `;
+
+    const labels = []; // datas
+    const datasets = {}; // sensores e valores médios
+
+    // Ordena as datas
+    const datasOrdenadas = Object.keys(historico).sort();
+
+    datasOrdenadas.forEach((data) => {
+      const sensores = historico[data];
+      labels.push(data);
+
+      Object.entries(sensores).forEach(([nome, valores]) => {
+        const media = (valores.max + valores.min) / 2;
+
+        html += `
+          <tr>
+            <td>${data}</td>
+            <td>${formatarNomeSensor(nome)}</td>
+            <td>${valores.min}</td>
+            <td>${valores.max}</td>
+          </tr>
+        `;
+
+        if (!datasets[nome]) datasets[nome] = [];
+        datasets[nome].push(media);
+      });
+    });
+
+    html += "</tbody></table>";
+    container.innerHTML = html;
+
+    // === Montar gráfico ===
+    const chartData = {
+      labels,
+      datasets: Object.entries(datasets).map(([nome, valores]) => ({
+        label: formatarNomeSensor(nome),
+        data: valores,
+        borderColor: getCorSensor(nome),
+        backgroundColor: getCorSensor(nome),
+        fill: false,
+        tension: 0.2,
+        borderWidth: 2,
+      })),
+    };
+
+    new Chart(ctx, {
+      type: "line",
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+          title: { display: true, text: "Evolução das Leituras (Média Diária)" },
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: "Valor" } },
+          x: { title: { display: true, text: "Data" } },
+        },
+      },
+    });
+  } catch (err) {
+    container.innerHTML = `<p style="color:red;">❌ Erro: ${err.message}</p>`;
+    console.error(err);
+  }
 }
 
-window.addEventListener("DOMContentLoaded", carregarHistorico);
+// === Funções auxiliares ===
+function getCorSensor(nome) {
+  const cores = {
+    Reservatorio_Elevador_current: "#007bff",
+    Reservatorio_Osmose_current: "#00bcd4",
+    Reservatorio_CME_current: "#4caf50",
+    Agua_Abrandada_current: "#9c27b0",
+    Pressao_Saida_Osmose_current: "#ff9800",
+    Pressao_Retorno_Osmose_current: "#f44336",
+    Pressao_Saida_CME_current: "#3f51b5",
+  };
+  return cores[nome] || `hsl(${Math.random() * 360}, 70%, 50%)`;
+}
+
+function formatarNomeSensor(nome) {
+  return nome
+    .replace(/_/g, " ")
+    .replace("current", "")
+    .replace("Reservatorio", "Reservatório")
+    .replace("Pressao", "Pressão")
+    .replace("Agua", "Água")
+    .trim();
+}
+
+// Inicia o carregamento ao abrir a página
+carregarHistorico();
+
+// (Opcional) Atualiza automaticamente a cada 60s
+// setInterval(carregarHistorico, 60000);

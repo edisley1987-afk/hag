@@ -12,39 +12,66 @@
     <div id="lastUpdate">Última atualização: --:--:--</div>
   </header>
 
-  <!-- container vazio: dashboard.js criará os cards dinamicamente -->
-  <main class="cards-container"></main>
+  <main class="cards-container">
+    <!-- Reservatório Elevador -->
+    <div class="card" id="cardElevador">
+      <div class="nivel-bar" id="nivelElevadorBar"></div>
+      <h2>Reservatório Elevador</h2>
+      <p class="valor" id="nivelElevador">--%</p>
+      <p class="litros" id="litrosElevador">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Elevador_current')">Ver Histórico</button>
+    </div>
+
+    <!-- Reservatório Osmose -->
+    <div class="card" id="cardOsmose">
+      <div class="nivel-bar" id="nivelOsmoseBar"></div>
+      <h2>Reservatório Osmose</h2>
+      <p class="valor" id="nivelOsmose">--%</p>
+      <p class="litros" id="litrosOsmose">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Osmose_current')">Ver Histórico</button>
+    </div>
+
+    <!-- Reservatório CME -->
+    <div class="card" id="cardCME">
+      <div class="nivel-bar" id="nivelCMEBar"></div>
+      <h2>Reservatório CME</h2>
+      <p class="valor" id="nivelCME">--%</p>
+      <p class="litros" id="litrosCME">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_CME_current')">Ver Histórico</button>
+    </div>
+
+    <!-- Água Abrandada -->
+    <div class="card" id="cardAbrandada">
+      <div class="nivel-bar" id="nivelAbrandadaBar"></div>
+      <h2>Água Abrandada</h2>
+      <p class="valor" id="nivelAbrandada">--%</p>
+      <p class="litros" id="litrosAbrandada">-- L</p>
+      <button class="historico-btn" onclick="abrirHistorico('Reservatorio_Agua_Abrandada_current')">Ver Histórico</button>
+    </div>
+
+    <!-- Pressão Saída Osmose -->
+    <div class="card pressao" id="cardPressaoSaida">
+      <h2>Pressão Saída Osmose</h2>
+      <p class="valor" id="pressaoSaida">-- bar</p>
+    </div>
+
+    <!-- Pressão Retorno Osmose -->
+    <div class="card pressao" id="cardPressaoRetorno">
+      <h2>Pressão Retorno Osmose</h2>
+      <p class="valor" id="pressaoRetorno">-- bar</p>
+    </div>
+
+    <!-- Pressão Saída CME -->
+    <div class="card pressao" id="cardPressaoCME">
+      <h2>Pressão Saída CME</h2>
+      <p class="valor" id="pressaoCME">-- bar</p>
+    </div>
+  </main>
 
   <footer>
     © Hospital Arnaldo Gavazza — Sistema de Monitoramento
   </footer>
 
   <script src="dashboard.js"></script>
-
-  <!-- Alerta de reservatório (mantive, não conflita) -->
-  <div id="alertaCritico" style="
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(255, 0, 0, 0.9);
-    color: white;
-    font-family: Arial, sans-serif;
-    z-index: 9999;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  ">
-    <div style="max-width: 600px; background: rgba(0,0,0,0.3); padding: 30px; border-radius: 15px;">
-      <h1 id="alertaTitulo" style="font-size: 2em; margin-bottom: 10px;">⚠️ Alerta Crítico</h1>
-      <p id="alertaMensagem" style="font-size: 1.5em;">Reservatório com nível crítico!</p>
-      <div style="margin-top: 20px;">
-        <button id="btnFecharAlerta" style="padding: 10px 20px; font-size: 1.1em; margin-right: 10px;">Fechar</button>
-        <button id="btnManutencao" style="padding: 10px 20px; font-size: 1.1em; background-color: #333; color: white;">Em manutenção</button>
-      </div>
-    </div>
-  </div>
-
 </body>
 </html>

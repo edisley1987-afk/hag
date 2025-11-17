@@ -1,0 +1,12 @@
+@echo off
+title Gerar ZIP HAG
+color 0B
+echo ===============================
+echo   Criando arquivo ZIP do site  
+echo ===============================
+echo.
+powershell -command "Compress-Archive -Path * -DestinationPath hag-9ki9-render.zip -Force"
+echo.
+echo ? Arquivo gerado com sucesso: hag-9ki9-render.zip
+echo Pressione qualquer tecla para sair...
+pause >nul
