@@ -1,120 +1,92 @@
 import express from "express";
 import cors from "cors";
+import fs from "fs";
 import path from "path";
-import mongoose from "mongoose";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// ====== Caminho absoluto para a pasta public ======
-const __dirname = path.resolve();
 app.use(express.static(path.join(__dirname, "public")));
 
-// ====== Conexão MongoDB ======
-mongoose
-  .connect("mongodb+srv://edisley1987_db_user:31UwWXzo5ru26zE2@cluster0.tbnesoa.mongodb.net/hag", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB conectado"))
-  .catch((err) => console.error("Erro ao conectar Mongo:", err));
+const DATA_DIR = "/data"; 
+const HIST_FILE = path.join(DATA_DIR, "historico.json");
 
-// ====== Modelo de Dados ======
-const dadoSchema = new mongoose.Schema({
-  dev_id: String,
-  ref: String,
-  value: Number,
-  time: Number,
-  unit: Number
+// Garantir pasta /data no Render Free
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR);
+}
+
+// Garantir arquivo historico.json
+if (!fs.existsSync(HIST_FILE)) {
+    fs.writeFileSync(HIST_FILE, JSON.stringify([]));
+}
+
+// 🔹 LER histórico
+function lerHistorico() {
+    try {
+        return JSON.parse(fs.readFileSync(HIST_FILE));
+    } catch (err) {
+        return [];
+    }
+}
+
+// 🔹 SALVAR histórico
+function salvarHistorico(data) {
+    fs.writeFileSync(HIST_FILE, JSON.stringify(data, null, 2));
+}
+
+// 📌 ROTAS
+
+// ➤ Receber dados do ESP32
+app.post("/api/dados", (req, res) => {
+    const entrada = {
+        timestamp: Date.now(),
+        ...req.body
+    };
+
+    const hist = lerHistorico();
+    hist.push(entrada);
+    salvarHistorico(hist);
+
+    res.json({ status: "OK", recebido: entrada });
 });
 
-const Dado = mongoose.model("Dado", dadoSchema);
-
-// ====== Rotas API ======
-
-// Receber dados do IoT
-app.post("/api/update", async (req, res) => {
-  try {
-    const dados = req.body;
-
-    await Dado.create(dados);
-
-    res.json({ status: "OK", recebido: true });
-  } catch (error) {
-    console.error("Erro ao salvar:", error);
-    res.status(500).json({ error: "Erro ao salvar dados" });
-  }
+// ➤ Último dado para o dashboard
+app.get("/api/ultimo", (req, res) => {
+    const hist = lerHistorico();
+    if (hist.length === 0) return res.json({});
+    res.json(hist[hist.length - 1]);
 });
 
-// API para dashboard (últimos valores)
-app.get("/api/last", async (req, res) => {
-  try {
-    const ultimos = await Dado.aggregate([
-      { $sort: { time: -1 } },
-      {
-        $group: {
-          _id: "$ref",
-          ref: { $first: "$ref" },
-          value: { $first: "$value" },
-          time: { $first: "$time" },
-          unit: { $first: "$unit" },
-        }
-      }
-    ]);
-
-    res.json(ultimos);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar últimos dados" });
-  }
+// ➤ Histórico completo
+app.get("/api/historico", (req, res) => {
+    res.json(lerHistorico());
 });
 
-// Histórico
-app.get("/api/historico/:ref", async (req, res) => {
-  try {
-    const lista = await Dado.find({ ref: req.params.ref })
-      .sort({ time: -1 })
-      .limit(2000);
+// ➤ Consumo diário (somatório)
+app.get("/api/consumo", (req, res) => {
+    const hist = lerHistorico();
+    let consumoTotal = 0;
 
-    res.json(lista);
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar histórico" });
-  }
+    hist.forEach(item => {
+        if (item.consumo) consumoTotal += Number(item.consumo);
+    });
+
+    res.json({
+        total: consumoTotal.toFixed(2),
+        registros: hist.length
+    });
 });
 
-// ====== Rotas de páginas ======
-
-// Página principal
+// Servir index.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Dashboard
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
-
-app.get("/dashboard.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
-
-// Histórico
-app.get("/historico", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "historico.html"));
-});
-
-// Consumo diário
-app.get("/consumo", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "consumo.html"));
-});
-
-// Login
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-// ====== Start ======
+// --------------------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta " + PORT);
-});
+app.listen(PORT, () => console.log("Servidor iniciado na porta " + PORT));
