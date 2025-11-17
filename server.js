@@ -1,5 +1,7 @@
 // ============================
-// 🔵 SERVIDOR UNIVERSAL HAG
+// 🔵 SERVIDOR UNIVERSAL HAG — VERSÃO FINAL
+// Aceita qualquer porta, qualquer content-type,
+// compatível com Render, gateway e dashboard.
 // ============================
 
 import express from "express";
@@ -13,10 +15,12 @@ const __dirname = path.resolve();
 // =====================
 // CONFIGURAÇÕES
 // =====================
+
+// Aceita QUALQUER tipo de request
 app.use(cors());
-app.use(express.json({ limit: "10mb", strict: false }));
-app.use(express.text({ type: "*/*", limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "20mb", strict: false }));
+app.use(express.text({ type: "*/*", limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
 // =====================
 // PASTA PUBLIC
@@ -39,63 +43,62 @@ if (!fs.existsSync(HISTORICO_FILE)) fs.writeFileSync(HISTORICO_FILE, "[]");
 
 
 // ==============================
-// 🔵 ROTA PRINCIPAL DE ATUALIZAÇÃO
+// 🔵 ROTA PRINCIPAL /atualizar (GATEWAY)
+// Aceita JSON, texto, form-data, urlencoded
 // ==============================
 app.post("/atualizar", (req, res) => {
 
-    // ============================
-    // LOG SUPER DETALHADO DO GATEWAY
-    // ============================
-    console.log("\n\n=========================");
-    console.log("📩 RECEBEU /atualizar");
+    console.log("\n=========================");
+    console.log("📩 RECEBIDO /atualizar");
     console.log("=========================");
+    console.log("📦 RAW BODY:", req.body);
 
-    console.log("🌐 IP REAL:", req.headers["x-forwarded-for"] || req.socket.remoteAddress);
-    console.log("🛰 HOST DE ORIGEM:", req.headers["host"]);
-    console.log("🔌 PROTOCOLO:", req.headers["x-forwarded-proto"] || req.protocol);
-    console.log("📎 USER-AGENT:", req.headers["user-agent"]);
-    console.log("🛠 CONTENT-TYPE:", req.headers["content-type"]);
-    console.log("📦 TAMANHO BODY:", req.headers["content-length"]);
-    console.log("➡ MÉTODO:", req.method);
-    console.log("➡ PATH:", req.originalUrl);
-    console.log("📬 HEADERS:", JSON.stringify(req.headers, null, 2));
-    console.log("📨 BODY CRU:", req.body);
-
-
-    // PROCESSAMENTO DO BODY
     let body = req.body;
 
-    if (Buffer.isBuffer(body)) {
-        body = body.toString("utf8");
-        console.log("📨 BODY CONVERTIDO DE BUFFER:", body);
-    }
-
+    // CONVERTER PARA JSON SE VIER COMO STRING
     if (typeof body === "string") {
         try {
             body = JSON.parse(body);
-            console.log("📦 BODY PARSEADO:", body);
         } catch {
-            console.log("❌ BODY NÃO É JSON VÁLIDO");
+            console.log("❌ Não é JSON puro, tentando converter formato bruto");
+            return res.status(400).json({ erro: "Formato inválido. Envie JSON." });
         }
     }
 
-    if (!body || typeof body !== "object") {
-        return res.status(400).json({ erro: "JSON inválido ou vazio" });
+    // VALIDAR FORMATO DO GATEWAY
+    if (!body || !Array.isArray(body.data)) {
+        return res.status(400).json({
+            erro: "Formato inválido: esperado { seq, data[] }"
+        });
     }
 
+    const timestamp = new Date().toISOString();
 
-    // ==============================
-    // SALVAR ÚLTIMA LEITURA
-    // ==============================
-    body.timestamp = new Date().toISOString();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(body, null, 2));
+    // CARREGAR ÚLTIMAS LEITURAS
+    let ultima = {};
+    try {
+        ultima = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    } catch { ultima = {}; }
 
-    console.log("💾 ÚLTIMA LEITURA SALVA");
+    // PROCESSAR CADA ITEM DA LISTA
+    body.data.forEach(item => {
+        if (!item.ref || typeof item.value === "undefined") return;
 
+        ultima[item.ref] = {
+            value: item.value,
+            time: item.time,
+            dev_id: item.dev_id,
+            unit: item.unit,
+            timestamp
+        };
+    });
 
-    // ==============================
-    // SALVAR NO HISTÓRICO
-    // ==============================
+    // SALVAR ARQUIVO /dados
+    fs.writeFileSync(DATA_FILE, JSON.stringify(ultima, null, 2));
+
+    console.log(`💾 Leituras recebidas: ${body.data.length}`);
+
+    // ===== SALVAR HISTÓRICO =====
     let historico = [];
 
     try {
@@ -105,18 +108,23 @@ app.post("/atualizar", (req, res) => {
         historico = [];
     }
 
-    historico.push(body);
+    historico.push({
+        seq: body.seq,
+        timestamp,
+        data: body.data
+    });
 
     fs.writeFileSync(HISTORICO_FILE, JSON.stringify(historico, null, 2));
 
-    console.log("📚 HISTÓRICO ATUALIZADO (total:", historico.length, ")");
-
-    return res.json({ status: "OK", recebido: body });
+    return res.json({
+        status: "OK",
+        recebidos: body.data.length
+    });
 });
 
 
 // ==============================
-// 🔵 ROTA /dados → Dashboard lê aqui
+// 🔵 ROTA /dados → Dashboard
 // ==============================
 app.get("/dados", (req, res) => {
     try {
@@ -129,7 +137,7 @@ app.get("/dados", (req, res) => {
 
 
 // ==============================
-// 🔵 ROTA /historico → Histórico completo
+// 🔵 ROTA /historico
 // ==============================
 app.get("/historico", (req, res) => {
     try {
@@ -142,9 +150,12 @@ app.get("/historico", (req, res) => {
 
 
 // ==============================
-// INICIAR SERVIDOR
+// INICIAR SERVIDOR (QUALQUER PORTA)
+// 0 = Node escolhe automaticamente
+// Render sobrepõe com process.env.PORT
 // ==============================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 0;
+
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor iniciado em http://localhost:${PORT}`);
+    console.log(`🚀 Servidor ativo na porta: ${PORT}`);
 });
