@@ -1,134 +1,117 @@
-// ======================================================
-//  HISTÓRICO — CORRIGIDO
-// ======================================================
+// =========================
+//  CAPACIDADES DOS RESERVATÓRIOS
+// =========================
+const capacidades = {
+    "elevador": 20000,
+    "osmose": 200,
+    "cme": 1000,
+    "abrandada": 9000
+};
 
-// Carregar lista de reservatórios para o <select>
-async function carregarListaReservatorios() {
+// =========================
+//  BUSCAR LISTA DE RESERVATÓRIOS
+// =========================
+document.addEventListener("DOMContentLoaded", async () => {
+    const select = document.getElementById("reservatorioSelect");
+
     try {
-        const resp = await fetch("/lista");
-        const lista = await resp.json();
+        const response = await fetch("https://hag-9ki9.onrender.com/reservatorios");
+        const reservatorios = await response.json();
 
-        const select = document.getElementById("selectReservatorio");
-        select.innerHTML = ""; // limpar
+        select.innerHTML = "";
 
-        if (!lista.length) {
-            select.innerHTML = "<option value=''>Nenhum reservatório encontrado</option>";
-            return;
-        }
-
-        lista.forEach(item => {
-            // Ex.: "Reservatorio_Elevador_current" → "Reservatório Elevador"
-            const nomeFormatado = item
-                .replace("Reservatorio_", "")
-                .replace("_current", "")
-                .replace(/_/g, " ");
-
-            const opt = document.createElement("option");
-            opt.value = item;
-            opt.textContent = nomeFormatado;
-            select.appendChild(opt);
+        reservatorios.forEach(res => {
+            const option = document.createElement("option");
+            option.value = res.id.toLowerCase();  
+            option.textContent = res.nome;
+            select.appendChild(option);
         });
 
-        // carregar primeiro automaticamente
-        carregarHistorico(select.value);
+        // Seleciona o primeiro da lista automaticamente
+        if (reservatorios.length > 0) {
+            carregarHistorico(reservatorios[0].id.toLowerCase());
+        }
 
         select.addEventListener("change", () => {
             carregarHistorico(select.value);
         });
 
-    } catch (e) {
-        console.error("Erro ao carregar lista de reservatórios:", e);
+    } catch (error) {
+        console.error("Erro ao carregar reservatórios:", error);
     }
-}
+});
 
-// ======================================================
-// CARREGAR HISTÓRICO SELECIONADO
-// ======================================================
-async function carregarHistorico(nomeCampo) {
+// =========================
+//  CARREGAR HISTÓRICO
+// =========================
+let grafico = null;
+
+async function carregarHistorico(reservatorioId) {
+
+    const tabela = document.getElementById("historicoTabela");
+    const corpoTabela = document.getElementById("tabelaBody");
+    const ctx = document.getElementById("historicoChart").getContext("2d");
+
+    // Limpar antes de atualizar
+    corpoTabela.innerHTML = "";
+
     try {
-        const resp = await fetch("/historico");
-        const dados = await resp.json();
+        const response = await fetch(`https://hag-9ki9.onrender.com/historico/${reservatorioId}`);
+        const data = await response.json();
 
-        const filtrado = dados.filter(reg => reg[nomeCampo] !== undefined);
-
-        atualizarTabela(filtrado);
-        atualizarGrafico(filtrado, nomeCampo);
-
-    } catch (e) {
-        console.error("Erro ao carregar histórico:", e);
-    }
-}
-
-// ======================================================
-// ATUALIZAR TABELA
-// ======================================================
-function atualizarTabela(lista) {
-    const tbody = document.querySelector("#tabelaHistorico tbody");
-    tbody.innerHTML = "";
-
-    if (!lista.length) {
-        tbody.innerHTML = "<tr><td colspan='3'>Nenhum dado encontrado</td></tr>";
-        return;
-    }
-
-    lista.forEach(reg => {
-        const tr = document.createElement("tr");
-
-        const data = new Date(reg.timestamp).toLocaleString("pt-BR");
-        const litros = reg.valor ?? reg.Reservatorio_Elevador_current ??
-            reg.Reservatorio_Osmose_current ??
-            reg.Reservatorio_Agua_Abrandada_current ??
-            reg.Reservatorio_CME_current ?? 0;
-
-        const porcentagem = reg.porcentagem ?? "—";
-
-        tr.innerHTML = `
-            <td>${data}</td>
-            <td>${litros}</td>
-            <td>${porcentagem}</td>
-        `;
-
-        tbody.appendChild(tr);
-    });
-}
-
-// ======================================================
-// GRÁFICO
-// ======================================================
-let grafico;
-
-function atualizarGrafico(lista, campo) {
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
-
-    if (grafico instanceof Chart) grafico.destroy();
-
-    const labels = lista.map(reg => new Date(reg.timestamp).toLocaleString("pt-BR"));
-    const valores = lista.map(reg => reg[campo]);
-
-    grafico = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label: campo.replace(/Reservatorio_|_current/g, "").replace(/_/g, " "),
-                data: valores,
-                borderColor: "#2c8b7d",
-                backgroundColor: "rgba(44,139,125,0.3)",
-                fill: true,
-                tension: 0.3,
-                pointRadius: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: "top" }
-            }
+        if (!data || data.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="3">Nenhum registro encontrado.</td></tr>`;
+            if (grafico) grafico.destroy();
+            return;
         }
-    });
-}
 
-// ======================================================
-// Inicializar ao carregar a página
-// ======================================================
-window.addEventListener("load", carregarListaReservatorios);
+        // Preparar dados do gráfico
+        const labels = data.map(item => item.data_hora);
+        const litros = data.map(item => item.litros);
+
+        // Destruir gráfico anterior
+        if (grafico) grafico.destroy();
+
+        grafico = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: reservatorioId.toUpperCase(),
+                    data: litros,
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        // Preencher tabela
+        const capacidade = capacidades[reservatorioId] || 1;
+
+        data.forEach(item => {
+            const percentual = ((item.litros / capacidade) * 100).toFixed(1);
+
+            const row = `
+                <tr>
+                    <td>${item.data_hora}</td>
+                    <td>${item.litros}</td>
+                    <td>${percentual}%</td>
+                </tr>
+            `;
+            corpoTabela.insertAdjacentHTML("beforeend", row);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+        corpoTabela.innerHTML = `<tr><td colspan="3">Erro ao carregar histórico.</td></tr>`;
+    }
+}
