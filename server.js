@@ -1,96 +1,129 @@
-// =============================
-//  SERVER.JS COMPLETO E FUNCIONAL
-// =============================
+// === server.js ===
 
 import express from "express";
-import fs from "fs";
-import path from "path";
 import cors from "cors";
-import bodyParser from "body-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
-// Configurações
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Arquivo JSON de armazenamento
-const DATA_FILE = path.join(process.cwd(), "dados.json");
+// Diretório /public
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "public")));
 
-// Garante que o arquivo JSON exista
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
+// ===== BANCO EM MEMÓRIA ===== //
+let historico = [];
+
+// Capacidade individual
+const capacidade = {
+  Reservatorio_Osmose: 10000,
+  Reservatorio_Elevador: 9000,
+  Reservatorio_CME: 6000,
+  Reservatorio_Agua_Abrandada: 8000
+};
+
+// ===== FUNÇÃO PARA CALCULAR % ===== //
+function calcPercent(name, litros) {
+  if (!capacidade[name]) return 0;
+  return Math.min(100, Math.max(0, (litros / capacidade[name]) * 100));
 }
 
-// =============================
-//   FUNÇÃO: SALVAR DADOS
-// =============================
-function salvarDados(name, litros, pressao) {
-    let dados = {};
-
-    try {
-        dados = JSON.parse(fs.readFileSync(DATA_FILE));
-    } catch (err) {
-        console.error("Erro lendo JSON:", err);
-    }
-
-    dados[name] = {
-        litros: litros,
-        pressao: pressao,
-        atualizado: new Date().toISOString()
-    };
-
-    fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-}
-
-// =============================
-//   ROTA GET (para testar no navegador)
-// =============================
+// ===== ROTA DE UPDATE ===== //
 app.get("/update", (req, res) => {
-    const { name, litros, pressao } = req.query;
+  const { name, litros, pressao } = req.query;
 
-    if (!name) return res.status(400).send("Erro: name não enviado.");
+  if (!name) {
+    return res.status(400).send("Erro: name é obrigatório.");
+  }
 
-    salvarDados(name, litros, pressao);
-    res.send("OK - Dados atualizados via GET");
+  let litrosFinal = null;
+  let pressaoFinal = null;
+
+  if (litros !== undefined) {
+    const n = Number(litros);
+    litrosFinal = Number((n * 10000).toFixed(0));
+  }
+
+  if (pressao !== undefined) {
+    const p = Number(pressao);
+    pressaoFinal = Number((p * 10).toFixed(2));
+  }
+
+  const registro = {
+    name,
+    litros: litrosFinal,
+    pressao: pressaoFinal,
+    porcentagem: litrosFinal ? calcPercent(name, litrosFinal) : null,
+    dataHora: new Date().toLocaleString("pt-BR")
+  };
+
+  historico.push(registro);
+  console.log("Novo registro:", registro);
+
+  return res.send("OK");
 });
 
-// =============================
-//   ROTA POST (para ESP8266/ESP32)
-// =============================
-app.post("/update", (req, res) => {
-    const { name, litros, pressao } = req.body;
-
-    if (!name) return res.status(400).send("Erro: name não enviado.");
-
-    salvarDados(name, litros, pressao);
-    res.json({ status: "OK", message: "Dados atualizados via POST" });
+// ===== ROTA PARA LISTAR DISPOSITIVOS ===== //
+app.get("/dispositivos", (req, res) => {
+  const lista = [
+    "Reservatorio_Osmose",
+    "Pressao_Saida_Osmose",
+    "Pressao_Retorno_Osmose",
+    "Reservatorio_Elevador",
+    "Reservatorio_CME",
+    "Pressao_Saida_CME",
+    "Reservatorio_Agua_Abrandada"
+  ];
+  res.json(lista);
 });
 
-// =============================
-//   ROTA PARA VISUALIZAR OS DADOS SALVOS
-// =============================
-app.get("/dados", (req, res) => {
-    try {
-        const dados = JSON.parse(fs.readFileSync(DATA_FILE));
-        res.json(dados);
-    } catch (err) {
-        res.status(500).json({ erro: "Não foi possível ler o arquivo" });
-    }
+// ===== ÚLTIMAS LEITURAS ===== //
+app.get("/ultimos", (req, res) => {
+  const ultimos = {};
+
+  for (let item of historico) {
+    ultimos[item.name] = item;
+  }
+
+  res.json(ultimos);
 });
 
-// =============================
-//   ROTA PRINCIPAL
-// =============================
-app.get("/", (req, res) => {
-    res.send("Servidor funcionando - HAG Reservatórios");
+// ===== HISTÓRICO POR DISPOSITIVO ===== //
+app.get("/historico/:name", (req, res) => {
+  const { name } = req.params;
+  const dados = historico.filter(x => x.name === name);
+  res.json(dados);
 });
 
-// =============================
-//   INICIAR SERVIDOR
-// =============================
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// ===== CONSUMO DIÁRIO ===== //
+app.get("/consumo", (req, res) => {
+  const { name } = req.query;
+  if (!name) return res.status(400).send("name obrigatório");
+
+  const registros = historico.filter(x => x.name === name);
+
+  const mapa = {};
+
+  for (let r of registros) {
+    const dia = r.dataHora.split(" ")[0];
+    if (!mapa[dia]) mapa[dia] = 0;
+    if (r.litros) mapa[dia] += r.litros;
+  }
+
+  res.json(mapa);
 });
+
+// ===== SERVIR HTML ===== //
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ===== INICIAR SERVIDOR ===== //
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () =>
+  console.log("Servidor rodando na porta " + PORT)
+);
