@@ -1,4 +1,6 @@
-/* ======= Servidor Universal HAG (com histórico otimizado + LOGS de origem) ======= */
+// ============================
+// 🔵 SERVIDOR UNIVERSAL HAG
+// ============================
 
 import express from "express";
 import fs from "fs";
@@ -8,245 +10,141 @@ import cors from "cors";
 const app = express();
 const __dirname = path.resolve();
 
-// ===============================
-//  MIDDLEWARES
-// ===============================
+// =====================
+// CONFIGURAÇÕES
+// =====================
 app.use(cors());
-app.use(express.json({ limit: "20mb", strict: false }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.text({ type: "*/*", limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// 🔵 GARANTE QUE O RENDER ENCONTRE /public
-const PUBLIC_DIR = path.join(__dirname, "public");
-app.use(express.static(PUBLIC_DIR));
+// =====================
+// PASTA PUBLIC
+// =====================
+app.use(express.static(path.join(__dirname, "public")));
 
-// ===============================
-//  DIRETÓRIOS DE DADOS
-// ===============================
+
+// =====================
+// ARQUIVOS DE DADOS
+// =====================
 const DATA_DIR = path.join(__dirname, "data");
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
-const HIST_FILE = path.join(DATA_DIR, "historico.json");
-const MANUTENCAO_FILE = path.join(DATA_DIR, "manutencao.json");
+const HISTORICO_FILE = path.join(DATA_DIR, "historico.json");
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+// cria arquivos se não existirem
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "{}");
+if (!fs.existsSync(HISTORICO_FILE)) fs.writeFileSync(HISTORICO_FILE, "[]");
 
-// ===============================
-//  SENSOR CONFIGURAÇÃO
-// ===============================
-const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008256, capacidade: 20000 },
-  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
-  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
-  "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
 
-  // Pressões
-  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
-  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
-  "Pressao_Saida_CME_current": { tipo: "pressao" }
-};
+// ==============================
+// 🔵 ROTA PRINCIPAL DE ATUALIZAÇÃO
+// ==============================
+app.post("/atualizar", (req, res) => {
 
-// ===============================
-// UTILITARIOS
-// ===============================
-function salvarLeituraAtual(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-}
-
-function adicionarAoHistorico(dados) {
-  let historico = [];
-  if (fs.existsSync(HIST_FILE)) {
-    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); } catch {}
-  }
-
-  const ultima = historico.length ? historico[historico.length - 1] : null;
-  let mudou = false;
-
-  if (ultima) {
-    for (const ref of Object.keys(SENSORES)) {
-      if (!ref.includes("Reservatorio")) continue;
-
-      const atual = dados[ref];
-      const anterior = ultima[ref];
-      const capacidade = SENSORES[ref].capacidade;
-
-      if (capacidade && anterior !== undefined) {
-        const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
-        if (diffPercent >= 5) {
-          mudou = true;
-          break;
-        }
-      }
-    }
-  } else mudou = true;
-
-  if (mudou) {
-    historico.push({ timestamp: new Date().toISOString(), ...dados });
-    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
-  }
-}
-
-// ===============================
-// 🔵 ROTA UNIVERSAL RECEBIMENTO DO GATEWAY
-// ===============================
-app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
-  try {
+    // ============================
+    // LOG SUPER DETALHADO DO GATEWAY
+    // ============================
     console.log("\n\n=========================");
-    console.log("📩 REQUISIÇÃO RECEBIDA EM /atualizar");
+    console.log("📩 RECEBEU /atualizar");
     console.log("=========================");
-    console.log("Método:", req.method);
-    console.log("IP:", req.ip);
-    console.log("Headers:", req.headers);
 
-    console.log("BODY CRU:", req.body);
+    console.log("🌐 IP REAL:", req.headers["x-forwarded-for"] || req.socket.remoteAddress);
+    console.log("🛰 HOST DE ORIGEM:", req.headers["host"]);
+    console.log("🔌 PROTOCOLO:", req.headers["x-forwarded-proto"] || req.protocol);
+    console.log("📎 USER-AGENT:", req.headers["user-agent"]);
+    console.log("🛠 CONTENT-TYPE:", req.headers["content-type"]);
+    console.log("📦 TAMANHO BODY:", req.headers["content-length"]);
+    console.log("➡ MÉTODO:", req.method);
+    console.log("➡ PATH:", req.originalUrl);
+    console.log("📬 HEADERS:", JSON.stringify(req.headers, null, 2));
+    console.log("📨 BODY CRU:", req.body);
 
+
+    // PROCESSAMENTO DO BODY
     let body = req.body;
 
-    if (Buffer.isBuffer(body)) body = body.toString("utf8");
+    if (Buffer.isBuffer(body)) {
+        body = body.toString("utf8");
+        console.log("📨 BODY CONVERTIDO DE BUFFER:", body);
+    }
 
     if (typeof body === "string") {
-      try { body = JSON.parse(body); }
-      catch { console.log("⚠ Body não era JSON válido"); }
+        try {
+            body = JSON.parse(body);
+            console.log("📦 BODY PARSEADO:", body);
+        } catch {
+            console.log("❌ BODY NÃO É JSON VÁLIDO");
+        }
     }
 
-    console.log("BODY PARSEADO:", body);
-
-    // Extrair possíveis formas de array
-    let dataArray = [];
-    if (Array.isArray(body)) dataArray = body;
-    else if (Array.isArray(body?.data)) dataArray = body.data;
-    else if (typeof body === "object" && body !== null)
-      dataArray = Object.keys(body)
-        .filter(k => k.includes("_current"))
-        .map(k => ({ ref: k, value: Number(body[k]) }));
-
-    if (!dataArray.length)
-      return res.status(400).json({ erro: "Nenhum dado válido recebido", recebido: body });
-
-    const dadosConvertidos = {};
-
-    for (const item of dataArray) {
-      const ref = item.ref || item.name;
-      const valor = Number(item.value);
-      if (!ref || isNaN(valor)) continue;
-
-      const sensor = SENSORES[ref];
-      if (!sensor) continue;
-
-      const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
-
-      let leituraConvertida;
-
-      if (tipo === "pressao") {
-        leituraConvertida = ((valor - 0.004) / 0.016) * 20;
-        leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
-        leituraConvertida = parseFloat(leituraConvertida.toFixed(2));
-      } else {
-        leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
-        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
-      }
-
-      dadosConvertidos[ref] = leituraConvertida;
+    if (!body || typeof body !== "object") {
+        return res.status(400).json({ erro: "JSON inválido ou vazio" });
     }
 
-    // ================================
-    // MANUTENÇÃO AUTOMÁTICA
-    // ================================
-    const LIMITE_MANUTENCAO = 30;
-    let manutencaoAtiva = {};
 
-    if (fs.existsSync(MANUTENCAO_FILE)) {
-      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); } catch {}
+    // ==============================
+    // SALVAR ÚLTIMA LEITURA
+    // ==============================
+    body.timestamp = new Date().toISOString();
+    fs.writeFileSync(DATA_FILE, JSON.stringify(body, null, 2));
+
+    console.log("💾 ÚLTIMA LEITURA SALVA");
+
+
+    // ==============================
+    // SALVAR NO HISTÓRICO
+    // ==============================
+    let historico = [];
+
+    try {
+        historico = JSON.parse(fs.readFileSync(HISTORICO_FILE, "utf8"));
+        if (!Array.isArray(historico)) historico = [];
+    } catch {
+        historico = [];
     }
 
-    for (const ref of Object.keys(SENSORES)) {
-      if (!ref.includes("Reservatorio")) continue;
-      const valor = dadosConvertidos[ref];
-      const capacidade = SENSORES[ref].capacidade;
-      const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
+    historico.push(body);
 
-      if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO)
-        delete manutencaoAtiva[ref];
+    fs.writeFileSync(HISTORICO_FILE, JSON.stringify(historico, null, 2));
+
+    console.log("📚 HISTÓRICO ATUALIZADO (total:", historico.length, ")");
+
+    return res.json({ status: "OK", recebido: body });
+});
+
+
+// ==============================
+// 🔵 ROTA /dados → Dashboard lê aqui
+// ==============================
+app.get("/dados", (req, res) => {
+    try {
+        const dados = JSON.parse(fs.readFileSync(DATA_FILE));
+        return res.json(dados);
+    } catch {
+        return res.json({});
     }
-
-    fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencaoAtiva, null, 2));
-
-    dadosConvertidos.timestamp = new Date().toISOString();
-    dadosConvertidos.manutencao = manutencaoAtiva;
-
-    salvarLeituraAtual(dadosConvertidos);
-    adicionarAoHistorico(dadosConvertidos);
-
-    console.log("✔ DADOS FINAL SALVO:", dadosConvertidos);
-
-    res.json({ status: "ok", dados: dadosConvertidos });
-
-  } catch (err) {
-    console.log("❌ ERRO GRAVE:", err);
-    res.status(500).json({ erro: err.message });
-  }
 });
 
-// ===============================
-// API: últimas leituras
-// ===============================
-app.get("/dados", (_, res) => {
-  if (!fs.existsSync(DATA_FILE)) return res.json({});
-  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
+
+// ==============================
+// 🔵 ROTA /historico → Histórico completo
+// ==============================
+app.get("/historico", (req, res) => {
+    try {
+        const historico = JSON.parse(fs.readFileSync(HISTORICO_FILE));
+        return res.json(historico);
+    } catch {
+        return res.json([]);
+    }
 });
 
-// ===============================
-// API: histórico completo
-// ===============================
-app.get("/historico", (_, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json([]);
-  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
-});
 
-// ===============================
-app.get("/historico/lista", (req, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json([]);
-
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  const reservatorios = new Set();
-
-  historico.forEach(registro => {
-    Object.keys(registro).forEach(chave => {
-      if (chave.includes("_current")) reservatorios.add(chave);
-    });
-  });
-
-  res.json([...reservatorios]);
-});
-
-app.get("/historico/:reservatorio", (req, res) => {
-  const ref = req.params.reservatorio;
-
-  if (!fs.existsSync(HIST_FILE)) return res.json([]);
-
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-
-  const resposta = historico
-    .filter(r => r[ref] !== undefined)
-    .map(r => ({
-      horario: r.timestamp,
-      valor: r[ref]
-    }));
-
-  res.json(resposta);
-});
-
-// ===============================
-// PÁGINAS
-// ===============================
-app.get("/", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
-app.get("/dashboard.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "dashboard.html")));
-app.get("/historico.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "historico.html")));
-app.get("/consumo.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "consumo.html")));
-
-// Fallback — Render SPA
-app.get("*", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
-
-// ===============================
-// RUN SERVER
-// ===============================
+// ==============================
+// INICIAR SERVIDOR
+// ==============================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor iniciado em http://localhost:${PORT}`);
+});
