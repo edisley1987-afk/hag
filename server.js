@@ -50,7 +50,6 @@ function adicionarAoHistorico(dados) {
   const ultima = historico.length ? historico[historico.length - 1] : null;
   let mudou = false;
 
-  // Verificar variação maior que 5% para reservar espaço
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
@@ -77,8 +76,14 @@ function adicionarAoHistorico(dados) {
   }
 }
 
-// === Receber leituras do Gateway ===
-app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
+/* ===========================================================
+   🚀 ROTA PRINCIPAL PARA RECEBER DADOS DO GATEWAY (/atualizar)
+   =========================================================== */
+
+app.all("/atualizar", (req, res) => {
+  console.log("📡 Requisição recebida no /atualizar");
+  console.log("📥 Body recebido:", req.body);
+
   try {
     let body = req.body;
 
@@ -96,7 +101,10 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
 
+    console.log("📊 Após processamento:", dataArray);
+
     if (!dataArray.length) {
+      console.log("❌ Nenhum dado válido recebido!");
       return res.status(400).json({ erro: "Nenhum dado válido" });
     }
 
@@ -105,8 +113,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     for (const item of dataArray) {
       const ref = item.ref || item.name;
       const valor = Number(item.value);
-
-      if (!ref || isNaN(valor)) continue;
 
       const sensor = SENSORES[ref];
       if (!sensor) continue;
@@ -127,59 +133,45 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
-    // Atualizar manutenção
-    const LIMITE_MANUTENCAO = 30;
-    let manutencaoAtiva = {};
-
-    if (fs.existsSync(MANUTENCAO_FILE)) {
-      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); }
-      catch { manutencaoAtiva = {}; }
-    }
-
-    for (const ref of Object.keys(SENSORES)) {
-      if (!ref.includes("Reservatorio")) continue;
-
-      const valor = dadosConvertidos[ref];
-      const capacidade = SENSORES[ref].capacidade;
-
-      const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
-
-      if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO) {
-        delete manutencaoAtiva[ref];
-      }
-    }
-
-    fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencaoAtiva, null, 2));
+    console.log("✅ Convertidos:", dadosConvertidos);
 
     dadosConvertidos.timestamp = new Date().toISOString();
-    dadosConvertidos.manutencao = manutencaoAtiva;
 
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
-    res.json({ status: "ok", dados: dadosConvertidos });
+    console.log("💾 Dados salvos com sucesso!");
+
+    return res.json({ status: "ok", dados: dadosConvertidos });
 
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
-    res.status(500).json({ erro: err.message });
+    return res.status(500).json({ erro: err.message });
   }
 });
 
-// === Últimos dados ===
+/* ==============================
+   🟦 ROTA /dados
+   ============================== */
+
 app.get("/dados", (_, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// === Histórico ===
+/* ==============================
+   🟦 ROTA /historico
+   ============================== */
+
 app.get("/historico", (_, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// =====================================================================
-//  🔵 ROTA CORRIGIDA — Lista SOMENTE de reservatórios (sem pressão)
-// =====================================================================
+/* ==============================
+   🟦 LISTA DE RESERVATÓRIOS
+   ============================== */
+
 app.get("/lista", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
@@ -188,19 +180,18 @@ app.get("/lista", (req, res) => {
 
   historico.forEach(registro => {
     Object.keys(registro).forEach(chave => {
-
-      // Somente reservatórios, ignorar pressão
-      if (chave.includes("Reservatorio") && chave.endsWith("_current")) {
+      if (chave.includes("Reservatorio") && chave.endsWith("_current"))
         reservatorios.add(chave);
-      }
-
     });
   });
 
   res.json([...reservatorios]);
 });
 
-// === Histórico individual ===
+/* ==============================
+   🟦 HISTÓRICO INDIVIDUAL
+   ============================== */
+
 app.get("/historico/:reservatorio", (req, res) => {
   const ref = req.params.reservatorio;
 
@@ -218,10 +209,27 @@ app.get("/historico/:reservatorio", (req, res) => {
   res.json(resposta);
 });
 
-// === Páginas estáticas ===
+/* ==============================
+   🟦 PÁGINAS HTML
+   ============================== */
+
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+
+/* =====================================================
+   🔥 CAPTURA QUALQUER OUTRA ROTA (descobrimos rota Khomp)
+   ===================================================== */
+
+app.all("*", (req, res) => {
+  console.log("📡 ROTA DESCONHECIDA:", req.method, req.url);
+  console.log("📥 BODY:", req.body);
+  res.json({ status: "rota-capturada", url: req.url });
+});
+
+/* ==============================
+   🟢 INICIAR SERVIDOR
+   ============================== */
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
