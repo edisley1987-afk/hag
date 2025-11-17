@@ -1,10 +1,4 @@
-/* ======= Servidor HAG — completo com histórico (SEM banco) =======
-   - Recebe leituras do gateway
-   - Salva última leitura em data/readings.json
-   - Mantém historico em data/historico.json (salva quando variação >= 5%)
-   - Calcula consumo diário a partir do histórico
-   - Endpoints para dashboard e debug
-   ================================================================== */
+/* ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) ======= */
 
 import express from "express";
 import fs from "fs";
@@ -17,6 +11,9 @@ const __dirname = path.resolve();
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.urlencoded({ extended: true }));
+
+// === Arquivos públicos ===
+app.use(express.static(path.join(__dirname, "public")));
 
 // === Diretórios e arquivos de dados ===
 const DATA_DIR = path.join(__dirname, "data");
@@ -37,35 +34,37 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Utilitários de arquivo ===
-function lerArquivoJSON(caminho, valorPadrao) {
-  if (!fs.existsSync(caminho)) return valorPadrao;
-  try { return JSON.parse(fs.readFileSync(caminho, "utf-8")); }
-  catch (err) { console.error("Erro ao ler JSON:", caminho, err); return valorPadrao; }
-}
-function salvarArquivoJSON(caminho, dados) {
-  fs.writeFileSync(caminho, JSON.stringify(dados, null, 2));
-}
-
-// === Salvar última leitura e histórico otimizado ===
+// === Funções utilitárias ===
 function salvarLeituraAtual(dados) {
-  salvarArquivoJSON(DATA_FILE, dados);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
 }
 
 function adicionarAoHistorico(dados) {
-  let historico = lerArquivoJSON(HIST_FILE, []);
+  let historico = [];
+
+  if (fs.existsSync(HIST_FILE)) {
+    try { historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")); }
+    catch { historico = []; }
+  }
+
   const ultima = historico.length ? historico[historico.length - 1] : null;
   let mudou = false;
 
+  // Verificar variação maior que 5% para reservar espaço
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
+
       const atual = dados[ref];
       const anterior = ultima[ref];
       const capacidade = SENSORES[ref].capacidade;
-      if (capacidade && anterior !== undefined && atual !== undefined) {
+
+      if (capacidade && anterior !== undefined) {
         const diffPercent = Math.abs((atual - anterior) / capacidade) * 100;
-        if (diffPercent >= 5) { mudou = true; break; }
+        if (diffPercent >= 5) {
+          mudou = true;
+          break;
+        }
       }
     }
   } else {
@@ -74,114 +73,43 @@ function adicionarAoHistorico(dados) {
 
   if (mudou) {
     historico.push({ timestamp: new Date().toISOString(), ...dados });
-    salvarArquivoJSON(HIST_FILE, historico);
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
   }
 }
 
-// === Função que calcula consumo diário a partir do historico ===
-// Estratégia:
-// - Agrupa registros por data (YYYY-MM-DD).
-// - Para cada reservatório naquela data, pega o primeiro e o último valor.
-// - Calcula diff = first - last (assume que nível diminui com consumo).
-// - Se diff < 0, define consumo = 0 (evita consumo negativo por enchimentos).
-function calcularConsumoDiario(historico) {
-  // retorno: { 'YYYY-MM-DD': { reservatorio_ref: { first, last, consumo } } }
-  const agrup = {};
-
-  historico.forEach(entry => {
-    const ts = new Date(entry.timestamp);
-    if (isNaN(ts)) return;
-    const dia = ts.toISOString().slice(0, 10); // YYYY-MM-DD
-
-    if (!agrup[dia]) agrup[dia] = [];
-    agrup[dia].push(entry);
-  });
-
-  const resultado = {};
-
-  for (const dia of Object.keys(agrup).sort()) {
-    const registros = agrup[dia].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const first = registros[0];
-    const last = registros[registros.length - 1];
-
-    resultado[dia] = {};
-
-    // percorre sensores do tipo reservatorio encontrados nos registros
-    const chaves = new Set();
-    registros.forEach(r => Object.keys(r).forEach(k => { if (k.includes("Reservatorio") && k.endsWith("_current")) chaves.add(k); }));
-
-    chaves.forEach(ref => {
-      const firstVal = first[ref] !== undefined ? first[ref] : null;
-      const lastVal = last[ref] !== undefined ? last[ref] : null;
-      if (firstVal === null || lastVal === null) {
-        resultado[dia][ref] = { first: firstVal, last: lastVal, consumo: 0 };
-      } else {
-        // consumo assumido como redução do nível: first - last
-        let consumo = firstVal - lastVal;
-        if (consumo < 0) consumo = 0; // se aumentou (enchimento), considerar 0 consumo
-        resultado[dia][ref] = { first: firstVal, last: lastVal, consumo };
-      }
-    });
-  }
-
-  return resultado;
-}
-
-// === Receber leituras do Gateway (/atualizar) ===
-app.all("/atualizar", (req, res) => {
-  console.log("📡 Requisição recebida no /atualizar —", new Date().toISOString());
-  console.log("📥 Cabeçalho:", req.headers ? { "content-type": req.headers["content-type"] } : {});
-  console.log("📥 Body raw (parcial):", typeof req.body === "object" ? JSON.stringify(req.body).slice(0, 1000) : String(req.body).slice(0,1000));
-
+// === Receber leituras do Gateway ===
+app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
 
-    // aceitar buffers/strings
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
-      try { body = JSON.parse(body); }
-      catch { /* não-json, mantemos string */ }
+      try { body = JSON.parse(body); } catch {}
     }
 
     let dataArray = [];
 
-    // vários formatos possíveis do gateway
     if (Array.isArray(body)) dataArray = body;
     else if (Array.isArray(body?.data)) dataArray = body.data;
-    else if (typeof body === "object" && body !== null) {
-      // transformar objeto { ref_current: valor, ... } em array
+    else if (typeof body === "object" && body !== null)
       dataArray = Object.keys(body)
-        .filter(k => k.includes("_current") || k.includes("ref"))
-        .map(k => ({ ref: k, value: body[k] }));
-      // também aceitar payloads com estrutura { time, unit, value, ref }
-      if (dataArray.length === 0 && body.ref && body.value !== undefined) {
-        dataArray = [ { ref: body.ref, value: body.value } ];
-      }
-    }
-
-    console.log("📊 Data array interpretado:", JSON.stringify(dataArray).slice(0,1000));
+        .filter(k => k.includes("_current"))
+        .map(k => ({ ref: k, value: Number(body[k]) }));
 
     if (!dataArray.length) {
-      console.log("❌ Nenhum dado válido detectado no payload.");
-      // responder 200 ao gateway com explicação curta (evita reenvios excessivos)
-      return res.status(200).json({ status: "no-data", info: "Nenhum dado com formato esperado" });
+      return res.status(400).json({ erro: "Nenhum dado válido" });
     }
 
     const dadosConvertidos = {};
 
     for (const item of dataArray) {
       const ref = item.ref || item.name;
-      const valorRaw = item.value;
-      const valor = Number(valorRaw);
+      const valor = Number(item.value);
 
       if (!ref || isNaN(valor)) continue;
 
       const sensor = SENSORES[ref];
-      if (!sensor) {
-        // se sensor não conhecido, apenas registra raw (útil pra descobrir novos refs)
-        dadosConvertidos[ref] = Number(valor.toFixed ? valor.toFixed(4) : valor);
-        continue;
-      }
+      if (!sensor) continue;
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
 
@@ -192,7 +120,6 @@ app.all("/atualizar", (req, res) => {
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(2));
       } else {
-        // normaliza entre vazio e cheio e converte para capacidade
         leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
       }
@@ -200,100 +127,101 @@ app.all("/atualizar", (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
-    // atualizar manutenção (mesma lógica que antes)
+    // Atualizar manutenção
     const LIMITE_MANUTENCAO = 30;
-    let manutencaoAtiva = lerArquivoJSON(MANUTENCAO_FILE, {});
+    let manutencaoAtiva = {};
+
+    if (fs.existsSync(MANUTENCAO_FILE)) {
+      try { manutencaoAtiva = JSON.parse(fs.readFileSync(MANUTENCAO_FILE, "utf-8")); }
+      catch { manutencaoAtiva = {}; }
+    }
+
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
+
       const valor = dadosConvertidos[ref];
       const capacidade = SENSORES[ref].capacidade;
-      const porcentagem = capacidade && valor !== undefined ? (valor / capacidade) * 100 : 0;
+
+      const porcentagem = capacidade ? (valor / capacidade) * 100 : 0;
+
       if (manutencaoAtiva[ref] && porcentagem > LIMITE_MANUTENCAO) {
         delete manutencaoAtiva[ref];
       }
     }
-    salvarArquivoJSON(MANUTENCAO_FILE, manutencaoAtiva);
 
-    // meta dados
+    fs.writeFileSync(MANUTENCAO_FILE, JSON.stringify(manutencaoAtiva, null, 2));
+
     dadosConvertidos.timestamp = new Date().toISOString();
     dadosConvertidos.manutencao = manutencaoAtiva;
 
-    // salvar
     salvarLeituraAtual(dadosConvertidos);
     adicionarAoHistorico(dadosConvertidos);
 
-    console.log("✅ Dados processados e salvos:", JSON.stringify(dadosConvertidos).slice(0,1000));
-
-    // responder 200 rápido ao gateway (evita timeout)
-    return res.status(200).json({ status: "ok" });
+    res.json({ status: "ok", dados: dadosConvertidos });
 
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
-    // responder 500 explicitamente para debugging
-    return res.status(500).json({ erro: err.message || String(err) });
+    res.status(500).json({ erro: err.message });
   }
 });
 
-// === Endpoints públicos para dashboard / frontend ===
-
-// Últimos dados
+// === Últimos dados ===
 app.get("/dados", (_, res) => {
-  const dados = lerArquivoJSON(DATA_FILE, {});
-  res.json(dados);
+  if (!fs.existsSync(DATA_FILE)) return res.json({});
+  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// Histórico completo
+// === Histórico ===
 app.get("/historico", (_, res) => {
-  const historico = lerArquivoJSON(HIST_FILE, []);
-  res.json(historico);
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// Lista de reservatórios (somente chaves que terminam com _current)
-app.get("/lista", (_, res) => {
-  const historico = lerArquivoJSON(HIST_FILE, []);
+// =====================================================================
+//  🔵 ROTA CORRIGIDA — Lista SOMENTE de reservatórios (sem pressão)
+// =====================================================================
+app.get("/lista", (req, res) => {
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
   const reservatorios = new Set();
-  historico.forEach(reg => {
-    Object.keys(reg).forEach(k => {
-      if (k.includes("Reservatorio") && k.endsWith("_current")) reservatorios.add(k);
+
+  historico.forEach(registro => {
+    Object.keys(registro).forEach(chave => {
+
+      // Somente reservatórios, ignorar pressão
+      if (chave.includes("Reservatorio") && chave.endsWith("_current")) {
+        reservatorios.add(chave);
+      }
+
     });
   });
+
   res.json([...reservatorios]);
 });
 
-// Histórico individual do reservatório
+// === Histórico individual ===
 app.get("/historico/:reservatorio", (req, res) => {
   const ref = req.params.reservatorio;
-  const historico = lerArquivoJSON(HIST_FILE, []);
+
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+
   const resposta = historico
     .filter(r => r[ref] !== undefined)
-    .map(r => ({ horario: r.timestamp, valor: r[ref] }));
+    .map(r => ({
+      horario: r.timestamp,
+      valor: r[ref]
+    }));
+
   res.json(resposta);
 });
 
-// Consumo diário calculado a partir do historico
-app.get("/consumo-diario", (_, res) => {
-  const historico = lerArquivoJSON(HIST_FILE, []);
-  const consumoPorDia = calcularConsumoDiario(historico);
-  res.json(consumoPorDia);
-});
-
-// Dashboard data (últimos valores + consumo últimos 7 dias)
-app.get("/dashboard-data", (_, res) => {
-  const dados = lerArquivoJSON(DATA_FILE, {});
-  const historico = lerArquivoJSON(HIST_FILE, []);
-  const consumo = calcularConsumoDiario(historico);
-
-  // pegar últimos 7 dias de consumo ordenados (se existirem)
-  const dias = Object.keys(consumo).sort().slice(-7);
-  const consumo7dias = {};
-  dias.forEach(d => consumo7dias[d] = consumo[d]);
-
-  res.json({ last: dados, consumo7dias });
-});
-
-// Páginas estáticas (se usar frontend estático em /public)
-app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")).catch(()=>res.sendStatus(404)));
+// === Páginas estáticas ===
+app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
 
 // Captura QUALQUER outra rota (útil para descobrir qual path o gateway está usando)
 app.all("*", (req, res) => {
