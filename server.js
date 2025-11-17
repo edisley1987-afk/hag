@@ -10,6 +10,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// Permitir JSON e form-urlencoded no POST
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // ------------------------------
 // BANCO DE DADOS
 // ------------------------------
@@ -42,14 +46,15 @@ const dadosAtuais = {};
 
 // Remove sufixos como "_A"
 function limparNome(nome) {
-  return nome.replace(/_A$/i, "");
+  return nome?.replace(/_A$/i, "") || "";
 }
 
-// ------------------------------
-// ROTA DE ATUALIZAÇÃO
-// ------------------------------
-app.get("/update", (req, res) => {
-  let { name, litros, pressao } = req.query;
+// -------------------------------------------
+// FUNÇÃO CENTRAL: trata GET e POST em /update
+// -------------------------------------------
+function processarUpdate(req, res) {
+  // Captura valores do GET (query) OU POST (body)
+  let { name, litros, pressao } = req.method === "GET" ? req.query : req.body;
 
   if (!name) return res.status(400).send("Nome inválido");
 
@@ -65,19 +70,31 @@ app.get("/update", (req, res) => {
 
   const datahora = new Date().toLocaleString("pt-BR");
 
+  // Salva no objeto atual
   dadosAtuais[name] = {
     valor: Number(valor),
     datahora
   };
 
+  // Salva no banco
   db.run(
     "INSERT INTO registros (nome, valor, datahora) VALUES (?, ?, ?)",
     [name, valor, datahora]
   );
 
   console.log("Novo registro:", name, valor, datahora);
-  res.send("OK");
-});
+  res.json({ status: "OK", name, valor });
+}
+
+// -------------------------------------------
+// Rota GET
+// -------------------------------------------
+app.get("/update", processarUpdate);
+
+// -------------------------------------------
+// Rota POST
+// -------------------------------------------
+app.post("/update", processarUpdate);
 
 // ------------------------------
 // ROTAS DO DASHBOARD
@@ -88,7 +105,6 @@ app.get("/current", (req, res) => {
 
 app.get("/history", (req, res) => {
   const { nome } = req.query;
-
   if (!nome) return res.status(400).send("Nome requerido.");
 
   db.all(
