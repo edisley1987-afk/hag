@@ -5,10 +5,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Capacidades corretas informadas por você
     const capacidades = {
-        "Reservatorio_elevador": 20000,
-        "RESERVATORIO_Osmose": 200,
-        "RESERVATORIO_CME": 1000,
-        "RESERVATORIO_Abrandada": 9000
+        "Reservatorio_Elevador": 20000,
+        "Reservatorio_Osmose": 200,
+        "Reservatorio_CME": 1000,
+        "Reservatorio_Abrandada": 9000
+    };
+
+    // Nomes amigáveis para exibição
+    const nomesAmigaveis = {
+        "Reservatorio_Elevador_current": "Reservatório Elevador",
+        "Reservatorio_Osmose_current": "Reservatório Osmose",
+        "Reservatorio_CME_current": "Reservatório CME",
+        "Reservatorio_Abrandada_current": "Reservatório Abrandada"
     };
 
     // --- 1) Buscar histórico completo e extrair nomes automaticamente ---
@@ -22,17 +30,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            // Extrair nomes dos campos terminados em "_current"
+            // Extrair apenas campos que são RESERVATÓRIOS
             const nomes = Object.keys(dados[0])
-                .filter(k => k.includes("_current"));
+                .filter(k =>
+                    k.toLowerCase().startsWith("reservatorio") &&
+                    k.endsWith("_current")
+                );
 
-            // Preencher SELECT
+            // Preencher SELECT com nomes amigáveis
             select.innerHTML = "";
             nomes.forEach(nome => {
-                select.innerHTML += `<option value="${nome}">${nome}</option>`;
+                const label = nomesAmigaveis[nome] || nome;
+                select.innerHTML += `<option value="${nome}">${label}</option>`;
             });
 
-            // Carregar o primeiro reservatório automaticamente
+            // Carregar primeiro reservatório automaticamente
             carregarHistorico(nomes[0]);
 
         } catch (erro) {
@@ -51,7 +63,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 litros: item[reservatorio]
             })).filter(r => r.litros !== undefined);
 
-            const capacidade = capacidades[reservatorio] || 100; // padrão
+            // Remover "_current" antes de buscar capacidade
+            const nomeCapacidade = reservatorio.replace("_current", "");
+            const capacidade = capacidades[nomeCapacidade] || 100;
 
             const datas = registros.map(r => formatarData(r.data));
             const litros = registros.map(r => Number(r.litros));
@@ -65,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 data: {
                     labels: datas,
                     datasets: [{
-                        label: reservatorio,
+                        label: nomesAmigaveis[reservatorio] || reservatorio,
                         data: litros,
                         borderColor: "#2c8b7d",
                         borderWidth: 2,
