@@ -1,4 +1,4 @@
-/* ======= Servidor Universal HAG (com histórico otimizado e variação > 5%) ======= */
+/* ======= Servidor Universal HAG (com histórico otimizado e suporte a nomes sem "_current") ======= */
 
 import express from "express";
 import fs from "fs";
@@ -50,7 +50,7 @@ function adicionarAoHistorico(dados) {
   const ultima = historico.length ? historico[historico.length - 1] : null;
   let mudou = false;
 
-  // Verificar variação maior que 5% para reservar espaço
+  // Verificar variação maior que 5% somente nos reservatórios
   if (ultima) {
     for (const ref of Object.keys(SENSORES)) {
       if (!ref.includes("Reservatorio")) continue;
@@ -90,11 +90,13 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     let dataArray = [];
 
     if (Array.isArray(body)) dataArray = body;
+
     else if (Array.isArray(body?.data)) dataArray = body.data;
-    else if (typeof body === "object" && body !== null)
+
+    else if (typeof body === "object" && body !== null) {
       dataArray = Object.keys(body)
-        .filter(k => k.includes("_current"))
         .map(k => ({ ref: k, value: Number(body[k]) }));
+    }
 
     if (!dataArray.length) {
       return res.status(400).json({ erro: "Nenhum dado válido" });
@@ -103,10 +105,15 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     const dadosConvertidos = {};
 
     for (const item of dataArray) {
-      const ref = item.ref || item.name;
+      let ref = item.ref || item.name;
       const valor = Number(item.value);
 
       if (!ref || isNaN(valor)) continue;
+
+      // 💡 Aceitar Nomes COM OU SEM "_current"
+      if (!ref.endsWith("_current")) {
+        ref = ref + "_current";
+      }
 
       const sensor = SENSORES[ref];
       if (!sensor) continue;
@@ -115,11 +122,15 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
       let leituraConvertida = 0;
 
+      // Conversão de Pressão → bar
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(2));
-      } else {
+      }
+
+      // Conversão de Reservatórios → Litros
+      else {
         leituraConvertida = Math.round(((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade);
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
       }
@@ -127,7 +138,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dadosConvertidos[ref] = leituraConvertida;
     }
 
-    // Atualizar manutenção
+    // === Atualizar manutenção ===
     const LIMITE_MANUTENCAO = 30;
     let manutencaoAtiva = {};
 
@@ -177,9 +188,7 @@ app.get("/historico", (_, res) => {
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// =====================================================================
-//  🔵 ROTA CORRIGIDA — Lista SOMENTE de reservatórios (sem pressão)
-// =====================================================================
+// === Lista SOMENTE de reservatórios (sem pressão) ===
 app.get("/lista", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
@@ -188,12 +197,9 @@ app.get("/lista", (req, res) => {
 
   historico.forEach(registro => {
     Object.keys(registro).forEach(chave => {
-
-      // Somente reservatórios, ignorar pressão
       if (chave.includes("Reservatorio") && chave.endsWith("_current")) {
         reservatorios.add(chave);
       }
-
     });
   });
 
@@ -223,14 +229,13 @@ app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html
 app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
 app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
 
-// Captura QUALQUER outra rota (útil para descobrir qual path o gateway está usando)
+// === Captura QUALQUER outra rota ===
 app.all("*", (req, res) => {
   console.log("📡 ROTA DESCONHECIDA RECEBIDA:", req.method, req.url);
   console.log("📥 BODY:", typeof req.body === "object" ? JSON.stringify(req.body).slice(0,1000) : String(req.body).slice(0,1000));
-  // responder 200 para evitar reenvios
   res.json({ status: "rota-capturada", url: req.url });
 });
 
-// === Start server ===
+// === Iniciar servidor ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
