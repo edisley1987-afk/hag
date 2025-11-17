@@ -1,117 +1,100 @@
-// ========================
-// HISTORICO.JS COMPLETO
-// ========================
+const API_URL = window.location.origin;
 
-// Capacidades fixas dos reservatórios
+// capacidades fixas
 const CAPACIDADES = {
-    "Reservatorio_elevador": 20000,
-    "RESERVATORIO_Osmose": 200,
-    "RESERVATORIO_CME": 1000,
-    "RESERVATORIO_Abrandada": 9000
+    "Reservatorio_Elevador_current": 20000,
+    "Reservatorio_Osmose_current": 200,
+    "Reservatorio_CME_current": 1000,
+    "Reservatorio_Agua_Abrandada_current": 9000
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    carregarReservatorios();
-    document.getElementById("selectReservatorio").addEventListener("change", carregarHistorico);
-});
-
-
-// ========================
-// CARREGA RESERVATÓRIOS (SEM API)
-// ========================
-function carregarReservatorios() {
+async function carregarReservatorios() {
     const select = document.getElementById("selectReservatorio");
 
-    select.innerHTML = `<option value="">Selecione o reservatório</option>`;
-
-    Object.keys(CAPACIDADES).forEach(key => {
-        let nome = key.replace(/_/g, " ");
-        select.innerHTML += `<option value="${key}">${nome}</option>`;
-    });
-}
-
-
-// ========================
-// BUSCA HISTÓRICO NO SERVIDOR
-// ========================
-async function carregarHistorico() {
-    const reservatorio = document.getElementById("selectReservatorio").value;
-    if (!reservatorio) return;
-
     try {
-        const res = await fetch(`/historico?reservatorio=${reservatorio}`);
-        const dados = await res.json();
+        const resp = await fetch(`${API_URL}/historico/lista`);
+        const lista = await resp.json();
 
-        if (!Array.isArray(dados) || dados.length === 0) {
-            document.getElementById("tabelaBody").innerHTML =
-                `<tr><td colspan="4">Nenhum dado disponível</td></tr>`;
-            return;
-        }
+        select.innerHTML = `<option value="">Selecione o Reservatório</option>`;
 
-        preencherTabela(dados, reservatorio);
-        gerarGrafico(dados, reservatorio);
+        lista.forEach(r => {
+            select.innerHTML += `<option value="${r}">${r.replace(/_/g, " ")}</option>`;
+        });
 
-    } catch (e) {
-        console.error("Erro ao carregar histórico", e);
+    } catch (err) {
+        console.error("Erro ao carregar reservatórios:", err);
+        select.innerHTML = `<option value="">Erro ao carregar</option>`;
     }
 }
 
+async function carregarHistorico() {
+    const r = document.getElementById("selectReservatorio").value;
+    if (!r) return;
 
-// ========================
-// PREENCHER TABELA
-// ========================
-function preencherTabela(lista, reservatorio) {
-    const tbody = document.getElementById("tabelaBody");
-    tbody.innerHTML = "";
+    try {
+        const resp = await fetch(`${API_URL}/historico/${r}`);
+        const dados = await resp.json();
 
-    const capacidade = CAPACIDADES[reservatorio];
+        const capacidade = CAPACIDADES[r] || 0;
 
-    lista.forEach(item => {
-        const litros = Number(item.valorLitros || 0);
-        const percentual = ((litros / capacidade) * 100).toFixed(1);
+        const tabela = document.getElementById("tabelaHistorico");
+        tabela.innerHTML = "";
 
-        const tr = `
-            <tr>
-                <td>${item.dataHora}</td>
-                <td>${litros}</td>
-                <td>${capacidade}</td>
-                <td>${percentual}%</td>
-            </tr>
-        `;
-        tbody.innerHTML += tr;
-    });
+        dados.forEach(item => {
+            const litros = item.valor;
+            const porcentagem = capacidade ? ((litros / capacidade) * 100).toFixed(1) : "-";
+
+            tabela.innerHTML += `
+                <tr>
+                    <td>${item.horario}</td>
+                    <td>${litros} L</td>
+                    <td>${porcentagem}%</td>
+                </tr>
+            `;
+        });
+
+        atualizarGrafico(dados, capacidade);
+
+    } catch (err) {
+        console.error("Erro ao carregar histórico:", err);
+    }
 }
 
-
-// ========================
-// GRÁFICO
-// ========================
 let grafico;
-
-function gerarGrafico(lista, reservatorio) {
-    const capacidade = CAPACIDADES[reservatorio];
-
-    const labels = lista.map(i => i.dataHora);
-    const valores = lista.map(i => Number((i.valorLitros / capacidade) * 100).toFixed(1));
-
+function atualizarGrafico(dados, capacidade) {
     const ctx = document.getElementById("graficoHistorico").getContext("2d");
+
+    const labels = dados.map(d => d.horario);
+    const litros = dados.map(d => d.valor);
+    const porcentagem = dados.map(d => capacidade ? (d.valor / capacidade * 100).toFixed(1) : 0);
 
     if (grafico) grafico.destroy();
 
     grafico = new Chart(ctx, {
         type: "line",
         data: {
-            labels: labels,
-            datasets: [{
-                label: "% do reservatório",
-                data: valores,
-                borderWidth: 2
-            }]
+            labels,
+            datasets: [
+                {
+                    label: "Litros",
+                    data: litros,
+                    borderWidth: 2
+                },
+                {
+                    label: "% do Reservatório",
+                    data: porcentagem,
+                    borderWidth: 2
+                }
+            ]
         },
         options: {
-            scales: {
-                y: { beginAtZero: true, max: 100 }
-            }
+            responsive: true,
+            maintainAspectRatio: false
         }
     });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    carregarReservatorios();
+    document.getElementById("selectReservatorio").addEventListener("change", carregarHistorico);
+});
