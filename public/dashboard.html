@@ -5,19 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Reservatórios — HAG</title>
 
-  <!-- se você já tem style.css global, mantenha; este arquivo importa style.css -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- ícones básicos -->
-  <style>
-    /* Ajustes específicos do dashboard (pequeno trecho para garantir look) */
-    .top-actions { display:flex; gap:12px; align-items:center; justify-content:center; margin:16px 0 6px; }
-    .btn-menu {
-      background:#1f8b73; color:#fff; border:none; padding:10px 16px; border-radius:12px;
-      box-shadow:0 2px 0 rgba(0,0,0,0.08); cursor:pointer; font-weight:600;
-    }
-    .btn-menu:hover { transform:translateY(-2px); }
-  </style>
 </head>
 <body>
   <header class="app-header">
@@ -30,7 +18,8 @@
         <button class="btn-menu" id="btnBack" title="Voltar">⬅ Voltar</button>
         <button class="btn-menu" id="btnHistorico" title="Histórico">📘 Histórico</button>
       </div>
-      <p id="lastUpdate" class="last-update">Última atualização: --/--/---- --:--:--</p>
+
+      <p id="lastUpdate" class="last-update">Última atualização: --</p>
     </div>
 
     <section class="cards-row" id="cardsRow">
@@ -44,6 +33,9 @@
     </div>
     <div class="footer-text">Hospital Arnaldo Gavazza — Monitoramento de Reservatórios</div>
   </footer>
+
+  <!-- áudio de alarme (uso de URL pública; navegador pode bloquear autoplay até interação) -->
+  <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script src="dashboard.js"></script>
 </body>
