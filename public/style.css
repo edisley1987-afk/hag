@@ -1,149 +1,81 @@
-/* === style.css === */
-/* Layout moderno horizontal com efeito visual de nível de água real */
+/* ===== Layout Global — Hospital Arnaldo Gavazza ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f7fa;
+  font-family: "Poppins", Arial, sans-serif;
+  background-color: #f5f9f8;
+  color: #1a3d36;
   margin: 0;
   padding: 0;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
 }
 
+/* ===== Header ===== */
 header {
-  background: #004d7a;
+  background-color: #2c8b7d;
   color: white;
+  padding: 18px 0;
   text-align: center;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-#lastUpdate {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-top: 5px;
+header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
 }
 
-/* === Cards lado a lado === */
-.cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
-  padding: 20px;
-  justify-items: center;
-  align-items: stretch;
-  flex-grow: 1;
+/* ===== Main Card Container ===== */
+main {
+  max-width: 1100px;
+  margin: 40px auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  padding: 30px;
 }
 
-/* === Card (caixa d'água) === */
-.card {
-  position: relative;
-  width: 100%;
-  max-width: 280px;
-  height: 320px;
-  background: #ffffff;
-  border-radius: 18px;
-  border: 4px solid #ccc;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  text-align: center;
-  transition: transform 0.25s, border-color 0.4s;
-}
-
-.card:hover {
-  transform: scale(1.03);
-}
-
-/* === Água subindo === */
-.card::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: var(--nivel, 0%);
-  background: var(--corNivel, linear-gradient(to top, #3498db, #2ecc71));
-  transition: height 1s ease, background 0.8s ease;
-  z-index: 0;
-  opacity: 0.5;
-}
-
-/* === Conteúdo acima da “água” === */
-.card h2,
-.card p,
-.card button {
-  position: relative;
-  z-index: 2;
-}
-
-.card h2 {
-  margin-top: 15px;
-  font-size: 1.2rem;
-  color: #004d7a;
-  margin-bottom: 10px;
-}
-
-.card p {
-  font-size: 1rem;
-  margin: 4px 0;
-}
-
-/* === Borda muda conforme nível === */
-.card[data-status="alto"] {
-  border-color: #2ecc71;
-}
-.card[data-status="medio"] {
-  border-color: #f1c40f;
-}
-.card[data-status="baixo"] {
-  border-color: #e74c3c;
-}
-
-/* === Botão histórico === */
-.historico-btn {
-  background: #004d7a;
+/* ===== Botões ===== */
+button {
+  background-color: #2c8b7d;
   color: white;
   border: none;
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.9rem;
-  margin-top: 10px;
-  transition: background 0.3s;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
-.historico-btn:hover {
-  background: #0074b1;
+button:hover {
+  background-color: #256f64;
+  transform: translateY(-2px);
 }
 
-/* === Quando sem dados === */
-.card.sem-dados {
-  opacity: 0.6;
-  border-color: #aaa;
-}
-.card.sem-dados::after {
-  height: 0 !important;
+/* ===== Containers ===== */
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
 }
 
-/* === Rodapé fixo === */
+canvas {
+  background-color: #fefefe;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100% !important;
+  max-height: 420px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ===== Footer ===== */
 footer {
-  background: #004d7a;
+  background-color: #2c8b7d;
   color: white;
   text-align: center;
-  padding: 10px;
-  font-size: 0.9rem;
-  position: sticky;
-  bottom: 0;
-}
-
-/* === Responsivo === */
-@media (max-width: 800px) {
-  .cards-container {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-  .card {
-    height: 260px;
-  }
+  padding: 12px;
+  margin-top: 40px;
+  font-size: 15px;
 }
