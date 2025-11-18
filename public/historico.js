@@ -1,5 +1,5 @@
 // =====================
-//  HISTORICO.JS FINAL
+//  HISTORICO.JS FINAL CORRIGIDO
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
@@ -70,6 +70,8 @@ async function carregarHistorico() {
       if (!infoReservatorio) return;
 
       const { min, max } = infoReservatorio;
+
+      // média em % (o servidor já envia convertido)
       const media = (min + max) / 2;
 
       labels.push(data);
@@ -86,7 +88,9 @@ async function carregarHistorico() {
       return;
     }
 
-    // CARD de última leitura
+    // ============================
+    // CARD DE ÚLTIMA LEITURA (LITROS)
+    // ============================
     if (ultimaLeitura && ultimaData) {
       const hoje = new Date();
       const dataUltima = new Date(ultimaData);
@@ -101,14 +105,16 @@ async function carregarHistorico() {
         <div class="card historico-card-resumo">
           <h3>Última leitura</h3>
           <p><strong>Data:</strong> ${ultimaData}</p>
-          <p><strong>Mínimo:</strong> ${ultimaLeitura.min}%</p>
-          <p><strong>Máximo:</strong> ${ultimaLeitura.max}%</p>
+          <p><strong>Mínimo:</strong> ${ultimaLeitura.min} L</p>
+          <p><strong>Máximo:</strong> ${ultimaLeitura.max} L</p>
           ${alerta}
         </div>
       `;
     }
 
-    // GRÁFICO
+    // ============================
+    // GRÁFICO EM PORCENTAGEM (%)
+    // ============================
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
