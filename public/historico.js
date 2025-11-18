@@ -32,7 +32,6 @@ const CORES = {
 // FUNÇÃO PRINCIPAL
 // =====================
 async function carregarHistorico() {
-  // Nome interno do reservatório selecionado
   const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
 
   if (!chaveReservatorio) {
@@ -41,7 +40,6 @@ async function carregarHistorico() {
     return;
   }
 
-  // Mensagem inicial
   cardsContainer.innerHTML = "⏳ Carregando histórico...";
 
   try {
@@ -56,7 +54,6 @@ async function carregarHistorico() {
       return;
     }
 
-    // Datas ordenadas (chaves do objeto: "2025-11-18", etc.)
     const datasOrdenadas = Object.keys(historico).sort();
 
     const labels = [];
@@ -65,7 +62,6 @@ async function carregarHistorico() {
     let ultimaLeitura = null;
     let ultimaData = null;
 
-    // Percorre cada dia e pega min/max do reservatório escolhido
     datasOrdenadas.forEach((data) => {
       const registroDia = historico[data];
       if (!registroDia) return;
@@ -83,7 +79,6 @@ async function carregarHistorico() {
       ultimaData = data;
     });
 
-    // Se não achou nenhuma leitura para esse reservatório
     if (!labels.length) {
       cardsContainer.innerHTML =
         "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
@@ -91,9 +86,7 @@ async function carregarHistorico() {
       return;
     }
 
-    // ==========================
-    // CARD "ÚLTIMA LEITURA"
-    // ==========================
+    // CARD de última leitura
     if (ultimaLeitura && ultimaData) {
       const hoje = new Date();
       const dataUltima = new Date(ultimaData);
@@ -115,9 +108,7 @@ async function carregarHistorico() {
       `;
     }
 
-    // ==========================
-    // GRÁFICO DE LINHA
-    // ==========================
+    // GRÁFICO
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
@@ -140,25 +131,8 @@ async function carregarHistorico() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top",
-          },
-          title: {
-            display: true,
-            text: "Histórico diário do reservatório",
-          },
-        },
         scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            title: { display: true, text: "Nível (%)" },
-          },
-          x: {
-            title: { display: true, text: "Data" },
-          },
+          y: { beginAtZero: true, max: 100 },
         },
       },
     });
@@ -169,12 +143,8 @@ async function carregarHistorico() {
   }
 }
 
-// =====================
-// EVENTOS
-// =====================
-
-// Sempre que trocar o reservatório, recarrega o gráfico
+// Evento ao mudar o select
 selectReservatorio.addEventListener("change", carregarHistorico);
 
-// Carrega automaticamente ao abrir a página
+// Carregar ao abrir
 carregarHistorico();
