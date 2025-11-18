@@ -1,5 +1,5 @@
 // =====================
-//  HISTORICO.JS FINAL (COM LITROS REAIS)
+//  HISTORICO.JS FINAL (com Trendline)
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
@@ -20,22 +20,31 @@ const MAPA_NOMES = {
   abrandada: "Reservatorio_Agua_Abrandada_current",
 };
 
-// CAPACIDADE REAL DE CADA RESERVATÓRIO
-const CAPACIDADES = {
-  Reservatorio_Elevador_current: 20000,   // 20.000 litros
-  Reservatorio_Osmose_current: 200,       // 200 litros
-  Reservatorio_CME_current: 5000,         // 5.000 litros
-  Reservatorio_Agua_Abrandada_current: 9000, // 9.000 litros
-};
-
-
-// Cores
+// Cores iguais ao dashboard
 const CORES = {
   Reservatorio_Elevador_current: "#2c8b7d",
   Reservatorio_Osmose_current: "#57b3a0",
   Reservatorio_CME_current: "#3498db",
   Reservatorio_Agua_Abrandada_current: "#9b59b6",
 };
+
+// ========================================
+// FUNÇÃO DE REGRESSÃO LINEAR (TRENDLINE)
+// ========================================
+function calcularTrendline(x, y) {
+  const n = y.length;
+  if (n === 0) return [];
+
+  const sumX = x.reduce((a, b) => a + b, 0);
+  const sumY = y.reduce((a, b) => a + b, 0);
+  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
+  const sumX2 = x.reduce((a, b) => a + b * b, 0);
+
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+
+  return x.map((xi) => slope * xi + intercept);
+}
 
 // =====================
 // FUNÇÃO PRINCIPAL
@@ -47,8 +56,6 @@ async function carregarHistorico() {
     cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
     return;
   }
-
-  const capacidade = CAPACIDADES[chaveReservatorio];
 
   cardsContainer.innerHTML = "⏳ Carregando histórico...";
 
@@ -64,24 +71,25 @@ async function carregarHistorico() {
     }
 
     const datasOrdenadas = Object.keys(historico).sort();
+
     const labels = [];
-    const valoresMediosLitros = [];
+    const valoresMedios = [];
 
     let ultimaLeitura = null;
     let ultimaData = null;
 
-    // Processa cada dia
     datasOrdenadas.forEach((data) => {
       const registroDia = historico[data];
+      if (!registroDia) return;
+
       const info = registroDia[chaveReservatorio];
       if (!info) return;
 
       const { min, max } = info;
-
-      const mediaLitros = (min + max) / 2; // agora é LITROS, não %
+      const media = (min + max) / 2;
 
       labels.push(data);
-      valoresMediosLitros.push(mediaLitros);
+      valoresMedios.push(media);
 
       ultimaLeitura = info;
       ultimaData = data;
@@ -93,9 +101,9 @@ async function carregarHistorico() {
       return;
     }
 
-    // ============================
-    // CARD DA ÚLTIMA LEITURA
-    // ============================
+    // ==========================
+    // CARD DE ÚLTIMA LEITURA
+    // ==========================
     if (ultimaLeitura && ultimaData) {
       const hoje = new Date();
       const dataUltima = new Date(ultimaData);
@@ -117,9 +125,15 @@ async function carregarHistorico() {
       `;
     }
 
-    // ============================
-    // GRÁFICO EM LINHA (LITROS)
-    // ============================
+    // =======================================
+    // TRENDLINE (REGRESSÃO LINEAR)
+    // =======================================
+    const indices = valoresMedios.map((_, i) => i);
+    const trendline = calcularTrendline(indices, valoresMedios);
+
+    // ==========================
+    // GRÁFICO
+    // ==========================
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
@@ -129,7 +143,7 @@ async function carregarHistorico() {
         datasets: [
           {
             label: "Nível médio diário (L)",
-            data: valoresMediosLitros,
+            data: valoresMedios,
             borderColor: CORES[chaveReservatorio],
             backgroundColor: CORES[chaveReservatorio],
             tension: 0.25,
@@ -137,16 +151,26 @@ async function carregarHistorico() {
             pointRadius: 3,
             fill: false,
           },
+
+          // 🎯 LINHA DE TENDÊNCIA PROFISSIONAL
+          {
+            label: "Linha de tendência",
+            data: trendline,
+            borderColor: "#555",
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0,
+            fill: false,
+          },
         ],
       },
+
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: {
-            beginAtZero: true,
-            max: capacidade, // ESCALA CORRETA POR RESERVATÓRIO
-          },
+          y: { beginAtZero: true },
         },
       },
     });
