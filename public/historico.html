@@ -9,33 +9,38 @@
 
 <body>
 
-  <header>
+  <header class="header">
     <h2>Histórico Diário de Níveis</h2>
   </header>
 
-  <main>
+  <main class="container">
+
     <div class="toolbar">
-      <button onclick="location.href='index.html'">⬅ Voltar</button>
-      <button onclick="location.href='consumo.html'">💧 Consumo Diário</button>
+      <button onclick="location.href='dashboard.html'" class="btn-back">⬅ Voltar</button>
+      <button onclick="location.href='consumo.html'" class="btn-history">💧 Consumo Diário</button>
     </div>
 
     <div class="card">
       <label>Selecione o reservatório:</label>
-      <select id="reservatorioSelect" onchange="carregarGrafico()">
-        <option value="Reservatorio_Elevador_current">Elevador</option>
-        <option value="Reservatorio_Osmose_current">Osmose</option>
-        <option value="Reservatorio_CME_current">CME</option>
-        <option value="Reservatorio_Agua_Abrandada_current">Água Abrandada</option>
+      <select id="reservatorioSelect">
+        <option value="elevador">Elevador</option>
+        <option value="osmose">Osmose</option>
+        <option value="cme">CME</option>
+        <option value="abrandada">Água Abrandada</option>
       </select>
     </div>
 
+    <!-- GRÁFICO -->
     <div class="card">
-      <canvas id="graficoHistorico"></canvas>
+      <canvas id="graficoHistorico" height="200"></canvas>
     </div>
+
+    <!-- CARDS DAS ÚLTIMAS LEITURAS -->
+    <div id="history-cards" class="history-cards"></div>
 
   </main>
 
-  <footer>
+  <footer class="footer">
     Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
   </footer>
 
