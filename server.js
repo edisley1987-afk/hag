@@ -27,28 +27,31 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.008056,
+    leituraCheio: 0.008305,   // 🔥 Atualizado
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
     leituraVazio: 0.00505,
-    leituraCheio: 0.006693,
+    leituraCheio: 0.006693,   // (já estava certo)
     capacidade: 200
   },
   "Reservatorio_CME_current": {
     leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
+    leituraCheio: 0.004408,   // (já estava certo)
     capacidade: 1000
   },
   "Reservatorio_Agua_Abrandada_current": {
     leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
+    leituraCheio: 0.004929,   // 🔥 Atualizado
     capacidade: 9000
   },
+
+  // Sensores de pressão continuam iguais
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
+
 
 // === Função para salvar última leitura ===
 function salvarDados(dados) {
