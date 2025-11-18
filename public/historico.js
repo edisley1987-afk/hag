@@ -1,18 +1,18 @@
 // =====================
-//  HISTORICO.JS FINAL CORRIGIDO
+//  HISTORICO.JS FINAL
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
 const API_URL = window.location.origin + "/historico";
 
-// Elementos da página (devem existir no HTML)
+// Elementos da página
 const selectReservatorio = document.getElementById("reservatorioSelect");
 const cardsContainer = document.getElementById("history-cards");
 const graficoCanvas = document.getElementById("graficoHistorico");
 
 let grafico = null;
 
-// Mapa do valor do <select> para o nome interno no arquivo historico.json
+// Mapa do value → chave interna usada no servidor
 const MAPA_NOMES = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -20,7 +20,7 @@ const MAPA_NOMES = {
   abrandada: "Reservatorio_Agua_Abrandada_current",
 };
 
-// Cores (mesma lógica do resto do sistema)
+// Cores iguais ao dashboard
 const CORES = {
   Reservatorio_Elevador_current: "#2c8b7d",
   Reservatorio_Osmose_current: "#57b3a0",
@@ -35,8 +35,7 @@ async function carregarHistorico() {
   const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
 
   if (!chaveReservatorio) {
-    cardsContainer.innerHTML =
-      "<p style='color:red;'>Reservatório inválido.</p>";
+    cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
     return;
   }
 
@@ -45,11 +44,10 @@ async function carregarHistorico() {
   try {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Falha ao buscar histórico");
-    const historico = await res.json();
 
+    const historico = await res.json();
     if (!historico || !Object.keys(historico).length) {
-      cardsContainer.innerHTML =
-        "<p style='text-align:center;'>📭 Nenhum dado encontrado.</p>";
+      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Nenhum dado encontrado.</p>";
       if (grafico) grafico.destroy();
       return;
     }
@@ -66,30 +64,27 @@ async function carregarHistorico() {
       const registroDia = historico[data];
       if (!registroDia) return;
 
-      const infoReservatorio = registroDia[chaveReservatorio];
-      if (!infoReservatorio) return;
+      const info = registroDia[chaveReservatorio];
+      if (!info) return;
 
-      const { min, max } = infoReservatorio;
-
-      // média em % (o servidor já envia convertido)
-      const media = (min + max) / 2;
+      const { min, max } = info;
+      const media = (min + max) / 2; // já em %
 
       labels.push(data);
       valoresMedios.push(media);
 
-      ultimaLeitura = infoReservatorio;
+      ultimaLeitura = info;
       ultimaData = data;
     });
 
     if (!labels.length) {
-      cardsContainer.innerHTML =
-        "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
+      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
       if (grafico) grafico.destroy();
       return;
     }
 
     // ============================
-    // CARD DE ÚLTIMA LEITURA (LITROS)
+    // CARD DA ÚLTIMA LEITURA
     // ============================
     if (ultimaLeitura && ultimaData) {
       const hoje = new Date();
@@ -113,7 +108,7 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // GRÁFICO EM PORCENTAGEM (%)
+    // GRÁFICO EM LINHA (%)
     // ============================
     if (grafico) grafico.destroy();
 
@@ -125,8 +120,8 @@ async function carregarHistorico() {
           {
             label: "Nível médio diário (%)",
             data: valoresMedios,
-            borderColor: CORES[chaveReservatorio] || "#2c8b7d",
-            backgroundColor: CORES[chaveReservatorio] || "#2c8b7d",
+            borderColor: CORES[chaveReservatorio],
+            backgroundColor: CORES[chaveReservatorio],
             tension: 0.25,
             borderWidth: 2,
             pointRadius: 3,
@@ -149,8 +144,8 @@ async function carregarHistorico() {
   }
 }
 
-// Evento ao mudar o select
+// Evento ao trocar o reservatório
 selectReservatorio.addEventListener("change", carregarHistorico);
 
-// Carregar ao abrir
+// Carregar na abertura da página
 carregarHistorico();
