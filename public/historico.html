@@ -9,16 +9,18 @@
 
 <body>
 
-  <header>
+  <!-- Barra superior igual ao consumo -->
+  <header class="topbar">
     <h1>Histórico Diário de Níveis</h1>
-    <a class="voltar-btn" href="index.html">⬅ Voltar</a>
+    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
   </header>
 
-  <main>
+  <!-- Conteúdo central -->
+  <main class="container">
 
-    <!-- ====== FILTRO DO RESERVATÓRIO ====== -->
-    <div class="card-grafico">
-      <label><strong>Selecione o reservatório:</strong></label><br>
+    <!-- CARD de seleção -->
+    <div class="card">
+      <label for="reservatorioSelect"><strong>Selecione o reservatório:</strong></label>
       <select id="reservatorioSelect" onchange="carregarGrafico()">
         <option value="Reservatorio_Elevador_current">Elevador</option>
         <option value="Reservatorio_Osmose_current">Osmose</option>
@@ -27,16 +29,17 @@
       </select>
     </div>
 
-    <!-- ====== GRÁFICO GRANDE ====== -->
-    <div class="card-grafico">
+    <!-- CARD do gráfico -->
+    <div class="card">
       <canvas id="graficoHistorico"></canvas>
     </div>
 
-    <!-- ====== TABELA ====== -->
-    <div id="historico"></div>
-
   </main>
 
+  <footer>
+    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
+  </footer>
+
+  <script src="historico.js"></script>
 </body>
-<script src="historico.js"></script>
 </html>
