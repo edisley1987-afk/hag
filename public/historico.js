@@ -1,188 +1,129 @@
-// =====================
-//  HISTORICO.JS FINAL (com Trendline)
-// =====================
+// === CONFIGURAÇÕES ===
+const HIST_FILE = "/storage/historico.json";
 
-// URL da API de histórico gerada pelo servidor Node
-const API_URL = window.location.origin + "/historico";
-
-// Elementos da página
-const selectReservatorio = document.getElementById("reservatorioSelect");
-const cardsContainer = document.getElementById("history-cards");
-const graficoCanvas = document.getElementById("graficoHistorico");
-
-let grafico = null;
-
-// Mapa do value → chave interna usada no servidor
-const MAPA_NOMES = {
-  elevador: "Reservatorio_Elevador_current",
-  osmose: "Reservatorio_Osmose_current",
-  cme: "Reservatorio_CME_current",
-  abrandada: "Reservatorio_Agua_Abrandada_current",
+// Capacidade por reservatório
+const CAPACIDADES = {
+  elevador: 20000,
+  osmose: 200,
+  cme: 5000,
+  abrandada: 9000,
 };
 
-// Cores iguais ao dashboard
-const CORES = {
-  Reservatorio_Elevador_current: "#2c8b7d",
-  Reservatorio_Osmose_current: "#57b3a0",
-  Reservatorio_CME_current: "#3498db",
-  Reservatorio_Agua_Abrandada_current: "#9b59b6",
+// Nome para exibir
+const NOMES = {
+  elevador: "Elevador",
+  osmose: "Osmose",
+  cme: "CME",
+  abrandada: "Água Abrandada",
 };
 
-// ========================================
-// FUNÇÃO DE REGRESSÃO LINEAR (TRENDLINE)
-// ========================================
-function calcularTrendline(x, y) {
-  const n = y.length;
-  if (n === 0) return [];
-
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
-  const sumX2 = x.reduce((a, b) => a + b * b, 0);
-
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
-
-  return x.map((xi) => slope * xi + intercept);
-}
-
-// =====================
-// FUNÇÃO PRINCIPAL
-// =====================
+// === BUSCAR HISTÓRICO ===
 async function carregarHistorico() {
-  const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
-
-  if (!chaveReservatorio) {
-    cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
-    return;
-  }
-
-  cardsContainer.innerHTML = "⏳ Carregando histórico...";
-
   try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Falha ao buscar histórico");
-
-    const historico = await res.json();
-    if (!historico || !Object.keys(historico).length) {
-      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Nenhum dado encontrado.</p>";
-      if (grafico) grafico.destroy();
-      return;
-    }
-
-    const datasOrdenadas = Object.keys(historico).sort();
-
-    const labels = [];
-    const valoresMedios = [];
-
-    let ultimaLeitura = null;
-    let ultimaData = null;
-
-    datasOrdenadas.forEach((data) => {
-      const registroDia = historico[data];
-      if (!registroDia) return;
-
-      const info = registroDia[chaveReservatorio];
-      if (!info) return;
-
-      const { min, max } = info;
-      const media = (min + max) / 2;
-
-      labels.push(data);
-      valoresMedios.push(media);
-
-      ultimaLeitura = info;
-      ultimaData = data;
-    });
-
-    if (!labels.length) {
-      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
-      if (grafico) grafico.destroy();
-      return;
-    }
-
-    // ==========================
-    // CARD DE ÚLTIMA LEITURA
-    // ==========================
-    if (ultimaLeitura && ultimaData) {
-      const hoje = new Date();
-      const dataUltima = new Date(ultimaData);
-      const diffMin = Math.round((hoje - dataUltima) / 60000);
-
-      const alerta =
-        diffMin > 10
-          ? "<div class='alerta'>⚠ Mais de 10 minutos sem atualização</div>"
-          : "";
-
-      cardsContainer.innerHTML = `
-        <div class="card historico-card-resumo">
-          <h3>Última leitura</h3>
-          <p><strong>Data:</strong> ${ultimaData}</p>
-          <p><strong>Mínimo:</strong> ${ultimaLeitura.min} L</p>
-          <p><strong>Máximo:</strong> ${ultimaLeitura.max} L</p>
-          ${alerta}
-        </div>
-      `;
-    }
-
-    // =======================================
-    // TRENDLINE (REGRESSÃO LINEAR)
-    // =======================================
-    const indices = valoresMedios.map((_, i) => i);
-    const trendline = calcularTrendline(indices, valoresMedios);
-
-    // ==========================
-    // GRÁFICO
-    // ==========================
-    if (grafico) grafico.destroy();
-
-    grafico = new Chart(graficoCanvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Nível médio diário (L)",
-            data: valoresMedios,
-            borderColor: CORES[chaveReservatorio],
-            backgroundColor: CORES[chaveReservatorio],
-            tension: 0.25,
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: false,
-          },
-
-          // 🎯 LINHA DE TENDÊNCIA PROFISSIONAL
-          {
-            label: "Linha de tendência",
-            data: trendline,
-            borderColor: "#555",
-            borderDash: [6, 6],
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0,
-            fill: false,
-          },
-        ],
-      },
-
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true },
-        },
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    cardsContainer.innerHTML = `<p style="color:red;">Erro ao carregar histórico: ${err.message}</p>`;
-    if (grafico) grafico.destroy();
+    const resp = await fetch(HIST_FILE + "?v=" + Date.now());
+    return await resp.json();
+  } catch (e) {
+    console.error("Erro ao carregar histórico:", e);
+    return {};
   }
 }
 
-// Evento ao trocar o reservatório
-selectReservatorio.addEventListener("change", carregarHistorico);
+// === GERAR GRÁFICO COM LINHA DE TENDÊNCIA ===
+function gerarGrafico(dias, valores, capacidade) {
+  const ctx = document.getElementById("grafico").getContext("2d");
 
-// Carregar na abertura da página
-carregarHistorico();
+  // Calcular tendência (regressão linear)
+  const n = valores.length;
+  const x = [...Array(n).keys()];
+  const avgX = x.reduce((a, b) => a + b, 0) / n;
+  const avgY = valores.reduce((a, b) => a + b, 0) / n;
+
+  let num = 0,
+    den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (x[i] - avgX) * (valores[i] - avgY);
+    den += (x[i] - avgX) ** 2;
+  }
+  const m = num / den;
+  const b = avgY - m * avgX;
+
+  const tendencia = x.map(i => m * i + b);
+
+  if (window.graficoInstance) window.graficoInstance.destroy();
+
+  window.graficoInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: dias,
+      datasets: [
+        {
+          label: "Nível médio diário (L)",
+          data: valores,
+          borderWidth: 3,
+          tension: 0.2,
+          pointRadius: 5,
+          borderColor: "#6a1b9a",
+          backgroundColor: "#6a1b9a",
+        },
+        {
+          label: "Linha de tendência",
+          data: tendencia,
+          borderWidth: 2,
+          borderDash: [6, 6],
+          tension: 0.1,
+          pointRadius: 0,
+          borderColor: "#000",
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          suggestedMin: 0,
+          suggestedMax: capacidade,
+        }
+      }
+    }
+  });
+}
+
+// === ATUALIZAR TELA ===
+async function atualizarHistorico() {
+  const select = document.getElementById("reservatorioSelect");
+  const chave = select.value;
+
+  const historico = await carregarHistorico();
+  const dias = Object.keys(historico).sort();
+
+  if (dias.length === 0) return;
+
+  let valores = [];
+  let exibirDias = [];
+
+  dias.forEach(d => {
+    const registro = historico[d][chave];
+    if (registro) {
+      const media = (registro.min + registro.max) / 2;
+      valores.push(media);
+      exibirDias.push(d);
+    }
+  });
+
+  // Última leitura
+  const ultimoDia = exibirDias[exibirDias.length - 1];
+  const ultima = historico[ultimoDia][chave];
+
+  document.getElementById("dadosResumo").innerHTML = `
+    <strong>Data:</strong> ${ultimoDia}<br>
+    <strong>Mínimo:</strong> ${ultima.min} L<br>
+    <strong>Máximo:</strong> ${ultima.max} L<br>
+  `;
+
+  gerarGrafico(exibirDias, valores, CAPACIDADES[chave]);
+}
+
+document.getElementById("reservatorioSelect").addEventListener("change", atualizarHistorico);
+
+atualizarHistorico();
