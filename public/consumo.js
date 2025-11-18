@@ -1,18 +1,19 @@
-// ======= consumo.js =======
-// Consumo diário REAL baseado em MIN/MAX do dia
+// ======= consumo.js (100% compatível com seu historico.json) =======
 
-const CAPACIDADE_ELEVADOR = 10000;  // ajuste aqui se necessário
-const CAPACIDADE_OSMOSE = 8000;     // ajuste aqui se necessário
+const CAPACIDADE_ELEVADOR = 20000;
+const CAPACIDADE_OSMOSE   = 200;
 
 let alertaEnviado = false;
 
+// ============================
+// Carregar histórico do servidor
 // ============================
 async function carregarConsumo() {
   try {
     const resp = await fetch("/historico");
     const historico = await resp.json();
 
-    if (!historico.length) {
+    if (!historico || Object.keys(historico).length === 0) {
       mostrarAvisoSemDados();
       return;
     }
@@ -33,64 +34,40 @@ async function carregarConsumo() {
 
 // ============================
 function mostrarAvisoSemDados() {
-  const canvas = document.getElementById("graficoConsumo");
-
-  if (window.graficoConsumo instanceof Chart) {
-    window.graficoConsumo.destroy();
-  }
-
-  canvas.parentElement.innerHTML =
-    "<p style='text-align:center; color:gray; font-size:18px;'>Ainda não há dados suficientes para gerar o gráfico de consumo diário.</p>";
+  document.getElementById("graficoConsumo").outerHTML =
+    "<p style='text-align:center; color:gray; font-size:18px;'>Sem dados suficientes para gerar o gráfico.</p>";
 }
 
-// ============================
+// ==========================================
+// Cálculo REAL usando min/max diário do servidor
+// ==========================================
 function calcularConsumoDiario(historico) {
-  const dias = {};
-
-  historico.forEach(entry => {
-    const data = new Date(entry.timestamp).toLocaleDateString("pt-BR");
-
-    if (!dias[data]) {
-      dias[data] = {
-        elevadorMin: Infinity,
-        elevadorMax: 0,
-        osmoseMin: Infinity,
-        osmoseMax: 0
-      };
-    }
-
-    if (typeof entry.Reservatorio_Elevador_current === "number") {
-      const v = entry.Reservatorio_Elevador_current;
-      dias[data].elevadorMin = Math.min(dias[data].elevadorMin, v);
-      dias[data].elevadorMax = Math.max(dias[data].elevadorMax, v);
-    }
-
-    if (typeof entry.Reservatorio_Osmose_current === "number") {
-      const v = entry.Reservatorio_Osmose_current;
-      dias[data].osmoseMin = Math.min(dias[data].osmoseMin, v);
-      dias[data].osmoseMax = Math.max(dias[data].osmoseMax, v);
-    }
-  });
-
-  const listaDias = Object.keys(dias).sort(
-    (a, b) => new Date(a.split("/").reverse().join("-")) - new Date(b.split("/").reverse().join("-"))
-  );
+  const dias = Object.keys(historico).sort();
 
   const resultado = [];
 
-  listaDias.forEach(dia => {
-    const d = dias[dia];
+  dias.forEach(data => {
+    const dia = historico[data];
 
-    const elevador = d.elevadorMin === Infinity ? 0 : d.elevadorMax - d.elevadorMin;
-    const osmose = d.osmoseMin === Infinity ? 0 : d.osmoseMax - d.osmoseMin;
+    const elev = dia["Reservatorio_Elevador_current"];
+    const osm  = dia["Reservatorio_Osmose_current"];
 
-    resultado.push({ dia, elevador, osmose, elevadorMax: d.elevadorMax, osmoseMax: d.osmoseMax });
+    const consumoElev = elev ? elev.max - elev.min : 0;
+    const consumoOsm  = osm  ? osm.max  - osm.min  : 0;
+
+    resultado.push({
+      dia: data,
+      elevador: consumoElev,
+      osmose: consumoOsm,
+      elevadorMax: elev ? elev.max : 0,
+      osmoseMax: osm ? osm.max : 0
+    });
   });
 
   return resultado.slice(-5);
 }
 
-// ============================
+// ==========================================
 function calcularRegressao(valores) {
   const n = valores.length;
   const x = valores.map((_, i) => i + 1);
@@ -107,7 +84,7 @@ function calcularRegressao(valores) {
   return x.map(v => slope * v + intercept);
 }
 
-// ============================
+// ==========================================
 function exibirGrafico(consumo) {
   const ctx = document.getElementById("graficoConsumo").getContext("2d");
 
@@ -123,12 +100,12 @@ function exibirGrafico(consumo) {
 
   // ALERTA 30%
   consumo.forEach(dia => {
-    const pctElevador = (dia.elevador / CAPACIDADE_ELEVADOR) * 100;
-    const pctOsmose = (dia.osmose / CAPACIDADE_OSMOSE) * 100;
+    const pctElev = (dia.elevador / CAPACIDADE_ELEVADOR) * 100;
+    const pctOsm  = (dia.osmose  / CAPACIDADE_OSMOSE  ) * 100;
 
-    if (!alertaEnviado && (pctElevador >= 30 || pctOsmose >= 30)) {
+    if (!alertaEnviado && (pctElev >= 30 || pctOsm >= 30)) {
       alertaEnviado = true;
-      alert("⚠️ ALERTA: Consumo atingiu 30% da capacidade de um dos reservatórios!");
+      alert("⚠️ ALERTA: Consumo atingiu 30% da capacidade!");
     }
   });
 
@@ -169,50 +146,28 @@ function exibirGrafico(consumo) {
           tension: 0.3,
           fill: false
         },
-        {
-          type: "line",
-          label: "Máximo Elevador",
-          data: consumo.map(d => d.elevadorMax),
-          borderDash: [5, 5],
-          borderColor: "#003322",
-          borderWidth: 1,
-          fill: false
-        },
-        {
-          type: "line",
-          label: "Máximo Osmose",
-          data: consumo.map(d => d.osmoseMax),
-          borderDash: [5, 5],
-          borderColor: "#007755",
-          borderWidth: 1,
-          fill: false
-        }
       ],
     },
 
     options: {
       responsive: true,
-      animation: { duration: 800 },
       plugins: {
         title: {
           display: true,
-          text: "Consumo Diário de Água — Últimos 5 Dias",
+          text: "Consumo Diário — Últimos 5 Dias",
           font: { size: 18 },
         },
         legend: { position: "top" },
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: "Litros Consumidos" },
-        },
+        y: { beginAtZero: true, title: { display: true, text: "Litros" } },
         x: { title: { display: true, text: "Dia" } },
       },
     },
   });
 }
 
-// ============================
+// ==========================================
 function atualizarMeiaNoite() {
   const agora = new Date();
   const prox = new Date();
@@ -226,7 +181,6 @@ function atualizarMeiaNoite() {
   }, ms);
 }
 
-// Inicializa
 window.addEventListener("load", () => {
   carregarConsumo();
   atualizarMeiaNoite();
