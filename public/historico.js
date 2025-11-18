@@ -1,5 +1,5 @@
 // =====================
-//  HISTORICO.JS FINAL
+//  HISTORICO.JS FINAL (COM LITROS REAIS)
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
@@ -20,7 +20,15 @@ const MAPA_NOMES = {
   abrandada: "Reservatorio_Agua_Abrandada_current",
 };
 
-// Cores iguais ao dashboard
+// CAPACIDADE REAL DE CADA RESERVATÓRIO
+const CAPACIDADES = {
+  Reservatorio_Elevador_current: 1000,   // 1.000 litros
+  Reservatorio_Osmose_current: 9000,     // 9.000 litros
+  Reservatorio_CME_current: 20000,       // 20.000 litros
+  Reservatorio_Agua_Abrandada_current: 20000,
+};
+
+// Cores
 const CORES = {
   Reservatorio_Elevador_current: "#2c8b7d",
   Reservatorio_Osmose_current: "#57b3a0",
@@ -39,6 +47,8 @@ async function carregarHistorico() {
     return;
   }
 
+  const capacidade = CAPACIDADES[chaveReservatorio];
+
   cardsContainer.innerHTML = "⏳ Carregando histórico...";
 
   try {
@@ -53,25 +63,24 @@ async function carregarHistorico() {
     }
 
     const datasOrdenadas = Object.keys(historico).sort();
-
     const labels = [];
-    const valoresMedios = [];
+    const valoresMediosLitros = [];
 
     let ultimaLeitura = null;
     let ultimaData = null;
 
+    // Processa cada dia
     datasOrdenadas.forEach((data) => {
       const registroDia = historico[data];
-      if (!registroDia) return;
-
       const info = registroDia[chaveReservatorio];
       if (!info) return;
 
       const { min, max } = info;
-      const media = (min + max) / 2; // já em %
+
+      const mediaLitros = (min + max) / 2; // agora é LITROS, não %
 
       labels.push(data);
-      valoresMedios.push(media);
+      valoresMediosLitros.push(mediaLitros);
 
       ultimaLeitura = info;
       ultimaData = data;
@@ -108,7 +117,7 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // GRÁFICO EM LINHA (%)
+    // GRÁFICO EM LINHA (LITROS)
     // ============================
     if (grafico) grafico.destroy();
 
@@ -118,8 +127,8 @@ async function carregarHistorico() {
         labels,
         datasets: [
           {
-            label: "Nível médio diário (%)",
-            data: valoresMedios,
+            label: "Nível médio diário (L)",
+            data: valoresMediosLitros,
             borderColor: CORES[chaveReservatorio],
             backgroundColor: CORES[chaveReservatorio],
             tension: 0.25,
@@ -133,7 +142,10 @@ async function carregarHistorico() {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, max: 100 },
+          y: {
+            beginAtZero: true,
+            max: capacidade, // ESCALA CORRETA POR RESERVATÓRIO
+          },
         },
       },
     });
