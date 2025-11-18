@@ -1,29 +1,27 @@
 // ======= Servidor Universal HAG - compatível com Gateway ITG e Render =======
-// Versão otimizada sem dependências externas desnecessárias
-// (não usa compression, body-parser ou outras libs além de express e cors)
 
-import express from "express";
-import fs from "fs";
-import path from "path";
-import cors from "cors";
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
 
 const app = express();
 const __dirname = path.resolve();
 
-// === Middleware universal: aceita QUALQUER tipo de requisição ===
+// === Middleware universal ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
-// === Pastas e arquivos ===
+// === Pastas ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Sensores calibrados conforme planilha ===
+// === Sensores ===
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008056, capacidade: 20000 },
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006693, capacidade: 200 },
@@ -34,13 +32,13 @@ const SENSORES = {
   "Pressao_Saida_CME_current": { tipo: "pressao" },
 };
 
-// === Função para salvar leituras ===
+// === Função para salvar dados ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
   console.log("💾 Leituras atualizadas:", dados);
 }
 
-// === Função para registrar histórico diário ===
+// === Histórico ===
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -68,19 +66,18 @@ function registrarHistorico(dados) {
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// === Endpoint universal do Gateway ===
+// === Endpoint universal ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path} de ${req.ip}`);
 
   try {
     let body = req.body;
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
+
     if (typeof body === "string") {
       try {
         body = JSON.parse(body);
-      } catch {
-        console.log("⚠️ Corpo não-JSON, conteúdo bruto:", body.slice(0, 200));
-      }
+      } catch {}
     }
 
     let dataArray = [];
@@ -93,11 +90,11 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     if (!dataArray.length) {
-      console.warn("⚠️ Nenhum dado válido encontrado:", body);
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
     const dadosConvertidos = {};
+
     for (const item of dataArray) {
       const ref = item.ref || item.name;
       const valor = Number(item.value);
@@ -113,13 +110,10 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       let leituraConvertida;
 
       if (tipo === "pressao") {
-        // Converte 4–20 mA → 0–20 bar
-        const corrente = valor;
-        leituraConvertida = ((corrente - 0.004) / 0.016) * 20;
+        leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(3));
       } else if (capacidade > 1) {
-        // Reservatórios: converte para litros
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
@@ -132,35 +126,31 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
+
     salvarDados(dadosConvertidos);
     registrarHistorico(dadosConvertidos);
 
     res.json({ status: "ok", dados: dadosConvertidos });
+
   } catch (err) {
     console.error("❌ Erro ao processar atualização:", err);
     res.status(500).json({ erro: err.message });
   }
 });
 
-// === Endpoints para dashboard e histórico ===
+// === Endpoints para dashboard ===
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
-  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  res.json(dados);
+  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
 app.get("/historico", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json({});
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  res.json(historico);
+  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
 });
 
-// === Servir interface estática ===
+// === Arquivos estáticos ===
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/historico-view", (req, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
