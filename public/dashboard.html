@@ -1,28 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Reservatórios — HAG</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="dashboard.js"></script>
-</head>
 
+  <!-- se você já tem style.css global, mantenha; este arquivo importa style.css -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ícones básicos -->
+  <style>
+    /* Ajustes específicos do dashboard (pequeno trecho para garantir look) */
+    .top-actions { display:flex; gap:12px; align-items:center; justify-content:center; margin:16px 0 6px; }
+    .btn-menu {
+      background:#1f8b73; color:#fff; border:none; padding:10px 16px; border-radius:12px;
+      box-shadow:0 2px 0 rgba(0,0,0,0.08); cursor:pointer; font-weight:600;
+    }
+    .btn-menu:hover { transform:translateY(-2px); }
+  </style>
+</head>
 <body>
-  <header>
-    <h1>Reservatórios</h1>
+  <header class="app-header">
+    <h1 id="appTitle">Reservatórios</h1>
   </header>
 
-  <main>
-    <div id="lastUpdate" class="ultima-atualizacao">Aguardando dados...</div>
+  <main class="container">
+    <div class="meta-row">
+      <div class="top-actions">
+        <button class="btn-menu" id="btnBack" title="Voltar">⬅ Voltar</button>
+        <button class="btn-menu" id="btnHistorico" title="Histórico">📘 Histórico</button>
+      </div>
+      <p id="lastUpdate" class="last-update">Última atualização: --/--/---- --:--:--</p>
+    </div>
 
-    <div class="cards-container"></div>
+    <section class="cards-row" id="cardsRow">
+      <!-- cards gerados pelo JS -->
+    </section>
   </main>
 
-  <footer>
-    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
+  <footer class="app-footer">
+    <div id="globalAlert" class="global-alert" aria-live="polite" style="display:none;">
+      ⚠️ Alerta: Nível crítico em um ou mais reservatórios!
+    </div>
+    <div class="footer-text">Hospital Arnaldo Gavazza — Monitoramento de Reservatórios</div>
   </footer>
 
-  <!-- Alarme sonoro -->
-  <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+  <script src="dashboard.js"></script>
 </body>
 </html>
