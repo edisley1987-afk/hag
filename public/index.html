@@ -2,22 +2,28 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento - Sistema de Água</title>
+  <title>Início — HAG</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <header>
-    <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
-    <p id="lastUpdate">Atualizado em: --</p>
+    <h2>Sistema de Monitoramento — HAG</h2>
   </header>
 
-  <div class="cards-container" id="cards"></div>
+  <main>
+    <div class="card" style="text-align:center;">
+      <h2>Bem-vindo ao Monitoramento dos Reservatórios</h2>
+      <p>Escolha uma das opções abaixo:</p>
+
+      <button onclick="location.href='dashboard.html'">📊 Dashboard</button>
+      <button onclick="location.href='historico.html'">📅 Histórico Diário</button>
+      <button onclick="location.href='consumo.html'">💧 Consumo</button>
+    </div>
+  </main>
 
   <footer>
-    <p>© 2025 Sistema de Monitoramento Hospitalar</p>
+    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
   </footer>
-
-  <script src="script.js"></script>
 </body>
 </html>
