@@ -9,25 +9,33 @@
 
 <body>
 
-  <!-- Barra superior igual ao consumo -->
+  <!-- Barra superior -->
   <header class="topbar">
     <h1>Histórico Diário de Níveis</h1>
-    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
+
+    <div class="top-buttons">
+      <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
+
+      <!-- 🔵 Botão para consumo diário -->
+      <button class="btn-consumo" onclick="location.href='consumo.html'">💧 Consumo Diário</button>
+    </div>
   </header>
 
-  <!-- Conteúdo central -->
   <main class="container">
 
     <!-- CARD de seleção -->
     <div class="card">
       <label for="reservatorioSelect"><strong>Selecione o reservatório:</strong></label>
-      <select id="reservatorioSelect" onchange="carregarGrafico()">
-        <option value="Reservatorio_Elevador_current">Elevador</option>
-        <option value="Reservatorio_Osmose_current">Osmose</option>
-        <option value="Reservatorio_CME_current">CME</option>
-        <option value="Reservatorio_Agua_Abrandada_current">Água Abrandada</option>
+      <select id="reservatorioSelect" onchange="carregarHistorico()">
+        <option value="elevador">Elevador</option>
+        <option value="osmose">Osmose</option>
+        <option value="cme">CME</option>
+        <option value="abrandada">Água Abrandada</option>
       </select>
     </div>
+
+    <!-- Área onde o JS vai colocar o card com última leitura -->
+    <div id="history-cards"></div>
 
     <!-- CARD do gráfico -->
     <div class="card">
