@@ -1,164 +1,118 @@
-// === dashboard.js ===
-// Exibe leituras em tempo real com nível visual (caixa d'água)
-
 const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000; // atualização a cada 5s
-let ultimaLeitura = 0;
+const UPDATE_INTERVAL = 5000;
+let ultimaLeituraMs = 0;
+let alarmPlaying = false;
 
-// Configuração dos reservatórios (em litros)
+// CAPACIDADES
 const RESERVATORIOS = {
-  Reservatorio_Elevador_current: {
-    nome: "Reservatório Elevador",
-    capacidade: 20000,
-  },
-  Reservatorio_Osmose_current: {
-    nome: "Reservatório Osmose",
-    capacidade: 200,
-  },
-  Reservatorio_CME_current: {
-    nome: "Reservatório CME",
-    capacidade: 1000,
-  },
-  Reservatorio_Agua_Abrandada_current: {
-    nome: "Água Abrandada",
-    capacidade: 9000,
-  },
+  Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
+  Reservatorio_Osmose_current: { nome: "Reservatório Osmose", capacidade: 200 },
+  Reservatorio_CME_current: { nome: "Reservatório CME", capacidade: 1000 },
+  Reservatorio_Agua_Abrandada_current: { nome: "Água Abrandada", capacidade: 9000 }
 };
 
-// Pressões
-const PRESSOES = {
-  Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
-  Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
-  Pressao_Saida_CME_current: "Pressão Saída CME",
-};
-
-// === Cria os cards dinamicamente ===
+// cria cards
 function criarCards() {
   const container = document.querySelector(".cards-container");
-  if (!container) return;
-
   container.innerHTML = "";
 
-  // Reservatórios
   Object.keys(RESERVATORIOS).forEach((id) => {
-    const card = document.createElement("div");
-    card.className = "card sem-dados";
-    card.id = id;
-    card.innerHTML = `
-      <h2>${RESERVATORIOS[id].nome}</h2>
-      <p class="nivel">--%</p>
-      <p class="litros">0 L</p>
-      <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
-    `;
-    container.appendChild(card);
-  });
+    const div = document.createElement("div");
+    div.className = "card";
+    div.id = id;
 
-  // Pressões
-  Object.keys(PRESSOES).forEach((id) => {
-    const card = document.createElement("div");
-    card.className = "card sem-dados";
-    card.id = id;
-    card.innerHTML = `
-      <h2>${PRESSOES[id]}</h2>
-      <p class="pressao">-- bar</p>
+    div.innerHTML = `
+      <div class="nivel-agua"></div>
+      <h2>${RESERVATORIOS[id].nome}</h2>
+      <div class="percentual">--%</div>
+      <div class="litros">0 L</div>
+      <div class="alerta-atraso" style="display:none;">Sem atualização há +10 min</div>
     `;
-    container.appendChild(card);
+
+    container.appendChild(div);
   });
 }
 
-// === Atualiza as leituras do servidor ===
+// tocar alarme
+function tocarAlarme() {
+  if (!alarmPlaying) {
+    const audio = document.getElementById("alarmSound");
+    audio.volume = 0.8;
+    audio.play();
+    alarmPlaying = true;
+  }
+}
+function pararAlarme() {
+  alarmPlaying = false;
+  const audio = document.getElementById("alarmSound");
+  audio.pause();
+  audio.currentTime = 0;
+}
+
+// atualizar leitura
 async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
     const dados = await res.json();
-    if (!dados || Object.keys(dados).length === 0) return;
 
-    ultimaLeitura = Date.now();
+    ultimaLeituraMs = Date.now();
 
-    // Atualiza reservatórios
-    Object.entries(RESERVATORIOS).forEach(([id, conf]) => {
+    Object.entries(RESERVATORIOS).forEach(([id, config]) => {
       const card = document.getElementById(id);
-      if (!card) return;
+      const nivel = card.querySelector(".nivel-agua");
+      const percEl = card.querySelector(".percentual");
+      const litrosEl = card.querySelector(".litros");
+      const atraso = card.querySelector(".alerta-atraso");
 
-      const valor = dados[id];
-      if (typeof valor !== "number" || isNaN(valor)) {
-        card.classList.add("sem-dados");
-        card.querySelector(".nivel").innerHTML = "--%";
-        card.querySelector(".litros").innerHTML = "0 L";
-        card.style.setProperty("--nivel", "0%");
-        return;
-      }
+      const valorLitros = dados[id];
+      if (typeof valorLitros !== "number") return;
 
-      const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
-      card.classList.remove("sem-dados");
+      const perc = Math.min(100, Math.max(0, (valorLitros / config.capacidade) * 100));
 
-      // Define status e cores
-      let status = "alto";
-      let cor = "linear-gradient(to top, #3498db, #2ecc71)";
-      if (perc < 30) {
-        status = "baixo";
-        cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
-      } else if (perc < 70) {
-        status = "medio";
-        cor = "linear-gradient(to top, #f1c40f, #f39c12)";
-      }
-
-      card.dataset.status = status;
-      card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
-      card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
+      // Atualiza barra
       card.style.setProperty("--nivel", perc + "%");
+
+      // Cores
+      let cor = "#2ecc71"; // verde
+      if (perc < 30) cor = "#e74c3c"; // vermelho
+      else if (perc < 60) cor = "#f1c40f"; // amarelo
+
       card.style.setProperty("--corNivel", cor);
+
+      // textos
+      percEl.textContent = perc.toFixed(0) + "%";
+      litrosEl.textContent = valorLitros.toLocaleString() + " L";
+
+      // alarme abaixo de 30%
+      if (perc < 30) tocarAlarme();
+      else pararAlarme();
+
+      atraso.style.display = "none";
     });
 
-    // Atualiza pressões
-    Object.entries(PRESSOES).forEach(([id, nome]) => {
-      const card = document.getElementById(id);
-      if (!card) return;
+    // Atualização no topo
+    document.getElementById("lastUpdate").textContent =
+      "Última atualização: " + new Date().toLocaleString("pt-BR");
 
-      const valor = dados[id];
-      if (typeof valor !== "number" || isNaN(valor)) {
-        card.classList.add("sem-dados");
-        card.querySelector(".pressao").innerHTML = "-- bar";
-        return;
-      }
-
-      card.classList.remove("sem-dados");
-      card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
-    });
-
-    // Atualiza data/hora
-    const last = document.getElementById("lastUpdate");
-    if (last) {
-      const dt = new Date(dados.timestamp || Date.now());
-      last.innerHTML = "Última atualização: " + dt.toLocaleString("pt-BR");
-    }
-  } catch (err) {
-    console.error("Erro ao buscar leituras:", err);
+  } catch (e) {
+    console.log("Erro ao atualizar:", e);
   }
 }
 
-// === Exibe 0% apenas se passar muito tempo sem atualização ===
+// se ficar +10 min sem atualizar
 setInterval(() => {
-  const tempo = Date.now() - ultimaLeitura;
-  if (tempo > 240000) {
+  const dif = Date.now() - ultimaLeituraMs;
+
+  if (dif > 10 * 60 * 1000) {
     document.querySelectorAll(".card").forEach((card) => {
-      card.classList.add("sem-dados");
-      if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
-      if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
-      if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
-      card.style.setProperty("--nivel", "0%");
+      card.querySelector(".alerta-atraso").style.display = "block";
+      pararAlarme();
     });
   }
-}, 10000);
+}, 3000);
 
-// === Inicializa dashboard ===
 window.addEventListener("DOMContentLoaded", () => {
   criarCards();
   atualizarLeituras();
   setInterval(atualizarLeituras, UPDATE_INTERVAL);
 });
-
-// === Função global para abrir histórico ===
-window.abrirHistorico = function (reservatorioId) {
-  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
-};
