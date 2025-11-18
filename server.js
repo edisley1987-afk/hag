@@ -1,9 +1,8 @@
 // ======= Servidor Universal HAG - compatível com Gateway ITG e Render =======
-
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
+import express from "express";
+import fs from "fs";
+import path from "path";
+import cors from "cors";
 
 const app = express();
 const __dirname = path.resolve();
@@ -15,10 +14,12 @@ app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
-// === Pastas ===
+// === Pastas de dados ===
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
+
+// Render não permite /data raiz — OK: data dentro do projeto
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // === Sensores ===
@@ -29,16 +30,14 @@ const SENSORES = {
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004008, leituraCheio: 0.004929, capacidade: 9000 },
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
-  "Pressao_Saida_CME_current": { tipo: "pressao" },
+  "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-// === Função para salvar dados ===
+// === Salvamento ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("💾 Leituras atualizadas:", dados);
 }
 
-// === Histórico ===
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -55,6 +54,7 @@ function registrarHistorico(dados) {
 
   Object.entries(dados).forEach(([ref, valor]) => {
     if (ref === "timestamp" || typeof valor !== "number") return;
+
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = { min: valor, max: valor };
     } else {
@@ -66,12 +66,13 @@ function registrarHistorico(dados) {
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// === Endpoint universal ===
+// === Endpoint Universal ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
-  console.log(`➡️ Recebido ${req.method} em ${req.path} de ${req.ip}`);
+  console.log("➡️ Entrada:", req.method, req.path);
 
   try {
     let body = req.body;
+
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
 
     if (typeof body === "string") {
@@ -81,9 +82,10 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     let dataArray = [];
+
     if (Array.isArray(body)) dataArray = body;
-    else if (body && Array.isArray(body.data)) dataArray = body.data;
-    else if (typeof body === "object" && body !== null) {
+    else if (body?.data) dataArray = body.data;
+    else if (typeof body === "object") {
       dataArray = Object.keys(body)
         .filter((k) => k.includes("_current"))
         .map((k) => ({ ref: k, value: Number(body[k]) }));
@@ -98,28 +100,28 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     for (const item of dataArray) {
       const ref = item.ref || item.name;
       const valor = Number(item.value);
-      if (!ref || isNaN(valor)) continue;
 
       const sensor = SENSORES[ref];
+
       if (!sensor) {
         dadosConvertidos[ref] = valor;
         continue;
       }
 
       const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
+
       let leituraConvertida;
 
       if (tipo === "pressao") {
         leituraConvertida = ((valor - 0.004) / 0.016) * 20;
         leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
         leituraConvertida = Number(leituraConvertida.toFixed(3));
-      } else if (capacidade > 1) {
+      } else {
         leituraConvertida =
           ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
         leituraConvertida = Math.round(leituraConvertida);
-      } else {
-        leituraConvertida = Number(valor.toFixed(5));
       }
 
       dadosConvertidos[ref] = leituraConvertida;
@@ -131,29 +133,28 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     registrarHistorico(dadosConvertidos);
 
     res.json({ status: "ok", dados: dadosConvertidos });
-
-  } catch (err) {
-    console.error("❌ Erro ao processar atualização:", err);
-    res.status(500).json({ erro: err.message });
+  } catch (e) {
+    res.status(500).json({ erro: e.message });
   }
 });
 
-// === Endpoints para dashboard ===
+// === Rotas ===
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
-  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
+  res.json(JSON.parse(fs.readFileSync(DATA_FILE)));
 });
 
 app.get("/historico", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json({});
-  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
+  res.json(JSON.parse(fs.readFileSync(HIST_FILE)));
 });
 
-// === Arquivos estáticos ===
+// === Interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public/index.html")));
+app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public/dashboard.html")));
+app.get("/historico-view", (req, res) => res.sendFile(path.join(__dirname, "public/historico.html")));
 
-// === Inicialização ===
+// === Start ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Servidor universal HAG ativo na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log("Servidor iniciado na porta", PORT));
