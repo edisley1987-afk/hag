@@ -79,11 +79,28 @@ function registrarHistorico(dados) {
   Object.entries(dados).forEach(([ref, valor]) => {
     if (ref === "timestamp" || typeof valor !== "number") return;
 
+    // --- Atualização de min/max ---
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = { min: valor, max: valor };
     } else {
       historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
       historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
+    }
+
+    // --- Registro apenas quando variar +5% da capacidade ---
+    const sensor = SENSORES[ref];        // precisa ter capacidade definida
+    if (!sensor || !sensor.capacidade) return;
+
+    const capacidade = sensor.capacidade;
+    const variacaoMinima = capacidade * 0.05; // 5%
+
+    if (!historico[hoje][ref].pontos) historico[hoje][ref].pontos = [];
+
+    const ultimoPonto = historico[hoje][ref].pontos.at(-1);
+
+    // Salva somente se houver uma variação significativa
+    if (!ultimoPonto || Math.abs(valor - ultimoPonto) >= variacaoMinima) {
+      historico[hoje][ref].pontos.push(valor);
     }
   });
 
