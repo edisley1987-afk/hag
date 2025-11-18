@@ -6,7 +6,33 @@
   <title>Histórico — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style-historico.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px auto;
+    }
+
+    .toolbar button {
+      background-color: #2c8b7d;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .toolbar button:hover {
+      background-color: #256f64;
+      transform: translateY(-2px);
+    }
+  </style>
 </head>
+
 <body>
   <header>
     <h1>📊 Histórico — Reservatórios</h1>
@@ -14,7 +40,14 @@
   </header>
 
   <main class="historico-main">
+
+    <!-- 🔵 BARRA DE BOTÕES -->
+    <div class="toolbar">
+      <button onclick="window.location.href='consumo.html'">📈 Ver Gráfico de Consumo Diário</button>
+    </div>
+
     <canvas id="graficoHistorico"></canvas>
+
     <div id="historico"></div>
   </main>
 
