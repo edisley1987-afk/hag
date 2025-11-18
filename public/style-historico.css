@@ -35,7 +35,26 @@ body {
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+
 .btn-voltar:hover {
+  background: #e3f5f3;
+}
+
+/* Botão Consumo Diário */
+.btn-consumo {
+  background: #ffffff;
+  color: #0f766e;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: bold;
+  margin-left: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-consumo:hover {
   background: #e3f5f3;
 }
 
@@ -63,6 +82,29 @@ body {
   margin-top: 8px;
   border-radius: 8px;
   border: 1px solid #ccc;
+}
+
+/* Card resumo da última leitura */
+.historico-card-resumo h3 {
+  margin-top: 0;
+  color: #0f766e;
+  font-size: 1.2rem;
+}
+
+.historico-card-resumo p {
+  margin: 5px 0;
+  font-size: 1rem;
+}
+
+/* Alerta */
+.alerta {
+  margin-top: 12px;
+  padding: 10px;
+  background: #ffe4e4;
+  color: #c82333;
+  border-left: 5px solid #c82333;
+  border-radius: 6px;
+  font-weight: bold;
 }
 
 /* Gráfico 100% responsivo */
