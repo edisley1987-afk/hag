@@ -1,5 +1,5 @@
 // === CONFIGURAÇÕES ===
-const HIST_FILE = "/storage/historico.json";
+const HIST_FILE = "/historico";   // <<< ALTERADO APENAS AQUI
 
 // Capacidade por reservatório
 const CAPACIDADES = {
