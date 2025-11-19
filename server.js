@@ -27,45 +27,46 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.008305,   // 🔥 Atualizado
+    leituraCheio: 0.008305,
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
     leituraVazio: 0.00505,
-    leituraCheio: 0.006693,   // (já estava certo)
+    leituraCheio: 0.006693,
     capacidade: 200
   },
   "Reservatorio_CME_current": {
     leituraVazio: 0.004088,
-    leituraCheio: 0.004408,   // (já estava certo)
+    leituraCheio: 0.004408,
     capacidade: 1000
   },
   "Reservatorio_Agua_Abrandada_current": {
     leituraVazio: 0.004008,
-    leituraCheio: 0.004929,   // 🔥 Atualizado
+    leituraCheio: 0.004929,
     capacidade: 9000
   },
 
-  // Sensores de pressão continuam iguais
+  // Sensores pressão
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
 };
 
-
 // === Função para salvar última leitura ===
 function salvarDados(dados) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-
-  // Log compatível com Render
   console.log("Leituras:", JSON.stringify(dados));
 }
 
-// === Função para registrar histórico diário ===
+// =================================================================================
+// === NOVA FUNÇÃO registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 5% =========
+// =================================================================================
+
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
 
+  // Carrega arquivo se existir
   if (fs.existsSync(HIST_FILE)) {
     try {
       historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
@@ -79,33 +80,49 @@ function registrarHistorico(dados) {
   Object.entries(dados).forEach(([ref, valor]) => {
     if (ref === "timestamp" || typeof valor !== "number") return;
 
-    // --- Atualização de min/max ---
+    const sensor = SENSORES[ref];
+    const capacidade = sensor?.capacidade || null;
+
+    // Criar estrutura inicial
     if (!historico[hoje][ref]) {
-      historico[hoje][ref] = { min: valor, max: valor };
-    } else {
-      historico[hoje][ref].min = Math.min(historico[hoje][ref].min, valor);
-      historico[hoje][ref].max = Math.max(historico[hoje][ref].max, valor);
+      historico[hoje][ref] = {
+        min: valor,
+        max: valor,
+        pontos: []
+      };
     }
 
-    // --- Registro apenas quando variar +5% da capacidade ---
-    const sensor = SENSORES[ref];        // precisa ter capacidade definida
-    if (!sensor || !sensor.capacidade) return;
+    const registro = historico[hoje][ref];
 
-    const capacidade = sensor.capacidade;
-    const variacaoMinima = capacidade * 0.05; // 5%
+    // Atualizar min/max
+    registro.min = Math.min(registro.min, valor);
+    registro.max = Math.max(registro.max, valor);
 
-    if (!historico[hoje][ref].pontos) historico[hoje][ref].pontos = [];
+    // Pressões não registram histórico por variação
+    if (!capacidade || capacidade <= 1) return;
 
-    const ultimoPonto = historico[hoje][ref].pontos.at(-1);
+    // Lógica da variação de 5%
+    const variacaoMinima = capacidade * 0.05;
+    const ultimo = registro.pontos.at(-1);
 
-    // Salva somente se houver uma variação significativa
-    if (!ultimoPonto || Math.abs(valor - ultimoPonto) >= variacaoMinima) {
-      historico[hoje][ref].pontos.push(valor);
+    const deveRegistrar =
+      !ultimo ||
+      Math.abs(valor - ultimo.valor) >= variacaoMinima;
+
+    if (deveRegistrar) {
+      registro.pontos.push({
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        valor: valor
+      });
     }
   });
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
+
+// =================================================================================
+// ========================= FIM DA NOVA FUNÇÃO ===================================
+// =================================================================================
 
 // === Endpoint universal do Gateway /atualizar ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
@@ -126,7 +143,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
     let dataArray = [];
 
-    // Possíveis formatos do Gateway
     if (Array.isArray(body)) {
       dataArray = body;
     } else if (body && Array.isArray(body.data)) {
@@ -167,8 +183,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         leituraConvertida = Number(leituraConvertida.toFixed(3));
       } else if (capacidade > 1) {
         leituraConvertida =
-          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) *
-          capacidade;
+          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
         leituraConvertida = Math.round(leituraConvertida);
       } else {
