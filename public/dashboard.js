@@ -32,19 +32,17 @@ const ALL_KEYS = [...Object.keys(RESERVATORIOS), ...Object.keys(PRESSOES)];
 
 // ------------------ Persistência manutenção (server or local) ------------------
 async function carregarManutencoes() {
-  // tenta carregar do server
   try {
     const r = await fetch(API_MANUT);
     if (!r.ok) throw new Error("no-api");
-    const arr = await r.json(); // espera lista [{ reservatorio: 'Reservatorio_Elevador_current', status:true }, ...]
+    const arr = await r.json();
     manutencoes = {};
     (arr || []).forEach(i => { if (i.reservatorio) manutencoes[i.reservatorio] = !!i.status; });
     suportouApiManut = true;
-    salvarManutencoesLocal(); // atualizar local com fallback
+    salvarManutencoesLocal();
     return;
   } catch (e) {
     suportouApiManut = false;
-    // fallback para localStorage
     const raw = localStorage.getItem("manutencoes_hag");
     try { manutencoes = raw ? JSON.parse(raw) : {}; } catch{ manutencoes = {}; }
   }
@@ -53,7 +51,6 @@ function salvarManutencoesLocal() {
   try { localStorage.setItem("manutencoes_hag", JSON.stringify(manutencoes)); } catch {}
 }
 async function setManutencaoServer(key, status) {
-  // tenta salvar no servidor; se falhar, salva local e marca suportouApiManut=false
   try {
     const r = await fetch(API_MANUT, {
       method: "POST",
@@ -86,21 +83,31 @@ function pingOnce() {
   try {
     ensureAudio();
     audioBip.currentTime = 0;
-    audioBip.play().catch(()=>{ /* blocked until user gesture */ });
+    audioBip.play().catch(()=>{});
   } catch {}
 }
+
 function startAlarm() {
   if (alarmando) return;
   alarmando = true;
+
+  // 🔴 alerta visual vermelho piscando
+  const g = document.getElementById("globalAlert");
+  g.style.display = "inline-block";
+  g.classList.add("critico");
+
   pingOnce();
   alarmTimer = setInterval(()=>{ if (alarmando) pingOnce(); }, ALARM_INTERVAL_MS);
-  document.getElementById("globalAlert").style.display = "inline-block";
 }
+
 function stopAlarm() {
   alarmando = false;
   if (alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
   try { if (audioBip) { audioBip.pause(); audioBip.currentTime = 0; } } catch {}
-  document.getElementById("globalAlert").style.display = "none";
+
+  const g = document.getElementById("globalAlert");
+  g.classList.remove("critico");
+  g.style.display = "none";
 }
 
 // ------------------ Create cards ------------------
@@ -126,13 +133,11 @@ function criarCards() {
     `;
     container.appendChild(card);
 
-    // toggle manutenção
     const toggle = card.querySelector(".maint-toggle");
     toggle.addEventListener("click", async (e) => {
       e.stopPropagation();
       const cur = !!manutencoes[key];
       await setManutencaoServer(key, !cur);
-      // if marked maintenance, stop alarm
       if (manutencoes[key]) stopAlarm();
     });
   });
@@ -159,13 +164,11 @@ function applyMaintenanceVisual(key) {
   const card = document.getElementById(key);
   if (!card) return;
   const badge = card.querySelector(".maint-badge");
-  if (manutencoes[key]) badge.style.display = "block";
-  else badge.style.display = "none";
+  badge.style.display = manutencoes[key] ? "block" : "none";
 }
 
-// ------------------ Update display using last known values ------------------
+// ------------------ Update display ------------------
 function atualizarDisplay(dados) {
-  // timestamp
   const last = document.getElementById("lastUpdate");
   const ts = dados.timestamp ? new Date(dados.timestamp) : new Date();
   last.textContent = "Última atualização: " + ts.toLocaleString("pt-BR");
@@ -176,103 +179,92 @@ function atualizarDisplay(dados) {
   // reservatórios
   Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
     const card = document.getElementById(key);
-    if (!card) return;
     const fill = card.querySelector(".fill");
     const pctEl = card.querySelector(".percent-large");
     const ltsEl = card.querySelector(".liters");
     const aviso = card.querySelector(".aviso-inatividade");
 
-    const valor = (typeof dados[key] === "number") ? dados[key] : undefined;
+    const valor = typeof dados[key] === "number" ? dados[key] : undefined;
 
     if (typeof valor === "number") {
-      // save last valid
       ultimoDadosValidos[key] = valor;
     }
 
-    // use last valid if current missing
-    const usar = (typeof valor === "number") ? valor : ultimoDadosValidos[key];
+    const usar = typeof valor === "number" ? valor : ultimoDadosValidos[key];
 
     if (typeof usar !== "number") {
-      // no data at all
       pctEl.textContent = "--%";
       ltsEl.textContent = "0 L";
-      if (fill) { fill.style.height = "0%"; fill.style.background = "#cccccc"; }
-      if (aviso) aviso.style.display = "none";
-      card.classList.add("no-data");
+      fill.style.height = "0%";
+      fill.style.background = "#cccccc";
+      aviso.style.display = "none";
       return;
     }
 
-    // compute %
     const perc = Math.min(100, Math.max(0, (usar / cfg.capacidade) * 100));
     const roundPct = Math.round(perc);
+
     pctEl.textContent = roundPct + "%";
     ltsEl.textContent = usar.toLocaleString() + " L";
+    fill.style.height = perc + "%";
 
-    // set fill full-card height
-    if (fill) {
-      fill.style.height = perc + "%";
-      // color by threshold
-      let cor = "#2ecc71";
-      if (perc <= 30) cor = "#e74c3c";
-      else if (perc < 70) cor = "#f1c40f";
-      fill.style.background = cor;
-    }
+    let cor = "#2ecc71";
+    if (perc <= 30) cor = "#e74c3c";
+    else if (perc < 70) cor = "#f1c40f";
 
-    card.classList.remove("no-data");
-    if (aviso) aviso.style.display = "none";
+    fill.style.background = cor;
 
-    // maintenance badge application
     applyMaintenanceVisual(key);
 
-    // decide critical
+    // 🔴 card crítico
     if (perc <= 30 && !manutencoes[key]) {
       algumCritico = true;
+      card.classList.add("critico");
+    } else {
+      card.classList.remove("critico");
     }
   });
 
   // pressões
   Object.entries(PRESSOES).forEach(([key, nome]) => {
     const card = document.getElementById(key);
-    if (!card) return;
     const pctEl = card.querySelector(".percent-large");
     const aviso = card.querySelector(".aviso-inatividade");
-    const valor = (typeof dados[key] === "number") ? dados[key] : ultimoDadosValidos[key];
+
+    const valor = typeof dados[key] === "number" ? dados[key] : ultimoDadosValidos[key];
 
     if (typeof valor !== "number") {
       pctEl.textContent = "-- bar";
-      if (aviso) aviso.style.display = "none";
-      card.classList.add("no-data");
+      aviso.style.display = "none";
       return;
     }
+
     pctEl.textContent = Number(valor).toFixed(2) + " bar";
-    if (aviso) aviso.style.display = "none";
-    card.classList.remove("no-data");
+    aviso.style.display = "none";
     ultimoDadosValidos[key] = valor;
   });
 
-  // alarm logic
+  // 🔴 lógica de alarme
   if (algumCritico) startAlarm();
   else stopAlarm();
 }
 
-// ------------------ If fetch fails, reapply cached display ------------------
+// ------------------ cache fallback ------------------
 function usarCacheSeNecessario() {
   const dados = { timestamp: new Date().toISOString() };
   Object.keys(ultimoDadosValidos).forEach(k => dados[k] = ultimoDadosValidos[k]);
   if (Object.keys(ultimoDadosValidos).length) atualizarDisplay(dados);
 }
 
-// ------------------ fetch data ------------------
+// ------------------ fetch ------------------
 async function buscarDados() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
     if (!res.ok) throw new Error("fetch-fail");
     const dados = await res.json();
 
-    // save timestamp from server if any
     if (!dados.timestamp) dados.timestamp = new Date().toISOString();
 
-    // update last valid per keys
     Object.keys(dados).forEach(k => {
       if (ALL_KEYS.includes(k) && typeof dados[k] === "number") {
         ultimoDadosValidos[k] = dados[k];
@@ -281,21 +273,19 @@ async function buscarDados() {
 
     atualizarDisplay(dados);
   } catch (e) {
-    // fallback: keep showing cached values
     usarCacheSeNecessario();
   }
 }
 
-// ------------------ inactivity check ------------------
+// ------------------ inactivity ------------------
 function verificarInatividade() {
   const now = Date.now();
   if (!ultimaLeitura || (now - ultimaLeitura) > INATIVITY_MS) {
-    // show inactivity message but keep last values displayed
+
     document.querySelectorAll(".card").forEach(card => {
       const aviso = card.querySelector(".aviso-inatividade");
       if (aviso) aviso.style.display = "block";
 
-      // also mark no-data visually if no last value
       const id = card.id;
       if (ultimoDadosValidos[id] === undefined) {
         card.classList.add("no-data");
@@ -304,22 +294,10 @@ function verificarInatividade() {
         const ltsEl = card.querySelector(".liters");
         if (ltsEl) ltsEl.textContent = "0 L";
         const fill = card.querySelector(".fill");
-        if (fill) { fill.style.height = "0%"; fill.style.background = "#cccccc"; }
-      } else {
-        // keep last shown values; ensure fill color correct (recompute)
-        if (RESERVATORIOS[id]) {
-          const perc = Math.min(100, Math.max(0, (ultimoDadosValidos[id] / RESERVATORIOS[id].capacidade)*100));
-          const fill = card.querySelector(".fill");
-          if (fill) {
-            fill.style.height = perc + "%";
-            let cor = "#2ecc71";
-            if (perc <= 30) cor = "#e74c3c";
-            else if (perc < 70) cor = "#f1c40f";
-            fill.style.background = cor;
-          }
-        }
+        if (fill) fill.style.height = "0%";
       }
     });
+
     stopAlarm();
   } else {
     document.querySelectorAll(".card .aviso-inatividade").forEach(el => el.style.display = "none");
@@ -328,31 +306,26 @@ function verificarInatividade() {
 
 // ------------------ init ------------------
 window.addEventListener("DOMContentLoaded", async () => {
-  // load persisted last readings and manutenções
   try {
     const raw = localStorage.getItem("ultimoDadosValidos_hag");
-    if (raw) { ultimoDadosValidos = JSON.parse(raw); }
-  } catch { ultimoDadosValidos = {}; }
+    if (raw) ultimoDadosValidos = JSON.parse(raw);
+  } catch {}
 
   await carregarManutencoes();
   criarCards();
-  // apply maintenance visuals for any saved
+
   Object.keys(manutencoes).forEach(k => applyMaintenanceVisual(k));
 
-  // top buttons
   const back = document.getElementById("btnBack");
   const hist = document.getElementById("btnHistorico");
   if (back) back.addEventListener("click", () => window.history.back());
   if (hist) hist.addEventListener("click", () => window.location.href = "historico.html");
 
-  // first fetch
   buscarDados();
 
-  // intervals
   setInterval(async () => {
     await buscarDados();
-    // persist ultimoDadosValidos local
-    try { localStorage.setItem("ultimoDadosValidos_hag", JSON.stringify(ultimoDadosValidos)); } catch {}
+    localStorage.setItem("ultimoDadosValidos_hag", JSON.stringify(ultimoDadosValidos));
   }, UPDATE_INTERVAL);
 
   setInterval(verificarInatividade, 8000);
