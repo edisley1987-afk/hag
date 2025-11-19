@@ -4,6 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let grafico = null;
 
+    // Capacidades dos reservatórios
+    const capacidade = {
+        elevador: 10000,
+        osmose: 5000,
+        cme: 3000,
+        abrandada: 9000
+    };
+
     async function carregarHistorico() {
         try {
             const reservatorio = select.value;
@@ -19,68 +27,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
             console.log("Recebido da API:", dados);
 
-            // ============================================
-            // TRATAMENTO UNIVERSAL DO OBJETO RETORNADO
-            // ============================================
-            const dias = Array.isArray(dados?.dias) ? dados.dias : [];
+            const dias = Array.isArray(dados.dias) ? dados.dias : [];
 
             if (!dias.length) {
-                console.warn("Nenhum dado encontrado para este reservatório.");
-                atualizarCardUltimaLeitura(null);
-                atualizarGrafico([], []);
+                console.warn("Nenhum dado encontrado.");
+                atualizarGrafico([], [], []);
                 return;
             }
 
-            // Ordena por data crescente
+            // Ordena por data
             dias.sort((a, b) => new Date(a.data) - new Date(b.data));
 
-            // Labels e valores
             const labels = dias.map(d => d.data);
 
-            const valores = dias.map(d => {
+            // Último valor de cada dia (litros)
+            const valoresLitros = dias.map(d => {
                 const ultimo = d.pontos?.at(-1);
                 return ultimo ? Number(ultimo.valor) : 0;
             });
 
-            atualizarCardUltimaLeitura(dias.at(-1));
-            atualizarGrafico(labels, valores);
+            // Cálculo do percentual baseado na capacidade específica
+            const capacidadeTotal = capacidade[reservatorio];
+
+            const valoresPercentuais = valoresLitros.map(v =>
+                capacidadeTotal ? Number(((v / capacidadeTotal) * 100).toFixed(1)) : 0
+            );
+
+            atualizarGrafico(labels, valoresPercentuais, valoresLitros);
 
         } catch (erro) {
             console.error("Erro ao carregar histórico:", erro);
         }
     }
 
-    // ============================================================
-    // CARD DA ÚLTIMA LEITURA (aparece acima do gráfico)
-    // ============================================================
-    function atualizarCardUltimaLeitura(registro) {
-        const div = document.getElementById("history-cards");
-
-        if (!registro) {
-            div.innerHTML = `
-                <div class="card card-alerta">
-                    <p>Nenhuma leitura encontrada para este reservatório.</p>
-                </div>
-            `;
-            return;
-        }
-
-        const ultimoPonto = registro.pontos?.at(-1);
-
-        div.innerHTML = `
-            <div class="card card-info">
-                <h3>Última Leitura</h3>
-                <p><strong>Data:</strong> ${registro.data}</p>
-                <p><strong>Hora:</strong> ${ultimoPonto?.hora || "--:--"}</p>
-                <p><strong>Nível:</strong> ${ultimoPonto?.valor ?? "-"}%</p>
-            </div>
-        `;
-    }
-
-    // ============================================================
-    // GRÁFICO
-    // ============================================================
-    function atualizarGrafico(labels, valores) {
+    function atualizarGrafico(labels, valoresPercentuais, valoresLitros) {
         if (grafico) {
             grafico.destroy();
         }
@@ -92,33 +72,56 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [
                     {
                         label: "Nível (%)",
-                        data: valores,
+                        data: valoresPercentuais,
                         borderWidth: 3,
-                        borderColor: "#2c8b7d",
-                        backgroundColor: "rgba(44, 139, 125, 0.3)",
-                        pointRadius: 5,
-                        tension: 0.35
+                        tension: 0.3,
                     }
                 ]
             },
             options: {
                 responsive: true,
+                interaction: {
+                    mode: "index",
+                    intersect: false
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const i = ctx.dataIndex;
+                                const percentual = ctx.raw;
+                                const litros = valoresLitros[i];
+
+                                return [
+                                    `Nível: ${percentual}%`,
+                                    `Litros: ${litros} L`
+                                ];
+                            }
+                        }
+                    },
+                    legend: {
+                        display: true
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        suggestedMax: 100
+                        suggestedMax: 100,
+                        title: {
+                            display: true,
+                            text: "%"
+                        }
                     }
                 }
             }
         });
     }
 
-    // Evento no select
     select.addEventListener("change", carregarHistorico);
 
-    // Torna global (chamado pelo HTML)
+    // Deixar função acessível globalmente
     window.carregarHistorico = carregarHistorico;
 
-    // Executa ao carregar a página
+    // Carrega ao abrir
     carregarHistorico();
 });
