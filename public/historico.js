@@ -1,129 +1,136 @@
-// === CONFIGURAÇÕES ===
-const HIST_FILE = "/historico";   // <<< ALTERADO APENAS AQUI
-
-// Capacidade por reservatório
-const CAPACIDADES = {
-  elevador: 20000,
-  osmose: 200,
-  cme: 5000,
-  abrandada: 9000,
+// === Configuração dos tanques ===
+const capacidades = {
+    elevador: 20000,
+    osmose: 200,
+    cme: 5000,
+    abrandada: 9000
 };
 
-// Nome para exibir
-const NOMES = {
-  elevador: "Elevador",
-  osmose: "Osmose",
-  cme: "CME",
-  abrandada: "Água Abrandada",
-};
+// === Variáveis globais ===
+let chartHistorico = null;
+let ultimoValorRegistrado = {}; // Armazena último valor salvo para cada reservatório
 
-// === BUSCAR HISTÓRICO ===
-async function carregarHistorico() {
-  try {
-    const resp = await fetch(HIST_FILE + "?v=" + Date.now());
-    return await resp.json();
-  } catch (e) {
-    console.error("Erro ao carregar histórico:", e);
-    return {};
-  }
-}
+// === Criar gráfico ===
+function criarGrafico() {
+    const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-// === GERAR GRÁFICO COM LINHA DE TENDÊNCIA ===
-function gerarGrafico(dias, valores, capacidade) {
-  const ctx = document.getElementById("grafico").getContext("2d");
-
-  // Calcular tendência (regressão linear)
-  const n = valores.length;
-  const x = [...Array(n).keys()];
-  const avgX = x.reduce((a, b) => a + b, 0) / n;
-  const avgY = valores.reduce((a, b) => a + b, 0) / n;
-
-  let num = 0,
-    den = 0;
-  for (let i = 0; i < n; i++) {
-    num += (x[i] - avgX) * (valores[i] - avgY);
-    den += (x[i] - avgX) ** 2;
-  }
-  const m = num / den;
-  const b = avgY - m * avgX;
-
-  const tendencia = x.map(i => m * i + b);
-
-  if (window.graficoInstance) window.graficoInstance.destroy();
-
-  window.graficoInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: dias,
-      datasets: [
-        {
-          label: "Nível médio diário (L)",
-          data: valores,
-          borderWidth: 3,
-          tension: 0.2,
-          pointRadius: 5,
-          borderColor: "#6a1b9a",
-          backgroundColor: "#6a1b9a",
+    chartHistorico = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Nível (%)",
+                    data: [],
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: "Tendência",
+                    data: [],
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0
+                }
+            ]
         },
-        {
-          label: "Linha de tendência",
-          data: tendencia,
-          borderWidth: 2,
-          borderDash: [6, 6],
-          tension: 0.1,
-          pointRadius: 0,
-          borderColor: "#000",
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
         }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          suggestedMin: 0,
-          suggestedMax: capacidade,
-        }
-      }
-    }
-  });
+    });
 }
 
-// === ATUALIZAR TELA ===
-async function atualizarHistorico() {
-  const select = document.getElementById("reservatorioSelect");
-  const chave = select.value;
+// === Cálculo da linha de tendência (regressão linear simples) ===
+function calcularTrendline(labels, values) {
+    const n = labels.length;
+    if (n < 2) return Array(n).fill(null);
 
-  const historico = await carregarHistorico();
-  const dias = Object.keys(historico).sort();
+    const x = labels.map((_, i) => i);
+    const y = values;
 
-  if (dias.length === 0) return;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
 
-  let valores = [];
-  let exibirDias = [];
+    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const b = (sumY - m * sumX) / n;
 
-  dias.forEach(d => {
-    const registro = historico[d][chave];
-    if (registro) {
-      const media = (registro.min + registro.max) / 2;
-      valores.push(media);
-      exibirDias.push(d);
-    }
-  });
-
-  // Última leitura
-  const ultimoDia = exibirDias[exibirDias.length - 1];
-  const ultima = historico[ultimoDia][chave];
-
-  document.getElementById("dadosResumo").innerHTML = `
-    <strong>Data:</strong> ${ultimoDia}<br>
-    <strong>Mínimo:</strong> ${ultima.min} L<br>
-    <strong>Máximo:</strong> ${ultima.max} L<br>
-  `;
-
-  gerarGrafico(exibirDias, valores, CAPACIDADES[chave]);
+    return x.map(i => m * i + b);
 }
 
-document.getElementById("reservatorioSelect").addEventListener("change", atualizarHistorico);
+// === Carregar histórico salvo ===
+async function carregarHistorico(reservatorio) {
+    const res = await fetch(`/historico/listar/${reservatorio}`);
+    const dados = await res.json();
 
-atualizarHistorico();
+    chartHistorico.data.labels = dados.map(item => item.hora);
+    chartHistorico.data.datasets[0].data = dados.map(item => item.nivel);
+
+    chartHistorico.data.datasets[1].data = calcularTrendline(
+        chartHistorico.data.labels,
+        chartHistorico.data.datasets[0].data
+    );
+
+    chartHistorico.update();
+
+    if (dados.length > 0) {
+        ultimoValorRegistrado[reservatorio] = dados[dados.length - 1].nivel;
+    }
+}
+
+// === Salvar novo registro somente se variação > 5% ===
+async function tentarRegistrarHistorico(reservatorio, novoValor) {
+    let ultimo = ultimoValorRegistrado[reservatorio] ?? null;
+
+    if (ultimo === null || Math.abs(novoValor - ultimo) >= 5) {
+        await fetch("/historico/salvar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                reservatorio,
+                nivel: novoValor,
+                hora: new Date().toLocaleTimeString("pt-BR")
+            })
+        });
+
+        ultimoValorRegistrado[reservatorio] = novoValor;
+
+        console.log(`Registro salvo (${reservatorio}): ${novoValor}%`);
+        carregarHistorico(reservatorio); // Atualiza gráfico automaticamente
+    } else {
+        console.log(`Mudança menor que 5%, não registrado (${reservatorio})`);
+    }
+}
+
+// === Atualização em tempo real (via SSE) ===
+if (!!window.EventSource) {
+    const source = new EventSource("/stream");
+
+    source.addEventListener("nivel", function (e) {
+        const dados = JSON.parse(e.data);
+
+        for (const reservatorio in dados) {
+            const valorAtual = dados[reservatorio];
+
+            tentarRegistrarHistorico(reservatorio, valorAtual);
+        }
+    });
+}
+
+// === Ao trocar reservatório no select ===
+document.getElementById("reservatorioSelect").addEventListener("change", function () {
+    carregarHistorico(this.value);
+});
+
+// === Inicializar ===
+window.onload = function () {
+    criarGrafico();
+    carregarHistorico("elevador");
+};
