@@ -58,15 +58,14 @@ function salvarDados(dados) {
   console.log("Leituras:", JSON.stringify(dados));
 }
 
-// =================================================================================
-// === NOVA FUNÇÃO registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 5% =========
-// =================================================================================
+// ============================================================================
+// === Função registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 5% ==========
+// ============================================================================
 
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
 
-  // Carrega arquivo se existir
   if (fs.existsSync(HIST_FILE)) {
     try {
       historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
@@ -83,7 +82,6 @@ function registrarHistorico(dados) {
     const sensor = SENSORES[ref];
     const capacidade = sensor?.capacidade || null;
 
-    // Criar estrutura inicial
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = {
         min: valor,
@@ -92,25 +90,18 @@ function registrarHistorico(dados) {
       };
     }
 
-    const registro = historico[hoje][ref];
+    const reg = historico[hoje][ref];
 
-    // Atualizar min/max
-    registro.min = Math.min(registro.min, valor);
-    registro.max = Math.max(registro.max, valor);
+    reg.min = Math.min(reg.min, valor);
+    reg.max = Math.max(reg.max, valor);
 
-    // Pressões não registram histórico por variação
     if (!capacidade || capacidade <= 1) return;
 
-    // Lógica da variação de 5%
     const variacaoMinima = capacidade * 0.05;
-    const ultimo = registro.pontos.at(-1);
+    const ultimo = reg.pontos.at(-1);
 
-    const deveRegistrar =
-      !ultimo ||
-      Math.abs(valor - ultimo.valor) >= variacaoMinima;
-
-    if (deveRegistrar) {
-      registro.pontos.push({
+    if (!ultimo || Math.abs(valor - ultimo.valor) >= variacaoMinima) {
+      reg.pontos.push({
         hora: new Date().toLocaleTimeString("pt-BR"),
         valor: valor
       });
@@ -119,10 +110,6 @@ function registrarHistorico(dados) {
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
-
-// =================================================================================
-// ========================= FIM DA NOVA FUNÇÃO ===================================
-// =================================================================================
 
 // === Endpoint universal do Gateway /atualizar ===
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
@@ -183,7 +170,9 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         leituraConvertida = Number(leituraConvertida.toFixed(3));
       } else if (capacidade > 1) {
         leituraConvertida =
-          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) * capacidade;
+          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) *
+          capacidade;
+
         leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
         leituraConvertida = Math.round(leituraConvertida);
       } else {
@@ -214,6 +203,41 @@ app.get("/dados", (req, res) => {
 app.get("/historico", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
+});
+
+// ============================================================================
+// === ROTAS NOVAS EXIGIDAS PELO FRONT-END ====================================
+// ============================================================================
+
+const MAPA_RESERVATORIOS = {
+  elevador: "Reservatorio_Elevador_current",
+  osmose: "Reservatorio_Osmose_current",
+  cme: "Reservatorio_CME_current",
+  abrandada: "Reservatorio_Agua_Abrandada_current"
+};
+
+app.get("/historico/listar/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+
+  if (!ref) {
+    return res.status(400).json({ erro: "Reservatório inválido" });
+  }
+
+  if (!fs.existsSync(HIST_FILE)) {
+    return res.json({ dias: [] });
+  }
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+
+  const dias = Object.entries(historico).map(([data, dados]) => ({
+    data,
+    min: dados[ref]?.min ?? null,
+    max: dados[ref]?.max ?? null,
+    pontos: dados[ref]?.pontos ?? []
+  }));
+
+  res.json({ reservatorio: nome, dias });
 });
 
 // === Interface estática ===
