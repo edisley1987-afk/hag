@@ -1,127 +1,164 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const select = document.getElementById("reservatorioSelect");
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
+// =====================
+//  HISTORICO.JS FINAL (COM LITROS REAIS)
+// =====================
 
-    let grafico = null;
+// URL da API de histórico gerada pelo servidor Node
+const API_URL = window.location.origin + "/historico";
 
-    // Capacidades dos reservatórios
-    const capacidade = {
-        elevador: 10000,
-        osmose: 5000,
-        cme: 3000,
-        abrandada: 9000
-    };
+// Elementos da página
+const selectReservatorio = document.getElementById("reservatorioSelect");
+const cardsContainer = document.getElementById("history-cards");
+const graficoCanvas = document.getElementById("graficoHistorico");
 
-    async function carregarHistorico() {
-        try {
-            const reservatorio = select.value;
-            const url = `/historico/listar/${reservatorio}`;
+let grafico = null;
 
-            const resp = await fetch(url);
+// Mapa do value → chave interna usada no servidor
+const MAPA_NOMES = {
+  elevador: "Reservatorio_Elevador_current",
+  osmose: "Reservatorio_Osmose_current",
+  cme: "Reservatorio_CME_current",
+  abrandada: "Reservatorio_Agua_Abrandada_current",
+};
 
-            if (!resp.ok) {
-                throw new Error(`Erro HTTP ${resp.status}`);
-            }
+// CAPACIDADE REAL DE CADA RESERVATÓRIO
+const CAPACIDADES = {
+  Reservatorio_Elevador_current: 20000,   // 20.000 litros
+  Reservatorio_Osmose_current: 200,       // 200 litros
+  Reservatorio_CME_current: 5000,         // 5.000 litros
+  Reservatorio_Agua_Abrandada_current: 9000, // 9.000 litros
+};
 
-            const dados = await resp.json();
 
-            console.log("Recebido da API:", dados);
+// Cores
+const CORES = {
+  Reservatorio_Elevador_current: "#2c8b7d",
+  Reservatorio_Osmose_current: "#57b3a0",
+  Reservatorio_CME_current: "#3498db",
+  Reservatorio_Agua_Abrandada_current: "#9b59b6",
+};
 
-            const dias = Array.isArray(dados.dias) ? dados.dias : [];
+// =====================
+// FUNÇÃO PRINCIPAL
+// =====================
+async function carregarHistorico() {
+  const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
 
-            if (!dias.length) {
-                console.warn("Nenhum dado encontrado.");
-                atualizarGrafico([], [], []);
-                return;
-            }
+  if (!chaveReservatorio) {
+    cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
+    return;
+  }
 
-            // Ordena por data
-            dias.sort((a, b) => new Date(a.data) - new Date(b.data));
+  const capacidade = CAPACIDADES[chaveReservatorio];
 
-            const labels = dias.map(d => d.data);
+  cardsContainer.innerHTML = "⏳ Carregando histórico...";
 
-            // Último valor de cada dia (litros)
-            const valoresLitros = dias.map(d => {
-                const ultimo = d.pontos?.at(-1);
-                return ultimo ? Number(ultimo.valor) : 0;
-            });
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Falha ao buscar histórico");
 
-            // Cálculo do percentual baseado na capacidade específica
-            const capacidadeTotal = capacidade[reservatorio];
-
-            const valoresPercentuais = valoresLitros.map(v =>
-                capacidadeTotal ? Number(((v / capacidadeTotal) * 100).toFixed(1)) : 0
-            );
-
-            atualizarGrafico(labels, valoresPercentuais, valoresLitros);
-
-        } catch (erro) {
-            console.error("Erro ao carregar histórico:", erro);
-        }
+    const historico = await res.json();
+    if (!historico || !Object.keys(historico).length) {
+      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Nenhum dado encontrado.</p>";
+      if (grafico) grafico.destroy();
+      return;
     }
 
-    function atualizarGrafico(labels, valoresPercentuais, valoresLitros) {
-        if (grafico) {
-            grafico.destroy();
-        }
+    const datasOrdenadas = Object.keys(historico).sort();
+    const labels = [];
+    const valoresMediosLitros = [];
 
-        grafico = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: "Nível (%)",
-                        data: valoresPercentuais,
-                        borderWidth: 3,
-                        tension: 0.3,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                interaction: {
-                    mode: "index",
-                    intersect: false
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(ctx) {
-                                const i = ctx.dataIndex;
-                                const percentual = ctx.raw;
-                                const litros = valoresLitros[i];
+    let ultimaLeitura = null;
+    let ultimaData = null;
 
-                                return [
-                                    `Nível: ${percentual}%`,
-                                    `Litros: ${litros} L`
-                                ];
-                            }
-                        }
-                    },
-                    legend: {
-                        display: true
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        suggestedMax: 100,
-                        title: {
-                            display: true,
-                            text: "%"
-                        }
-                    }
-                }
-            }
-        });
+    // Processa cada dia
+    datasOrdenadas.forEach((data) => {
+      const registroDia = historico[data];
+      const info = registroDia[chaveReservatorio];
+      if (!info) return;
+
+      const { min, max } = info;
+
+      const mediaLitros = (min + max) / 2; // agora é LITROS, não %
+
+      labels.push(data);
+      valoresMediosLitros.push(mediaLitros);
+
+      ultimaLeitura = info;
+      ultimaData = data;
+    });
+
+    if (!labels.length) {
+      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
+      if (grafico) grafico.destroy();
+      return;
     }
 
-    select.addEventListener("change", carregarHistorico);
+    // ============================
+    // CARD DA ÚLTIMA LEITURA
+    // ============================
+    if (ultimaLeitura && ultimaData) {
+      const hoje = new Date();
+      const dataUltima = new Date(ultimaData);
+      const diffMin = Math.round((hoje - dataUltima) / 60000);
 
-    // Deixar função acessível globalmente
-    window.carregarHistorico = carregarHistorico;
+      const alerta =
+        diffMin > 10
+          ? "<div class='alerta'>⚠ Mais de 10 minutos sem atualização</div>"
+          : "";
 
-    // Carrega ao abrir
-    carregarHistorico();
-});
+      cardsContainer.innerHTML = `
+        <div class="card historico-card-resumo">
+          <h3>Última leitura</h3>
+          <p><strong>Data:</strong> ${ultimaData}</p>
+          <p><strong>Mínimo:</strong> ${ultimaLeitura.min} L</p>
+          <p><strong>Máximo:</strong> ${ultimaLeitura.max} L</p>
+          ${alerta}
+        </div>
+      `;
+    }
+
+    // ============================
+    // GRÁFICO EM LINHA (LITROS)
+    // ============================
+    if (grafico) grafico.destroy();
+
+    grafico = new Chart(graficoCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Nível médio diário (L)",
+            data: valoresMediosLitros,
+            borderColor: CORES[chaveReservatorio],
+            backgroundColor: CORES[chaveReservatorio],
+            tension: 0.25,
+            borderWidth: 2,
+            pointRadius: 3,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: capacidade, // ESCALA CORRETA POR RESERVATÓRIO
+          },
+        },
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    cardsContainer.innerHTML = `<p style="color:red;">Erro ao carregar histórico: ${err.message}</p>`;
+    if (grafico) grafico.destroy();
+  }
+}
+
+// Evento ao trocar o reservatório
+selectReservatorio.addEventListener("change", carregarHistorico);
+
+// Carregar na abertura da página
+carregarHistorico();
