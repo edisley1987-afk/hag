@@ -107,10 +107,11 @@ body {
   font-weight: bold;
 }
 
-/* Gráfico 100% responsivo */
+/* === CORREÇÃO DO GRÁFICO (SEM ALTERAR LAYOUT) === */
 canvas {
-  width: 100%!important;
-  height: 350px!important;
+  width: 100% !important;
+  height: 420px !important; /* antes 350px — agora não corta mais */
+  display: block;
 }
 
 /* Rodapé */
