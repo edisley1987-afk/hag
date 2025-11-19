@@ -1,4 +1,4 @@
-/* ===== style.css (global + dashboard) - Modelo A (card preenchendo todo) ===== */
+/* ===== style.css (global + dashboard) - Atualizado ===== */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -31,13 +31,31 @@ body {
 }
 
 /* top actions and last update */
-.top-actions { display:flex; gap:12px; align-items:center; justify-content:center; margin-bottom:8px; }
+.top-actions { 
+  display:flex; 
+  gap:12px; 
+  align-items:center; 
+  justify-content:center; 
+  margin-bottom:8px; 
+}
 .btn-menu {
-  background:#1f8b73; color:#fff; border:none; padding:10px 16px; border-radius:12px;
-  box-shadow:0 2px 0 rgba(0,0,0,0.08); cursor:pointer; font-weight:600;
+  background:#1f8b73; 
+  color:#fff; 
+  border:none; 
+  padding:10px 16px; 
+  border-radius:12px;
+  box-shadow:0 2px 0 rgba(0,0,0,0.08); 
+  cursor:pointer; 
+  font-weight:600;
+  transition:0.2s;
 }
 .btn-menu:hover { transform: translateY(-2px); }
-.last-update { color:#375b54; font-size:14px; text-align:center; margin:0 0 8px; }
+.last-update { 
+  color:#375b54; 
+  font-size:14px; 
+  text-align:center; 
+  margin:0 0 8px; 
+}
 
 /* cards row */
 .cards-row {
@@ -48,7 +66,7 @@ body {
   align-items:flex-start;
 }
 
-/* ----- CARD (reservatório ocupa inteiro com fill) ----- */
+/* ----- CARD padrão ----- */
 .card {
   width:230px;
   height:340px;
@@ -60,12 +78,16 @@ body {
   display:flex;
   flex-direction:column;
   align-items:center;
+  transition: border 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* CARD content layers:
-   - .fill layer absolute: will fill bottom->top up to 100%
-   - .content sits above fill (z-index)
-*/
+/* CARD crítico */
+.card.critico {
+  border:3px solid #c02626;
+  box-shadow:0 0 22px rgba(255,0,0,0.35);
+}
+
+/* camada de preenchimento */
 .card .fill {
   position:absolute;
   left:0; right:0; bottom:0;
@@ -88,7 +110,6 @@ body {
   min-height:100%;
 }
 
-/* title */
 .card .title {
   width:100%;
   text-align:center;
@@ -117,7 +138,7 @@ body {
   z-index:4;
 }
 
-/* maintenance badge inside card (hidden unless maintenance active & level <=30) */
+/* maintenance badge */
 .maint-badge {
   position:absolute;
   top:10px;
@@ -131,7 +152,7 @@ body {
   display:none;
 }
 
-/* maintenance toggle small icon (left top) */
+/* maintenance toggle */
 .maint-toggle {
   position:absolute;
   top:10px;
@@ -144,7 +165,7 @@ body {
   z-index:7;
 }
 
-/* inactivity message inside card */
+/* aviso de inatividade */
 .aviso-inatividade {
   position:absolute;
   left:10px; right:10px;
@@ -159,13 +180,22 @@ body {
   z-index:9;
 }
 
-/* pressure card variant */
+/* pressure card */
 .card.pressao { width:230px; height:240px; }
 .card.pressao .fill { display:none; }
 .card.pressao .percent-large { margin-top:28px; font-size:20px; }
 
-/* global alert floating above footer */
-.app-footer { margin-top:26px; background:#1f8b73; color:#fff; padding:12px 10px; text-align:center; position:relative; }
+/* footer */
+.app-footer { 
+  margin-top:26px; 
+  background:#1f8b73; 
+  color:#fff; 
+  padding:12px 10px; 
+  text-align:center; 
+  position:relative; 
+}
+
+/* ALERTA GLOBAL */
 .global-alert {
   position:relative;
   display:inline-block;
@@ -174,6 +204,21 @@ body {
   padding:8px 12px;
   border-radius:8px;
   margin-bottom:8px;
+  font-weight:700;
+  transition:0.3s;
+}
+
+/* ALERTA GLOBAL — CRÍTICO VERMELHO PISCANTE */
+.global-alert.critico {
+  background:#b80000 !important;
+  color:#fff !important;
+  animation: piscar 1s infinite;
+}
+
+@keyframes piscar {
+  0% { opacity:1; }
+  50% { opacity:0.4; }
+  100% { opacity:1; }
 }
 
 /* responsive tweaks */
