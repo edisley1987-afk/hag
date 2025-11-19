@@ -27,7 +27,10 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.008305,
+    
+    // *** AJUSTE SOLICITADO ***
+    leituraCheio: 0.008400,
+
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
@@ -97,7 +100,7 @@ function registrarHistorico(dados) {
 
     if (!capacidade || capacidade <= 1) return;
 
-    // *** ALTERAÇÃO SOLICITADA: 2% ***
+    // === Variação mínima ajustada para 2% ===
     const variacaoMinima = capacidade * 0.02;
 
     const ultimo = reg.pontos.at(-1);
