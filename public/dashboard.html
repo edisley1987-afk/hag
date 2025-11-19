@@ -28,13 +28,17 @@
   </main>
 
   <footer class="app-footer">
+    <!-- 🔥 Agora o alerta pode receber classe "critico" via JS -->
     <div id="globalAlert" class="global-alert" aria-live="polite" style="display:none;">
       ⚠️ Alerta: Nível crítico em um ou mais reservatórios!
+      <br>
+      <span id="criticalList"></span>
     </div>
+
     <div class="footer-text">Hospital Arnaldo Gavazza — Monitoramento de Reservatórios</div>
   </footer>
 
-  <!-- áudio de alarme (uso de URL pública; navegador pode bloquear autoplay até interação) -->
+  <!-- 🔊 Áudio de alarme -->
   <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script src="dashboard.js"></script>
