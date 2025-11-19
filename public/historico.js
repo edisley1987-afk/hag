@@ -1,5 +1,5 @@
 // =====================
-//  HISTORICO.JS FINAL (COM LITROS REAIS)
+//  HISTORICO.JS FINAL (SEM ALERTA) – COM LITROS REAIS
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
@@ -27,7 +27,6 @@ const CAPACIDADES = {
   Reservatorio_CME_current: 5000,         // 5.000 litros
   Reservatorio_Agua_Abrandada_current: 9000, // 9.000 litros
 };
-
 
 // Cores
 const CORES = {
@@ -78,7 +77,7 @@ async function carregarHistorico() {
 
       const { min, max } = info;
 
-      const mediaLitros = (min + max) / 2; // agora é LITROS, não %
+      const mediaLitros = (min + max) / 2; // litros reais
 
       labels.push(data);
       valoresMediosLitros.push(mediaLitros);
@@ -94,25 +93,15 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // CARD DA ÚLTIMA LEITURA
+    // CARD DA ÚLTIMA LEITURA (sem alerta)
     // ============================
     if (ultimaLeitura && ultimaData) {
-      const hoje = new Date();
-      const dataUltima = new Date(ultimaData);
-      const diffMin = Math.round((hoje - dataUltima) / 60000);
-
-      const alerta =
-        diffMin > 10
-          ? "<div class='alerta'>⚠ Mais de 10 minutos sem atualização</div>"
-          : "";
-
       cardsContainer.innerHTML = `
         <div class="card historico-card-resumo">
           <h3>Última leitura</h3>
           <p><strong>Data:</strong> ${ultimaData}</p>
           <p><strong>Mínimo:</strong> ${ultimaLeitura.min} L</p>
           <p><strong>Máximo:</strong> ${ultimaLeitura.max} L</p>
-          ${alerta}
         </div>
       `;
     }
