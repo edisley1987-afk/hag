@@ -1,37 +1,74 @@
-// === Configuração dos tanques ===
-const capacidades = {
+// === CONFIGURAÇÕES ===
+const API_URL = "https://hag-9ki9.onrender.com"; // seu servidor Render
+
+// Reservatórios e seus volumes máximos
+const RESERVATORIOS = {
     elevador: 20000,
     osmose: 200,
     cme: 5000,
     abrandada: 9000
 };
 
-// === Variáveis globais ===
-let chartHistorico = null;
-let ultimoValorRegistrado = {}; // Armazena último valor salvo para cada reservatório
+// === ELEMENTOS DA TELA ===
+const selectReservatorio = document.getElementById("reservatorioSelect");
+const ctx = document.getElementById("graficoHistorico");
 
-// === Criar gráfico ===
-function criarGrafico() {
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
+// Variáveis globais do gráfico
+let grafico = null;
+let ultimoNivel = null;
 
-    chartHistorico = new Chart(ctx, {
+// === FUNÇÃO PRINCIPAL ===
+async function carregarHistorico() {
+    const reservatorio = selectReservatorio.value;
+    const volumeMax = RESERVATORIOS[reservatorio];
+
+    try {
+        const response = await fetch(`${API_URL}/historico/listar/${reservatorio}`);
+        if (!response.ok) throw new Error("Erro ao buscar histórico");
+
+        const dados = await response.json();
+
+        // Converte para porcentagem
+        const labels = dados.map(item =>
+            new Date(item.data_hora).toLocaleString("pt-BR")
+        );
+
+        const valores = dados.map(item =>
+            Number(((item.nivel / volumeMax) * 100).toFixed(2))
+        );
+
+        montarGrafico(labels, valores);
+        ultimoNivel = valores[valores.length - 1] || null;
+
+    } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+    }
+}
+
+// === MONTAR GRÁFICO ===
+function montarGrafico(labels, valores) {
+    if (grafico) grafico.destroy();
+
+    // Gerar linha de tendência (regressão linear)
+    const trend = gerarTrendline(valores);
+
+    grafico = new Chart(ctx, {
         type: "line",
         data: {
-            labels: [],
+            labels,
             datasets: [
                 {
                     label: "Nível (%)",
-                    data: [],
-                    borderWidth: 2,
+                    data: valores,
+                    borderWidth: 3,
                     fill: false,
                     tension: 0.3
                 },
                 {
                     label: "Tendência",
-                    data: [],
-                    borderDash: [5, 5],
-                    borderWidth: 1,
-                    pointRadius: 0,
+                    data: trend,
+                    borderWidth: 2,
+                    borderDash: [6, 6],
                     fill: false,
                     tension: 0
                 }
@@ -46,91 +83,83 @@ function criarGrafico() {
     });
 }
 
-// === Cálculo da linha de tendência (regressão linear simples) ===
-function calcularTrendline(labels, values) {
-    const n = labels.length;
-    if (n < 2) return Array(n).fill(null);
+// === TRENDLINE (Regressão Linear Simples) ===
+function gerarTrendline(valores) {
+    const n = valores.length;
+    if (n < 2) return valores.map(() => null);
 
-    const x = labels.map((_, i) => i);
-    const y = values;
+    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
 
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+    valores.forEach((y, x) => {
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumXX += x * x;
+    });
 
-    const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const b = (sumY - m * sumX) / n;
+    const mediaX = sumX / n;
+    const mediaY = sumY / n;
 
-    return x.map(i => m * i + b);
+    const b = (sumXY - n * mediaX * mediaY) / (sumXX - n * mediaX * mediaX);
+    const a = mediaY - b * mediaX;
+
+    return valores.map((_, x) => Number((a + b * x).toFixed(2)));
 }
 
-// === Carregar histórico salvo ===
-async function carregarHistorico(reservatorio) {
-    const res = await fetch(`/historico/listar/${reservatorio}`);
-    const dados = await res.json();
+// === MONITORAR ATUALIZAÇÕES EM TEMPO REAL ===
+async function monitorarAtualizacoes() {
+    setInterval(async () => {
+        const reservatorio = selectReservatorio.value;
+        const volumeMax = RESERVATORIOS[reservatorio];
 
-    chartHistorico.data.labels = dados.map(item => item.hora);
-    chartHistorico.data.datasets[0].data = dados.map(item => item.nivel);
+        try {
+            const resp = await fetch(`${API_URL}/nivel/${reservatorio}`);
+            if (!resp.ok) return;
 
-    chartHistorico.data.datasets[1].data = calcularTrendline(
-        chartHistorico.data.labels,
-        chartHistorico.data.datasets[0].data
-    );
+            const dado = await resp.json();
+            const nivelAtual = Number(((dado.nivel / volumeMax) * 100).toFixed(2));
 
-    chartHistorico.update();
+            if (ultimoNivel === null) {
+                ultimoNivel = nivelAtual;
+                return;
+            }
 
-    if (dados.length > 0) {
-        ultimoValorRegistrado[reservatorio] = dados[dados.length - 1].nivel;
-    }
+            const diferenca = Math.abs(nivelAtual - ultimoNivel);
+
+            // Grava no histórico somente se variou +5%
+            if (diferenca >= 5) {
+                await registrarHistorico(reservatorio, dado.nivel);
+                await carregarHistorico();
+                ultimoNivel = nivelAtual;
+            }
+
+        } catch (error) {
+            console.error("Erro no monitoramento:", error);
+        }
+
+    }, 5000); // Atualiza a cada 5 segundos
 }
 
-// === Salvar novo registro somente se variação > 5% ===
-async function tentarRegistrarHistorico(reservatorio, novoValor) {
-    let ultimo = ultimoValorRegistrado[reservatorio] ?? null;
-
-    if (ultimo === null || Math.abs(novoValor - ultimo) >= 5) {
-        await fetch("/historico/salvar", {
+// === GRAVAR HISTÓRICO NO SERVIDOR ===
+async function registrarHistorico(reservatorio, nivel) {
+    try {
+        await fetch(`${API_URL}/historico/registrar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 reservatorio,
-                nivel: novoValor,
-                hora: new Date().toLocaleTimeString("pt-BR")
+                nivel,
+                data_hora: new Date().toISOString()
             })
         });
-
-        ultimoValorRegistrado[reservatorio] = novoValor;
-
-        console.log(`Registro salvo (${reservatorio}): ${novoValor}%`);
-        carregarHistorico(reservatorio); // Atualiza gráfico automaticamente
-    } else {
-        console.log(`Mudança menor que 5%, não registrado (${reservatorio})`);
+    } catch (error) {
+        console.error("Erro ao salvar histórico:", error);
     }
 }
 
-// === Atualização em tempo real (via SSE) ===
-if (!!window.EventSource) {
-    const source = new EventSource("/stream");
+// === EVENTOS ===
+selectReservatorio.addEventListener("change", carregarHistorico);
 
-    source.addEventListener("nivel", function (e) {
-        const dados = JSON.parse(e.data);
-
-        for (const reservatorio in dados) {
-            const valorAtual = dados[reservatorio];
-
-            tentarRegistrarHistorico(reservatorio, valorAtual);
-        }
-    });
-}
-
-// === Ao trocar reservatório no select ===
-document.getElementById("reservatorioSelect").addEventListener("change", function () {
-    carregarHistorico(this.value);
-});
-
-// === Inicializar ===
-window.onload = function () {
-    criarGrafico();
-    carregarHistorico("elevador");
-};
+// === INICIAR ===
+carregarHistorico();
+monitorarAtualizacoes();
