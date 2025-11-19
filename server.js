@@ -46,7 +46,7 @@ const SENSORES = {
     capacidade: 9000
   },
 
-  // Sensores pressão
+  // Sensores de pressão
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
@@ -59,7 +59,7 @@ function salvarDados(dados) {
 }
 
 // ============================================================================
-// === Função registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 5% ==========
+// === Função registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 2% ==========
 // ============================================================================
 
 function registrarHistorico(dados) {
@@ -97,7 +97,9 @@ function registrarHistorico(dados) {
 
     if (!capacidade || capacidade <= 1) return;
 
-    const variacaoMinima = capacidade * 0.05;
+    // *** ALTERAÇÃO SOLICITADA: 2% ***
+    const variacaoMinima = capacidade * 0.02;
+
     const ultimo = reg.pontos.at(-1);
 
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacaoMinima) {
