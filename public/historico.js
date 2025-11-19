@@ -81,5 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     select.addEventListener("change", carregarHistorico);
 
+// === Torna a função global ===
+window.carregarHistorico = carregarHistorico;
+
     carregarHistorico(); // Carrega ao abrir a página
 });
