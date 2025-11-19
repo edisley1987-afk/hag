@@ -1,5 +1,5 @@
 // =====================
-//  HISTORICO.JS FINAL (SEM ALERTA) – COM LITROS REAIS
+//  HISTORICO.JS FINAL (SEM ALERTA) – COM LITROS REAIS + LINHA DE NÍVEL MÁXIMO
 // =====================
 
 // URL da API de histórico gerada pelo servidor Node
@@ -107,8 +107,9 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // GRÁFICO EM LINHA (LITROS)
+    // GRÁFICO EM LINHA (LITROS + LINHA DE MÁXIMO)
     // ============================
+
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
@@ -126,6 +127,17 @@ async function carregarHistorico() {
             pointRadius: 3,
             fill: false,
           },
+          {
+            label: "Nível Máximo (L)",
+            data: labels.map(() => capacidade), // linha horizontal
+            borderColor: "#d9534f",
+            backgroundColor: "#d9534f",
+            borderDash: [6, 4],
+            tension: 0,
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+          },
         ],
       },
       options: {
@@ -134,11 +146,12 @@ async function carregarHistorico() {
         scales: {
           y: {
             beginAtZero: true,
-            max: capacidade, // ESCALA CORRETA POR RESERVATÓRIO
+            max: capacidade, // ESCALA CORRETA
           },
         },
       },
     });
+
   } catch (err) {
     console.error(err);
     cardsContainer.innerHTML = `<p style="color:red;">Erro ao carregar histórico: ${err.message}</p>`;
