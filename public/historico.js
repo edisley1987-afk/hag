@@ -19,29 +19,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
             console.log("Recebido da API:", dados);
 
-            // ================================
-            // CORREÇÃO PRINCIPAL 
-            // API retorna: { reservatorio, dias:[...] }
-            // ================================
-            const dias = Array.isArray(dados.dias) ? dados.dias : [];
+            // ============================================
+            // TRATAMENTO UNIVERSAL DO OBJETO RETORNADO
+            // ============================================
+            const dias = Array.isArray(dados?.dias) ? dados.dias : [];
 
             if (!dias.length) {
-                console.warn("Nenhum dado encontrado.");
+                console.warn("Nenhum dado encontrado para este reservatório.");
+                atualizarCardUltimaLeitura(null);
                 atualizarGrafico([], []);
                 return;
             }
 
-            // Ordena por data
+            // Ordena por data crescente
             dias.sort((a, b) => new Date(a.data) - new Date(b.data));
 
+            // Labels e valores
             const labels = dias.map(d => d.data);
+
             const valores = dias.map(d => {
-                if (d.pontos && d.pontos.length) {
-                    return d.pontos[d.pontos.length - 1].valor;
-                }
-                return 0;
+                const ultimo = d.pontos?.at(-1);
+                return ultimo ? Number(ultimo.valor) : 0;
             });
 
+            atualizarCardUltimaLeitura(dias.at(-1));
             atualizarGrafico(labels, valores);
 
         } catch (erro) {
@@ -49,6 +50,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // ============================================================
+    // CARD DA ÚLTIMA LEITURA (aparece acima do gráfico)
+    // ============================================================
+    function atualizarCardUltimaLeitura(registro) {
+        const div = document.getElementById("history-cards");
+
+        if (!registro) {
+            div.innerHTML = `
+                <div class="card card-alerta">
+                    <p>Nenhuma leitura encontrada para este reservatório.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const ultimoPonto = registro.pontos?.at(-1);
+
+        div.innerHTML = `
+            <div class="card card-info">
+                <h3>Última Leitura</h3>
+                <p><strong>Data:</strong> ${registro.data}</p>
+                <p><strong>Hora:</strong> ${ultimoPonto?.hora || "--:--"}</p>
+                <p><strong>Nível:</strong> ${ultimoPonto?.valor ?? "-"}%</p>
+            </div>
+        `;
+    }
+
+    // ============================================================
+    // GRÁFICO
+    // ============================================================
     function atualizarGrafico(labels, valores) {
         if (grafico) {
             grafico.destroy();
@@ -63,7 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         label: "Nível (%)",
                         data: valores,
                         borderWidth: 3,
-                        tension: 0.3
+                        borderColor: "#2c8b7d",
+                        backgroundColor: "rgba(44, 139, 125, 0.3)",
+                        pointRadius: 5,
+                        tension: 0.35
                     }
                 ]
             },
@@ -79,10 +113,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Evento no select
     select.addEventListener("change", carregarHistorico);
 
-// === Torna a função global ===
-window.carregarHistorico = carregarHistorico;
+    // Torna global (chamado pelo HTML)
+    window.carregarHistorico = carregarHistorico;
 
-    carregarHistorico(); // Carrega ao abrir a página
+    // Executa ao carregar a página
+    carregarHistorico();
 });
