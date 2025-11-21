@@ -1,0 +1,8 @@
+{
+  "2025-11-19": {
+    "elevador": { "min": 19000, "max": 20000, "pontos": [] },
+    "osmose":   { "min": 150,   "max": 195,   "pontos": [] },
+    "cme":      { "min": 4800,  "max": 5000,  "pontos": [] },
+    "abrandada":{ "min": 8700,  "max": 9000,  "pontos": [] }
+  }
+}
