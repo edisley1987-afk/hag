@@ -1,117 +1,98 @@
 // =====================
-//  HISTORICO.JS FINAL – DIÁRIO / 24h (SEM ALERTA)
+//  HISTORICO.JS – COMPATÍVEL COM O SERVIDOR ATUAL
 // =====================
 
-// Elementos da página
 const selectReservatorio = document.getElementById("reservatorioSelect");
-const selectPeriodo = document.getElementById("periodoSelect");   // 🔵 novo seletor
+const selectPeriodo = document.getElementById("periodoSelect"); 
 const cardsContainer = document.getElementById("history-cards");
 const graficoCanvas = document.getElementById("graficoHistorico");
 
 let grafico = null;
 
-// Mapa do value → chave interna usada no servidor
 const MAPA_NOMES = {
-  elevador: "Reservatorio_Elevador_current",
-  osmose: "Reservatorio_Osmose_current",
-  cme: "Reservatorio_CME_current",
-  abrandada: "Reservatorio_Agua_Abrandada_current",
+  elevador: "elevador",
+  osmose: "osmose",
+  cme: "cme",
+  abrandada: "abrandada",
 };
 
-// CAPACIDADE REAL DE CADA RESERVATÓRIO
+const NOMES_COMPLETOS = {
+  elevador: "Reservatório Elevador",
+  osmose: "Osmose",
+  cme: "CME",
+  abrandada: "Água Abrandada",
+};
+
 const CAPACIDADES = {
-  Reservatorio_Elevador_current: 20000,
-  Reservatorio_Osmose_current: 200,
-  Reservatorio_CME_current: 1000,
-  Reservatorio_Agua_Abrandada_current: 9000,
+  elevador: 20000,
+  osmose: 200,
+  cme: 1000,
+  abrandada: 9000,
 };
 
-// Cores do gráfico
 const CORES = {
-  Reservatorio_Elevador_current: "#2c8b7d",
-  Reservatorio_Osmose_current: "#57b3a0",
-  Reservatorio_CME_current: "#3498db",
-  Reservatorio_Agua_Abrandada_current: "#9b59b6",
+  elevador: "#2c8b7d",
+  osmose: "#57b3a0",
+  cme: "#3498db",
+  abrandada: "#9b59b6",
 };
 
 // =====================
-//  FUNÇÃO PRINCIPAL
+//  CARREGAR HISTÓRICO
 // =====================
-async function carregarHistorico() {
-  const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
-  if (!chaveReservatorio) {
-    cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
-    return;
-  }
 
-  // 🔵 Define rota baseado no período escolhido
+async function carregarHistorico() {
+  const reservatorio = MAPA_NOMES[selectReservatorio.value];
   const periodo = selectPeriodo.value;
 
-  const API_URL =
-    periodo === "24h"
-      ? `${window.location.origin}/historico/24h/${selectReservatorio.value}`
-      : window.location.origin + "/historico";
+  let API_URL = "";
+  if (periodo === "24h") {
+    API_URL = `${window.location.origin}/historico/24h/${reservatorio}`;
+  } else {
+    API_URL = `${window.location.origin}/historico`;
+  }
 
-  const capacidade = CAPACIDADES[chaveReservatorio];
-
-  cardsContainer.innerHTML = "⏳ Carregando histórico...";
+  cardsContainer.innerHTML = "⏳ Carregando...";
 
   try {
     const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Falha ao buscar histórico");
+    const dados = await res.json();
 
-    const historico = await res.json();
-    if (!historico || !Object.keys(historico).length) {
-      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Nenhum dado encontrado.</p>";
+    if (!Array.isArray(dados) || dados.length === 0) {
+      cardsContainer.innerHTML = "<p>📭 Nenhum dado encontrado.</p>";
       if (grafico) grafico.destroy();
       return;
     }
 
-    const datasOrdenadas = Object.keys(historico).sort();
-    const labels = [];
-    const valoresMediosLitros = [];
+    // Filtra somente o reservatório desejado
+    const filtrado = dados.filter(d => d.reservatorio === reservatorio);
 
-    let ultimaLeitura = null;
-    let ultimaData = null;
-
-    datasOrdenadas.forEach((data) => {
-      const registroDia = historico[data];
-      const info = registroDia[chaveReservatorio];
-      if (!info) return;
-
-      const { min, max } = info;
-      const mediaLitros = (min + max) / 2;
-
-      labels.push(data);
-      valoresMediosLitros.push(mediaLitros);
-
-      ultimaLeitura = info;
-      ultimaData = data;
-    });
-
-    if (!labels.length) {
-      cardsContainer.innerHTML = "<p style='text-align:center;'>📭 Não há dados para esse reservatório.</p>";
+    if (filtrado.length === 0) {
+      cardsContainer.innerHTML = "<p>📭 Não há dados para esse reservatório.</p>";
       if (grafico) grafico.destroy();
       return;
     }
 
-    // ============================
-    // CARD DA ÚLTIMA LEITURA
-    // ============================
-    if (ultimaLeitura && ultimaData) {
-      cardsContainer.innerHTML = `
-        <div class="card historico-card-resumo">
-          <h3>Última leitura</h3>
-          <p><strong>Data:</strong> ${ultimaData}</p>
-          <p><strong>Mínimo:</strong> ${ultimaLeitura.min} L</p>
-          <p><strong>Máximo:</strong> ${ultimaLeitura.max} L</p>
-        </div>
-      `;
-    }
+    // Organiza por timestamp
+    filtrado.sort((a, b) => a.timestamp - b.timestamp);
 
-    // ============================
-    // GRÁFICO (LITROS)
-    // ============================
+    // Prepara gráfico
+    const labels = filtrado.map(d => formatarHoraOuDia(d.timestamp, periodo));
+    const valores = filtrado.map(d => d.valor);
+
+    // Última leitura
+    const last = filtrado[filtrado.length - 1];
+    const dataUltima = new Date(last.timestamp).toLocaleString("pt-BR");
+
+    cardsContainer.innerHTML = `
+      <div class="card historico-card-resumo">
+        <h3>Última leitura</h3>
+        <p><strong>Data:</strong> ${dataUltima}</p>
+        <p><strong>Nível:</strong> ${last.valor} L</p>
+      </div>
+    `;
+
+    // GRAFICO
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
@@ -120,50 +101,50 @@ async function carregarHistorico() {
         labels,
         datasets: [
           {
-            label: "Nível médio (L)",
-            data: valoresMediosLitros,
-            borderColor: CORES[chaveReservatorio],
-            backgroundColor: CORES[chaveReservatorio],
-            tension: 0.25,
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: false,
+            label: "Nível (L)",
+            data: valores,
+            borderColor: CORES[reservatorio],
+            backgroundColor: CORES[reservatorio],
+            tension: 0.3
           },
           {
-            label: "Nível Máximo (L)",
-            data: labels.map(() => capacidade),
+            label: "Capacidade Máxima",
+            data: labels.map(() => CAPACIDADES[reservatorio]),
             borderColor: "#d9534f",
-            backgroundColor: "#d9534f",
-            borderDash: [6, 4],
-            borderWidth: 2,
-            pointRadius: 0,
-            tension: 0,
-            fill: false,
-          },
-        ],
+            borderDash: [5, 4],
+            pointRadius: 0
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
           y: {
-            beginAtZero: true,
-            max: capacidade,
-          },
-        },
-      },
+            min: 0,
+            max: CAPACIDADES[reservatorio]
+          }
+        }
+      }
     });
 
-  } catch (err) {
-    console.error(err);
-    cardsContainer.innerHTML = `<p style="color:red;">Erro ao carregar histórico: ${err.message}</p>`;
-    if (grafico) grafico.destroy();
+  } catch (e) {
+    cardsContainer.innerHTML = `<p style="color:red;">Erro: ${e.message}</p>`;
   }
 }
 
-// Eventos
+// =====================
+//  FORMATAÇÃO PARA GRÁFICO
+// =====================
+function formatarHoraOuDia(ts, periodo) {
+  const d = new Date(ts);
+  if (periodo === "24h") {
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  return d.toLocaleDateString("pt-BR");
+}
+
 selectReservatorio.addEventListener("change", carregarHistorico);
 selectPeriodo.addEventListener("change", carregarHistorico);
 
-// Inicialização
 carregarHistorico();
