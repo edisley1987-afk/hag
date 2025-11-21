@@ -323,6 +323,51 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
   res.json(ultimos5);
 });
 
+// ========================================================================
+//   🔥 NOVA ROTA — USADA PELO FRONTEND /api/consumo?dias=5
+// ========================================================================
+app.get("/api/consumo", (req, res) => {
+  const qtdDias = Number(req.query.dias || 5);
+
+  if (!fs.existsSync(HIST_FILE)) {
+    return res.json({
+      dias: [],
+      elevador: [],
+      osmose: []
+    });
+  }
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const dias = Object.keys(historico).sort().slice(-qtdDias);
+
+  const resultado = {
+    dias,
+    elevador: [],
+    osmose: []
+  };
+
+  function calcularConsumo(ref) {
+    return dias.map(data => {
+      const dia = historico[data][ref];
+      if (!dia) return 0;
+
+      const valores = [];
+
+      if (typeof dia.min === "number") valores.push(dia.min);
+      if (Array.isArray(dia.pontos)) dia.pontos.forEach(p => valores.push(p.valor));
+
+      if (valores.length < 2) return 0;
+
+      return Number((valores[0] - valores[valores.length - 1]).toFixed(2));
+    });
+  }
+
+  resultado.elevador = calcularConsumo("Reservatorio_Elevador_current");
+  resultado.osmose = calcularConsumo("Reservatorio_Osmose_current");
+
+  res.json(resultado);
+});
+
 // === Interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) =>
