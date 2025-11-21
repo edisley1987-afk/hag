@@ -1,12 +1,10 @@
 // =====================
-//  HISTORICO.JS FINAL (SEM ALERTA) – COM LITROS REAIS + LINHA DE NÍVEL MÁXIMO
+//  HISTORICO.JS FINAL – DIÁRIO / 24h (SEM ALERTA)
 // =====================
-
-// URL da API de histórico gerada pelo servidor Node
-const API_URL = window.location.origin + "/historico";
 
 // Elementos da página
 const selectReservatorio = document.getElementById("reservatorioSelect");
+const selectPeriodo = document.getElementById("periodoSelect");   // 🔵 novo seletor
 const cardsContainer = document.getElementById("history-cards");
 const graficoCanvas = document.getElementById("graficoHistorico");
 
@@ -22,13 +20,13 @@ const MAPA_NOMES = {
 
 // CAPACIDADE REAL DE CADA RESERVATÓRIO
 const CAPACIDADES = {
-  Reservatorio_Elevador_current: 20000,   // 20.000 litros
-  Reservatorio_Osmose_current: 200,       // 200 litros
-  Reservatorio_CME_current: 1000,         // 1.000 litros
-  Reservatorio_Agua_Abrandada_current: 9000, // 9.000 litros
+  Reservatorio_Elevador_current: 20000,
+  Reservatorio_Osmose_current: 200,
+  Reservatorio_CME_current: 1000,
+  Reservatorio_Agua_Abrandada_current: 9000,
 };
 
-// Cores
+// Cores do gráfico
 const CORES = {
   Reservatorio_Elevador_current: "#2c8b7d",
   Reservatorio_Osmose_current: "#57b3a0",
@@ -37,15 +35,21 @@ const CORES = {
 };
 
 // =====================
-// FUNÇÃO PRINCIPAL
+//  FUNÇÃO PRINCIPAL
 // =====================
 async function carregarHistorico() {
   const chaveReservatorio = MAPA_NOMES[selectReservatorio.value];
-
   if (!chaveReservatorio) {
     cardsContainer.innerHTML = "<p style='color:red;'>Reservatório inválido.</p>";
     return;
   }
+
+  // 🔵 Define rota baseado no período escolhido
+  const periodo = selectPeriodo.value;
+  const API_URL =
+    periodo === "24h"
+      ? window.location.origin + "/historico/24h"
+      : window.location.origin + "/historico";
 
   const capacidade = CAPACIDADES[chaveReservatorio];
 
@@ -69,15 +73,13 @@ async function carregarHistorico() {
     let ultimaLeitura = null;
     let ultimaData = null;
 
-    // Processa cada dia
     datasOrdenadas.forEach((data) => {
       const registroDia = historico[data];
       const info = registroDia[chaveReservatorio];
       if (!info) return;
 
       const { min, max } = info;
-
-      const mediaLitros = (min + max) / 2; // litros reais
+      const mediaLitros = (min + max) / 2;
 
       labels.push(data);
       valoresMediosLitros.push(mediaLitros);
@@ -93,7 +95,7 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // CARD DA ÚLTIMA LEITURA (sem alerta)
+    // CARD DA ÚLTIMA LEITURA
     // ============================
     if (ultimaLeitura && ultimaData) {
       cardsContainer.innerHTML = `
@@ -107,9 +109,8 @@ async function carregarHistorico() {
     }
 
     // ============================
-    // GRÁFICO EM LINHA (LITROS + LINHA DE MÁXIMO)
+    // GRÁFICO (LITROS)
     // ============================
-
     if (grafico) grafico.destroy();
 
     grafico = new Chart(graficoCanvas, {
@@ -118,7 +119,7 @@ async function carregarHistorico() {
         labels,
         datasets: [
           {
-            label: "Nível médio diário (L)",
+            label: "Nível médio (L)",
             data: valoresMediosLitros,
             borderColor: CORES[chaveReservatorio],
             backgroundColor: CORES[chaveReservatorio],
@@ -129,13 +130,13 @@ async function carregarHistorico() {
           },
           {
             label: "Nível Máximo (L)",
-            data: labels.map(() => capacidade), // linha horizontal
+            data: labels.map(() => capacidade),
             borderColor: "#d9534f",
             backgroundColor: "#d9534f",
             borderDash: [6, 4],
-            tension: 0,
             borderWidth: 2,
             pointRadius: 0,
+            tension: 0,
             fill: false,
           },
         ],
@@ -146,7 +147,7 @@ async function carregarHistorico() {
         scales: {
           y: {
             beginAtZero: true,
-            max: capacidade, // ESCALA CORRETA
+            max: capacidade,
           },
         },
       },
@@ -159,8 +160,9 @@ async function carregarHistorico() {
   }
 }
 
-// Evento ao trocar o reservatório
+// Eventos
 selectReservatorio.addEventListener("change", carregarHistorico);
+selectPeriodo.addEventListener("change", carregarHistorico);
 
-// Carregar na abertura da página
+// Inicialização
 carregarHistorico();
