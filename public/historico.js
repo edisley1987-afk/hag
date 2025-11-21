@@ -46,9 +46,10 @@ async function carregarHistorico() {
 
   // 🔵 Define rota baseado no período escolhido
   const periodo = selectPeriodo.value;
+
   const API_URL =
     periodo === "24h"
-      ? window.location.origin + "/historico/24h"
+      ? `${window.location.origin}/historico/24h/${selectReservatorio.value}`
       : window.location.origin + "/historico";
 
   const capacidade = CAPACIDADES[chaveReservatorio];
