@@ -61,7 +61,6 @@ function salvarDados(dados) {
 // ============================================================================
 // === Função registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 2% ==========
 // ============================================================================
-
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -201,8 +200,15 @@ app.get("/dados", (req, res) => {
 });
 
 // ========================================================================
-//  🔥 SUBSTITUTO DO /historico ANTIGO — AGORA NO FORMATO QUE O FRONT ESPERA
+//  🔥 /historico — FORMATO QUE O FRONT USA
 // ========================================================================
+const MAPA_RESERVATORIOS = {
+  elevador: "Reservatorio_Elevador_current",
+  osmose: "Reservatorio_Osmose_current",
+  cme: "Reservatorio_CME_current",
+  abrandada: "Reservatorio_Agua_Abrandada_current"
+};
+
 app.get("/historico", (req, res) => {
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
@@ -241,21 +247,13 @@ app.get("/historico", (req, res) => {
 });
 
 // ========================================================================
-//   🔥 SUBSTITUTO DO /historico/24h — FORMATO SIMPLES PARA O FRONT
+//   🔥 /historico/24h/:reservatorio
 // ========================================================================
-const MAPA_RESERVATORIOS = {
-  elevador: "Reservatorio_Elevador_current",
-  osmose: "Reservatorio_Osmose_current",
-  cme: "Reservatorio_CME_current",
-  abrandada: "Reservatorio_Agua_Abrandada_current"
-};
-
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
 
   if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
-
   if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
@@ -283,6 +281,48 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
   res.json(saida);
 });
 
+// ========================================================================
+//   🔥 NOVO ENDPOINT — CONSUMO DOS ÚLTIMOS 5 DIAS (ELEVADOR + OSMOSE)
+// ========================================================================
+app.get("/consumo/5dias/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const dias = [];
+
+  for (const [data, sensores] of Object.entries(historico)) {
+    const reg = sensores[ref];
+    if (!reg) continue;
+
+    const valores = [];
+
+    if (typeof reg.min === "number") valores.push(reg.min);
+    if (Array.isArray(reg.pontos)) {
+      reg.pontos.forEach(p => valores.push(p.valor));
+    }
+
+    if (valores.length >= 2) {
+      dias.push({
+        dia: data,
+        consumo: valores[0] - valores[valores.length - 1]
+      });
+    }
+  }
+
+  dias.sort((a, b) => a.dia.localeCompare(b.dia));
+
+  const ultimos5 = dias.slice(-5).map(d => ({
+    dia: d.dia,
+    consumo: Number(d.consumo.toFixed(2))
+  }));
+
+  res.json(ultimos5);
+});
+
 // === Interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) =>
@@ -297,60 +337,6 @@ app.get("/historico-view", (req, res) =>
 app.get("/login", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.html"))
 );
-// =======================================
-//   NOVO ENDPOINT: CONSUMO DOS ÚLTIMOS 5 DIAS
-// =======================================
-
-app.get("/consumo/5dias/:reservatorio", (req, res) => {
-    const reservatorio = req.params.reservatorio;
-
-    try {
-        const historico = JSON.parse(fs.readFileSync("historico.json", "utf8"));
-
-        // Filtra somente o reservatório solicitado
-        const dados = historico.filter(d => d.reservatorio === reservatorio);
-
-        if (dados.length === 0) {
-            return res.json([]);
-        }
-
-        // Organiza por timestamp
-        dados.sort((a, b) => a.timestamp - b.timestamp);
-
-        // Agrupa por dia
-        const dias = {};
-
-        dados.forEach(item => {
-            const dia = new Date(item.timestamp).toISOString().slice(0, 10);
-            if (!dias[dia]) dias[dia] = [];
-            dias[dia].push(item.valor);
-        });
-
-        // Pega somente os últimos 5 dias
-        const ultimos5Dias = Object.keys(dias)
-            .sort()
-            .slice(-5);
-
-        const resultado = ultimos5Dias.map(dia => {
-            const valores = dias[dia];
-
-            const nivelInicial = valores[0];
-            const nivelFinal = valores[valores.length - 1];
-
-            const consumo = nivelInicial - nivelFinal;
-
-            return {
-                dia,
-                consumo: Number(consumo.toFixed(2))
-            };
-        });
-
-        res.json(resultado);
-
-    } catch (err) {
-        res.status(500).json({ erro: err.message });
-    }
-});
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
