@@ -1,4 +1,4 @@
-// ======= consumo.js (100% compatível com seu historico.json) =======
+// ======= consumo.js (Compatível com historico.json) =======
 
 const CAPACIDADE_ELEVADOR = 20000;
 const CAPACIDADE_OSMOSE   = 200;
@@ -39,7 +39,7 @@ function mostrarAvisoSemDados() {
 }
 
 // ==========================================
-// Cálculo REAL usando min/max diário do servidor
+// Cálculo REAL usando min/max diário do histórico.json
 // ==========================================
 function calcularConsumoDiario(historico) {
   const dias = Object.keys(historico).sort();
@@ -49,8 +49,9 @@ function calcularConsumoDiario(historico) {
   dias.forEach(data => {
     const dia = historico[data];
 
-    const elev = dia["Reservatorio_Elevador_current"];
-    const osm  = dia["Reservatorio_Osmose_current"];
+    // NOMES CORRETOS DO JSON!!!
+    const elev = dia["elevador"];
+    const osm  = dia["osmose"];
 
     const consumoElev = elev ? elev.max - elev.min : 0;
     const consumoOsm  = osm  ? osm.max  - osm.min  : 0;
@@ -64,7 +65,7 @@ function calcularConsumoDiario(historico) {
     });
   });
 
-  return resultado.slice(-5);
+  return resultado.slice(-5); // últimos 5 dias
 }
 
 // ==========================================
