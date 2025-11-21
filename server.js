@@ -297,6 +297,60 @@ app.get("/historico-view", (req, res) =>
 app.get("/login", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.html"))
 );
+// =======================================
+//   NOVO ENDPOINT: CONSUMO DOS ÚLTIMOS 5 DIAS
+// =======================================
+
+app.get("/consumo/5dias/:reservatorio", (req, res) => {
+    const reservatorio = req.params.reservatorio;
+
+    try {
+        const historico = JSON.parse(fs.readFileSync("historico.json", "utf8"));
+
+        // Filtra somente o reservatório solicitado
+        const dados = historico.filter(d => d.reservatorio === reservatorio);
+
+        if (dados.length === 0) {
+            return res.json([]);
+        }
+
+        // Organiza por timestamp
+        dados.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Agrupa por dia
+        const dias = {};
+
+        dados.forEach(item => {
+            const dia = new Date(item.timestamp).toISOString().slice(0, 10);
+            if (!dias[dia]) dias[dia] = [];
+            dias[dia].push(item.valor);
+        });
+
+        // Pega somente os últimos 5 dias
+        const ultimos5Dias = Object.keys(dias)
+            .sort()
+            .slice(-5);
+
+        const resultado = ultimos5Dias.map(dia => {
+            const valores = dias[dia];
+
+            const nivelInicial = valores[0];
+            const nivelFinal = valores[valores.length - 1];
+
+            const consumo = nivelInicial - nivelFinal;
+
+            return {
+                dia,
+                consumo: Number(consumo.toFixed(2))
+            };
+        });
+
+        res.json(resultado);
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+});
 
 // === Inicialização ===
 const PORT = process.env.PORT || 3000;
