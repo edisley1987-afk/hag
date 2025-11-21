@@ -24,7 +24,7 @@ const MAPA_NOMES = {
 const CAPACIDADES = {
   Reservatorio_Elevador_current: 20000,   // 20.000 litros
   Reservatorio_Osmose_current: 200,       // 200 litros
-  Reservatorio_CME_current: 5000,         // 5.000 litros
+  Reservatorio_CME_current: 1000,         // 1.000 litros
   Reservatorio_Agua_Abrandada_current: 9000, // 9.000 litros
 };
 
