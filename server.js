@@ -245,6 +245,50 @@ app.get("/historico/listar/:reservatorio", (req, res) => {
   res.json({ reservatorio: nome, dias });
 });
 
+// === NOVO ENDPOINT: comportamento das últimas 24 horas ===
+app.get("/historico/24h/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+
+  if (!ref) {
+    return res.status(400).json({ erro: "Reservatório inválido" });
+  }
+
+  if (!fs.existsSync(HIST_FILE)) {
+    return res.json({ pontos: [] });
+  }
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const agora = new Date();
+  
+  const pontos24h = [];
+
+  // Varre todos os dias do arquivo
+  for (const [data, dadosDia] of Object.entries(historico)) {
+    const pontos = dadosDia[ref]?.pontos || [];
+
+    for (const p of pontos) {
+      const dataHora = new Date(`${data} ${p.hora}`);
+
+      // Apenas últimos 24h
+      if (agora - dataHora <= 24 * 60 * 60 * 1000) {
+        pontos24h.push({
+          timestamp: dataHora.toISOString(),
+          valor: p.valor
+        });
+      }
+    }
+  }
+
+  // Ordena por tempo crescente
+  pontos24h.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  res.json({
+    reservatorio: nome,
+    pontos: pontos24h
+  });
+});
+
 // === Interface estática ===
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) =>
