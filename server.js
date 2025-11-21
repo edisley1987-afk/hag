@@ -27,10 +27,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    
-    // *** AJUSTE SOLICITADO ***
     leituraCheio: 0.008400,
-
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
@@ -100,9 +97,7 @@ function registrarHistorico(dados) {
 
     if (!capacidade || capacidade <= 1) return;
 
-    // === Variação mínima ajustada para 2% ===
     const variacaoMinima = capacidade * 0.02;
-
     const ultimo = reg.pontos.at(-1);
 
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacaoMinima) {
@@ -205,15 +200,49 @@ app.get("/dados", (req, res) => {
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
+// ========================================================================
+//  🔥 SUBSTITUTO DO /historico ANTIGO — AGORA NO FORMATO QUE O FRONT ESPERA
+// ========================================================================
 app.get("/historico", (req, res) => {
-  if (!fs.existsSync(HIST_FILE)) return res.json({});
-  res.json(JSON.parse(fs.readFileSync(HIST_FILE, "utf-8")));
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const saida = [];
+
+  for (const [data, sensores] of Object.entries(historico)) {
+    for (const [ref, dados] of Object.entries(sensores)) {
+      const nome = Object.keys(MAPA_RESERVATORIOS)
+        .find(key => MAPA_RESERVATORIOS[key] === ref);
+
+      if (!nome) continue;
+
+      if (typeof dados.min === "number") {
+        saida.push({
+          reservatorio: nome,
+          timestamp: new Date(data).getTime(),
+          valor: dados.min
+        });
+      }
+
+      for (const p of dados.pontos || []) {
+        const dt = new Date(`${data} ${p.hora}`);
+        saida.push({
+          reservatorio: nome,
+          timestamp: dt.getTime(),
+          valor: p.valor
+        });
+      }
+    }
+  }
+
+  saida.sort((a, b) => a.timestamp - b.timestamp);
+
+  res.json(saida);
 });
 
-// ============================================================================
-// === ROTAS NOVAS EXIGIDAS PELO FRONT-END ====================================
-// ============================================================================
-
+// ========================================================================
+//   🔥 SUBSTITUTO DO /historico/24h — FORMATO SIMPLES PARA O FRONT
+// ========================================================================
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -221,72 +250,37 @@ const MAPA_RESERVATORIOS = {
   abrandada: "Reservatorio_Agua_Abrandada_current"
 };
 
-app.get("/historico/listar/:reservatorio", (req, res) => {
-  const nome = req.params.reservatorio.toLowerCase();
-  const ref = MAPA_RESERVATORIOS[nome];
-
-  if (!ref) {
-    return res.status(400).json({ erro: "Reservatório inválido" });
-  }
-
-  if (!fs.existsSync(HIST_FILE)) {
-    return res.json({ dias: [] });
-  }
-
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-
-  const dias = Object.entries(historico).map(([data, dados]) => ({
-    data,
-    min: dados[ref]?.min ?? null,
-    max: dados[ref]?.max ?? null,
-    pontos: dados[ref]?.pontos ?? []
-  }));
-
-  res.json({ reservatorio: nome, dias });
-});
-
-// === NOVO ENDPOINT: comportamento das últimas 24 horas ===
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
 
-  if (!ref) {
-    return res.status(400).json({ erro: "Reservatório inválido" });
-  }
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
 
-  if (!fs.existsSync(HIST_FILE)) {
-    return res.json({ pontos: [] });
-  }
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  const agora = new Date();
-  
-  const pontos24h = [];
+  const agora = Date.now();
+  const saida = [];
 
-  // Varre todos os dias do arquivo
-  for (const [data, dadosDia] of Object.entries(historico)) {
-    const pontos = dadosDia[ref]?.pontos || [];
+  for (const [data, sensores] of Object.entries(historico)) {
+    const pontos = sensores[ref]?.pontos || [];
 
     for (const p of pontos) {
-      const dataHora = new Date(`${data} ${p.hora}`);
+      const dt = new Date(`${data} ${p.hora}`).getTime();
 
-      // Apenas últimos 24h
-      if (agora - dataHora <= 24 * 60 * 60 * 1000) {
-        pontos24h.push({
-          timestamp: dataHora.toISOString(),
+      if (agora - dt <= 24 * 60 * 60 * 1000) {
+        saida.push({
+          reservatorio: nome,
+          timestamp: dt,
           valor: p.valor
         });
       }
     }
   }
 
-  // Ordena por tempo crescente
-  pontos24h.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  saida.sort((a, b) => a.timestamp - b.timestamp);
 
-  res.json({
-    reservatorio: nome,
-    pontos: pontos24h
-  });
+  res.json(saida);
 });
 
 // === Interface estática ===
