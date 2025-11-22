@@ -35,7 +35,10 @@ const PRESSOES = {
 // === Cria os cards dinamicamente ===
 function criarCards() {
   const container = document.querySelector(".cards-container");
-  if (!container) return;
+  if (!container) {
+    console.error("❌ ERRO: .cards-container não encontrado no HTML.");
+    return;
+  }
 
   container.innerHTML = "";
 
@@ -44,12 +47,22 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
+
     card.innerHTML = `
       <h2>${RESERVATORIOS[id].nome}</h2>
+
+      <div class="nivel-visual">
+        <div class="nivel-barra"></div>
+      </div>
+
       <p class="nivel">--%</p>
       <p class="litros">0 L</p>
-      <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
+
+      <button class="historico-btn" onclick="abrirHistorico('${id}')">
+        Ver Histórico
+      </button>
     `;
+
     container.appendChild(card);
   });
 
@@ -58,10 +71,12 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
+
     card.innerHTML = `
       <h2>${PRESSOES[id]}</h2>
       <p class="pressao">-- bar</p>
     `;
+
     container.appendChild(card);
   });
 }
@@ -71,6 +86,7 @@ async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
     const dados = await res.json();
+
     if (!dados || Object.keys(dados).length === 0) return;
 
     ultimaLeitura = Date.now();
@@ -81,33 +97,31 @@ async function atualizarLeituras() {
       if (!card) return;
 
       const valor = dados[id];
+
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".nivel").innerHTML = "--%";
         card.querySelector(".litros").innerHTML = "0 L";
-        card.style.setProperty("--nivel", "0%");
+        card.querySelector(".nivel-barra").style.height = "0%";
         return;
       }
 
       const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
+
       card.classList.remove("sem-dados");
 
-      // Define status e cores
-      let status = "alto";
-      let cor = "linear-gradient(to top, #3498db, #2ecc71)";
-      if (perc < 30) {
-        status = "baixo";
-        cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
-      } else if (perc < 70) {
-        status = "medio";
-        cor = "linear-gradient(to top, #f1c40f, #f39c12)";
-      }
+      // Define a cor de acordo com o nível
+      let cor = "#3498db"; // azul
+      if (perc < 30) cor = "#e74c3c"; // vermelho
+      else if (perc < 70) cor = "#f1c40f"; // amarelo
 
-      card.dataset.status = status;
+      // Aplica valores
       card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
       card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
-      card.style.setProperty("--nivel", perc + "%");
-      card.style.setProperty("--corNivel", cor);
+
+      const barra = card.querySelector(".nivel-barra");
+      barra.style.height = perc + "%";
+      barra.style.backgroundColor = cor;
     });
 
     // Atualiza pressões
@@ -116,6 +130,7 @@ async function atualizarLeituras() {
       if (!card) return;
 
       const valor = dados[id];
+
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".pressao").innerHTML = "-- bar";
@@ -137,28 +152,32 @@ async function atualizarLeituras() {
   }
 }
 
-// === Exibe 0% apenas se passar muito tempo sem atualização ===
+// Exibe --% se ficar muito tempo sem atualizar
 setInterval(() => {
   const tempo = Date.now() - ultimaLeitura;
+
   if (tempo > 240000) {
     document.querySelectorAll(".card").forEach((card) => {
       card.classList.add("sem-dados");
+
       if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
       if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
       if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
-      card.style.setProperty("--nivel", "0%");
+
+      const barra = card.querySelector(".nivel-barra");
+      if (barra) barra.style.height = "0%";
     });
   }
 }, 10000);
 
-// === Inicializa dashboard ===
+// Inicializa dashboard
 window.addEventListener("DOMContentLoaded", () => {
   criarCards();
   atualizarLeituras();
   setInterval(atualizarLeituras, UPDATE_INTERVAL);
 });
 
-// === Função global para abrir histórico ===
+// Função global para abrir histórico
 window.abrirHistorico = function (reservatorioId) {
   window.location.href = `historico.html?reservatorio=${reservatorioId}`;
 };
