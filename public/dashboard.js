@@ -34,10 +34,9 @@ const PRESSOES = {
 
 // === Cria os cards dinamicamente ===
 function criarCards() {
-  const container = document.querySelector(".cards-container");
-
+  const container = document.getElementById("cardsRow");
   if (!container) {
-    console.error("ERRO: .cards-container não encontrado no HTML.");
+    console.error("ERRO: #cardsRow não encontrado no HTML.");
     return;
   }
 
@@ -78,6 +77,7 @@ async function atualizarLeituras() {
     if (!dados || Object.keys(dados).length === 0) return;
 
     ultimaLeitura = Date.now();
+    let reservatoriosCriticos = [];
 
     // Atualiza reservatórios
     Object.entries(RESERVATORIOS).forEach(([id, conf]) => {
@@ -89,19 +89,19 @@ async function atualizarLeituras() {
         card.classList.add("sem-dados");
         card.querySelector(".nivel").innerHTML = "--%";
         card.querySelector(".litros").innerHTML = "0 L";
-        card.style.setProperty("--nivel", "0%");
         return;
       }
 
       const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
       card.classList.remove("sem-dados");
 
-      // Define cores
+      // Define cores e níveis
       let status = "alto";
       let cor = "linear-gradient(to top, #3498db, #2ecc71)";
       if (perc < 30) {
         status = "baixo";
         cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
+        reservatoriosCriticos.push(conf.nome);
       } else if (perc < 70) {
         status = "medio";
         cor = "linear-gradient(to top, #f1c40f, #f39c12)";
@@ -110,9 +110,6 @@ async function atualizarLeituras() {
       card.dataset.status = status;
       card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
       card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
-
-      card.style.setProperty("--nivel", perc + "%");
-      card.style.setProperty("--corNivel", cor);
     });
 
     // Atualiza pressões
@@ -131,12 +128,27 @@ async function atualizarLeituras() {
       card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
     });
 
-    // Atualiza data/hora
+    // Atualiza data
     const last = document.getElementById("lastUpdate");
     if (last) {
       const dt = new Date(dados.timestamp || Date.now());
       last.innerHTML = "Última atualização: " + dt.toLocaleString("pt-BR");
     }
+
+    // === Alerta global ===
+    const alertBox = document.getElementById("globalAlert");
+    const list = document.getElementById("criticalList");
+
+    if (reservatoriosCriticos.length > 0) {
+      alertBox.style.display = "block";
+      alertBox.classList.add("critico");
+      list.innerHTML = reservatoriosCriticos.join(", ");
+      document.getElementById("alarmSound").play().catch(() => {});
+    } else {
+      alertBox.style.display = "none";
+      alertBox.classList.remove("critico");
+    }
+
   } catch (err) {
     console.error("Erro ao buscar leituras:", err);
   }
@@ -144,14 +156,12 @@ async function atualizarLeituras() {
 
 // === Exibe 0% apenas se passar muito tempo sem atualização ===
 setInterval(() => {
-  const tempo = Date.now() - ultimaLeitura;
-  if (tempo > 240000) {
+  if (Date.now() - ultimaLeitura > 240000) {
     document.querySelectorAll(".card").forEach((card) => {
       card.classList.add("sem-dados");
       if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
       if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
       if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
-      card.style.setProperty("--nivel", "0%");
     });
   }
 }, 10000);
