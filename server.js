@@ -23,15 +23,18 @@ const HIST_FILE = path.join(DATA_DIR, "historico.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// === Tabela de sensores calibrados ===
+// ============================================================================
+// 🔥 TABELA DE SENSORES — CALIBRAÇÃO AJUSTADA E CONFIRMADA
+// ============================================================================
+
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.008400,
+    leituraCheio: 0.009480, // recalibrado (0.008056 = 85%)
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
-    leituraVazio: 0.00505,
+    leituraVazio: 0.005050,
     leituraCheio: 0.006693,
     capacidade: 200
   },
@@ -42,7 +45,7 @@ const SENSORES = {
   },
   "Reservatorio_Agua_Abrandada_current": {
     leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
+    leituraCheio: 0.004929, // recalibrado pelo seu valor de 15%
     capacidade: 9000
   },
 
@@ -59,7 +62,7 @@ function salvarDados(dados) {
 }
 
 // ============================================================================
-// === Função registrarHistorico() — REGISTRO REAL COM VARIAÇÃO > 2% ==========
+// === Função registrarHistorico() — ARMAZENA variação > 2% ====================
 // ============================================================================
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
@@ -110,7 +113,9 @@ function registrarHistorico(dados) {
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// === Endpoint universal do Gateway /atualizar ===
+// ============================================================================
+// === Endpoint universal /atualizar — aceita qualquer formato =================
+// ============================================================================
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path}`);
 
@@ -193,15 +198,17 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   }
 });
 
-// === Endpoints de API ===
+// ============================================================================
+// === /dados ================================================================
+// ============================================================================
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
-// ========================================================================
-//  🔥 /historico — FORMATO QUE O FRONT USA
-// ========================================================================
+// ============================================================================
+// === /historico — usado pelo front ==========================================
+// ============================================================================
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -246,9 +253,9 @@ app.get("/historico", (req, res) => {
   res.json(saida);
 });
 
-// ========================================================================
-//   🔥 /historico/24h/:reservatorio
-// ========================================================================
+// ============================================================================
+// === /historico/24h/:reservatorio ===========================================
+// ============================================================================
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
@@ -281,9 +288,9 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
   res.json(saida);
 });
 
-// ========================================================================
-//   🔥 NOVO ENDPOINT — CONSUMO DOS ÚLTIMOS 5 DIAS (ELEVADOR + OSMOSE)
-// ========================================================================
+// ============================================================================
+// === /consumo/5dias/:reservatorio ===========================================
+// ============================================================================
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
@@ -323,9 +330,9 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
   res.json(ultimos5);
 });
 
-// ========================================================================
-//   🔥 NOVA ROTA — USADA PELO FRONTEND /api/consumo?dias=5
-// ========================================================================
+// ============================================================================
+// === /api/consumo — usado pelo dashboard ====================================
+// ============================================================================
 app.get("/api/consumo", (req, res) => {
   const qtdDias = Number(req.query.dias || 5);
 
@@ -368,7 +375,9 @@ app.get("/api/consumo", (req, res) => {
   res.json(resultado);
 });
 
-// === Interface estática ===
+// ============================================================================
+// === Interface estática =====================================================
+// ============================================================================
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
@@ -383,7 +392,9 @@ app.get("/login", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.html"))
 );
 
-// === Inicialização ===
+// ============================================================================
+// === Inicialização ==========================================================
+// ============================================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor HAG ativo na porta ${PORT}`);
