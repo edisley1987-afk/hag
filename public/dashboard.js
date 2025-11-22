@@ -1,330 +1,240 @@
-// ===== dashboard.js (completo) =====
-// Modelo A: card preenchendo TODO o card (tanque), persistência de última leitura,
-// inatividade 10min, alarme <=30%, manutenção no servidor (se disponível) ou fallback localStorage.
+// ===== dashboard.js (completo e corrigido) =====
 
+// --- CONFIG ---
 const API_URL = window.location.origin + "/dados";
-const API_MANUT = window.location.origin + "/api/manutencao"; // rota opcional no servidor
+const API_MANUT = window.location.origin + "/api/manutencao";
 const UPDATE_INTERVAL = 5000;
 const INATIVITY_MS = 10 * 60 * 1000;
 const ALARM_INTERVAL_MS = 10000;
 
 let ultimaLeitura = 0;
-let ultimoDadosValidos = {}; // { key: numericValue }
+let ultimoDadosValidos = {};
+let manutencoes = {};
+let suportouApiManut = true;
 let alarmando = false;
 let alarmTimer = null;
 let audioBip = null;
-let manutencoes = {}; // { key: true }
-let suportouApiManut = true; // tentaremos usar rota /api/manutencao, fallback para localStorage
 
-// sensores
-const RESERVATORIOS = {
-  Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
-  Reservatorio_Osmose_current:  { nome: "Reservatório Osmose", capacidade: 200 },
-  Reservatorio_CME_current:     { nome: "Reservatório CME", capacidade: 1000 },
-  Reservatorio_Agua_Abrandada_current: { nome: "Água Abrandada", capacidade: 9000 }
+// Tabela oficial dos sensores (corrigido)
+const CURVAS = {
+  Reservatorio_Elevador_current:      { vazio: 0.004168, cheio: 0.008742, capacidade: 20000 },
+  Reservatorio_Osmose_current:        { vazio: 0.005050, cheio: 0.006492, capacidade: 200 },
+  Reservatorio_CME_current:           { vazio: 0.004088, cheio: 0.004408, capacidade: 1000 },
+  Reservatorio_Agua_Abrandada_current:{ vazio: 0.004048, cheio: 0.006515, capacidade: 9000 }
 };
+
+const RESERVATORIOS = {
+  Reservatorio_Elevador_current:      { nome: "Reservatório Elevador", capacidade: 20000 },
+  Reservatorio_Osmose_current:        { nome: "Reservatório Osmose", capacidade: 200 },
+  Reservatorio_CME_current:           { nome: "Reservatório CME", capacidade: 1000 },
+  Reservatorio_Agua_Abrandada_current:{ nome: "Água Abrandada", capacidade: 9000 }
+};
+
 const PRESSOES = {
   Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
   Pressao_Retorno_Osmose_current:"Pressão Retorno Osmose",
   Pressao_Saida_CME_current:     "Pressão Saída CME"
 };
+
 const ALL_KEYS = [...Object.keys(RESERVATORIOS), ...Object.keys(PRESSOES)];
 
-// ------------------ Persistência manutenção (server or local) ------------------
+
+// ------------------ Função de cálculo REAL ------------------
+function calcularPercentual(key, valor) {
+  const c = CURVAS[key];
+  if (!c) return 0;
+  
+  let pct = ((valor - c.vazio) / (c.cheio - c.vazio)) * 100;
+
+  // Limites obrigatórios
+  if (pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+
+  return pct;
+}
+
+
+// ------------------ Persistência de manutenção ------------------
 async function carregarManutencoes() {
   try {
     const r = await fetch(API_MANUT);
-    if (!r.ok) throw new Error("no-api");
+    if (!r.ok) throw new Error("API falhou");
     const arr = await r.json();
     manutencoes = {};
-    (arr || []).forEach(i => { if (i.reservatorio) manutencoes[i.reservatorio] = !!i.status; });
+    (arr || []).forEach(i => manutencoes[i.reservatorio] = !!i.status);
     suportouApiManut = true;
-    salvarManutencoesLocal();
-    return;
-  } catch (e) {
+    localStorage.setItem("manutencoes_hag", JSON.stringify(manutencoes));
+  } catch {
     suportouApiManut = false;
-    const raw = localStorage.getItem("manutencoes_hag");
-    try { manutencoes = raw ? JSON.parse(raw) : {}; } catch{ manutencoes = {}; }
-  }
-}
-function salvarManutencoesLocal() {
-  try { localStorage.setItem("manutencoes_hag", JSON.stringify(manutencoes)); } catch {}
-}
-async function setManutencaoServer(key, status) {
-  try {
-    const r = await fetch(API_MANUT, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ reservatorio: key, status })
-    });
-    if (!r.ok) throw new Error("no-save");
-    manutencoes[key] = !!status;
-    salvarManutencoesLocal();
-    suportouApiManut = true;
-    applyMaintenanceVisual(key);
-    return true;
-  } catch (e) {
-    suportouApiManut = false;
-    manutencoes[key] = !!status;
-    salvarManutencoesLocal();
-    applyMaintenanceVisual(key);
-    return false;
+    try {
+      manutencoes = JSON.parse(localStorage.getItem("manutencoes_hag")) || {};
+    } catch { manutencoes = {}; }
   }
 }
 
-// ------------------ Audio / Alarm ------------------
+
+// ------------------ Áudio / Alarme ------------------
 function ensureAudio() {
   if (!audioBip) {
-    audioBip = document.getElementById("alarmSound") || new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    audioBip.preload = "auto";
+    audioBip = document.getElementById("alarmSound") ||
+               new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
   }
 }
+
 function pingOnce() {
-  try {
-    ensureAudio();
-    audioBip.currentTime = 0;
-    audioBip.play().catch(()=>{});
-  } catch {}
+  ensureAudio();
+  audioBip.currentTime = 0;
+  audioBip.play().catch(()=>{});
 }
 
 function startAlarm() {
   if (alarmando) return;
   alarmando = true;
 
-  // 🔴 alerta visual vermelho piscando
-  const g = document.getElementById("globalAlert");
-  g.style.display = "inline-block";
-  g.classList.add("critico");
+  document.getElementById("globalAlert").style.display = "inline-block";
 
   pingOnce();
-  alarmTimer = setInterval(()=>{ if (alarmando) pingOnce(); }, ALARM_INTERVAL_MS);
+  alarmTimer = setInterval(pingOnce, ALARM_INTERVAL_MS);
 }
 
 function stopAlarm() {
   alarmando = false;
-  if (alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
-  try { if (audioBip) { audioBip.pause(); audioBip.currentTime = 0; } } catch {}
+  clearInterval(alarmTimer);
+  alarmTimer = null;
 
-  const g = document.getElementById("globalAlert");
-  g.classList.remove("critico");
-  g.style.display = "none";
+  document.getElementById("globalAlert").style.display = "none";
+  if (audioBip) audioBip.pause();
 }
 
-// ------------------ Create cards ------------------
+
+// ------------------ Criação dos Cards ------------------
 function criarCards() {
   const container = document.getElementById("cardsRow");
   container.innerHTML = "";
 
-  // reservatórios
   Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
     const card = document.createElement("div");
     card.className = "card reservatorio";
     card.id = key;
+
     card.innerHTML = `
       <div class="fill" style="height:0%; background:#2ecc71;"></div>
       <div class="content">
-        <div class="maint-toggle" title="Marcar / remover manutenção">🛠</div>
-        <div class="maint-badge">EM MANUTENÇÃO</div>
         <div class="title">${cfg.nome}</div>
         <div class="percent-large">--%</div>
         <div class="liters">0 L</div>
         <div class="aviso-inatividade">⚠ Sem atualização há mais de 10 minutos!</div>
       </div>
     `;
-    container.appendChild(card);
 
-    const toggle = card.querySelector(".maint-toggle");
-    toggle.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const cur = !!manutencoes[key];
-      await setManutencaoServer(key, !cur);
-      if (manutencoes[key]) stopAlarm();
-    });
+    container.appendChild(card);
   });
 
-  // pressões
   Object.entries(PRESSOES).forEach(([key, nome]) => {
     const card = document.createElement("div");
     card.className = "card pressao";
     card.id = key;
+
     card.innerHTML = `
       <div class="content">
         <div class="title">${nome}</div>
         <div class="percent-large">-- bar</div>
-        <div class="liters">&nbsp;</div>
         <div class="aviso-inatividade">⚠ Sem atualização há mais de 10 minutos!</div>
       </div>
     `;
+
     container.appendChild(card);
   });
 }
 
-// ------------------ apply maintenance visual ------------------
-function applyMaintenanceVisual(key) {
-  const card = document.getElementById(key);
-  if (!card) return;
-  const badge = card.querySelector(".maint-badge");
-  badge.style.display = manutencoes[key] ? "block" : "none";
-}
 
-// ------------------ Update display ------------------
+// ------------------ Atualização do Display ------------------
 function atualizarDisplay(dados) {
-  const last = document.getElementById("lastUpdate");
-  const ts = dados.timestamp ? new Date(dados.timestamp) : new Date();
-  last.textContent = "Última atualização: " + ts.toLocaleString("pt-BR");
   ultimaLeitura = Date.now();
-
   let algumCritico = false;
 
-  // reservatórios
+  // Reservatórios
   Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
     const card = document.getElementById(key);
+    const valor = dados[key];
+
+    if (typeof valor === "number") ultimoDadosValidos[key] = valor;
+
+    const usar = ultimoDadosValidos[key];
+    if (usar === undefined) return;
+
+    const pct = calcularPercentual(key, usar);
+    const litros = Math.round((pct / 100) * CURVAS[key].capacidade);
+
     const fill = card.querySelector(".fill");
     const pctEl = card.querySelector(".percent-large");
     const ltsEl = card.querySelector(".liters");
-    const aviso = card.querySelector(".aviso-inatividade");
 
-    const valor = typeof dados[key] === "number" ? dados[key] : undefined;
-
-    if (typeof valor === "number") {
-      ultimoDadosValidos[key] = valor;
-    }
-
-    const usar = typeof valor === "number" ? valor : ultimoDadosValidos[key];
-
-    if (typeof usar !== "number") {
-      pctEl.textContent = "--%";
-      ltsEl.textContent = "0 L";
-      fill.style.height = "0%";
-      fill.style.background = "#cccccc";
-      aviso.style.display = "none";
-      return;
-    }
-
-    const perc = Math.min(100, Math.max(0, (usar / cfg.capacidade) * 100));
-    const roundPct = Math.round(perc);
-
-    pctEl.textContent = roundPct + "%";
-    ltsEl.textContent = usar.toLocaleString() + " L";
-    fill.style.height = perc + "%";
+    pctEl.textContent = Math.round(pct) + "%";
+    ltsEl.textContent = litros.toLocaleString() + " L";
+    fill.style.height = pct + "%";
 
     let cor = "#2ecc71";
-    if (perc <= 30) cor = "#e74c3c";
-    else if (perc < 70) cor = "#f1c40f";
+    if (pct <= 30) cor = "#e74c3c";
+    else if (pct < 70) cor = "#f1c40f";
 
     fill.style.background = cor;
 
-    applyMaintenanceVisual(key);
-
-    // 🔴 card crítico
-    if (perc <= 30 && !manutencoes[key]) {
-      algumCritico = true;
-      card.classList.add("critico");
-    } else {
-      card.classList.remove("critico");
-    }
+    if (pct <= 30) algumCritico = true;
   });
 
-  // pressões
-  Object.entries(PRESSOES).forEach(([key, nome]) => {
+  // Pressões
+  Object.entries(PRESSOES).forEach(([key]) => {
     const card = document.getElementById(key);
-    const pctEl = card.querySelector(".percent-large");
-    const aviso = card.querySelector(".aviso-inatividade");
+    const valor = dados[key];
 
-    const valor = typeof dados[key] === "number" ? dados[key] : ultimoDadosValidos[key];
+    if (typeof valor === "number") ultimoDadosValidos[key] = valor;
 
-    if (typeof valor !== "number") {
-      pctEl.textContent = "-- bar";
-      aviso.style.display = "none";
-      return;
-    }
+    const usar = ultimoDadosValidos[key];
+    if (usar === undefined) return;
 
-    pctEl.textContent = Number(valor).toFixed(2) + " bar";
-    aviso.style.display = "none";
-    ultimoDadosValidos[key] = valor;
+    card.querySelector(".percent-large").textContent =
+      Number(usar).toFixed(2) + " bar";
   });
 
-  // 🔴 lógica de alarme
+  // Alarme global
   if (algumCritico) startAlarm();
   else stopAlarm();
 }
 
-// ------------------ cache fallback ------------------
-function usarCacheSeNecessario() {
-  const dados = { timestamp: new Date().toISOString() };
-  Object.keys(ultimoDadosValidos).forEach(k => dados[k] = ultimoDadosValidos[k]);
-  if (Object.keys(ultimoDadosValidos).length) atualizarDisplay(dados);
-}
 
-// ------------------ fetch ------------------
+// ------------------ Fetch de dados ------------------
 async function buscarDados() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
-    if (!res.ok) throw new Error("fetch-fail");
+    if (!res.ok) throw new Error();
     const dados = await res.json();
-
-    if (!dados.timestamp) dados.timestamp = new Date().toISOString();
-
-    Object.keys(dados).forEach(k => {
-      if (ALL_KEYS.includes(k) && typeof dados[k] === "number") {
-        ultimoDadosValidos[k] = dados[k];
-      }
-    });
-
     atualizarDisplay(dados);
-  } catch (e) {
-    usarCacheSeNecessario();
+  } catch {
+    atualizarDisplay(ultimoDadosValidos);
   }
 }
 
-// ------------------ inactivity ------------------
+
+// ------------------ Inatividade ------------------
 function verificarInatividade() {
-  const now = Date.now();
-  if (!ultimaLeitura || (now - ultimaLeitura) > INATIVITY_MS) {
-
-    document.querySelectorAll(".card").forEach(card => {
-      const aviso = card.querySelector(".aviso-inatividade");
-      if (aviso) aviso.style.display = "block";
-
-      const id = card.id;
-      if (ultimoDadosValidos[id] === undefined) {
-        card.classList.add("no-data");
-        const pctEl = card.querySelector(".percent-large");
-        if (pctEl) pctEl.textContent = "--%";
-        const ltsEl = card.querySelector(".liters");
-        if (ltsEl) ltsEl.textContent = "0 L";
-        const fill = card.querySelector(".fill");
-        if (fill) fill.style.height = "0%";
-      }
-    });
-
-    stopAlarm();
-  } else {
-    document.querySelectorAll(".card .aviso-inatividade").forEach(el => el.style.display = "none");
+  if (Date.now() - ultimaLeitura > INATIVITY_MS) {
+    document.querySelectorAll(".aviso-inatividade").forEach(e => e.style.display = "block");
   }
 }
 
-// ------------------ init ------------------
-window.addEventListener("DOMContentLoaded", async () => {
+
+// ------------------ INIT ------------------
+window.addEventListener("DOMContentLoaded", () => {
   try {
-    const raw = localStorage.getItem("ultimoDadosValidos_hag");
-    if (raw) ultimoDadosValidos = JSON.parse(raw);
+    ultimoDadosValidos = JSON.parse(localStorage.getItem("ultimoDadosValidos_hag")) || {};
   } catch {}
 
-  await carregarManutencoes();
   criarCards();
-
-  Object.keys(manutencoes).forEach(k => applyMaintenanceVisual(k));
-
-  const back = document.getElementById("btnBack");
-  const hist = document.getElementById("btnHistorico");
-  if (back) back.addEventListener("click", () => window.history.back());
-  if (hist) hist.addEventListener("click", () => window.location.href = "historico.html");
-
   buscarDados();
 
-  setInterval(async () => {
-    await buscarDados();
+  setInterval(() => {
+    buscarDados();
     localStorage.setItem("ultimoDadosValidos_hag", JSON.stringify(ultimoDadosValidos));
   }, UPDATE_INTERVAL);
 
