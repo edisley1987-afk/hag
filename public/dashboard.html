@@ -13,6 +13,7 @@
   </header>
 
   <main class="container">
+
     <div class="meta-row">
       <div class="top-actions">
         <button class="btn-menu" id="btnBack" title="Voltar">⬅ Voltar</button>
@@ -22,40 +23,21 @@
       <p id="lastUpdate" class="last-update">Última atualização: --</p>
     </div>
 
-    <section class="cards-row" id="cardsRow">
-      <!-- 🔥 Os cards serão criados via JS -->
-      <!-- Exemplo da estrutura que JS vai montar:
+    <!-- 🔥🔥 AQUI VOLTA O CONTAINER DOS CARDS 🔥🔥 -->
+    <section class="cards-container"></section>
 
-      <div class="card" data-reservatorio="Reservatorio_Elevador_current" data-capacidade="20000">
-          <h3>Reservatório Elevador</h3>
-
-          <div class="nivel">
-              <span class="percentual">0%</span>
-              <span class="litros">0 L</span>
-          </div>
-
-          <div class="alerta-msg" style="display:none;"></div>
-          <div class="status-manut" style="display:none;"></div>
-
-          <button class="btn-manut" style="display:none;">🔧 Marcar Manutenção</button>
-      </div>
-
-      -->
-    </section>
   </main>
 
   <footer class="app-footer">
-    <!-- 🔥 Alerta global -->
+
     <div id="globalAlert" class="global-alert" aria-live="polite" style="display:none;">
-      ⚠️ Alerta: Nível crítico em um ou mais reservatórios!
-      <br>
+      ⚠️ Alerta: Nível crítico em um ou mais reservatórios! <br>
       <span id="criticalList"></span>
     </div>
 
     <div class="footer-text">Hospital Arnaldo Gavazza — Monitoramento de Reservatórios</div>
   </footer>
 
-  <!-- 🔊 Alarme -->
   <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script src="dashboard.js"></script>
