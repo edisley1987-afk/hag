@@ -1,29 +1,29 @@
-<!-- Exemplo de card de reservatório (injetado pelo JS) -->
-<div id="Reservatorio_Elevador_current" class="card reservatorio sem-dados" style="--nivel:0%;">
-  <div class="aviso-inativo">⚠ Sem atualização há mais de 10 minutos</div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoramento dos Reservatórios</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="dashboard.js"></script>
+</head>
 
-  <!-- área da onda: SVG em largura 200% para permitir animação horizontal sem "buracos" -->
-  <div class="nivel" aria-hidden="true">
-    <svg class="wave-svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <!-- wave layer 1 (mais clara) -->
-      <g class="wave-path wave-1" transform="translate(0,0)">
-        <path d="M0 120 C 150 200 350 40 600 120 C 850 200 1050 40 1200 120 L1200 400 L0 400 Z" fill="#2fa7ff"></path>
-        <!-- repetir o mesmo path deslocado para loop horizontal -->
-        <path d="M1200 120 C 1350 200 1550 40 1800 120 C 2050 200 2250 40 2400 120 L2400 400 L1200 400 Z" fill="#2fa7ff"></path>
-      </g>
-      <!-- wave layer 2 (mais escura / lenta) -->
-      <g class="wave-path wave-2" transform="translate(0,0)">
-        <path d="M0 140 C 150 60 350 240 600 140 C 850 40 1050 240 1200 140 L1200 400 L0 400 Z" fill="#0066c5"></path>
-        <path d="M1200 140 C 1350 60 1550 240 1800 140 C 2050 40 2250 240 2400 140 L2400 400 L1200 400 Z" fill="#0066c5"></path>
-      </g>
-    </svg>
-  </div>
+<body>
 
-  <!-- conteudo textual sobre a onda -->
-  <div class="conteudo">
-    <h3>Reservatório Elevador</h3>
-    <div class="percent">--%</div>
-    <div class="liters">-- L</div>
-    <button class="btn-hist" onclick="abrirHistorico('Reservatorio_Elevador')">Ver Histórico</button>
-  </div>
-</div>
+  <header class="topo">
+    <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
+    <div id="lastUpdate">Última atualização: --</div>
+  </header>
+
+  <h2>Reservatórios</h2>
+  <div id="reservatoriosContainer" class="container-linhas"></div>
+
+  <h2>Pressões</h2>
+  <div id="pressoesContainer" class="container-linhas"></div>
+
+  <footer class="rodape">
+    © 2025 Sistema de Monitoramento Hospitalar
+  </footer>
+
+</body>
+</html>
