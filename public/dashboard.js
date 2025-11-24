@@ -22,23 +22,29 @@ const PRESSOES_CFG = {
   Pressao_Rede: "Pressão Rede Interna"
 };
 
-// Cria os cards na página ao carregar
+
+// Aguarda DOM carregar
 document.addEventListener("DOMContentLoaded", () => {
   criarEstruturaInicial();
   atualizar();
   setInterval(atualizar, UPDATE_INTERVAL);
 });
 
+
 /* -----------------------------------------
    CRIA A ESTRUTURA BASE DE CARDS
 ----------------------------------------- */
 function criarEstruturaInicial() {
-  const container = document.getElementById("cardsContainer");
-  container.innerHTML = "";
 
-  // Reservatórios
+  const reservatoriosArea = document.getElementById("reservatoriosContainer");
+  const pressoesArea = document.getElementById("pressoesContainer");
+
+  reservatoriosArea.innerHTML = "";
+  pressoesArea.innerHTML = "";
+
+  // --- Criar cartões dos Reservatórios ---
   Object.keys(RESERVATORIOS).forEach(chave => {
-    container.innerHTML += `
+    reservatoriosArea.innerHTML += `
       <div class="card tanque" id="${chave}">
         <h3>${RESERVATORIOS[chave].nome}</h3>
         <div class="tanque-visu">
@@ -48,15 +54,16 @@ function criarEstruturaInicial() {
       </div>`;
   });
 
-  // Pressões
+  // --- Criar cartões das Pressões ---
   Object.keys(PRESSOES_CFG).forEach(chave => {
-    container.innerHTML += `
+    pressoesArea.innerHTML += `
       <div class="card pressao-card" id="${chave}">
         <h3>${PRESSOES_CFG[chave]}</h3>
         <p class="pressao-valor" id="${chave}_valor">-- bar</p>
       </div>`;
   });
 }
+
 
 /* -----------------------------------------
    ATUALIZA OS DADOS
@@ -72,12 +79,12 @@ async function atualizar() {
     renderizarDados(dados);
 
   } catch (e) {
-    // Fallback se a API falhar
     if (ultimaLeitura) {
       renderizarDados(ultimaLeitura);
     }
   }
 }
+
 
 /* -----------------------------------------
    RENDERIZA A TELA
@@ -104,7 +111,6 @@ function renderizarDados(raw) {
   // ---- PRESSÕES ----
   Object.keys(PRESSOES_CFG).forEach(chave => {
     const valor = raw[chave + "_current"];
-
     if (valor == null) return;
 
     document.getElementById(chave + "_valor").textContent =
