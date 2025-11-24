@@ -1,81 +1,171 @@
-/* ====================== style.css ====================== */
+/* public/style.css
+   Estilos para reservatórios (com onda/nível) e pressões (metade da altura)
+*/
 
-body {
+:root{
+  --bg: #eef6fb;
+  --card-bg: #ffffff;
+  --accent: #0a6fe0;
+  --ok: #1ca44c;
+  --warn: #f4b400;
+  --danger: #ff3b30;
+  --muted: #9aa7b2;
+}
+
+*{box-sizing: border-box}
+body{
+  margin:0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef4fa;
-  margin: 0;
+  background: var(--bg);
+  color:#18333b;
 }
 
-/* Topo */
-header {
-  background: #004a99;
-  color: white;
-  padding: 25px;
-  text-align: center;
+/* header */
+header{
+  background: var(--accent);
+  color:#fff;
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+header h1{ margin:0; font-size:20px }
+#lastUpdate{ font-size:13px; opacity:0.95 }
+
+/* sections */
+section{ padding:18px 22px; }
+section h2{ margin: 0 0 12px 0; color:var(--accent) }
+
+/* containers */
+.cards-container{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  align-items:flex-start;
 }
 
-section h2 {
-  margin-left: 30px;
-  margin-top: 30px;
+/* --------------------------
+   CARD RESERVATÓRIO (GRANDE)
+   -------------------------- */
+.card-reservatorio{
+  width: 260px;
+  background: var(--card-bg);
+  border-radius:12px;
+  box-shadow: 0 6px 18px rgba(8,32,50,0.06);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
 }
 
-/* Conteiner de cards */
-.cards-container {
-  display: flex;
-  gap: 25px;
-  flex-wrap: wrap;
-  padding: 20px 30px;
+/* título */
+.card-reservatorio .titulo-card{
+  margin:0 0 8px 0;
+  font-size:16px;
+  color:#123846;
 }
 
-/* Card geral */
-.card {
-  width: 250px;
-  background: white;
-  border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+/* tanque (visual) */
+.tanque-visu{
+  position:relative;
+  height:180px;
+  border-radius:10px;
+  background: linear-gradient(180deg,#e9f6ff,#d9eefc);
+  border: 1px solid rgba(10,110,200,0.12);
+  overflow:hidden;
 }
 
-/* Tanques */
-.tanque-visu {
-  width: 100%;
-  height: 150px;
-  border: 2px solid #0077cc;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #e2e8f0;
-  position: relative;
-  margin-top: 10px;
+/* nível - altura é atualizada inline */
+.nivel-agua{
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:0%;
+  background: linear-gradient(180deg,#45c3ff,#0077cc);
+  transition:height 700ms ease;
 }
 
-.nivel-agua {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 0%;
-  background: linear-gradient(#4fc3f7, #0288d1);
-  transition: height 0.6s ease;
+/* overlay com percent e litros */
+.overlay-info{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  color:#ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.percent-text{ font-size:28px; font-weight:700; margin-bottom:6px }
+.liters-text{ font-size:14px; opacity:0.95 }
+
+/* ações do card */
+.card-actions{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.capacidade{ font-size:13px; color:var(--muted) }
+
+.btn-hist{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13px;
 }
 
-.percentual {
-  margin-top: 12px;
-  font-size: 20px;
-  font-weight: bold;
-  text-align: center;
+/* estado alerta (nível baixo) */
+.card-reservatorio.alerta{
+  box-shadow: 0 6px 22px rgba(255,59,48,0.12);
+  border: 1px solid rgba(255,59,48,0.12);
 }
 
-/* Pressões */
-.pressao-valor {
-  font-size: 26px;
-  margin-top: 10px;
-  font-weight: bold;
+/* --------------------------
+   CARD PRESSÃO (MENORES)
+   Metade da altura dos reservatórios
+   -------------------------- */
+.card-pressao{
+  width: 260px;            /* mesma largura dos reservatórios */
+  height: 90px;            /* metade/menor: ajustado conforme pedido */
+  background: var(--card-bg);
+  border-radius:10px;
+  padding:10px 12px;
+  box-shadow: 0 6px 18px rgba(8,32,50,0.05);
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
-/* Rodapé */
-footer {
-  background: #004a99;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  margin-top: 40px;
+/* título e valor */
+.card-pressao .titulo-card{ font-size:14px; margin:0; color:#0d3340 }
+.pressao-valor{ font-size:20px; font-weight:700; color:#0b5fa8 }
+.pressao-unidade{ font-size:12px; color:var(--muted) }
+
+/* estado visual por faixa */
+.card-pressao.pressao-baixa{ border-left:6px solid var(--danger) }
+.card-pressao.pressao-ok{ border-left:6px solid var(--warn) }
+.card-pressao.pressao-alta{ border-left:6px solid var(--ok) }
+
+/* sem dado */
+.card-pressao.sem-dado .pressao-valor{ color:#999 }
+
+/* responsividade */
+@media (max-width:900px){
+  .card-reservatorio, .card-pressao{ width: 48% }
 }
+
+@media (max-width:520px){
+  .card-reservatorio, .card-pressao{ width: 100% }
+}
+
+/* rodapé */
+footer{ padding:18px; text-align:center; color:#fff; background:var(--accent); margin-top:20px }
