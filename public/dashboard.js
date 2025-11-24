@@ -1,196 +1,176 @@
 // =============================
-// dashboard.js — COMPLETO
+// dashboard.js — Glassmorphism + waves
 // =============================
-
-// URL da API do servidor
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000; // 5s
 let ultimaLeitura = 0;
 
-
-// -----------------------------
-// CONFIGURAÇÃO DOS RESERVATÓRIOS
-// -----------------------------
+// configuracao (nomes e capacidades)
 const RESERVATORIOS = {
-    Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
-    Reservatorio_Osmose_current:   { nome: "Reservatório Osmose",   capacidade: 200 },
-    Reservatorio_CME_current:      { nome: "Reservatório CME",      capacidade: 1000 },
-    Abrandada_current:             { nome: "Água Abrandada",        capacidade: 9000 }
+  Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
+  Reservatorio_Osmose_current:   { nome: "Reservatório Osmose",   capacidade: 200 },
+  Reservatorio_CME_current:      { nome: "Reservatório CME",      capacidade: 1000 },
+  Abrandada_current:             { nome: "Água Abrandada",        capacidade: 9000 }
 };
 
-
-// -----------------------------
-// CONFIGURAÇÃO DAS PRESSÕES
-// -----------------------------
 const PRESSOES = {
-    Pressao_Saida_Osmose_current:  "Pressão Saída Osmose",
-    Pressao_Retorno_Osmose_current:"Pressão Retorno Osmose",
-    Pressao_Saida_CME_current:     "Pressão Saída CME"
+  Pressao_Saida_Osmose_current:  "Pressão Saída Osmose",
+  Pressao_Retorno_Osmose_current:"Pressão Retorno Osmose",
+  Pressao_Saida_CME_current:     "Pressão Saída CME"
 };
 
 
-// =============================
-// CRIAÇÃO DOS CARDS DINÂMICOS
-// =============================
-function criarCards() {
-    const container = document.getElementById("cardsContainer");
-    container.innerHTML = "";
+// cria cards
+function criarCards(){
+  const container = document.getElementById("cardsContainer");
+  container.innerHTML = "";
 
-    // --- RESERVATÓRIOS ---
-    Object.keys(RESERVATORIOS).forEach(id => {
-        const cfg = RESERVATORIOS[id];
+  // Reservatorios
+  Object.keys(RESERVATORIOS).forEach(id=>{
+    const cfg = RESERVATORIOS[id];
+    const card = document.createElement("article");
+    card.className = "card reservatorio sem-dados";
+    card.id = id;
 
-        const card = document.createElement("div");
-        card.className = "card reservatorio";
-        card.id = id;
+    card.innerHTML = `
+      <div class="tank" aria-hidden="true">
+        <div class="water" style="height:0%">
+          <div class="wave"></div>
+          <div class="wave wave2"></div>
+        </div>
+      </div>
 
-        card.innerHTML = `
-            <div class="nivel">
-                <div class="nivelInterno"></div>
-            </div>
+      <h3>${cfg.nome}</h3>
+      <div class="percent">--%</div>
+      <div class="liters">-- L</div>
 
-            <h3>${cfg.nome}</h3>
-            <p class="percent">--%</p>
-            <p class="liters">-- L</p>
+      <button class="btn-hist" type="button" onclick="abrirHistorico('${id.replace('_current','')}')">Ver Histórico</button>
+    `;
+    container.appendChild(card);
+  });
 
-            <button onclick="abrirHistorico('${id.replace('_current','')}')" class="btn-hist">
-                Ver Histórico
-            </button>
-        `;
-
-        container.appendChild(card);
-    });
-
-    // --- PRESSÕES ---
-    Object.keys(PRESSOES).forEach(id => {
-        const nome = PRESSOES[id];
-
-        const card = document.createElement("div");
-        card.className = "card pressao";
-        card.id = id;
-
-        card.innerHTML = `
-            <h3>${nome}</h3>
-            <p class="percent">-- bar</p>
-        `;
-
-        container.appendChild(card);
-    });
+  // Pressoes
+  Object.keys(PRESSOES).forEach(id=>{
+    const nome = PRESSOES[id];
+    const card = document.createElement("article");
+    card.className = "card pressao";
+    card.id = id;
+    card.innerHTML = `
+      <div>
+        <h3>${nome}</h3>
+        <div class="percent">-- bar</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
 }
 
 
-// =============================
-// ATUALIZAÇÃO DAS LEITURAS
-// =============================
-async function atualizarLeituras() {
-    try {
-        const resposta = await fetch(API_URL);
-        const dados = await resposta.json();
+// busca leituras e atualiza UI
+async function atualizarLeituras(){
+  try{
+    const res = await fetch(API_URL + "?t=" + Date.now());
+    const dados = await res.json();
+    if(!dados) return;
+    ultimaLeitura = Date.now();
 
-        if (!dados) return;
+    // atualizar reservatorios
+    Object.keys(RESERVATORIOS).forEach(key=>{
+      const cfg = RESERVATORIOS[key];
+      const card = document.getElementById(key);
+      if(!card) return;
 
-        ultimaLeitura = Date.now();
+      // o servidor pode enviar com nome exato ou sem _current, tente ambas
+      let valor = dados[key];
+      if (typeof valor === "undefined") {
+        const alt = key.replace('_current','');
+        valor = dados[alt];
+      }
 
-        // Atualiza reservatórios
-        Object.keys(RESERVATORIOS).forEach(key => {
-            const cfg = RESERVATORIOS[key];
-            const card = document.getElementById(key);
+      const percentEl = card.querySelector(".percent");
+      const litersEl = card.querySelector(".liters");
+      const water = card.querySelector(".water");
 
-            if (!card) return;
+      if (typeof valor !== "number" || isNaN(valor)) {
+        percentEl.textContent = "--%";
+        litersEl.textContent = "-- L";
+        water.style.height = "0%";
+        card.classList.add("sem-dados");
+        card.removeAttribute("data-status");
+        return;
+      }
 
-            const valor = dados[key];   // servidor envia *_current
-            const percentEl = card.querySelector(".percent");
-            const litersEl = card.querySelector(".liters");
-            const nivelInterno = card.querySelector(".nivelInterno");
+      const perc = Math.round(Math.max(0, Math.min(100, (valor / cfg.capacidade) * 100)));
+      percentEl.textContent = perc + "%";
+      litersEl.textContent = valor.toLocaleString("pt-BR") + " L";
+      water.style.height = perc + "%";
 
-            if (typeof valor !== "number" || isNaN(valor)) {
-                percentEl.textContent = "--%";
-                litersEl.textContent = "-- L";
-                nivelInterno.style.height = "0%";
-                card.classList.add("sem-dados");
-                return;
-            }
+      // cores
+      if (perc < 30) {
+        water.style.background = "linear-gradient(to top, #e74c3c, #ff8c00)";
+      } else if (perc < 70) {
+        water.style.background = "linear-gradient(to top, #f1c40f, #f39c12)";
+      } else {
+        water.style.background = "linear-gradient(to top, #2ecc71, #3498db)";
+      }
 
-            const perc = Math.round(Math.max(0, Math.min(100, (valor / cfg.capacidade) * 100)));
+      // status attribute (css may change shadow)
+      if (perc < 30) card.dataset.status = "baixo";
+      else if (perc < 70) card.dataset.status = "medio";
+      else card.dataset.status = "alto";
 
-            percentEl.textContent = perc + "%";
-            litersEl.textContent = valor.toLocaleString("pt-BR") + " L";
-            nivelInterno.style.height = perc + "%";
+      card.classList.remove("sem-dados");
+    });
 
-            // Cores progressivas
-            if (perc < 30)
-                nivelInterno.style.background = "linear-gradient(to top, #e74c3c, #ff8c00)";
-            else if (perc < 70)
-                nivelInterno.style.background = "linear-gradient(to top, #f1c40f, #f39c12)";
-            else
-                nivelInterno.style.background = "linear-gradient(to top, #3498db, #2ecc71)";
+    // atualizar pressões
+    Object.keys(PRESSOES).forEach(key=>{
+      const card = document.getElementById(key);
+      if(!card) return;
 
-            // Status
-            if (perc < 30) card.dataset.status = "baixo";
-            else if (perc < 70) card.dataset.status = "medio";
-            else card.dataset.status = "alto";
+      let v = dados[key];
+      if (typeof v === "undefined") {
+        const alt = key.replace('_current','');
+        v = dados[alt];
+      }
+      const el = card.querySelector(".percent");
+      if (typeof v !== "number" || isNaN(v)) el.textContent = "-- bar";
+      else el.textContent = v.toFixed(2) + " bar";
+    });
 
-            card.classList.remove("sem-dados");
-        });
-
-        // Atualiza pressões
-        Object.keys(PRESSOES).forEach(key => {
-            const card = document.getElementById(key);
-            if (!card) return;
-
-            const el = card.querySelector(".percent");
-            const v = dados[key];
-
-            if (typeof v !== "number" || isNaN(v))
-                el.textContent = "-- bar";
-            else
-                el.textContent = v.toFixed(2) + " bar";
-        });
-
-        // Última atualização
-        const last = document.getElementById("lastUpdate");
-        if (last) {
-            const dt = new Date(dados.timestamp || Date.now());
-            last.textContent = "Última atualização: " + dt.toLocaleString("pt-BR");
-        }
-
-    } catch (err) {
-        console.error("Erro ao buscar leituras:", err);
+    // ultima atualizacao
+    const last = document.getElementById("lastUpdate");
+    if(last){
+      const dt = new Date(dados.timestamp || Date.now());
+      last.textContent = "Última atualização: " + dt.toLocaleString("pt-BR");
     }
+  }catch(err){
+    console.error("Erro ao buscar leituras:", err);
+  }
 }
 
-
-// =============================
-// FALLBACK — SEM ATUALIZAÇÃO
-// =============================
-setInterval(() => {
-    const diff = Date.now() - ultimaLeitura;
-
-    // Se passaram 4 minutos sem dados → mostrar "--"
-    if (diff > 4 * 60 * 1000) {
-        document.querySelectorAll(".card.reservatorio").forEach(c => {
-            c.querySelector(".percent").textContent = "--%";
-            c.querySelector(".liters").textContent = "-- L";
-            c.querySelector(".nivelInterno").style.height = "0%";
-            c.classList.add("sem-dados");
-        });
-    }
+// fallback — quando sem atualização por X tempo
+setInterval(()=>{
+  const diff = Date.now() - ultimaLeitura;
+  if(diff > 4 * 60 * 1000){ // 4min sem dados
+    document.querySelectorAll(".card.reservatorio").forEach(c=>{
+      c.querySelector(".percent").textContent = "--%";
+      c.querySelector(".liters").textContent = "-- L";
+      const w = c.querySelector(".water"); if(w) w.style.height = "0%";
+      c.classList.add("sem-dados");
+    });
+  }
 }, 10000);
 
 
-// =============================
-// INICIALIZAÇÃO
-// =============================
-window.addEventListener("DOMContentLoaded", () => {
-    criarCards();
-    atualizarLeituras();
-    setInterval(atualizarLeituras, UPDATE_INTERVAL);
+// init
+window.addEventListener("DOMContentLoaded", ()=>{
+  criarCards();
+  atualizarLeituras();
+  setInterval(atualizarLeituras, UPDATE_INTERVAL);
 });
 
-
-// =============================
-// ABRIR HISTÓRICO
-// =============================
-window.abrirHistorico = function (reservatorioId) {
-    window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+// abrir histórico
+window.abrirHistorico = function(reservatorioId){
+  // envia sem _current (compatível com historic)
+  window.location.href = `historico.html?reservatorio=${encodeURIComponent(reservatorioId)}`;
 };
