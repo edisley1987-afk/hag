@@ -1,120 +1,146 @@
-/* ================================
-   PALETA E ESTILO GERAL
-================================ */
-:root {
+/* =============================
+   style.css — onda SVG animada
+============================= */
+:root{
   --azul1: #004a8f;
-  --azul2: #0066c5;
-  --azul3: #0a87ff;
-  --branco: #ffffff;
-  --cinza-bg: #f2f6fc;
+  --azul2: #0a66d0;
+  --azul3: #2fa7ff;
+  --bg: #f1f5fb;
+  --card-bg: #ffffff;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--cinza-bg);
-  color: #111;
+/* GLOBAL */
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:var(--bg);
+  color:#111;
 }
 
-/* ================================
-      CABEÇALHO E RODAPÉ
-================================ */
-header, footer {
-  text-align: center;
-  padding: 15px;
-  background: var(--azul1);
-  color: white;
+/* HEADER / FOOTER */
+header, footer{
+  background:var(--azul1);
+  color:#fff;
+  text-align:center;
+  padding:14px;
+}
+h2{ margin-left:12px; color:var(--azul1); }
+
+/* LINHAS HORIZONTAIS */
+.cards-container{
+  display:flex;
+  gap:16px;
+  padding:14px;
+  overflow-x:auto;
+  flex-wrap:nowrap; /* mantém tudo na horizontal */
 }
 
-h2 {
-  margin-left: 10px;
+/* CARD BASE */
+.card{
+  width:240px;
+  height:220px;
+  background:var(--card-bg);
+  border-radius:14px;
+  border:2px solid var(--azul1);
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  padding:12px;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  text-align:center;
+  transition: transform .18s ease, box-shadow .18s ease;
+  /* variável que controla o nível (definida pelo JS) */
+  --nivel: 0%;
+}
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 10px 26px rgba(0,0,0,0.16);
 }
 
-/* ================================
-      CONTAINER DE CARDS
-================================ */
-.cards-container {
-  display: flex;
-  flex-wrap: nowrap;         /* 🔥 Impede quebra de linha */
-  gap: 15px;
-  padding: 10px;
-  overflow-x: auto;          /* 🔥 Caso muitos cards, vira rolagem horizontal */
+/* AVISO INATIVIDADE */
+.aviso-inativo{
+  display:none;
+  position:absolute;
+  top:10px; left:10px; right:10px;
+  background:#d9534f; color:#fff;
+  padding:6px 8px; border-radius:8px;
+  font-size:.85rem; z-index:12;
 }
 
-/* ================================
-            CARD
-   (aparência de caixa d'água)
-================================ */
-.card {
-  width: 220px;
-  height: 180px;
-  background: var(--branco);
-  border-radius: 14px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 12px;
-  text-align: center;
-  border: 2px solid var(--azul1);
+/* ÁREA DA ONDA (SVG) - ocupa todo o card e é independente do conteúdo */
+.nivel{
+  position:absolute;
+  left:0; right:0; top:0; bottom:0;
+  z-index:1;
+  pointer-events:none;
+  display:block;
 }
 
-/* ================================
-    ÁGUA PREENCHENDO O CARD
-================================ */
-.card-fill {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 0%;
-  background: var(--azul3);
-  transition: height .8s ease;
-  opacity: 0.85;
-  z-index: 0;
+/* O grupo dentro do SVG será movido verticalmente para simular o nível.
+   Usamos transform: translateY(calc(100% - var(--nivel))) para subir/baixar. */
+.wave-svg{
+  width:100%;
+  height:100%;
+  display:block;
+  transform: translateY(calc(100% - var(--nivel)));
+  transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
 }
 
-.card h3,
-.card .value,
-.card .litros {
-  position: relative;
-  z-index: 2;
+/* Duas ondas se movem horizontalmente com velocidades diferentes (parallax) */
+.wave-path {
+  transform-origin: 0 0;
+  animation: waveMove 6s linear infinite;
+  opacity:0.85;
+}
+.wave-path.wave-2 {
+  animation-duration: 10s;
+  opacity:0.55;
+  mix-blend-mode: multiply;
 }
 
-.card h3 {
-  font-size: 1.1rem;
-  margin: 0;
-  font-weight: bold;
+/* animação horizontal */
+@keyframes waveMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); } /* loop suave se o path tiver repeat */
 }
 
-.card .value {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-top: 5px;
+/* SOBRE O CONTEÚDO (texto por cima da onda) */
+.card .conteudo{
+  position:relative;
+  z-index: 6;
+  color:#fff; /* será melhor legível sobre a onda */
+  text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+  padding-bottom:8px;
 }
 
-.card .litros {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
+/* Ajuste de textos dentro do conteúdo */
+.card h3{ margin:0; font-size:1.05rem; font-weight:700; color:#fff; }
+.percent{ font-size:2rem; font-weight:800; margin-top:6px; color:#fff; }
+.liters{ font-size:.95rem; opacity:0.95; margin-top:6px; color:#fff; }
 
-/* ================================
-    ÁREA DAS PRESSÕES
-================================ */
-.pressao {
-  background: #ffffff;
-  border: 2px solid #0066c5;
+/* Botão histórico */
+.btn-hist{
+  margin-top:10px;
+  padding:8px 12px;
+  background:rgba(255,255,255,0.12);
+  border-radius:10px;
+  color:#fff; border:none; cursor:pointer;
+  z-index:6;
 }
+.btn-hist:hover{ background:rgba(255,255,255,0.18); }
 
-/* ================================
-   RESPONSIVIDADE
-================================ */
-@media (max-width: 700px) {
-  .card {
-    width: 180px;
-    height: 160px;
-  }
+/* Pressões (cards menores em altura) */
+.card.pressao{ height:170px; }
+
+/* estado sem-dados */
+.sem-dados { opacity:0.65; }
+
+/* responsividade */
+@media (max-width:760px){
+  .card{ width:190px; height:190px; }
+  .card.pressao{ height:160px; }
+  .percent{ font-size:1.6rem; }
 }
