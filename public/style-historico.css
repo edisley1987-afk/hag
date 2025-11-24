@@ -1,114 +1,72 @@
-:root {
-  --accent: #0a4fa3;
-  --bg: #eef6fb;
-  --card-bg: rgba(255, 255, 255, 0.9);
-}
-
 body {
   margin: 0;
-  font-family: "Segoe UI", Arial;
-  background: var(--bg);
+  padding: 20px;
+  background: #f5f7fa;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #333;
 }
 
-/* Header */
-.app-header {
-  background: var(--accent);
-  padding: 18px;
+.titulo-centro {
   text-align: center;
-  color: #fff;
-  position: relative;
+  margin-bottom: 20px;
+}
+
+.toolbar {
+  margin-bottom: 15px;
 }
 
 .btn-voltar {
-  position: absolute;
-  left: 16px;
-  top: 16px;
-  padding: 6px 12px;
-  background: #ffffff33;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  background: #3182ce;
   color: #fff;
-  font-weight: bold;
-}
-
-/* Layout geral */
-.container {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 16px;
-  display: grid;
-  gap: 22px;
-  grid-template-columns: 1fr 1fr;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .card {
-  background: var(--card-bg);
+  background: #fff;
   padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  border: 1px solid rgba(15,40,80,0.06);
+  margin: 15px auto;
+  border-radius: 15px;
+  max-width: 900px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.09);
 }
 
-/* Filtros */
-.linha {
-  margin-top: 14px;
-  display: flex;
-  gap: 12px;
+.filtro-card label {
+  margin-right: 8px;
+  font-weight: bold;
 }
 
-select, .btn {
-  padding: 10px;
+.filtro-card select,
+.filtro-card input {
+  padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
+  margin-right: 15px;
 }
 
-.btn {
-  background: var(--accent);
+#btnCarregar {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #38a169;
   color: white;
-  font-weight: bold;
   cursor: pointer;
 }
 
-/* Resumo */
-.resumo-card ul {
-  margin-top: 12px;
-  list-style: none;
-  padding: 0;
+#tabelaContainer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
 }
 
-.resumo-card li {
-  padding: 4px 0;
-  color: #123;
+#tabelaContainer th, #tabelaContainer td {
+  padding: 10px;
   border-bottom: 1px solid #ddd;
 }
 
-/* Gráfico */
-.grafico-card {
-  grid-column: 1 / span 2;
-  padding: 30px;
-}
-
-canvas {
-  width: 100% !important;
-  height: 380px !important;
-}
-
-/* Rodapé */
-.app-footer {
-  margin-top: 40px;
-  background: var(--accent);
-  padding: 12px;
-  text-align: center;
-  color: #fff;
-  font-size: 14px;
-}
-
-@media (max-width: 820px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-  .grafico-card {
-    grid-column: 1;
-  }
+#tabelaContainer th {
+  background: #f0f3f7;
 }
