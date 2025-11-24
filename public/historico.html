@@ -2,61 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Histórico — HAG</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histórico — Hospital Arnaldo Gavazza</title>
   <link rel="stylesheet" href="style-historico.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
-
-  <!-- Barra superior -->
-  <header class="topbar">
-    <h1>Histórico Diário de Níveis</h1>
-
-    <div class="top-buttons">
-      <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
-      <button class="btn-consumo" onclick="location.href='consumo.html'">💧 Consumo Diário</button>
-    </div>
+  <header>
+    <h1>📊 Histórico — Reservatórios</h1>
+    <a href="dashboard.html" class="voltar-btn">⬅ Voltar ao Painel</a>
   </header>
 
-  <main class="container">
-
-    <!-- CARD de seleção -->
-    <div class="card">
-
-      <!-- Reservatório -->
-      <label for="reservatorioSelect"><strong>Selecione o reservatório:</strong></label>
-      <select id="reservatorioSelect" onchange="carregarHistorico()">
-        <option value="elevador">Elevador</option>
-        <option value="osmose">Osmose</option>
-        <option value="cme">CME</option>
-        <option value="abrandada">Água Abrandada</option>
-      </select>
-
-      <!-- Período (APENAS 1 VEZ) -->
-      <div style="margin-top: 12px;">
-        <label for="periodoSelect"><strong>Período:</strong></label>
-        <select id="periodoSelect" onchange="carregarHistorico()">
-          <option value="diario">Diário</option>
-          <option value="24h">Últimas 24 horas</option>
-        </select>
-      </div>
-
-    </div>
-
-    <!-- Área onde o JS vai colocar o card com última leitura -->
-    <div id="history-cards"></div>
-
-    <!-- CARD do gráfico -->
-    <div class="card">
-      <canvas id="graficoHistorico"></canvas>
-    </div>
-
+  <main class="historico-main">
+    <canvas id="graficoHistorico"></canvas>
+    <div id="historico"></div>
   </main>
-
-  <footer>
-    Hospital Arnaldo Gavazza — Monitoramento de Reservatórios
-  </footer>
 
   <script src="historico.js"></script>
 </body>

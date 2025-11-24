@@ -1,233 +1,149 @@
-/* ===== style.css (global + dashboard) - Atualizado ===== */
+/* === style.css === */
+/* Layout moderno horizontal com efeito visual de nível de água real */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-* { box-sizing: border-box; }
-html,body { height:100%; }
 body {
-  margin:0;
-  font-family: "Poppins", Arial, sans-serif;
-  background: #f5f9f7;
-  color: #123c33;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* header */
-.app-header {
-  background:#21876d;
-  color:#fff;
-  padding:20px 10px;
-  text-align:center;
-  box-shadow:0 2px 6px rgba(0,0,0,0.06);
-}
-.app-header h1 { margin:0; font-size:30px; font-weight:700; }
-
-/* container */
-.container {
-  max-width:1200px;
-  margin:20px auto 40px;
-  padding:10px 18px;
+header {
+  background: #004d7a;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* top actions and last update */
-.top-actions { 
-  display:flex; 
-  gap:12px; 
-  align-items:center; 
-  justify-content:center; 
-  margin-bottom:8px; 
-}
-.btn-menu {
-  background:#1f8b73; 
-  color:#fff; 
-  border:none; 
-  padding:10px 16px; 
-  border-radius:12px;
-  box-shadow:0 2px 0 rgba(0,0,0,0.08); 
-  cursor:pointer; 
-  font-weight:600;
-  transition:0.2s;
-}
-.btn-menu:hover { transform: translateY(-2px); }
-.last-update { 
-  color:#375b54; 
-  font-size:14px; 
-  text-align:center; 
-  margin:0 0 8px; 
+#lastUpdate {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 5px;
 }
 
-/* cards row */
-.cards-row {
-  display:flex;
-  gap:22px;
-  flex-wrap:wrap;
-  justify-content:center;
-  align-items:flex-start;
+/* === Cards lado a lado === */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  justify-items: center;
+  align-items: stretch;
+  flex-grow: 1;
 }
 
-/* ----- CARD padrão ----- */
+/* === Card (caixa d'água) === */
 .card {
-  width:230px;
-  height:340px;
-  border-radius:14px;
-  background:#fff;
-  box-shadow: 0 6px 18px rgba(18,60,51,0.06);
-  position:relative;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  transition: border 0.4s ease, box-shadow 0.4s ease;
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  height: 320px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 4px solid #ccc;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  text-align: center;
+  transition: transform 0.25s, border-color 0.4s;
 }
 
-/* CARD crítico */
-.card.critico {
-  border:3px solid #c02626;
-  box-shadow:0 0 22px rgba(255,0,0,0.35);
+.card:hover {
+  transform: scale(1.03);
 }
 
-/* camada de preenchimento */
-.card .fill {
-  position:absolute;
-  left:0; right:0; bottom:0;
-  height:0%;
-  transition: height 800ms ease, background 400ms ease;
-  z-index:1;
+/* === Água subindo === */
+.card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nivel, 0%);
+  background: var(--corNivel, linear-gradient(to top, #3498db, #2ecc71));
+  transition: height 1s ease, background 0.8s ease;
+  z-index: 0;
+  opacity: 0.5;
 }
 
-/* content layer */
-.card .content {
-  position:relative;
-  z-index:2;
-  width:100%;
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start;
-  gap:6px;
-  min-height:100%;
+/* === Conteúdo acima da “água” === */
+.card h2,
+.card p,
+.card button {
+  position: relative;
+  z-index: 2;
 }
 
-.card .title {
-  width:100%;
-  text-align:center;
-  font-weight:700;
-  color:#063b33;
-  margin-bottom:6px;
-  margin-top:6px;
-  z-index:3;
+.card h2 {
+  margin-top: 15px;
+  font-size: 1.2rem;
+  color: #004d7a;
+  margin-bottom: 10px;
 }
 
-/* percent big */
-.percent-large {
-  font-size:36px;
-  font-weight:800;
-  color:#042a23;
-  z-index:4;
-  margin-top:22px;
+.card p {
+  font-size: 1rem;
+  margin: 4px 0;
 }
 
-/* liters */
-.liters {
-  margin-top:auto;
-  padding:10px 0 6px;
-  color:#064036;
-  font-weight:700;
-  z-index:4;
+/* === Borda muda conforme nível === */
+.card[data-status="alto"] {
+  border-color: #2ecc71;
+}
+.card[data-status="medio"] {
+  border-color: #f1c40f;
+}
+.card[data-status="baixo"] {
+  border-color: #e74c3c;
 }
 
-/* maintenance badge */
-.maint-badge {
-  position:absolute;
-  top:10px;
-  right:10px;
-  background:#ffd966;
-  color:#3b3b3b;
-  padding:6px 8px;
-  border-radius:8px;
-  font-weight:700;
-  z-index:6;
-  display:none;
+/* === Botão histórico === */
+.historico-btn {
+  background: #004d7a;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  transition: background 0.3s;
 }
 
-/* maintenance toggle */
-.maint-toggle {
-  position:absolute;
-  top:10px;
-  left:10px;
-  background:rgba(0,0,0,0.06);
-  color:#0b5345;
-  padding:6px;
-  border-radius:8px;
-  cursor:pointer;
-  z-index:7;
+.historico-btn:hover {
+  background: #0074b1;
 }
 
-/* aviso de inatividade */
-.aviso-inatividade {
-  position:absolute;
-  left:10px; right:10px;
-  bottom:48px;
-  background: rgba(255,255,255,0.9);
-  color:#a33;
-  padding:8px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:700;
-  display:none;
-  z-index:9;
+/* === Quando sem dados === */
+.card.sem-dados {
+  opacity: 0.6;
+  border-color: #aaa;
+}
+.card.sem-dados::after {
+  height: 0 !important;
 }
 
-/* pressure card */
-.card.pressao { width:230px; height:240px; }
-.card.pressao .fill { display:none; }
-.card.pressao .percent-large { margin-top:28px; font-size:20px; }
-
-/* footer */
-.app-footer { 
-  margin-top:26px; 
-  background:#1f8b73; 
-  color:#fff; 
-  padding:12px 10px; 
-  text-align:center; 
-  position:relative; 
+/* === Rodapé fixo === */
+footer {
+  background: #004d7a;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 0.9rem;
+  position: sticky;
+  bottom: 0;
 }
 
-/* ALERTA GLOBAL */
-.global-alert {
-  position:relative;
-  display:inline-block;
-  background:#ffcc00;
-  color:#532400;
-  padding:8px 12px;
-  border-radius:8px;
-  margin-bottom:8px;
-  font-weight:700;
-  transition:0.3s;
-}
-
-/* ALERTA GLOBAL — CRÍTICO VERMELHO PISCANTE */
-.global-alert.critico {
-  background:#b80000 !important;
-  color:#fff !important;
-  animation: piscar 1s infinite;
-}
-
-@keyframes piscar {
-  0% { opacity:1; }
-  50% { opacity:0.4; }
-  100% { opacity:1; }
-}
-
-/* responsive tweaks */
-@media (max-width:900px) {
-  .card { width:200px; height:320px; }
-  .card.pressao { height:220px; }
-}
-@media (max-width:560px) {
-  .cards-row { gap:12px; }
-  .card { width:46%; }
-  .card.pressao { width:46%; }
+/* === Responsivo === */
+@media (max-width: 800px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .card {
+    height: 260px;
+  }
 }

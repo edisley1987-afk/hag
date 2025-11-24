@@ -1,124 +1,107 @@
-/* === LAYOUT IGUAL AO CONSUMO === */
+/* === style-historico.css === */
 
 body {
-  margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef2f5;
+  background-color: #f5f7fa;
+  margin: 0;
+  padding: 0;
   color: #222;
 }
 
-/* Topo igual ao consumo.html */
-.topbar {
-  background: #0f766e;
+header {
+  background: linear-gradient(90deg, #007bff, #0056b3);
   color: white;
-  padding: 20px 40px;
+  padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.topbar h1 {
+header h1 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
 }
 
-/* Botão voltar igual ao consumo */
-.btn-voltar {
+.voltar-btn {
+  text-decoration: none;
   background: white;
-  color: #0f766e;
-  border: none;
-  font-size: 0.95rem;
-  padding: 10px 18px;
+  color: #0056b3;
+  padding: 10px 16px;
   border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-weight: 600;
+  transition: 0.3s;
 }
 
-.btn-voltar:hover {
-  background: #e3f5f3;
+.voltar-btn:hover {
+  background: #e6ecff;
 }
 
-/* Botão Consumo Diário */
-.btn-consumo {
-  background: #ffffff;
-  color: #0f766e;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: bold;
-  margin-left: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+main {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.btn-consumo:hover {
-  background: #e3f5f3;
-}
-
-/* Conteúdo central igual ao consumo */
-.container {
-  max-width: 1100px;
-  margin: 30px auto;
-  padding: 20px;
-}
-
-/* Cards iguais ao consumo */
-.card {
-  background: white;
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-  margin-bottom: 25px;
-}
-
-/* Select */
-.card select {
-  width: 260px;
-  font-size: 1rem;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-/* Card resumo da última leitura */
-.historico-card-resumo h3 {
-  margin-top: 0;
-  color: #0f766e;
-  font-size: 1.2rem;
-}
-
-.historico-card-resumo p {
-  margin: 5px 0;
-  font-size: 1rem;
-}
-
-/* Alerta */
-.alerta {
-  margin-top: 12px;
-  padding: 10px;
-  background: #ffe4e4;
-  color: #c82333;
-  border-left: 5px solid #c82333;
-  border-radius: 6px;
-  font-weight: bold;
-}
-
-/* === CORREÇÃO DO GRÁFICO (SEM ALTERAR LAYOUT) === */
+/* === Gráfico === */
 canvas {
-  width: 100% !important;
-  height: 420px !important; /* antes 350px — agora não corta mais */
-  display: block;
+  width: 100%;
+  max-height: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
 }
 
-/* Rodapé */
-footer {
-  margin-top: 50px;
-  padding: 20px;
-  text-align: center;
-  color: #555;
+/* === Tabela === */
+.tabela-historico {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabela-historico th {
+  background-color: #007bff;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px;
   font-size: 0.9rem;
+}
+
+.tabela-historico td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+.tabela-historico tr:nth-child(even) {
+  background-color: #f9fbff;
+}
+
+.tabela-historico tr:hover {
+  background-color: #e6ecff;
+  transition: 0.2s;
+}
+
+/* === Responsividade === */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .voltar-btn {
+    margin-top: 10px;
+  }
+
+  .tabela-historico th, .tabela-historico td {
+    font-size: 0.8rem;
+    padding: 8px;
+  }
 }
