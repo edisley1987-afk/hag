@@ -1,142 +1,164 @@
-// ====================== CONFIG ===========================
-const API_URL = "/dados";  // sua rota que retorna as leituras
-const UPDATE_INTERVAL = 5000;
+// === dashboard.js ===
+// Exibe leituras em tempo real com nível visual (caixa d'água)
 
-// Capacidades dos reservatórios (litros)
-const CAP = {
-  elevador: 20000,
-  osmose: 200,
-  cme: 5000,
-  abrandada: 5000
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000; // atualização a cada 5s
+let ultimaLeitura = 0;
+
+// Configuração dos reservatórios (em litros)
+const RESERVATORIOS = {
+  Reservatorio_Elevador_current: {
+    nome: "Reservatório Elevador",
+    capacidade: 20000,
+  },
+  Reservatorio_Osmose_current: {
+    nome: "Reservatório Osmose",
+    capacidade: 200,
+  },
+  Reservatorio_CME_current: {
+    nome: "Reservatório CME",
+    capacidade: 1000,
+  },
+  Reservatorio_Agua_Abrandada_current: {
+    nome: "Água Abrandada",
+    capacidade: 9000,
+  },
 };
 
-// Mapeamento dos nomes do JSON → nomes do dashboard
-const MAP = {
-  Reservatorio_Elevador_current: "elevador",
-  Reservatorio_Osmose_current: "osmose",
-  Reservatorio_CME_current: "cme",
-  Agua_Abrandada_current: "abrandada",
-
-  Pressao_Saida_Osmose_current: "pressao_saida_osmose",
-  Pressao_Retorno_Osmose_current: "pressao_retorno_osmose",
-  Pressao_Saida_CME_current: "pressao_saida_cme"
+// Pressões
+const PRESSOES = {
+  Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
+  Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
+  Pressao_Saida_CME_current: "Pressão Saída CME",
 };
 
-// Lista de exibição
-const ITEMS = [
-  "elevador",
-  "osmose",
-  "cme",
-  "abrandada",
-  "pressao_saida_osmose",
-  "pressao_retorno_osmose",
-  "pressao_saida_cme"
-];
-
-// ============================================================
-// Criação dos cards
-// ============================================================
+// === Cria os cards dinamicamente ===
 function criarCards() {
-  const div = document.getElementById("cards");
-  div.innerHTML = "";
+  const container = document.querySelector(".cards-container");
+  if (!container) return;
 
-  ITEMS.forEach(id => {
-    let tipo = id.includes("pressao") ? "pressao" : "reservatorio";
+  container.innerHTML = "";
 
-    let html = `
-      <div class="card" id="card_${id}">
-        ${
-          tipo === "reservatorio"
-            ? `
-            <div class="nivelBox">
-              <div class="nivelInterno" id="nivel_${id}" style="height:0%"></div>
-            </div>
-            <h3>${formatarNome(id)}</h3>
-            <h2 id="pct_${id}">--%</h2>
-            <p id="litros_${id}">-- L</p>
-            <button class="histBtn" onclick="irHistorico('${id}')">Ver Histórico</button>
-          `
-            : `
-            <h3>${formatarNome(id)}</h3>
-            <h2 id="press_${id}">-- bar</h2>
-          `
-        }
-      </div>
+  // Reservatórios
+  Object.keys(RESERVATORIOS).forEach((id) => {
+    const card = document.createElement("div");
+    card.className = "card sem-dados";
+    card.id = id;
+    card.innerHTML = `
+      <h2>${RESERVATORIOS[id].nome}</h2>
+      <p class="nivel">--%</p>
+      <p class="litros">0 L</p>
+      <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
     `;
+    container.appendChild(card);
+  });
 
-    div.innerHTML += html;
+  // Pressões
+  Object.keys(PRESSOES).forEach((id) => {
+    const card = document.createElement("div");
+    card.className = "card sem-dados";
+    card.id = id;
+    card.innerHTML = `
+      <h2>${PRESSOES[id]}</h2>
+      <p class="pressao">-- bar</p>
+    `;
+    container.appendChild(card);
   });
 }
 
-criarCards();
-
-// ============================================================
-// Nome formatado para os cards
-// ============================================================
-function formatarNome(str) {
-  return str
-    .replace("cme", "CME")
-    .replace("osmose", "Osmose")
-    .replace("elevador", "Elevador")
-    .replace("abrandada", "Água Abrandada")
-    .replace("pressao_saida_osmose", "Pressão Saída Osmose")
-    .replace("pressao_retorno_osmose", "Pressão Retorno Osmose")
-    .replace("pressao_saida_cme", "Pressão Saída CME");
-}
-
-// ============================================================
-// Acessar tela de histórico
-// ============================================================
-function irHistorico(id) {
-  window.location.href = `historico.html?res=${id}`;
-}
-
-// ============================================================
-// Atualizar interface com dados
-// ============================================================
-function atualizarUI(data) {
-  document.getElementById("lastUpdate").innerHTML =
-    "Atualizado em: " + new Date().toLocaleTimeString();
-
-  Object.keys(MAP).forEach(key => {
-    const nome = MAP[key];
-    const valor = data[key];
-
-    if (valor == null) return;
-
-    // PRESSÃO
-    if (nome.includes("pressao")) {
-      document.getElementById("press_" + nome).innerHTML =
-        valor.toFixed(2) + " bar";
-      return;
-    }
-
-    // RESERVATÓRIO
-    const cap = CAP[nome];
-    const pct = Math.min(100, Math.max(0, (valor / cap) * 100));
-
-    const pctEl = document.getElementById("pct_" + nome);
-    const litEl = document.getElementById("litros_" + nome);
-    const nivEl = document.getElementById("nivel_" + nome);
-
-    pctEl.innerHTML = pct.toFixed(0) + "%";
-    litEl.innerHTML = valor + " L";
-    nivEl.style.height = pct + "%";
-  });
-}
-
-// ============================================================
-// Buscar dados do servidor
-// ============================================================
-async function atualizar() {
+// === Atualiza as leituras do servidor ===
+async function atualizarLeituras() {
   try {
-    const resp = await fetch(API_URL);
-    const json = await resp.json();
-    atualizarUI(json);
-  } catch (e) {
-    console.log("Erro ao buscar dados:", e);
+    const res = await fetch(API_URL + "?t=" + Date.now());
+    const dados = await res.json();
+    if (!dados || Object.keys(dados).length === 0) return;
+
+    ultimaLeitura = Date.now();
+
+    // Atualiza reservatórios
+    Object.entries(RESERVATORIOS).forEach(([id, conf]) => {
+      const card = document.getElementById(id);
+      if (!card) return;
+
+      const valor = dados[id];
+      if (typeof valor !== "number" || isNaN(valor)) {
+        card.classList.add("sem-dados");
+        card.querySelector(".nivel").innerHTML = "--%";
+        card.querySelector(".litros").innerHTML = "0 L";
+        card.style.setProperty("--nivel", "0%");
+        return;
+      }
+
+      const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
+      card.classList.remove("sem-dados");
+
+      // Define status e cores
+      let status = "alto";
+      let cor = "linear-gradient(to top, #3498db, #2ecc71)";
+      if (perc < 30) {
+        status = "baixo";
+        cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
+      } else if (perc < 70) {
+        status = "medio";
+        cor = "linear-gradient(to top, #f1c40f, #f39c12)";
+      }
+
+      card.dataset.status = status;
+      card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
+      card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
+      card.style.setProperty("--nivel", perc + "%");
+      card.style.setProperty("--corNivel", cor);
+    });
+
+    // Atualiza pressões
+    Object.entries(PRESSOES).forEach(([id, nome]) => {
+      const card = document.getElementById(id);
+      if (!card) return;
+
+      const valor = dados[id];
+      if (typeof valor !== "number" || isNaN(valor)) {
+        card.classList.add("sem-dados");
+        card.querySelector(".pressao").innerHTML = "-- bar";
+        return;
+      }
+
+      card.classList.remove("sem-dados");
+      card.querySelector(".pressao").innerHTML = valor.toFixed(2) + " bar";
+    });
+
+    // Atualiza data/hora
+    const last = document.getElementById("lastUpdate");
+    if (last) {
+      const dt = new Date(dados.timestamp || Date.now());
+      last.innerHTML = "Última atualização: " + dt.toLocaleString("pt-BR");
+    }
+  } catch (err) {
+    console.error("Erro ao buscar leituras:", err);
   }
 }
 
-atualizar();
-setInterval(atualizar, UPDATE_INTERVAL);
+// === Exibe 0% apenas se passar muito tempo sem atualização ===
+setInterval(() => {
+  const tempo = Date.now() - ultimaLeitura;
+  if (tempo > 240000) {
+    document.querySelectorAll(".card").forEach((card) => {
+      card.classList.add("sem-dados");
+      if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
+      if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
+      if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
+      card.style.setProperty("--nivel", "0%");
+    });
+  }
+}, 10000);
+
+// === Inicializa dashboard ===
+window.addEventListener("DOMContentLoaded", () => {
+  criarCards();
+  atualizarLeituras();
+  setInterval(atualizarLeituras, UPDATE_INTERVAL);
+});
+
+// === Função global para abrir histórico ===
+window.abrirHistorico = function (reservatorioId) {
+  window.location.href = `historico.html?reservatorio=${reservatorioId}`;
+};
