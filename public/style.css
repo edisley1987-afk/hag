@@ -1,11 +1,12 @@
 /* === ESTILO GERAL === */
 :root {
-  --cor-primaria: #0a3d62;      /* Azul petróleo do cabeçalho/rodapé */
-  --cor-secundaria: #1e5f8b;    /* Azul mais claro suave */
-  --cor-fundo: #f4f6f9;         /* Fundo cinza claro */
-  --cor-card: #ffffff;          /* Card branco */
-  --cor-texto: #222;
-  --cor-texto-inverso: #ffffff;
+  --cor-primaria: #0B5E55;       /* Verde escuro oficial */
+  --cor-secundaria: #3CA89C;     /* Verde médio */
+  --cor-suave: #A7D6CE;          /* Verde pastel claro */
+  --cor-fundo: #F4F6F9;          /* Fundo neutro */
+  --cor-card: #FFFFFF;           /* Cards brancos */
+  --cor-texto: #222222;
+  --cor-texto-inverso: #FFFFFF;
   --sombra: 0 3px 12px rgba(0,0,0,0.12);
 }
 
@@ -37,60 +38,62 @@ header {
 /* === GRID DOS CARDS === */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
 }
 
 /* === CARDS === */
 .card {
   background: var(--cor-card);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px 18px;
   box-shadow: var(--sombra);
   border-left: 6px solid var(--cor-primaria);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
 }
 
 .card h2 {
-  margin: 0 0 10px;
-  font-size: 20px;
+  margin: 0 0 6px;
+  font-size: 18px;
   color: var(--cor-primaria);
 }
 
-/* Porcentagem grande */
+/* === PORCENTAGEM === */
 .porcentagem {
-  font-size: 42px;
+  font-size: 32px;
   font-weight: bold;
   color: var(--cor-secundaria);
-  margin: 10px 0 5px;
+  margin: 6px 0 4px;
 }
 
-/* Texto de volume */
+/* === VOLUME === */
 .volume {
-  font-size: 16px;
-  margin-bottom: 12px;
+  font-size: 14px;
   color: #444;
+  margin-bottom: 10px;
 }
 
+/* === BOTÃO HISTÓRICO === */
 .btn-historico {
   display: inline-block;
-  margin-top: 8px;
-  background: var(--cor-primaria);
-  color: #fff;
-  padding: 10px 14px;
+  margin-top: 6px;
+  background: var(--cor-secundaria);
+  color: var(--cor-texto-inverso);
+  padding: 8px 14px;
   border-radius: 8px;
   text-decoration: none;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
   transition: 0.2s ease;
 }
 
 .btn-historico:hover {
-  background: var(--cor-secundaria);
+  background: var(--cor-primaria);
 }
 
 /* === RODAPÉ === */
@@ -105,9 +108,19 @@ footer {
 
 /* === MOBILE === */
 @media (max-width: 600px) {
-  header { text-align: center; }
+  header {
+    text-align: center;
+  }
+
+  .card {
+    padding: 14px;
+  }
 
   .porcentagem {
-    font-size: 34px;
+    font-size: 26px;
+  }
+
+  .card h2 {
+    font-size: 16px;
   }
 }
