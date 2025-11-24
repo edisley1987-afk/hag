@@ -1,141 +1,153 @@
-/* ==== ESTILO GERAL ==== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* === style.css (completo) === */
+/* Layout moderno horizontal com efeito visual de nível de água */
 
 body {
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef3fa;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
   color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* ==== TOPO ==== */
 header {
+  width: 100%;
   background: #0a4fa3;
   color: white;
+  padding: 20px 0;
   text-align: center;
-  padding: 20px 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
 }
 
 header h1 {
-  font-size: 22px;
-  font-weight: bold;
+  margin: 0;
+  font-size: 24px;
 }
 
-#lastUpdate {
+header p {
+  margin: 4px 0 0 0;
   font-size: 14px;
-  margin-top: 5px;
   opacity: 0.9;
 }
 
-/* ==== GRID ==== */
-.cards-container {
+.container {
+  width: 95%;
   max-width: 1400px;
-  margin: 20px auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-  padding: 0 15px;
+  margin-top: 25px;
 }
 
-/* ==== CARD ==== */
+/* --- GRID DOS CARDS --- */
+.grid-reservatorios {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+/* --- CARD PRINCIPAL --- */
 .card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px;
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
   text-align: center;
   position: relative;
-  overflow: hidden;
-
-  border-top: 6px solid #0a4fa3;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-  transition: 0.25s ease;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-}
-
-/* ==== ÁREA DE NÍVEL (VISUAL DO RESERVATÓRIO) ==== */
-.nivel-box {
+/* ÁREA do nível dentro do card */
+.card-nivel {
+  position: relative;
   width: 100%;
-  height: 130px;
-  border: 3px solid #0a4fa3;
+  height: 150px;              /* AGORA A ALTURA REAL DO CARD */
+  background: #eef2f7;
   border-radius: 10px;
   overflow: hidden;
-  position: relative;
-  background: #dce9ff;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+  border: 1px solid #d8d8d8;
 }
 
-.agua {
+/* ÁGUA — preenche todo o card e muda porcentagem */
+.nivel-agua {
   position: absolute;
   bottom: 0;
-  left: 0;
   width: 100%;
-
-  /* Altura controlada pelo JS → agua.style.height = "XX%" */
-  height: 0%;
-
-  background: var(--corNivel, linear-gradient(to top, #4a9cff, #0a4fa3));
-  transition: height 1s ease, background 0.5s ease;
+  height: 100%;               /* PREENCHER TUDO */
+  background: linear-gradient(to top, #0aa2ff, #6cf788);
+  transition: height 0.6s ease;
 }
 
-/* ==== TEXTOS DO CARD ==== */
-.card h2 {
-  font-size: 18px;
+/* Texto do nome */
+.card h3 {
+  margin: 5px 0 0 0;
+  font-size: 16px;
   font-weight: bold;
-  margin-bottom: 8px;
+}
+
+/* Porcentagem */
+.card .percentual {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 5px 0;
   color: #0a4fa3;
 }
 
-.nivel {
-  font-size: 22px;
-  font-weight: bold;
-}
-
-.litros,
-.pressao {
-  font-size: 15px;
-  margin-top: 4px;
-  opacity: 0.85;
-}
-
-/* ==== BOTÃO HISTÓRICO ==== */
-.historico-btn {
-  margin-top: 12px;
-  padding: 6px 14px;
+/* Litros */
+.card .litros {
   font-size: 13px;
+  color: #555;
+}
+
+/* Botão */
+.btn-historico {
+  margin-top: 10px;
+  background: #0a4fa3;
+  color: white;
   border: none;
+  padding: 6px 14px;
   border-radius: 8px;
-  background: #0a4fa3;
-  color: white;
   cursor: pointer;
-  transition: 0.2s;
+  font-size: 13px;
 }
 
-.historico-btn:hover {
-  background: #063777;
+.btn-historico:hover {
+  background: #083a77;
 }
 
-/* ==== FOOTER ==== */
-footer {
-  background: #0a4fa3;
-  color: white;
-  padding: 10px;
+/* --- CARDS DE PRESSÃO --- */
+.grid-pressoes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+.card-pressao {
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
   text-align: center;
-  margin-top: 40px;
+}
+
+.card-pressao h4 {
+  margin: 0 0 8px 0;
+  color: #0a4fa3;
+}
+
+.card-pressao p {
+  margin: 0;
   font-size: 14px;
 }
 
-/* ==== ESTILO QUANDO NÃO TEM DADOS ==== */
-.card.sem-dados {
-  opacity: 0.6;
-}
-
-.card.sem-dados .agua {
-  height: 0% !important;
+/* RODAPÉ */
+footer {
+  margin-top: 40px;
+  width: 100%;
+  text-align: center;
+  padding: 15px 0;
+  background: #0a4fa3;
+  color: white;
+  font-size: 12px;
+  box-shadow: 0px -3px 7px rgba(0, 0, 0, 0.2);
 }
