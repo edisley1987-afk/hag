@@ -130,9 +130,10 @@ async function atualizarLeituras() {
     Object.keys(PRESSOES).forEach((id) => {
       const card = document.getElementById(id);
       if (!card) return;
-      const el = card.querySelector(".percent-large");
 
+      const el = card.querySelector(".percent-large");
       const valor = dados[id];
+
       if (typeof valor !== "number") {
         el.innerHTML = "-- bar";
         return;
@@ -153,19 +154,40 @@ async function atualizarLeituras() {
   }
 }
 
-// === Reset se ficar sem atualizar ===
+// === MONITORAMENTO DE INATIVIDADE (alerta dentro dos cards) ===
 setInterval(() => {
-  if (Date.now() - ultimaLeitura > 240000) {
-    document.querySelectorAll(".card").forEach((c) => {
-      const fill = c.querySelector(".fill");
-      const perc = c.querySelector(".percent-large");
-      const lit = c.querySelector(".liters");
+  const agora = Date.now();
+  const diff = agora - ultimaLeitura;
 
-      if (fill) fill.style.height = "0%";
-      if (perc) perc.innerHTML = "--%";
-      if (lit) lit.innerHTML = "0 L";
-    });
-  }
+  document.querySelectorAll(".card").forEach(card => {
+    let aviso = card.querySelector(".alerta-inatividade");
+
+    // Cria o aviso se ainda não existir
+    if (!aviso) {
+      aviso = document.createElement("div");
+      aviso.className = "alerta-inatividade";
+      aviso.style.marginTop = "8px";
+      aviso.style.fontSize = "13px";
+      aviso.style.fontWeight = "bold";
+      aviso.style.color = "#e67e22";
+      aviso.style.display = "none";
+      aviso.style.textAlign = "center";
+      aviso.style.background = "rgba(230, 126, 34, 0.15)";
+      aviso.style.padding = "4px 6px";
+      aviso.style.borderRadius = "6px";
+      aviso.innerHTML = "⚠ Sem atualização há mais de 10 minutos";
+
+      card.querySelector(".content").appendChild(aviso);
+    }
+
+    // Mostrar ou ocultar
+    if (diff > 10 * 60 * 1000) {
+      aviso.style.display = "block";
+    } else {
+      aviso.style.display = "none";
+    }
+  });
+
 }, 10000);
 
 // Init
