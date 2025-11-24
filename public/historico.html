@@ -1,22 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Histórico — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style-historico.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Histórico — Monitoramento HAG</title>
+
+  <!-- Chart.js (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="historico.css" />
 </head>
 <body>
-  <header>
-    <h1>📊 Histórico — Reservatórios</h1>
-    <a href="dashboard.html" class="voltar-btn">⬅ Voltar ao Painel</a>
+  <header class="hist-header">
+    <div class="left">
+      <button id="btnBack" class="btn-ghost">← Voltar</button>
+      <h1 id="histTitle">Histórico</h1>
+      <div id="subTitle" class="sub">Últimas 24 horas</div>
+    </div>
+
+    <div class="right">
+      <select id="reservatorioSelect" aria-label="Reservatório">
+        <option value="elevador">Reservatório Elevador</option>
+        <option value="osmose">Reservatório Osmose</option>
+        <option value="cme">Reservatório CME</option>
+        <option value="abrandada">Água Abrandada</option>
+      </select>
+
+      <button id="btnRefresh" class="btn-primary">Atualizar</button>
+      <button id="btnExport" class="btn-ghost">Exportar CSV</button>
+    </div>
   </header>
 
-  <main class="historico-main">
-    <canvas id="graficoHistorico"></canvas>
-    <div id="historico"></div>
+  <main class="hist-main">
+    <section class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-title">Mín</div>
+        <div class="stat-value" id="statMin">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Máx</div>
+        <div class="stat-value" id="statMax">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Média</div>
+        <div class="stat-value" id="statAvg">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Última</div>
+        <div class="stat-value" id="statLast">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Consumo (24h)</div>
+        <div class="stat-value" id="statConsumo">--</div>
+      </div>
+    </section>
+
+    <section class="chart-panel">
+      <canvas id="histChart" height="160"></canvas>
+    </section>
+
+    <section class="table-panel" id="tablePanel">
+      <table id="pontosTable">
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Valor (L)</th>
+            <th>Variação</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </main>
+
+  <footer class="hist-footer">
+    <div id="lastUpdate">Última atualização: --</div>
+    <div class="brand">Hospital Arnaldo Gavazza — Histórico</div>
+  </footer>
 
   <script src="historico.js"></script>
 </body>
