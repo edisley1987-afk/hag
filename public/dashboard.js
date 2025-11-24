@@ -1,10 +1,7 @@
-// ===== dashboard.js CORRIGIDO =====
-
 // Rotas
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000;
 
-// Última leitura para fallback
 let ultimaLeitura = null;
 
 // Configuração dos reservatórios
@@ -22,30 +19,27 @@ const PRESSOES_CFG = {
   Pressao_Rede: "Pressão Rede Interna"
 };
 
-
-// Aguarda DOM carregar
 document.addEventListener("DOMContentLoaded", () => {
   criarEstruturaInicial();
   atualizar();
   setInterval(atualizar, UPDATE_INTERVAL);
 });
 
-
 /* -----------------------------------------
-   CRIA A ESTRUTURA BASE DE CARDS
+   CRIA STRUCT DOS CARDS
 ----------------------------------------- */
 function criarEstruturaInicial() {
 
-  const reservatoriosArea = document.getElementById("reservatoriosContainer");
-  const pressoesArea = document.getElementById("pressoesContainer");
+  const res = document.getElementById("reservatoriosContainer");
+  const pres = document.getElementById("pressoesContainer");
 
-  reservatoriosArea.innerHTML = "";
-  pressoesArea.innerHTML = "";
+  res.innerHTML = "";
+  pres.innerHTML = "";
 
-  // --- Criar cartões dos Reservatórios ---
+  // RESERVATÓRIOS ------------------------------
   Object.keys(RESERVATORIOS).forEach(chave => {
-    reservatoriosArea.innerHTML += `
-      <div class="card tanque" id="${chave}">
+    res.innerHTML += `
+      <div class="card-reservatorio" id="${chave}">
         <h3>${RESERVATORIOS[chave].nome}</h3>
         <div class="tanque-visu">
           <div class="nivel-agua" id="${chave}_nivel"></div>
@@ -54,16 +48,15 @@ function criarEstruturaInicial() {
       </div>`;
   });
 
-  // --- Criar cartões das Pressões ---
+  // PRESSÕES ----------------------------------
   Object.keys(PRESSOES_CFG).forEach(chave => {
-    pressoesArea.innerHTML += `
-      <div class="card pressao-card" id="${chave}">
+    pres.innerHTML += `
+      <div class="card-pressao" id="${chave}">
         <h3>${PRESSOES_CFG[chave]}</h3>
         <p class="pressao-valor" id="${chave}_valor">-- bar</p>
       </div>`;
   });
 }
-
 
 /* -----------------------------------------
    ATUALIZA OS DADOS
@@ -71,7 +64,7 @@ function criarEstruturaInicial() {
 async function atualizar() {
   try {
     const resp = await fetch(API_URL);
-    if (!resp.ok) throw new Error("Falha na API");
+    if (!resp.ok) throw new Error("Erro na API");
 
     const dados = await resp.json();
     ultimaLeitura = dados;
@@ -79,19 +72,16 @@ async function atualizar() {
     renderizarDados(dados);
 
   } catch (e) {
-    if (ultimaLeitura) {
-      renderizarDados(ultimaLeitura);
-    }
+    if (ultimaLeitura) renderizarDados(ultimaLeitura);
   }
 }
 
-
 /* -----------------------------------------
-   RENDERIZA A TELA
+   RENDERIZA NA TELA
 ----------------------------------------- */
 function renderizarDados(raw) {
 
-  // ---- RESERVATÓRIOS ----
+  // RESERVATÓRIOS ----------------------------
   Object.keys(RESERVATORIOS).forEach(chave => {
     const capacidade = RESERVATORIOS[chave].capacidade;
     const valor = raw[chave + "_current"];
@@ -108,12 +98,10 @@ function renderizarDados(raw) {
     else card.classList.remove("alerta");
   });
 
-  // ---- PRESSÕES ----
+  // PRESSÕES ----------------------------------
   Object.keys(PRESSOES_CFG).forEach(chave => {
     const valor = raw[chave + "_current"];
     if (valor == null) return;
-
-    document.getElementById(chave + "_valor").textContent =
-      valor.toFixed(2) + " bar";
+    document.getElementById(chave + "_valor").textContent = valor.toFixed(2) + " bar";
   });
 }
