@@ -1,13 +1,13 @@
 // ====================== dashboard.js ======================
 
-// Rotas da API
+// ROTA da API
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000;
 
-// Última leitura armazenada em caso de falha
+// Última leitura salva
 let ultimaLeitura = null;
 
-// Configuração dos reservatórios
+// Configuração dos reservatórios (nomes e capacidades)
 const RESERVATORIOS = {
   Reservatorio_elevador: { nome: "Reservatório Elevador", capacidade: 20000 },
   RESERVATORIO_Osmose: { nome: "Osmose Reversa", capacidade: 200 },
@@ -24,26 +24,26 @@ const PRESSOES_CFG = {
   Pressao_retorno: "Pressão Retorno"
 };
 
-// Cria os cards quando a página carrega
+// Ao carregar
 document.addEventListener("DOMContentLoaded", () => {
-  criarEstruturas();
+  montarEstruturas();
   atualizar();
   setInterval(atualizar, UPDATE_INTERVAL);
 });
 
 /* ------------------------------------------------------------
-   CRIA OS CARDS NA TELA
+   CRIA CARDS NA TELA
 ------------------------------------------------------------ */
-function criarEstruturas() {
-  const r = document.getElementById("reservatoriosContainer");
-  const p = document.getElementById("pressoesContainer");
+function montarEstruturas() {
+  const contR = document.getElementById("reservatoriosContainer");
+  const contP = document.getElementById("pressoesContainer");
 
-  r.innerHTML = "";
-  p.innerHTML = "";
+  contR.innerHTML = "";
+  contP.innerHTML = "";
 
-  // Criar cards dos reservatórios
+  // Cards dos reservatórios
   Object.keys(RESERVATORIOS).forEach(chave => {
-    r.innerHTML += `
+    contR.innerHTML += `
       <div class="card tanque">
         <h3>${RESERVATORIOS[chave].nome}</h3>
 
@@ -56,9 +56,9 @@ function criarEstruturas() {
     `;
   });
 
-  // Criar cards das pressões
+  // Cards das pressões
   Object.keys(PRESSOES_CFG).forEach(chave => {
-    p.innerHTML += `
+    contP.innerHTML += `
       <div class="card pressao-card">
         <h3>${PRESSOES_CFG[chave]}</h3>
         <p id="${chave}_valor" class="pressao-valor">-- bar</p>
@@ -68,19 +68,18 @@ function criarEstruturas() {
 }
 
 /* ------------------------------------------------------------
-   BUSCAR DADOS DA API
+   BUSCA DADOS
 ------------------------------------------------------------ */
 async function atualizar() {
   try {
     const r = await fetch(API_URL);
-    if (!r.ok) throw new Error("Falha API");
+    if (!r.ok) throw new Error("Erro API");
 
     const dados = await r.json();
     ultimaLeitura = dados;
 
     renderizar(dados);
     atualizarRelogio();
-
   } catch (e) {
     if (ultimaLeitura) {
       renderizar(ultimaLeitura);
@@ -89,15 +88,15 @@ async function atualizar() {
 }
 
 /* ------------------------------------------------------------
-   MOSTRA DADOS NA TELA
+   DESENHA OS DADOS NA TELA
 ------------------------------------------------------------ */
 function renderizar(raw) {
 
-  // -------- RESERVATÓRIOS --------
+  // --------- RESERVATÓRIOS ---------
   Object.keys(RESERVATORIOS).forEach(chave => {
     const capacidade = RESERVATORIOS[chave].capacidade;
-
     const valor = raw[chave + "_current"];
+
     if (valor == null) return;
 
     const percent = Math.min(100, Math.max(0, (valor / capacidade) * 100));
@@ -106,7 +105,7 @@ function renderizar(raw) {
     document.getElementById(chave + "_percent").textContent = percent.toFixed(1) + "%";
   });
 
-  // -------- PRESSÕES --------
+  // --------- PRESSÕES ---------
   Object.keys(PRESSOES_CFG).forEach(chave => {
     const v = raw[chave + "_current"];
     if (v == null) return;
@@ -116,11 +115,10 @@ function renderizar(raw) {
 }
 
 /* ------------------------------------------------------------
-   RELÓGIO DE ULTIMA ATUALIZAÇÃO
+   RELÓGIO
 ------------------------------------------------------------ */
 function atualizarRelogio() {
-  const div = document.getElementById("lastUpdate");
   const agora = new Date();
-  div.textContent = "Última atualização: " +
-    agora.toLocaleTimeString("pt-BR");
+  document.getElementById("lastUpdate").textContent =
+    "Última atualização: " + agora.toLocaleTimeString("pt-BR");
 }
