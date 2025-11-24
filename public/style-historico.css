@@ -1,107 +1,119 @@
-/* === style-historico.css === */
+/* historico.css — Dashboard PRO (multigraf) */
 
-body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background-color: #f5f7fa;
-  margin: 0;
-  padding: 0;
-  color: #222;
+:root{
+  --accent: #0a4fa3;
+  --bg: #f3f8fd;
+  --card: #fff;
+  --muted: #567;
 }
 
-header {
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  color: white;
-  padding: 20px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+*{ box-sizing: border-box; margin:0; padding:0; font-family: "Segoe UI", Arial, sans-serif; }
+body{ background: var(--bg); color: #123; min-height:100vh; }
+
+/* Header */
+.hist-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 20px;
+  background: linear-gradient(90deg, rgba(10,79,163,0.95), rgba(6,120,180,0.95));
+  color:#fff;
+  gap:10px;
+  box-shadow: 0 6px 20px rgba(10,79,163,0.12);
+}
+.hist-header .left{ display:flex; align-items:center; gap:12px; }
+.hist-header h1{ font-size:20px; font-weight:700; margin-right:6px; }
+.hist-header .sub{ font-size:13px; opacity:0.9; }
+.hist-header .right{ display:flex; align-items:center; gap:10px; }
+
+/* Buttons / selects */
+.btn-primary{
+  background: #ff7a18;
+  color:#fff;
+  border: none;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+.btn-ghost{
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+select#reservatorioSelect{
+  padding:8px 10px; border-radius:8px; border:none; font-weight:700;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+/* Main layout */
+.hist-main{
+  max-width:1180px;
+  margin:20px auto;
+  padding:0 16px 40px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
 }
 
-.voltar-btn {
-  text-decoration: none;
-  background: white;
-  color: #0056b3;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: 0.3s;
+/* Stats row */
+.stats-row{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap:14px;
+}
+.stat-card{
+  background: var(--card);
+  padding:14px;
+  border-radius:12px;
+  box-shadow: 0 8px 22px rgba(14,40,80,0.06);
+  border-top: 6px solid rgba(10,79,163,0.06);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.stat-title{ font-size:12px; color:var(--muted); font-weight:700; }
+.stat-value{ font-size:20px; font-weight:900; color:#0b3650; }
+
+/* Chart panel */
+.chart-panel{
+  background: var(--card);
+  padding:12px;
+  border-radius:12px;
+  box-shadow: 0 12px 32px rgba(10,79,163,0.04);
 }
 
-.voltar-btn:hover {
-  background: #e6ecff;
+/* Table panel */
+.table-panel{
+  background: var(--card);
+  padding:12px;
+  border-radius:12px;
+  box-shadow: 0 8px 22px rgba(14,40,80,0.04);
+  overflow:auto;
+}
+#pontosTable{ width:100%; border-collapse:collapse; }
+#pontosTable th, #pontosTable td{
+  padding:8px 10px; text-align:left;
+  border-bottom:1px solid #eef2f8;
+  font-size:14px;
+}
+#pontosTable th{ font-weight:800; color:#345; }
+
+/* footer */
+.hist-footer{
+  max-width:1180px;
+  margin: 6px auto 40px;
+  padding:0 16px;
+  display:flex;
+  justify-content:space-between;
+  color:#667;
+  font-size:13px;
 }
 
-main {
-  padding: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* === Gráfico === */
-canvas {
-  width: 100%;
-  max-height: 400px;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-}
-
-/* === Tabela === */
-.tabela-historico {
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tabela-historico th {
-  background-color: #007bff;
-  color: white;
-  text-transform: uppercase;
-  font-weight: 600;
-  padding: 12px;
-  font-size: 0.9rem;
-}
-
-.tabela-historico td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  font-size: 0.95rem;
-}
-
-.tabela-historico tr:nth-child(even) {
-  background-color: #f9fbff;
-}
-
-.tabela-historico tr:hover {
-  background-color: #e6ecff;
-  transition: 0.2s;
-}
-
-/* === Responsividade === */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .voltar-btn {
-    margin-top: 10px;
-  }
-
-  .tabela-historico th, .tabela-historico td {
-    font-size: 0.8rem;
-    padding: 8px;
-  }
+/* responsive tweaks */
+@media (max-width:900px){
+  .hist-header{ flex-direction:column; align-items:flex-start; gap:8px; padding:12px; }
+  .hist-footer{ flex-direction:column; gap:6px; align-items:flex-start; }
 }
