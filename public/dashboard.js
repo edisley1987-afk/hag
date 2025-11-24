@@ -1,249 +1,113 @@
-// === dashboard.js ===
-const API_URL = "/api/dashboard";
+// ===== dashboard.js CORRIGIDO =====
 
-let ultimoTimestamp = null;
-let alertaTimeoutAtivo = false;
+// Rotas
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000;
 
-/* ============================================================
-   TABELA OFICIAL DE RESERVATÓRIOS (LEITURA MIN / MAX)
-   ============================================================ */
-const RESERVATORIOS_CFG = {
-  "ELEVADOR": {
-    capacidade: 20000,
-    min: 0.004168,
-    max: 0.008742
-  },
-  "OSMOSE": {
-    capacidade: 200,
-    min: 0.00505,
-    max: 0.006492
-  },
-  "CME": {
-    capacidade: 1000,
-    min: 0.004088,
-    max: 0.004408
-  },
-  "ABRANDADA": {
-    capacidade: 9000,
-    min: 0.004048,
-    max: 0.006515
-  }
+// Última leitura para fallback
+let ultimaLeitura = null;
+
+// Configuração dos reservatórios
+const RESERVATORIOS = {
+  Reservatorio_Elevador: { nome: "Reservatório Elevador", capacidade: 20000 },
+  Reservatorio_Osmose: { nome: "Osmose Reversa", capacidade: 200 },
+  Reservatorio_CME: { nome: "CME", capacidade: 5000 },
+  Reservatorio_Abrandada: { nome: "Abrandada", capacidade: 5000 }
 };
 
-/* ============================================================
-   LISTA OFICIAL DE PRESSÕES
-   ============================================================ */
+// Configuração das pressões
 const PRESSOES_CFG = {
-  "Pressao_Saida_CME": "PRESSÃO CME - SAÍDA",
-  "Pressao_Saida_Osmose": "PRESSÃO OSMOSE - SAÍDA",
-  "Pressao_Retorno_Osmose": "PRESSÃO OSMOSE - RETORNO"
+  Pressao_Saida_CME: "Pressão Saída CME",
+  Pressao_Abrandada: "Pressão Abrandada",
+  Pressao_Rede: "Pressão Rede Interna"
 };
 
-/* ============================================================
-    FUNÇÃO PRINCIPAL DO FETCH
-   ============================================================ */
-async function carregarDados() {
+// Cria os cards na página ao carregar
+document.addEventListener("DOMContentLoaded", () => {
+  criarEstruturaInicial();
+  atualizar();
+  setInterval(atualizar, UPDATE_INTERVAL);
+});
+
+/* -----------------------------------------
+   CRIA A ESTRUTURA BASE DE CARDS
+----------------------------------------- */
+function criarEstruturaInicial() {
+  const container = document.getElementById("cardsContainer");
+  container.innerHTML = "";
+
+  // Reservatórios
+  Object.keys(RESERVATORIOS).forEach(chave => {
+    container.innerHTML += `
+      <div class="card tanque" id="${chave}">
+        <h3>${RESERVATORIOS[chave].nome}</h3>
+        <div class="tanque-visu">
+          <div class="nivel-agua" id="${chave}_nivel"></div>
+        </div>
+        <p class="percentual" id="${chave}_percent">--%</p>
+      </div>`;
+  });
+
+  // Pressões
+  Object.keys(PRESSOES_CFG).forEach(chave => {
+    container.innerHTML += `
+      <div class="card pressao-card" id="${chave}">
+        <h3>${PRESSOES_CFG[chave]}</h3>
+        <p class="pressao-valor" id="${chave}_valor">-- bar</p>
+      </div>`;
+  });
+}
+
+/* -----------------------------------------
+   ATUALIZA OS DADOS
+----------------------------------------- */
+async function atualizar() {
   try {
     const resp = await fetch(API_URL);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (!resp.ok) throw new Error("Falha na API");
 
-    const raw = await resp.json();
+    const dados = await resp.json();
+    ultimaLeitura = dados;
 
-    const data = transformarDados(raw);
+    renderizarDados(dados);
 
-    if (data.lastUpdate) {
-      ultimoTimestamp = Date.now();
-      alertaTimeoutAtivo = false;
+  } catch (e) {
+    // Fallback se a API falhar
+    if (ultimaLeitura) {
+      renderizarDados(ultimaLeitura);
     }
-
-    criarCards(data);
-    atualizarReservatorios(data);
-    atualizarPressao(data);
-    atualizarTimestamp(data.lastUpdate);
-
-  } catch (err) {
-    console.error("Erro ao carregar dados:", err);
   }
 }
 
-/* ============================================================
-    TRANSFORMA O JSON DO SERVIDOR
-   ============================================================ */
-function transformarDados(raw) {
-  const reservatorios = [];
-  const pressoes = [];
+/* -----------------------------------------
+   RENDERIZA A TELA
+----------------------------------------- */
+function renderizarDados(raw) {
 
-  // --- RESERVATÓRIOS ---
-  for (const nome in RESERVATORIOS_CFG) {
-    const chave = `Reservatorio_${nome}_current`;
+  // ---- RESERVATÓRIOS ----
+  Object.keys(RESERVATORIOS).forEach(chave => {
+    const capacidade = RESERVATORIOS[chave].capacidade;
+    const valor = raw[chave + "_current"];
 
-    if (raw[chave] !== undefined) {
-      const cfg = RESERVATORIOS_CFG[nome];
-      const valorSensor = raw[chave];
+    if (valor == null) return;
 
-      const percent = calcularPercent(valorSensor, cfg.min, cfg.max);
+    const percent = Math.min(100, Math.max(0, (valor / capacidade) * 100));
 
-      reservatorios.push({
-        setor: nome,
-        percent,
-        litros: Math.round((percent / 100) * cfg.capacidade),
-        manutencao: false
-      });
-    }
-  }
+    document.getElementById(chave + "_nivel").style.height = percent + "%";
+    document.getElementById(chave + "_percent").textContent = percent.toFixed(1) + "%";
 
-  // --- PRESSÕES ---
-  for (const chave in PRESSOES_CFG) {
-    if (raw[chave + "_current"] !== undefined) {
-      pressoes.push({
-        nome: PRESCOES_CFG[chave],
-        valor: raw[chave + "_current"]
-      });
-    }
-  }
-
-  return {
-    reservatorios,
-    pressoes,
-    lastUpdate: raw.timestamp
-  };
-}
-
-/* ============================================================
-    CALCULA % USANDO MIN/MAX REAL
-   ============================================================ */
-function calcularPercent(valor, min, max) {
-  const p = ((valor - min) / (max - min)) * 100;
-  return Math.min(100, Math.max(0, Math.round(p)));
-}
-
-/* ============================================================
-    CRIA TODOS OS CARDS AUTOMATICAMENTE
-   ============================================================ */
-function criarCards(data) {
-  const contRes = document.getElementById("reservatoriosContainer");
-  const contPres = document.getElementById("pressoesContainer");
-
-  contRes.innerHTML = "";
-  contPres.innerHTML = "";
-
-  // --- RESERVATÓRIOS ---
-  data.reservatorios.forEach((r) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.setor = r.setor;
-
-    card.innerHTML = `
-      <div class="nivel">
-        <svg class="wave-svg" viewBox="0 0 500 150">
-          <path d="M0 49 C 150 150, 350 0, 500 49 L500 150 L0 150 Z"/>
-        </svg>
-      </div>
-
-      <div class="conteudo">
-        <h3>${r.setor}</h3>
-        <div class="percent">--%</div>
-        <div class="liters">-- L</div>
-      </div>
-    `;
-
-    contRes.appendChild(card);
+    const card = document.getElementById(chave);
+    if (percent <= 30) card.classList.add("alerta");
+    else card.classList.remove("alerta");
   });
 
-  // --- PRESSÕES ---
-  data.pressoes.forEach((p) => {
-    const card = document.createElement("div");
-    card.className = "card-pressao";
-    card.dataset.nome = p.nome;
+  // ---- PRESSÕES ----
+  Object.keys(PRESSOES_CFG).forEach(chave => {
+    const valor = raw[chave + "_current"];
 
-    card.innerHTML = `
-      <h3>${p.nome}</h3>
-      <div class="valor-pressao">--</div>
-    `;
+    if (valor == null) return;
 
-    contPres.appendChild(card);
+    document.getElementById(chave + "_valor").textContent =
+      valor.toFixed(2) + " bar";
   });
 }
-
-/* ============================================================
-    ATUALIZA RESERVATÓRIOS (COM ONDA)
-   ============================================================ */
-function atualizarReservatorios(data) {
-  document.querySelectorAll(".card").forEach((card) => {
-    const setor = card.dataset.setor;
-    const r = data.reservatorios.find(x => x.setor === setor);
-    if (!r) return;
-
-    const percent = r.percent;
-    const litros = r.litros;
-
-    card.querySelector(".percent").textContent = percent + "%";
-    card.querySelector(".liters").textContent = litros + " L";
-    card.querySelector(".nivel").style.height = percent + "%";
-
-    // Remove todas as classes e adiciona a correta
-    card.classList.remove("alta", "media", "baixa");
-
-    if (percent >= 70) card.classList.add("alta");
-    else if (percent >= 40) card.classList.add("media");
-    else card.classList.add("baixa");
-
-    // atraso
-    if (alertaTimeoutAtivo) {
-      card.classList.add("alerta-piscando");
-    } else {
-      card.classList.remove("alerta-piscando");
-    }
-  });
-}
-
-/* ============================================================
-    ATUALIZA PRESSÕES
-   ============================================================ */
-function atualizarPressao(data) {
-  document.querySelectorAll(".card-pressao").forEach((card) => {
-    const nome = card.dataset.nome;
-    const pres = data.pressoes.find(x => x.nome === nome);
-    if (!pres) return;
-
-    card.querySelector(".valor-pressao").textContent =
-      pres.valor.toFixed(3) + " bar";
-
-    // atraso
-    if (alertaTimeoutAtivo) {
-      card.classList.add("alerta-piscando");
-    } else {
-      card.classList.remove("alerta-piscando");
-    }
-  });
-}
-
-/* ============================================================
-    ATUALIZA TIMER NA TELA
-   ============================================================ */
-function atualizarTimestamp(ms) {
-  const el = document.getElementById("lastUpdate");
-  if (!ms) {
-    el.textContent = "Última atualização: --";
-    return;
-  }
-
-  const dt = new Date(ms);
-  el.textContent = "Última atualização: " + dt.toLocaleTimeString("pt-BR");
-}
-
-/* ============================================================
-    CONTADOR DE ATRASO > 10s
-   ============================================================ */
-setInterval(() => {
-  if (!ultimoTimestamp) return;
-  if (Date.now() - ultimoTimestamp >= 10000 && !alertaTimeoutAtivo) {
-    alertaTimeoutAtivo = true;
-  }
-}, 1000);
-
-/* ============================================================
-    ATUALIZA A CADA 5s
-   ============================================================ */
-setInterval(carregarDados, 5000);
-carregarDados();
