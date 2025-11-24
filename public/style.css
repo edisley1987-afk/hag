@@ -4,7 +4,7 @@
 :root {
   --bg: #eef6fb;
   --card-bg: #ffffff;
-  --text-dark: #0a0a0a;      /* texto mais escuro */
+  --text-dark: #0a0a0a;
   --header-bg: #0a4fa3;
   --footer-bg: #0a4fa3;
   --header-text: #ffffff;
@@ -12,7 +12,7 @@
   --wave-blue: #0a90ff;
   --wave-yellow: #f8d000;
   --wave-red: #ff3b30;
-  --wave-gray: #bcbcbc;      /* manutenção */
+  --wave-gray: #bcbcbc;
 }
 
 /* =============================== */
@@ -82,7 +82,6 @@ section { margin: 20px; }
   animation: waveMove 6s linear infinite;
 }
 
-/* MOVIMENTO DA ONDA */
 @keyframes waveMove {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
@@ -95,18 +94,14 @@ section { margin: 20px; }
 /* =============================== */
 /*   COR DINÂMICA DA ONDA POR %    */
 /* =============================== */
-
-/* >= 70% azul */
 .card.alta {
   --wave-color: var(--wave-blue);
 }
 
-/* 40–69% amarelo */
 .card.media {
   --wave-color: var(--wave-yellow);
 }
 
-/* < 40% vermelho */
 .card.baixa {
   --wave-color: var(--wave-red);
 }
@@ -175,4 +170,62 @@ section { margin: 20px; }
 @keyframes piscar {
   0% { opacity: 1; }
   100% { opacity: 0.2; }
+}
+
+/* ================================================= */
+/*     NOVO: CARDS DE PRESSÃO – METADE DO TAMANHO   */
+/* ================================================= */
+
+.card-pressao {
+  position: relative;
+  width: 220px;
+  height: 140px;           /* METADE DA ALTURA DOS RESERVATÓRIOS */
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  text-align: center;
+}
+
+/* TÍTULO DO CARD */
+.card-pressao h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--text-dark);
+}
+
+/* VALOR GRANDE */
+.valor-pressao {
+  margin-top: 6px;
+  font-size: 34px;
+  font-weight: bold;
+  color: var(--wave-blue);
+}
+
+/* SEM DADOS */
+.card-pressao.sem-dados .valor-pressao {
+  color: #999;
+  font-size: 26px;
+}
+
+/* ALERTA / INATIVIDADE */
+.card-pressao .aviso-inativo {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 4px;
+  background: #ff4747;
+  color: white;
+  font-size: 13px;
+  text-align: center;
+  border-radius: 18px 18px 0 0;
+}
+
+/* PISCAR IGUAL AOS RESERVATÓRIOS */
+.card-pressao.alerta-piscando .aviso-inativo {
+  animation: piscar 1s infinite alternate;
 }
