@@ -44,10 +44,16 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
+
     card.innerHTML = `
+      <div class="nivel-box">
+        <div class="agua"></div>
+      </div>
+
       <h2>${RESERVATORIOS[id].nome}</h2>
       <p class="nivel">--%</p>
       <p class="litros">0 L</p>
+
       <button class="historico-btn" onclick="abrirHistorico('${id}')">Ver Histórico</button>
     `;
     container.appendChild(card);
@@ -58,6 +64,7 @@ function criarCards() {
     const card = document.createElement("div");
     card.className = "card sem-dados";
     card.id = id;
+
     card.innerHTML = `
       <h2>${PRESSOES[id]}</h2>
       <p class="pressao">-- bar</p>
@@ -81,20 +88,24 @@ async function atualizarLeituras() {
       if (!card) return;
 
       const valor = dados[id];
+      const agua = card.querySelector(".agua");
+
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".nivel").innerHTML = "--%";
         card.querySelector(".litros").innerHTML = "0 L";
-        card.style.setProperty("--nivel", "0%");
+        if (agua) agua.style.height = "0%";
         return;
       }
 
       const perc = Math.min(100, Math.max(0, (valor / conf.capacidade) * 100));
+
       card.classList.remove("sem-dados");
 
-      // Define status e cores
+      // Status e cores
       let status = "alto";
       let cor = "linear-gradient(to top, #3498db, #2ecc71)";
+
       if (perc < 30) {
         status = "baixo";
         cor = "linear-gradient(to top, #e74c3c, #ff8c00)";
@@ -106,16 +117,24 @@ async function atualizarLeituras() {
       card.dataset.status = status;
       card.querySelector(".nivel").innerHTML = perc.toFixed(0) + "%";
       card.querySelector(".litros").innerHTML = valor.toLocaleString() + " L";
+
+      // Animação de água
       card.style.setProperty("--nivel", perc + "%");
       card.style.setProperty("--corNivel", cor);
+
+      if (agua) {
+        agua.style.height = perc + "%";
+        agua.style.background = cor;
+      }
     });
 
     // Atualiza pressões
-    Object.entries(PRESSOES).forEach(([id, nome]) => {
+    Object.entries(PRESSOES).forEach(([id]) => {
       const card = document.getElementById(id);
       if (!card) return;
 
       const valor = dados[id];
+
       if (typeof valor !== "number" || isNaN(valor)) {
         card.classList.add("sem-dados");
         card.querySelector(".pressao").innerHTML = "-- bar";
@@ -137,15 +156,21 @@ async function atualizarLeituras() {
   }
 }
 
-// === Exibe 0% apenas se passar muito tempo sem atualização ===
+// === Exibe 0% se tempo sem atualização for grande ===
 setInterval(() => {
   const tempo = Date.now() - ultimaLeitura;
+
   if (tempo > 240000) {
     document.querySelectorAll(".card").forEach((card) => {
       card.classList.add("sem-dados");
+
       if (card.querySelector(".nivel")) card.querySelector(".nivel").innerHTML = "--%";
       if (card.querySelector(".litros")) card.querySelector(".litros").innerHTML = "0 L";
       if (card.querySelector(".pressao")) card.querySelector(".pressao").innerHTML = "-- bar";
+
+      const agua = card.querySelector(".agua");
+      if (agua) agua.style.height = "0%";
+
       card.style.setProperty("--nivel", "0%");
     });
   }
@@ -158,7 +183,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setInterval(atualizarLeituras, UPDATE_INTERVAL);
 });
 
-// === Função global para abrir histórico ===
+// === Abre histórico ===
 window.abrirHistorico = function (reservatorioId) {
   window.location.href = `historico.html?reservatorio=${reservatorioId}`;
 };
