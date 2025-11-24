@@ -1,32 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</title>
+<link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <header class="app-header">
-    <h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-    <p id="lastUpdate" class="last-update">Última atualização: --</p>
-  </header>
+<header class="app-header">
+<h1>Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
+<p id="lastUpdate" class="last-update">Última atualização: --</p>
+</header>
 
-  <main class="container">
 
-    <!-- GRID DE RESERVATÓRIOS -->
-    <section class="grid-reservatorios" id="cards"></section>
+<main>
+<section class="cards-container" id="cardsContainer"></section>
+</main>
 
-    <!-- GRID DE PRESSÕES (opcional, se existir no JS) -->
-    <section class="grid-pressoes" id="pressaoCards"></section>
 
-  </main>
+<footer class="app-footer">© Hospital Arnaldo Gavazza — Sistema de Monitoramento</footer>
 
-  <footer class="app-footer">
-    © Hospital Arnaldo Gavazza — Sistema de Monitoramento
-  </footer>
 
-  <script src="dashboard.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>
