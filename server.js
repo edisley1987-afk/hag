@@ -5,9 +5,13 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import { fileURLToPath } from "url";
+
+// === Corrigir __dirname no ESModules (ESSENCIAL NO RENDER) ===
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const __dirname = path.resolve();
 
 // === Middleware universal (aceita qualquer formato do Gateway) ===
 app.use(cors());
@@ -26,11 +30,10 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 // ============================================================================
 // 🔥 TABELA DE SENSORES — CALIBRAÇÃO AJUSTADA E CONFIRMADA
 // ============================================================================
-
 const SENSORES = {
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.009480, // recalibrado (0.008056 = 85%)
+    leituraCheio: 0.009480,
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
@@ -45,11 +48,11 @@ const SENSORES = {
   },
   "Reservatorio_Agua_Abrandada_current": {
     leituraVazio: 0.004008,
-    leituraCheio: 0.004929, // recalibrado pelo seu valor de 15%
+    leituraCheio: 0.004929,
     capacidade: 9000
   },
 
-  // Sensores de pressão
+  // Pressões
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" }
@@ -62,7 +65,7 @@ function salvarDados(dados) {
 }
 
 // ============================================================================
-// === Função registrarHistorico() — ARMAZENA variação > 2% ====================
+// === registrarHistorico()
 // ============================================================================
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
@@ -114,7 +117,7 @@ function registrarHistorico(dados) {
 }
 
 // ============================================================================
-// === Endpoint universal /atualizar — aceita qualquer formato =================
+// === Endpoint universal /atualizar
 // ============================================================================
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path}`);
@@ -199,7 +202,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 });
 
 // ============================================================================
-// === /dados ================================================================
+// === /dados
 // ============================================================================
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
@@ -207,7 +210,7 @@ app.get("/dados", (req, res) => {
 });
 
 // ============================================================================
-// === /historico — usado pelo front ==========================================
+// === /historico
 // ============================================================================
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
@@ -254,7 +257,7 @@ app.get("/historico", (req, res) => {
 });
 
 // ============================================================================
-// === /historico/24h/:reservatorio ===========================================
+// === /historico/24h/:reservatorio
 // ============================================================================
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
@@ -289,7 +292,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// === /consumo/5dias/:reservatorio ===========================================
+// === /consumo/5dias/:reservatorio
 // ============================================================================
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
@@ -331,7 +334,7 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// === /api/consumo — usado pelo dashboard ====================================
+// === /api/consumo — usado pelo dashboard
 // ============================================================================
 app.get("/api/consumo", (req, res) => {
   const qtdDias = Number(req.query.dias || 5);
@@ -374,8 +377,9 @@ app.get("/api/consumo", (req, res) => {
 
   res.json(resultado);
 });
+
 // ============================================================================
-// === /api/dashboard — resumo usado no dashboard =============================
+// === /api/dashboard — resumo usado no dashboard
 // ============================================================================
 app.get("/api/dashboard", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) {
@@ -445,24 +449,28 @@ app.get("/api/dashboard", (req, res) => {
 });
 
 // ============================================================================
-// === Interface estática =====================================================
+// === Interface estática
 // ============================================================================
 app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
 );
+
 app.get("/dashboard", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "dashboard.html"))
 );
+
 app.get("/historico-view", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "historico.html"))
 );
+
 app.get("/login", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "login.html"))
 );
 
 // ============================================================================
-// === Inicialização ==========================================================
+// === Inicialização
 // ============================================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
