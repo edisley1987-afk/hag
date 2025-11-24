@@ -1,51 +1,44 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Histórico — Reservatórios</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Histórico Diário</title>
 
-  <link rel="stylesheet" href="historico.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- CSS Moderno -->
+  <link rel="stylesheet" href="./historico.css">
 </head>
 
 <body>
-  <header class="app-header">
-    <button class="btn-voltar" onclick="history.back()">⬅ Voltar</button>
-    <h1>Histórico dos Reservatórios</h1>
-  </header>
 
-  <main class="container">
+  <div class="toolbar">
+    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
+  </div>
 
-    <div class="card filtros-card">
-      <h2 id="tituloReservatorio">Reservatório</h2>
+  <h2 class="titulo-centro">Histórico Diário de Níveis</h2>
 
-      <div class="linha">
-        <label>Reservatório:</label>
-        <select id="reservatorioSelect"></select>
-      </div>
+  <div class="card filtro-card">
+      <label for="reservatorioSelect">Reservatório:</label>
+      <select id="reservatorioSelect">
+        <option value="elevador">Elevador</option>
+        <option value="osmose">Osmose</option>
+        <option value="cme">CME</option>
+        <option value="abrandada">Abrandada</option>
+      </select>
 
-      <div class="linha">
-        <button id="btnAtualizar" class="btn">Atualizar</button>
-        <button id="btnExportar" class="btn">Exportar CSV</button>
-      </div>
-    </div>
+      <label for="dataSelect">Data:</label>
+      <input type="date" id="dataSelect">
 
-    <div class="card resumo-card">
-      <h3>Resumo das últimas 24h</h3>
-      <ul id="resumoList"></ul>
-    </div>
+      <button id="btnCarregar">Carregar</button>
+  </div>
 
-    <div class="card grafico-card">
-      <canvas id="grafico"></canvas>
-    </div>
+  <div class="card">
+    <canvas id="grafico"></canvas>
+  </div>
 
-  </main>
+  <div id="tabelaContainer" class="card tabela-card"></div>
 
-  <footer class="app-footer">
-    Hospital Arnaldo Gavazza — Monitoramento
-  </footer>
-
-  <script src="historico.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./historico.js"></script>
 </body>
 </html>
