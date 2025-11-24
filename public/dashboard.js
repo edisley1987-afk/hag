@@ -5,6 +5,9 @@ const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000;
 let ultimaLeitura = 0;
 
+// Estado de manutenção salvo localmente
+let manutencao = JSON.parse(localStorage.getItem("manutencaoReservatorios") || "{}");
+
 // Configuração dos reservatórios (em litros)
 const RESERVATORIOS = {
   Reservatorio_Elevador_current: {
@@ -32,7 +35,7 @@ const PRESSOES = {
   Pressao_Saida_CME_current: "Pressão Saída CME",
 };
 
-// === Cria os cards dinamicamente ===
+// === Criar cards ===
 function criarCards() {
   const container = document.getElementById("cardsRow");
   if (!container) {
@@ -54,7 +57,28 @@ function criarCards() {
         <div class="title">${RESERVATORIOS[id].nome}</div>
         <div class="percent-large">--%</div>
         <div class="liters">0 L</div>
+
         <button class="btn-menu" onclick="abrirHistorico('${id}')">Ver Histórico</button>
+
+        <button class="btn-maint"
+          style="margin-top:6px; padding:4px; width:100%; font-size:12px"
+          onclick="toggleManutencao('${id}')">
+          ${manutencao[id] ? "Remover Manutenção" : "Marcar Manutenção"}
+        </button>
+
+        <div class="manut-label" style="
+            margin-top:6px;
+            padding:4px;
+            display:${manutencao[id] ? "block" : "none"};
+            background:rgba(142, 68, 173, 0.2);
+            color:#8e44ad;
+            font-weight:bold;
+            font-size:13px;
+            border-radius:6px;
+            text-align:center;">
+            🔧 Em manutenção
+        </div>
+
       </div>
     `;
 
@@ -78,7 +102,7 @@ function criarCards() {
   });
 }
 
-// === Atualiza as leituras do servidor ===
+// === Atualizar leituras ===
 async function atualizarLeituras() {
   try {
     const res = await fetch(API_URL + "?t=" + Date.now());
@@ -96,14 +120,22 @@ async function atualizarLeituras() {
       const percentEl = card.querySelector(".percent-large");
       const litrosEl = card.querySelector(".liters");
       const fill = card.querySelector(".fill");
+      const manutLabel = card.querySelector(".manut-label");
 
       if (!fill) return;
+
+      // Se estiver em manutenção → não mostrar alertas
+      if (manutencao[id]) {
+        percentEl.innerHTML = "--%";
+        litrosEl.innerHTML = "Em manutenção";
+        fill.style.height = "0%";
+        return;
+      }
 
       if (typeof valor !== "number" || isNaN(valor)) {
         percentEl.innerHTML = "--%";
         litrosEl.innerHTML = "0 L";
         fill.style.height = "0%";
-        card.classList.remove("critico");
         return;
       }
 
@@ -116,13 +148,36 @@ async function atualizarLeituras() {
       // Cores
       if (perc < 30) {
         fill.style.background = "linear-gradient(to top, #e74c3c, #ff8c00)";
-        card.classList.add("critico");
       } else if (perc < 70) {
         fill.style.background = "linear-gradient(to top, #f1c40f, #f39c12)";
-        card.classList.remove("critico");
       } else {
         fill.style.background = "linear-gradient(to top, #3498db, #2ecc71)";
-        card.classList.remove("critico");
+      }
+
+      // === ALERTA DE NÍVEL BAIXO (<30%) ===
+      let alerta = card.querySelector(".alerta-baixo");
+
+      if (!alerta) {
+        alerta = document.createElement("div");
+        alerta.className = "alerta-baixo";
+        alerta.style.marginTop = "6px";
+        alerta.style.fontSize = "13px";
+        alerta.style.fontWeight = "bold";
+        alerta.style.color = "#c0392b";
+        alerta.style.display = "none";
+        alerta.style.textAlign = "center";
+        alerta.style.background = "rgba(192, 57, 43, 0.2)";
+        alerta.style.padding = "4px 6px";
+        alerta.style.borderRadius = "6px";
+        card.querySelector(".content").appendChild(alerta);
+      }
+
+      // Mostrar aviso somente se NÃO estiver em manutenção
+      if (perc < 30) {
+        alerta.innerHTML = "⚠ Nível muito baixo! (<30%)";
+        alerta.style.display = "block";
+      } else {
+        alerta.style.display = "none";
       }
     });
 
@@ -154,15 +209,19 @@ async function atualizarLeituras() {
   }
 }
 
-// === MONITORAMENTO DE INATIVIDADE (alerta dentro dos cards) ===
+// === Inatividade (>10 min) ===
 setInterval(() => {
   const agora = Date.now();
   const diff = agora - ultimaLeitura;
 
   document.querySelectorAll(".card").forEach(card => {
+    const id = card.id;
+
+    // não mostrar alerta se estiver em manutenção
+    if (manutencao[id]) return;
+
     let aviso = card.querySelector(".alerta-inatividade");
 
-    // Cria o aviso se ainda não existir
     if (!aviso) {
       aviso = document.createElement("div");
       aviso.className = "alerta-inatividade";
@@ -180,15 +239,20 @@ setInterval(() => {
       card.querySelector(".content").appendChild(aviso);
     }
 
-    // Mostrar ou ocultar
-    if (diff > 10 * 60 * 1000) {
-      aviso.style.display = "block";
-    } else {
-      aviso.style.display = "none";
-    }
+    aviso.style.display = diff > 10 * 60 * 1000 ? "block" : "none";
   });
 
 }, 10000);
+
+// === Alternar Manutenção ===
+function toggleManutencao(id) {
+  manutencao[id] = !manutencao[id];
+
+  localStorage.setItem("manutencaoReservatorios", JSON.stringify(manutencao));
+
+  criarCards(); // redesenha com o estado atualizado
+  atualizarLeituras();
+}
 
 // Init
 window.addEventListener("DOMContentLoaded", () => {
