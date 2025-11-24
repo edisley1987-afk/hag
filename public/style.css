@@ -1,160 +1,158 @@
-/* ==== style.css - visual moderno, glass + onda animada ==== */
-
-:root{
-  --accent: #0a4fa3;
-  --bg: #eef6fb;
-  --card-bg: rgba(255,255,255,0.95);
+/* ================================
+   PALeta DE CORES DO HOSPITAL
+================================ */
+:root {
+  --verde: #0C8A78;
+  --verde-agua: #32C9AF;
+  --azul-banner: #82D8DE;
+  --branco: #FFFFFF;
+  --cinza-claro: #F3F6F8;
+  --cinza-texto: #2A2A2A;
 }
 
-*{ box-sizing: border-box; margin:0; padding:0; }
-html,body{ height:100%; }
-body{
+/* ================================
+   LAYOUT GLOBAL
+================================ */
+body {
+  margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--bg);
-  color: #123;
+  background: var(--cinza-claro);
+  color: var(--cinza-texto);
 }
 
-/* Header */
-.app-header{
-  background: var(--accent);
-  color: #fff;
-  text-align: center;
-  padding: 28px 12px;
-  box-shadow: 0 4px 14px rgba(10,79,163,0.18);
-}
-.app-header h1{ font-size:28px; font-weight:700; margin-bottom:6px; }
-.last-update{ font-size:13px; opacity:0.9; }
-
-/* Grid */
-.cards-container{
-  max-width: 1240px;
-  margin: 26px auto 60px;
-  padding: 0 18px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 22px;
+h1, h2, h3 {
+  font-weight: 600;
 }
 
-/* Card */
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.95));
-  border-radius: 14px;
-  padding: 18px;
-  min-height: 280px;
-  box-shadow: 0 10px 30px rgba(15,40,80,0.06);
-  border: 1px solid rgba(15,40,80,0.06);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  position:relative;
-  overflow:visible;
-}
-
-/* area de nível (caixa da água) */
-.nivel{
+/* ================================
+   TOPO / BARRA AZUL IGUAL AO SITE
+================================ */
+.header {
   width: 100%;
-  height: 120px;
-  border-radius: 10px;
+  padding: 20px 0;
+  background: var(--verde);
+  color: white;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.sub-header {
+  text-align: center;
+  margin-top: 6px;
+  color: #e5e9ea;
+  font-size: 14px;
+}
+
+/* ================================
+   GRID MODERNO
+================================ */
+.container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+  padding: 35px;
+}
+
+/* ================================
+   CARD DO RESERVATÓRIO — MODERNO
+================================ */
+.card {
+  width: 280px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+  transition: 0.3s ease;
+  position: relative;
   overflow: hidden;
-  background: #e8f1f8;
-  border: 3px solid rgba(10,79,163,0.12);
+  text-align: center;
+}
+
+/* Hover suave */
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* ================================
+   ÁGUA ANIMADA
+================================ */
+.water {
+  width: 100%;
+  height: 110px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--azul-banner), var(--verde-agua));
+  overflow: hidden;
   position: relative;
 }
 
-/* área colorida (preenchimento que sobe) */
-.wave{
-  position:absolute;
-  left:0; right:0; bottom:0;
-  height: 0%;               /* atualizado via JS --> style.setProperty('--nivel') ou style.height */
-  background: linear-gradient(to top, #2ecc71 0%, #3498db 100%);
-  transition: height 900ms ease, background 600ms ease;
-  z-index:1;
-}
-
-/* pseudo-onda em movimento (textura/ripple) */
-.wave::before{
-  content: "";
-  position:absolute;
-  left: -30%;
-  top: -30%;
-  width: 160%;
-  height: 220%;
-  background-image:
-    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.25) 6%, transparent 7%),
-    radial-gradient(circle at 40% 60%, rgba(255,255,255,0.18) 6%, transparent 7%),
-    radial-gradient(circle at 70% 40%, rgba(255,255,255,0.22) 6%, transparent 7%);
-  opacity: 0.35;
-  transform: translateX(0);
-  animation: waveMove 6s linear infinite;
-  pointer-events:none;
-  mix-blend-mode: overlay;
-  z-index:2;
+/* ondas */
+.wave {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  left: -50%;
+  background: rgba(255,255,255,0.35);
+  opacity: 0.7;
+  border-radius: 43%;
+  animation: waveMove 6s infinite linear;
 }
 
 @keyframes waveMove {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-30%); }
+  from { transform: translateX(0) rotate(0deg); }
+  to   { transform: translateX(-50%) rotate(360deg); }
 }
 
-/* Title, percent, liters */
-h3{ margin-top: 14px; font-size:16px; color:#045; text-align:center; font-weight:700; }
-.percent{ font-size:30px; font-weight:800; margin-top:12px; color:#0d3140; }
-.liters{ font-size:13px; color:#345; margin-top:6px; opacity:0.85; }
-
-/* histórico button */
-.btn-hist{
-  margin-top:auto;
-  width:100%;
-  background: transparent;
-  border: 1px solid rgba(10,79,163,0.12);
-  padding: 10px;
-  border-radius:8px;
-  cursor:pointer;
-  color:var(--accent);
-  font-weight:700;
-  transition: background 0.18s, transform .12s;
-}
-.btn-hist:hover{ background: rgba(10,79,163,0.06); transform: translateY(-2px); }
-
-/* pressao card smaller */
-.card.pressao{ min-height:150px; display:flex; justify-content:center; align-items:center; }
-.card.pressao h3{ margin-bottom:10px; }
-.card.pressao .percent{ font-size:20px; margin:0; }
-
-/* sem-dados visual */
-.card.sem-dados{ opacity:0.78; filter:grayscale(0.02); }
-.card.sem-dados .wave{ background: linear-gradient(to top, #bdbdbd, #e6e6e6); }
-.card.sem-dados .wave::before{ opacity:0.12; }
-
-/* alerta inatividade */
-.aviso-inativo{
-  position:absolute;
-  left:12px; right:12px;
-  top:12px;
-  padding:8px 10px;
-  border-radius:8px;
-  background: rgba(255,245,230,0.95);
-  color:#8a3500;
-  font-weight:700;
-  text-align:center;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  z-index: 5;
-  display:none;
+/* ================================
+   TEXTO DENTRO DO CARD
+================================ */
+.card-title {
+  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 600;
 }
 
-/* status top-border colors */
-.card[data-status="alto"]{ border-top:6px solid #2ecc71; }
-.card[data-status="medio"]{ border-top:6px solid #f1c40f; }
-.card[data-status="baixo"]{ border-top:6px solid #e74c3c; }
-
-/* footer */
-.app-footer{ background: var(--accent); color:#fff; padding:10px 12px; text-align:center; }
-
-/* responsive tweaks */
-@media (max-width:900px){
-  .cards-container{ gap:16px; padding:0 10px; }
-  .nivel{ height:100px; }
+.percent {
+  font-size: 34px;
+  font-weight: 700;
+  margin-top: 10px;
 }
-@media (max-width:520px){
-  .percent{ font-size:22px; }
+
+.litros {
+  font-size: 15px;
+  margin-top: 8px;
+  color: var(--verde);
+}
+
+/* ================================
+   BOTÃO "VER HISTÓRICO"
+================================ */
+.btn {
+  display: block;
+  margin: 12px auto 0;
+  width: 140px;
+  padding: 8px 0;
+  border-radius: 12px;
+  border: none;
+  background: var(--verde);
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  background: var(--verde-agua);
+}
+
+/* ================================
+   ALERTA INATIVIDADE
+================================ */
+.alerta {
+  margin-top: 12px;
+  font-size: 14px;
+  color: red;
+  font-weight: bold;
 }
