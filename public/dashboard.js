@@ -1,57 +1,104 @@
 // === dashboard.js ===
-// Ajuste conforme sua API real
 const API_URL = "/api/dashboard";
 
+// Armazena o último timestamp recebido
+let ultimoTimestamp = null;
+
+// Controla se já estamos em alerta por falta de atualização
+let alertaTimeoutAtivo = false;
+
+// ===============================
+//    FUNÇÃO PRINCIPAL DO FETCH
+// ===============================
 async function carregarDados() {
   try {
     const resp = await fetch(API_URL);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
     const data = await resp.json();
+
+    // Salva timestamp caso exista
+    if (data.lastUpdate) {
+      ultimoTimestamp = Date.now();
+      alertaTimeoutAtivo = false;
+    }
+
     atualizarDashboard(data);
   } catch (err) {
     console.error("Erro ao carregar dados:", err);
   }
 }
 
+// ===============================
+//   ATUALIZA OS CARDS NA TELA
+// ===============================
 function atualizarDashboard(data) {
   document.querySelectorAll(".card-reservatorio").forEach((card) => {
-    const id = card.dataset.id;
-    const info = data[id];
+    const setor = card.dataset.setor;
+    const info = data.reservatorios.find(r => r.setor === setor);
     if (!info) return;
 
-    const nivel = info.percentual;
+    // Elementos do card
+    const nivel = info.percent;
     const onda = card.querySelector(".onda");
     const texto = card.querySelector(".nivel-text");
     const alerta = card.querySelector(".alerta");
+    const msgAtraso = card.querySelector(".alerta-atraso");
 
+    // Mantém última leitura fixa
     texto.textContent = `${nivel}%`;
-
-    // === Ajuste da onda conforme nível ===
     onda.style.height = `${nivel}%`;
 
-    // === Cor da onda ===
+    // ==============================
+    //     CORES DA ONDA
+    // ==============================
     if (info.manutencao) {
       onda.style.background = "#777";
-      card.classList.remove("alerta-critico");
       alerta.style.display = "none";
+      card.classList.remove("alerta-critico");
     } else if (nivel >= 80) {
       onda.style.background = "#0a89e8";
-      card.classList.remove("alerta-critico");
       alerta.style.display = "none";
+      card.classList.remove("alerta-critico");
     } else if (nivel >= 40) {
       onda.style.background = "#14b86e";
-      card.classList.remove("alerta-critico");
       alerta.style.display = "none";
+      card.classList.remove("alerta-critico");
     } else {
-      // crítico
+      // nível crítico
       onda.style.background = "#d9534f";
-      card.classList.add("alerta-critico");
       alerta.style.display = "block";
+      card.classList.add("alerta-critico");
+    }
+
+    // ==============================
+    //  ALERTA DE FALTA DE ATUALIZAÇÃO
+    // ==============================
+    if (alertaTimeoutAtivo) {
+      msgAtraso.style.display = "block";
+    } else {
+      msgAtraso.style.display = "none";
     }
   });
 }
 
-// Atualização automática
+// ===============================
+//  VERIFICA SE HÁ ATRASO > 10s
+// ===============================
+setInterval(() => {
+  if (!ultimoTimestamp) return;
+
+  const agora = Date.now();
+  const diff = agora - ultimoTimestamp;
+
+  if (diff >= 10000 && !alertaTimeoutAtivo) {
+    alertaTimeoutAtivo = true;
+    console.warn("⚠ Sem atualização há mais de 10 segundos.");
+  }
+}, 1000);
+
+// ===============================
+//    ATUALIZA A CADA 5s
+// ===============================
 setInterval(carregarDados, 5000);
 carregarDados();
