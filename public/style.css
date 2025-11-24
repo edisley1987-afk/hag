@@ -30,25 +30,27 @@ header {
 
 /* === CONTAINER PRINCIPAL === */
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 25px auto;
   padding: 0 20px;
 }
 
-/* === CARDS EM LINHA === */
+/* === CARDS EM LINHA HORIZONTAL === */
 .reservatorios-container {
   display: flex;
+  flex-direction: row;     /* deixa tudo na horizontal */
   gap: 18px;
-  flex-wrap: wrap;
   justify-content: center;
-  padding-top: 10px;
+  flex-wrap: nowrap;       /* impede quebrar linha */
+  overflow-x: auto;        /* scroll horizontal caso necessário */
+  padding: 10px 0;
 }
 
-/* === CARD MODERNO TIPO CAIXA D’ÁGUA === */
+/* === CARD TIPO CAIXA D’ÁGUA === */
 .card {
   position: relative;
-  width: 260px;            /* largura ideal */
-  height: 160px;           /* altura reduzida */
+  width: 260px;            /* tamanho ideal */
+  height: 160px;
   background: var(--cor-card);
   border-radius: 14px;
   padding: 16px 18px;
@@ -58,7 +60,7 @@ header {
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-/* Efeito água */
+/* Nível da água */
 .card .water-level {
   position: absolute;
   bottom: 0;
@@ -67,7 +69,7 @@ header {
   height: var(--nivel, 0%);
   background: var(--cor-secundaria);
   opacity: 0.25;
-  transition: height 0.7s ease;
+  transition: height 0.6s ease;
 }
 
 .card .conteudo {
@@ -75,6 +77,7 @@ header {
   z-index: 2;
 }
 
+/* Hover */
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.18);
@@ -133,6 +136,11 @@ footer {
 @media (max-width: 600px) {
   header {
     text-align: center;
+  }
+
+  .reservatorios-container {
+    flex-wrap: wrap;     /* no celular, pode quebrar linha */
+    overflow-x: visible;
   }
 
   .card {
