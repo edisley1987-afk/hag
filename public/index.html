@@ -6,18 +6,71 @@
   <title>Monitoramento - Sistema de Água</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <header>
     <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
     <p id="lastUpdate">Atualizado em: --</p>
   </header>
 
-  <div class="cards-container" id="cards"></div>
+  <div class="cards-container">
+
+    <!-- === Reservatório Elevador === -->
+    <div class="card nivel" id="cardElevador" onclick="abrirHistorico('elevador')">
+      <h3>Reservatório Elevador</h3>
+      <div class="nivel-bar" id="nivelElevadorBar"></div>
+      <p class="valor" id="nivelElevador">--%</p>
+      <p class="litros" id="litrosElevador">-- L</p>
+    </div>
+
+    <!-- === Reservatório Osmose === -->
+    <div class="card nivel" id="cardOsmose" onclick="abrirHistorico('osmose')">
+      <h3>Reservatório Osmose</h3>
+      <div class="nivel-bar" id="nivelOsmoseBar"></div>
+      <p class="valor" id="nivelOsmose">--%</p>
+      <p class="litros" id="litrosOsmose">-- L</p>
+    </div>
+
+    <!-- === Reservatório CME === -->
+    <div class="card nivel" id="cardCME" onclick="abrirHistorico('cme')">
+      <h3>Reservatório CME</h3>
+      <div class="nivel-bar" id="nivelCMEBar"></div>
+      <p class="valor" id="nivelCME">--%</p>
+      <p class="litros" id="litrosCME">-- L</p>
+    </div>
+
+    <!-- === Reservatório Água Abrandada === -->
+    <div class="card nivel" id="cardAbrandada" onclick="abrirHistorico('abrandada')">
+      <h3>Água Abrandada</h3>
+      <div class="nivel-bar" id="nivelAbrandadaBar"></div>
+      <p class="valor" id="nivelAbrandada">--%</p>
+      <p class="litros" id="litrosAbrandada">-- L</p>
+    </div>
+
+    <!-- === Pressão Saída Osmose === -->
+    <div class="card pressao">
+      <h3>Pressão Saída Osmose</h3>
+      <p class="valor" id="pressaoSaida">-- bar</p>
+    </div>
+
+    <!-- === Pressão Retorno Osmose === -->
+    <div class="card pressao">
+      <h3>Pressão Retorno Osmose</h3>
+      <p class="valor" id="pressaoRetorno">-- bar</p>
+    </div>
+
+    <!-- === Pressão CME === -->
+    <div class="card pressao">
+      <h3>Pressão CME</h3>
+      <p class="valor" id="pressaoCME">-- bar</p>
+    </div>
+
+  </div>
 
   <footer>
     <p>© 2025 Sistema de Monitoramento Hospitalar</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
