@@ -374,6 +374,75 @@ app.get("/api/consumo", (req, res) => {
 
   res.json(resultado);
 });
+// ============================================================================
+// === /api/dashboard — resumo usado no dashboard =============================
+// ============================================================================
+app.get("/api/dashboard", (req, res) => {
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.json({
+      lastUpdate: "-",
+      reservatorios: [],
+      pressoes: []
+    });
+  }
+
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const reservatorios = [
+    {
+      nome: "Reservatório Elevador",
+      setor: "elevador",
+      percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
+      current_liters: dados["Reservatorio_Elevador_current"],
+      manutencao: false
+    },
+    {
+      nome: "Reservatório Osmose",
+      setor: "osmose",
+      percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
+      current_liters: dados["Reservatorio_Osmose_current"],
+      manutencao: false
+    },
+    {
+      nome: "Reservatório CME",
+      setor: "cme",
+      percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
+      current_liters: dados["Reservatorio_CME_current"],
+      manutencao: false
+    },
+    {
+      nome: "Água Abrandada",
+      setor: "abrandada",
+      percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
+      current_liters: dados["Reservatorio_Agua_Abrandada_current"],
+      manutencao: false
+    }
+  ];
+
+  const pressoes = [
+    {
+      nome: "Pressão Saída Osmose",
+      setor: "saida_osmose",
+      pressao: dados["Pressao_Saida_Osmose_current"]
+    },
+    {
+      nome: "Pressão Retorno Osmose",
+      setor: "retorno_osmose",
+      pressao: dados["Pressao_Retorno_Osmose_current"]
+    },
+    {
+      nome: "Pressão Saída CME",
+      setor: "saida_cme",
+      pressao: dados["Pressao_Saida_CME_current"]
+    }
+  ];
+
+  res.json({
+    lastUpdate: dados.timestamp,
+    reservatorios,
+    pressoes
+  });
+});
 
 // ============================================================================
 // === Interface estática =====================================================
