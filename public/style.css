@@ -1,146 +1,180 @@
-/* =============================
-   style.css — onda SVG animada
-============================= */
-:root{
-  --azul1: #004a8f;
-  --azul2: #0a66d0;
-  --azul3: #2fa7ff;
-  --bg: #f1f5fb;
+/* =============================== */
+/*  VARIÁVEIS GERAIS DO SISTEMA   */
+/* =============================== */
+:root {
+  --bg: #eef6fb;
   --card-bg: #ffffff;
+  --text-dark: #1d1d1d;
+  --header-bg: #0a4fa3;
+  --footer-bg: #0a4fa3;
+  --header-text: #ffffff;
 }
 
-/* GLOBAL */
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:"Segoe UI",Arial,sans-serif;
-  background:var(--bg);
-  color:#111;
+/* =============================== */
+/*        ESTILO BASE DO SITE      */
+/* =============================== */
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--text-dark);
 }
 
-/* HEADER / FOOTER */
-header, footer{
-  background:var(--azul1);
-  color:#fff;
-  text-align:center;
-  padding:14px;
-}
-h2{ margin-left:12px; color:var(--azul1); }
-
-/* LINHAS HORIZONTAIS */
-.cards-container{
-  display:flex;
-  gap:16px;
-  padding:14px;
-  overflow-x:auto;
-  flex-wrap:nowrap; /* mantém tudo na horizontal */
+header, footer {
+  text-align: center;
+  padding: 12px;
+  background: var(--header-bg);
+  color: var(--header-text);
 }
 
-/* CARD BASE */
-.card{
-  width:240px;
-  height:220px;
-  background:var(--card-bg);
-  border-radius:14px;
-  border:2px solid var(--azul1);
-  box-shadow:0 6px 18px rgba(0,0,0,0.12);
-  padding:12px;
-  position:relative;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  text-align:center;
-  transition: transform .18s ease, box-shadow .18s ease;
-  /* variável que controla o nível (definida pelo JS) */
-  --nivel: 0%;
-}
-.card:hover{
-  transform:translateY(-6px);
-  box-shadow:0 10px 26px rgba(0,0,0,0.16);
+h1, h2 {
+  margin: 10px 0;
 }
 
-/* AVISO INATIVIDADE */
-.aviso-inativo{
-  display:none;
-  position:absolute;
-  top:10px; left:10px; right:10px;
-  background:#d9534f; color:#fff;
-  padding:6px 8px; border-radius:8px;
-  font-size:.85rem; z-index:12;
+section {
+  margin: 20px;
 }
 
-/* ÁREA DA ONDA (SVG) - ocupa todo o card e é independente do conteúdo */
-.nivel{
-  position:absolute;
-  left:0; right:0; top:0; bottom:0;
-  z-index:1;
-  pointer-events:none;
-  display:block;
+/* =============================== */
+/*     LINHAS DE CARDS HORIZONTAL  */
+/* =============================== */
+.cards-container {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
 }
 
-/* O grupo dentro do SVG será movido verticalmente para simular o nível.
-   Usamos transform: translateY(calc(100% - var(--nivel))) para subir/baixar. */
-.wave-svg{
-  width:100%;
-  height:100%;
-  display:block;
-  transform: translateY(calc(100% - var(--nivel)));
-  transition: transform 0.8s cubic-bezier(.2,.9,.2,1);
+.cards-row {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 10px;
 }
 
-/* Duas ondas se movem horizontalmente com velocidades diferentes (parallax) */
-.wave-path {
-  transform-origin: 0 0;
+/* =============================== */
+/*            CARD BASE            */
+/* =============================== */
+.card {
+  position: relative;
+  width: 220px;
+  height: 280px;
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* =============================== */
+/*      ÁREA DA ONDA ANIMADA       */
+/* =============================== */
+.nivel {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: var(--nivel);
+  overflow: hidden;
+  transition: height 0.8s ease;
+}
+
+.wave-svg {
+  width: 200%;
+  height: 100%;
   animation: waveMove 6s linear infinite;
-  opacity:0.85;
-}
-.wave-path.wave-2 {
-  animation-duration: 10s;
-  opacity:0.55;
-  mix-blend-mode: multiply;
 }
 
-/* animação horizontal */
+/* MOVIMENTO DA ONDA */
 @keyframes waveMove {
   from { transform: translateX(0); }
-  to   { transform: translateX(-50%); } /* loop suave se o path tiver repeat */
+  to   { transform: translateX(-50%); }
 }
 
-/* SOBRE O CONTEÚDO (texto por cima da onda) */
-.card .conteudo{
-  position:relative;
-  z-index: 6;
-  color:#fff; /* será melhor legível sobre a onda */
-  text-shadow: 0 2px 6px rgba(0,0,0,0.45);
-  padding-bottom:8px;
+/* TODOS OS PATHS DA ONDA HERDAM ESTA COR */
+.wave-path path {
+  fill: var(--wave-color);
 }
 
-/* Ajuste de textos dentro do conteúdo */
-.card h3{ margin:0; font-size:1.05rem; font-weight:700; color:#fff; }
-.percent{ font-size:2rem; font-weight:800; margin-top:6px; color:#fff; }
-.liters{ font-size:.95rem; opacity:0.95; margin-top:6px; color:#fff; }
+/* =============================== */
+/*   COR DINÂMICA DA ONDA POR %    */
+/* =============================== */
 
-/* Botão histórico */
-.btn-hist{
-  margin-top:10px;
-  padding:8px 12px;
-  background:rgba(255,255,255,0.12);
-  border-radius:10px;
-  color:#fff; border:none; cursor:pointer;
-  z-index:6;
+/* >= 70% azul */
+.card[style*="--nivel:7"],
+.card[style*="--nivel:8"],
+.card[style*="--nivel:9"],
+.card[style*="--nivel:100"] {
+  --wave-color: #0a90ff;
 }
-.btn-hist:hover{ background:rgba(255,255,255,0.18); }
 
-/* Pressões (cards menores em altura) */
-.card.pressao{ height:170px; }
+/* 40–69% amarelo */
+.card[style*="--nivel:4"],
+.card[style*="--nivel:5"],
+.card[style*="--nivel:6"] {
+  --wave-color: #f8d000;
+}
 
-/* estado sem-dados */
-.sem-dados { opacity:0.65; }
+/* < 40% vermelho */
+.card[style*="--nivel:0"],
+.card[style*="--nivel:1"],
+.card[style*="--nivel:2"],
+.card[style*="--nivel:3"] {
+  --wave-color: #ff3b30;
+}
 
-/* responsividade */
-@media (max-width:760px){
-  .card{ width:190px; height:190px; }
-  .card.pressao{ height:160px; }
-  .percent{ font-size:1.6rem; }
+/* =============================== */
+/*       CONTEÚDO DO CARD          */
+/* =============================== */
+.conteudo {
+  position: relative;
+  z-index: 10;
+  padding: 15px;
+  text-align: center;
+  color: var(--text-dark);
+  font-weight: bold;
+}
+
+.percent {
+  font-size: 28px;
+  margin-top: 5px;
+}
+
+.liters {
+  font-size: 18px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.btn-hist {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: none;
+  background: var(--header-bg);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* =============================== */
+/*      CARD SEM DADOS / ALERTA    */
+/* =============================== */
+.sem-dados .nivel {
+  display: none;
+}
+
+.aviso-inativo {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 6px;
+  background: #ff4747;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  z-index: 20;
 }
