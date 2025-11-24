@@ -1,114 +1,142 @@
-const API_URL = "/dados";
-const UPDATE_MS = 4000;
+// ====================== CONFIG ===========================
+const API_URL = "/dados";  // sua rota que retorna as leituras
+const UPDATE_INTERVAL = 5000;
 
-// Configurações dos reservatórios
-const CONFIG = {
-  elevador: {
-    capacidade: 20000,
-    leituraVazio: 0.004168,
-    leituraCheio: 0.008742,
-    bar: "nivelElevadorBar",
-    pct: "nivelElevador",
-    lt: "litrosElevador",
-    card: "cardElevador"
-  },
-
-  osmose: {
-    capacidade: 200,
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006492,
-    bar: "nivelOsmoseBar",
-    pct: "nivelOsmose",
-    lt: "litrosOsmose",
-    card: "cardOsmose"
-  },
-
-  cme: {
-    capacidade: 1000,
-    leituraVazio: 0.004088,
-    leituraCheio: 0.004408,
-    bar: "nivelCMEBar",
-    pct: "nivelCME",
-    lt: "litrosCME",
-    card: "cardCME"
-  },
-
-  abrandada: {
-    capacidade: 9000,
-    leituraVazio: 0.004048,
-    leituraCheio: 0.006515,
-    bar: "nivelAbrandadaBar",
-    pct: "nivelAbrandada",
-    lt: "litrosAbrandada",
-    card: "cardAbrandada"
-  }
+// Capacidades dos reservatórios (litros)
+const CAP = {
+  elevador: 20000,
+  osmose: 200,
+  cme: 5000,
+  abrandada: 5000
 };
 
-// Pressões (só exibe valor)
-let PRESSOES = {
-  pressaoSaida: "pressaoSaida",
-  pressaoRetorno: "pressaoRetorno",
-  pressaoCME: "pressaoCME"
+// Mapeamento dos nomes do JSON → nomes do dashboard
+const MAP = {
+  Reservatorio_Elevador_current: "elevador",
+  Reservatorio_Osmose_current: "osmose",
+  Reservatorio_CME_current: "cme",
+  Agua_Abrandada_current: "abrandada",
+
+  Pressao_Saida_Osmose_current: "pressao_saida_osmose",
+  Pressao_Retorno_Osmose_current: "pressao_retorno_osmose",
+  Pressao_Saida_CME_current: "pressao_saida_cme"
 };
 
-// FUNÇÃO PRINCIPAL
+// Lista de exibição
+const ITEMS = [
+  "elevador",
+  "osmose",
+  "cme",
+  "abrandada",
+  "pressao_saida_osmose",
+  "pressao_retorno_osmose",
+  "pressao_saida_cme"
+];
+
+// ============================================================
+// Criação dos cards
+// ============================================================
+function criarCards() {
+  const div = document.getElementById("cards");
+  div.innerHTML = "";
+
+  ITEMS.forEach(id => {
+    let tipo = id.includes("pressao") ? "pressao" : "reservatorio";
+
+    let html = `
+      <div class="card" id="card_${id}">
+        ${
+          tipo === "reservatorio"
+            ? `
+            <div class="nivelBox">
+              <div class="nivelInterno" id="nivel_${id}" style="height:0%"></div>
+            </div>
+            <h3>${formatarNome(id)}</h3>
+            <h2 id="pct_${id}">--%</h2>
+            <p id="litros_${id}">-- L</p>
+            <button class="histBtn" onclick="irHistorico('${id}')">Ver Histórico</button>
+          `
+            : `
+            <h3>${formatarNome(id)}</h3>
+            <h2 id="press_${id}">-- bar</h2>
+          `
+        }
+      </div>
+    `;
+
+    div.innerHTML += html;
+  });
+}
+
+criarCards();
+
+// ============================================================
+// Nome formatado para os cards
+// ============================================================
+function formatarNome(str) {
+  return str
+    .replace("cme", "CME")
+    .replace("osmose", "Osmose")
+    .replace("elevador", "Elevador")
+    .replace("abrandada", "Água Abrandada")
+    .replace("pressao_saida_osmose", "Pressão Saída Osmose")
+    .replace("pressao_retorno_osmose", "Pressão Retorno Osmose")
+    .replace("pressao_saida_cme", "Pressão Saída CME");
+}
+
+// ============================================================
+// Acessar tela de histórico
+// ============================================================
+function irHistorico(id) {
+  window.location.href = `historico.html?res=${id}`;
+}
+
+// ============================================================
+// Atualizar interface com dados
+// ============================================================
+function atualizarUI(data) {
+  document.getElementById("lastUpdate").innerHTML =
+    "Atualizado em: " + new Date().toLocaleTimeString();
+
+  Object.keys(MAP).forEach(key => {
+    const nome = MAP[key];
+    const valor = data[key];
+
+    if (valor == null) return;
+
+    // PRESSÃO
+    if (nome.includes("pressao")) {
+      document.getElementById("press_" + nome).innerHTML =
+        valor.toFixed(2) + " bar";
+      return;
+    }
+
+    // RESERVATÓRIO
+    const cap = CAP[nome];
+    const pct = Math.min(100, Math.max(0, (valor / cap) * 100));
+
+    const pctEl = document.getElementById("pct_" + nome);
+    const litEl = document.getElementById("litros_" + nome);
+    const nivEl = document.getElementById("nivel_" + nome);
+
+    pctEl.innerHTML = pct.toFixed(0) + "%";
+    litEl.innerHTML = valor + " L";
+    nivEl.style.height = pct + "%";
+  });
+}
+
+// ============================================================
+// Buscar dados do servidor
+// ============================================================
 async function atualizar() {
   try {
     const resp = await fetch(API_URL);
-    const dados = await resp.json();
-
-    // Atualiza data/hora
-    document.getElementById("lastUpdate").innerText =
-      "Atualizado em: " + new Date().toLocaleTimeString("pt-BR");
-
-    // Atualiza reservatórios
-    Object.keys(CONFIG).forEach(key => {
-      const sensor = "Reservatorio_" + key.charAt(0).toUpperCase() + key.slice(1) + "_current";
-      const entrada = dados[sensor];
-
-      if (!entrada) return;
-
-      const valor = entrada.value;
-      const cfg = CONFIG[key];
-
-      let pct = ((valor - cfg.leituraVazio) /
-                  (cfg.leituraCheio - cfg.leituraVazio)) * 100;
-
-      pct = Math.max(0, Math.min(100, pct));
-
-      const litros = (pct / 100) * cfg.capacidade;
-
-      // Exibe
-      document.getElementById(cfg.pct).innerText = pct.toFixed(0) + "%";
-      document.getElementById(cfg.lt).innerText = litros.toFixed(0) + " L";
-
-      // Anima barra
-      const barra = document.getElementById(cfg.bar);
-      barra.style.setProperty("--h", pct + "%");
-
-      // Alerta < 30%
-      const card = document.getElementById(cfg.card);
-      if (pct <= 30) card.classList.add("alerta");
-      else card.classList.remove("alerta");
-    });
-
-    // Atualiza pressões
-    if (dados.Pressao_Saida_Osmose_current)
-      document.getElementById("pressaoSaida").innerText =
-        dados.Pressao_Saida_Osmose_current.value.toFixed(2) + " bar";
-
-    if (dados.Pressao_Retorno_Osmose_current)
-      document.getElementById("pressaoRetorno").innerText =
-        dados.Pressao_Retorno_Osmose_current.value.toFixed(2) + " bar";
-
-    if (dados.Pressao_Saida_CME_current)
-      document.getElementById("pressaoCME").innerText =
-        dados.Pressao_Saida_CME_current.value.toFixed(2) + " bar";
-
-  } catch (erro) {
-    console.error("Erro ao atualizar:", erro);
+    const json = await resp.json();
+    atualizarUI(json);
+  } catch (e) {
+    console.log("Erro ao buscar dados:", e);
   }
 }
 
-setInterval(atualizar, UPDATE_MS);
 atualizar();
+setInterval(atualizar, UPDATE_INTERVAL);
