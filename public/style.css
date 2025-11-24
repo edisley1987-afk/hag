@@ -4,10 +4,15 @@
 :root {
   --bg: #eef6fb;
   --card-bg: #ffffff;
-  --text-dark: #1d1d1d;
+  --text-dark: #0a0a0a;      /* texto mais escuro */
   --header-bg: #0a4fa3;
   --footer-bg: #0a4fa3;
   --header-text: #ffffff;
+
+  --wave-blue: #0a90ff;
+  --wave-yellow: #f8d000;
+  --wave-red: #ff3b30;
+  --wave-gray: #bcbcbc;      /* manutenção */
 }
 
 /* =============================== */
@@ -28,31 +33,19 @@ header, footer {
   color: var(--header-text);
 }
 
-h1, h2 {
-  margin: 10px 0;
-}
+h1, h2 { margin: 10px 0; }
 
-section {
-  margin: 20px;
-}
+section { margin: 20px; }
 
 /* =============================== */
 /*     LINHAS DE CARDS HORIZONTAL  */
 /* =============================== */
-.cards-container {
+.cards-container, .cards-row {
   display: flex;
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
   padding-bottom: 10px;
-}
-
-.cards-row {
-  display: flex;
-  gap: 20px;
-  justify-content: flex-start;
-  overflow-x: auto;
-  padding: 10px;
 }
 
 /* =============================== */
@@ -95,7 +88,6 @@ section {
   to   { transform: translateX(-50%); }
 }
 
-/* TODOS OS PATHS DA ONDA HERDAM ESTA COR */
 .wave-path path {
   fill: var(--wave-color);
 }
@@ -105,26 +97,30 @@ section {
 /* =============================== */
 
 /* >= 70% azul */
-.card[style*="--nivel:7"],
-.card[style*="--nivel:8"],
-.card[style*="--nivel:9"],
-.card[style*="--nivel:100"] {
-  --wave-color: #0a90ff;
+.card.alta {
+  --wave-color: var(--wave-blue);
 }
 
 /* 40–69% amarelo */
-.card[style*="--nivel:4"],
-.card[style*="--nivel:5"],
-.card[style*="--nivel:6"] {
-  --wave-color: #f8d000;
+.card.media {
+  --wave-color: var(--wave-yellow);
 }
 
 /* < 40% vermelho */
-.card[style*="--nivel:0"],
-.card[style*="--nivel:1"],
-.card[style*="--nivel:2"],
-.card[style*="--nivel:3"] {
-  --wave-color: #ff3b30;
+.card.baixa {
+  --wave-color: var(--wave-red);
+}
+
+/* =============================== */
+/*   MODO MANUTENÇÃO (cinza)       */
+/* =============================== */
+.card.manutencao {
+  --wave-color: var(--wave-gray);
+  opacity: 0.8;
+}
+
+.card.manutencao .aviso-inativo {
+  display: none !important;
 }
 
 /* =============================== */
@@ -139,16 +135,8 @@ section {
   font-weight: bold;
 }
 
-.percent {
-  font-size: 28px;
-  margin-top: 5px;
-}
-
-.liters {
-  font-size: 18px;
-  opacity: 0.8;
-  margin-top: 4px;
-}
+.percent { font-size: 28px; margin-top: 5px; }
+.liters  { font-size: 18px; opacity: 0.85; margin-top: 4px; }
 
 .btn-hist {
   margin-top: 10px;
@@ -163,9 +151,7 @@ section {
 /* =============================== */
 /*      CARD SEM DADOS / ALERTA    */
 /* =============================== */
-.sem-dados .nivel {
-  display: none;
-}
+.sem-dados .nivel { display: none; }
 
 .aviso-inativo {
   position: absolute;
@@ -177,4 +163,16 @@ section {
   font-size: 14px;
   text-align: center;
   z-index: 20;
+}
+
+/* =============================== */
+/*    ALERTA PISCANDO CRÍTICO      */
+/* =============================== */
+.alerta-piscando .aviso-inativo {
+  animation: piscar 1s infinite alternate;
+}
+
+@keyframes piscar {
+  0% { opacity: 1; }
+  100% { opacity: 0.2; }
 }
