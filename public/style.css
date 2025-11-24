@@ -1,153 +1,69 @@
-/* === style.css (completo) === */
-/* Layout moderno horizontal com efeito visual de nível de água */
-
-body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f7fa;
-  margin: 0;
-  padding: 0;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* ==== style.css (visual moderno com nível dentro do card) ==== */
+border:3px solid #0a4fa3;
+background:#dce9ff;
+overflow:hidden;
+position:relative;
+margin-top:18px; /* deixa abaixo da faixa */
+}
+.nivelInterno{
+position:absolute;
+left:0; right:0; bottom:0;
+height:0%; /* será atualizado pelo JS */
+background: linear-gradient(to top, #3498db, #2ecc71);
+transition: height 900ms ease, background 500ms ease;
+opacity:0.95;
 }
 
-header {
-  width: 100%;
-  background: #0a4fa3;
-  color: white;
-  padding: 20px 0;
-  text-align: center;
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
+
+.title {
+margin-top:12px;
+font-weight:700;
+color:#0a4fa3;
+font-size:18px;
+}
+.percent {
+margin-top:12px;
+font-weight:800;
+font-size:28px;
+color:#16384c;
+}
+.liters{
+font-size:13px;
+color:#32545f;
+margin-top:6px;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 24px;
+
+.histBtn{
+margin-top:auto;
+margin-bottom:6px;
+padding:8px 14px;
+background:#0a4fa3;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
 
-header p {
-  margin: 4px 0 0 0;
-  font-size: 14px;
-  opacity: 0.9;
+
+.card.pressao .nivelBox{ display:none; }
+.card.pressao .percent{ font-size:18px; }
+
+
+.app-footer{
+background:#0a4fa3;
+color:#fff;
+padding:10px 12px;
+text-align:center;
 }
 
-.container {
-  width: 95%;
-  max-width: 1400px;
-  margin-top: 25px;
-}
 
-/* --- GRID DOS CARDS --- */
-.grid-reservatorios {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 25px;
-  margin-bottom: 25px;
-}
+/* cores por status via data-status (bordas) */
+.card[data-status="alto"]{ border-top:6px solid #2ecc71; }
+.card[data-status="medio"]{ border-top:6px solid #f1c40f; }
+.card[data-status="baixo"]{ border-top:6px solid #e74c3c; }
 
-/* --- CARD PRINCIPAL --- */
-.card {
-  background: white;
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  position: relative;
-}
 
-/* ÁREA do nível dentro do card */
-.card-nivel {
-  position: relative;
-  width: 100%;
-  height: 150px;              /* AGORA A ALTURA REAL DO CARD */
-  background: #eef2f7;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 12px;
-  border: 1px solid #d8d8d8;
-}
-
-/* ÁGUA — preenche todo o card e muda porcentagem */
-.nivel-agua {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 100%;               /* PREENCHER TUDO */
-  background: linear-gradient(to top, #0aa2ff, #6cf788);
-  transition: height 0.6s ease;
-}
-
-/* Texto do nome */
-.card h3 {
-  margin: 5px 0 0 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-/* Porcentagem */
-.card .percentual {
-  font-size: 22px;
-  font-weight: bold;
-  margin: 5px 0;
-  color: #0a4fa3;
-}
-
-/* Litros */
-.card .litros {
-  font-size: 13px;
-  color: #555;
-}
-
-/* Botão */
-.btn-historico {
-  margin-top: 10px;
-  background: #0a4fa3;
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.btn-historico:hover {
-  background: #083a77;
-}
-
-/* --- CARDS DE PRESSÃO --- */
-.grid-pressoes {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
-}
-
-.card-pressao {
-  background: white;
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
-  text-align: center;
-}
-
-.card-pressao h4 {
-  margin: 0 0 8px 0;
-  color: #0a4fa3;
-}
-
-.card-pressao p {
-  margin: 0;
-  font-size: 14px;
-}
-
-/* RODAPÉ */
-footer {
-  margin-top: 40px;
-  width: 100%;
-  text-align: center;
-  padding: 15px 0;
-  background: #0a4fa3;
-  color: white;
-  font-size: 12px;
-  box-shadow: 0px -3px 7px rgba(0, 0, 0, 0.2);
+@media (max-width:700px){
+.nivelBox{ height:100px; }
 }
