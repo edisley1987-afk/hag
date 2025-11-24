@@ -4,6 +4,14 @@ const API_URL = "/api/dashboard";
 let ultimoTimestamp = null;
 let alertaTimeoutAtivo = false;
 
+// CONFIGURAÇÕES DE CAPACIDADE DOS RESERVATÓRIOS
+const CAPACIDADES = {
+  "CME": 5000,
+  "OSMOSE": 200,
+  // Se no futuro vier elevador, basta adicionar aqui:
+  // "ELEVADOR": 20000
+};
+
 // ===============================
 //    FUNÇÃO PRINCIPAL DO FETCH
 // ===============================
@@ -12,7 +20,10 @@ async function carregarDados() {
     const resp = await fetch(API_URL);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-    const data = await resp.json();
+    const raw = await resp.json();
+
+    // Converter para o formato esperado
+    const data = transformarDados(raw);
 
     if (data.lastUpdate) {
       ultimoTimestamp = Date.now();
@@ -29,12 +40,48 @@ async function carregarDados() {
 }
 
 // ===============================
+//   TRANSFORMA O JSON DO SERVIDOR
+// ===============================
+function transformarDados(raw) {
+  const reservatorios = [];
+
+  if (raw.Reservatorio_CME_current !== undefined) {
+    reservatorios.push({
+      setor: "CME",
+      percent: calcularPercent("CME", raw.Reservatorio_CME_current),
+      manutencao: false
+    });
+  }
+
+  if (raw.Reservatorio_Osmose_current !== undefined) {
+    reservatorios.push({
+      setor: "OSMOSE",
+      percent: calcularPercent("OSMOSE", raw.Reservatorio_Osmose_current),
+      manutencao: false
+    });
+  }
+
+  return {
+    reservatorios,
+    lastUpdate: raw.timestamp
+  };
+}
+
+// ===============================
+//   CALCULA PERCENTUAL
+// ===============================
+function calcularPercent(nome, valor) {
+  const capacidade = CAPACIDADES[nome];
+  if (!capacidade) return 0;
+  return Math.min(100, Math.max(0, Math.round((valor / capacidade) * 100)));
+}
+
+// ===============================
 //   CRIA CARDS AUTOMATICAMENTE
 // ===============================
 function criarCardsSeNecessario(data) {
   const container = document.getElementById("reservatoriosContainer");
-
-  container.innerHTML = ""; // limpa e recria
+  container.innerHTML = ""; 
 
   data.reservatorios.forEach((res) => {
     const card = document.createElement("div");
@@ -45,7 +92,7 @@ function criarCardsSeNecessario(data) {
       <div class="onda"></div>
 
       <div class="conteudo">
-        <h3>${res.setor.replace(/_/g, " ")}</h3>
+        <h3>${res.setor}</h3>
         <div class="nivel-text">--%</div>
 
         <div class="alerta" style="display:none">
@@ -102,7 +149,6 @@ function atualizarDashboard(data) {
       card.classList.add("alerta-critico");
     }
 
-    // FALTA DE ATUALIZAÇÃO
     atraso.style.display = alertaTimeoutAtivo ? "block" : "none";
   });
 }
