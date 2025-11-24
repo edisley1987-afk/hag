@@ -64,12 +64,29 @@ function criarEstruturaInicial(reservatorios, pressoes) {
         </div>
       </div>
 
+      <!-- ALERTA -->
+      <div class="alerta-msg" id="${id}_alerta" style="display:none;">
+        ⚠ Nível crítico (abaixo de 30%)
+      </div>
+
+      <!-- MANUTENÇÃO -->
+      <div class="manutencao-container">
+        <label>
+          <input type="checkbox" class="manutencao-check" id="${id}_manut">
+          Em manutenção
+        </label>
+        <div class="manutencao-tag" id="${id}_tag" style="display:none;">
+          EM MANUTENÇÃO
+        </div>
+      </div>
+
       <div class="card-actions">
         <div class="capacidade" id="${id}_cap"></div>
         <button class="btn-hist" data-setor="${r.setor}">Ver histórico</button>
       </div>
     `;
 
+    // botão histórico
     card.querySelector(".btn-hist").addEventListener("click", (e) => {
       const setor = e.currentTarget.dataset.setor;
       window.location.href =
@@ -99,19 +116,60 @@ function criarEstruturaInicial(reservatorios, pressoes) {
 function atualizarValores(data) {
   data.reservatorios.forEach(r => {
     const id = `res_${r.setor}`;
+    const nivel = document.getElementById(`${id}_nivel`);
+    const pct = document.getElementById(`${id}_percent`);
+    const lit = document.getElementById(`${id}_litros`);
+    const cap = document.getElementById(`${id}_cap`);
+    const alerta = document.getElementById(`${id}_alerta`);
+    const manutCheck = document.getElementById(`${id}_manut`);
+    const manutTag = document.getElementById(`${id}_tag`);
+    const card = document.getElementById(id);
 
-    document.getElementById(`${id}_nivel`).style.height = `${r.percent}%`;
-    document.getElementById(`${id}_percent`).textContent = `${r.percent}%`;
-    document.getElementById(`${id}_litros`).textContent = `${r.current_liters} L`;
-    document.getElementById(`${id}_cap`).textContent =
-      `Capacidade: ${r.capacidade.toLocaleString("pt-BR")} L`;
+    nivel.style.height = `${r.percent}%`;
+    pct.textContent = `${r.percent}%`;
+    lit.textContent = `${r.current_liters} L`;
+    cap.textContent = `Capacidade: ${r.capacidade.toLocaleString("pt-BR")} L`;
+
+    // ALERTA DE 30%
+    if (!manutCheck.checked && r.percent <= 30) {
+      alerta.style.display = "block";
+      card.classList.add("alerta");
+    } else {
+      alerta.style.display = "none";
+      card.classList.remove("alerta");
+    }
+
+    // MANUTENÇÃO
+    manutCheck.addEventListener("change", () => {
+      if (manutCheck.checked) {
+        manutTag.style.display = "block";
+        alerta.style.display = "none";
+        card.classList.remove("alerta");
+      } else {
+        manutTag.style.display = "none";
+      }
+    });
+
+    // se a manutenção estiver ativa, sempre exibir a TAG
+    if (manutCheck.checked) {
+      manutTag.style.display = "block";
+    }
   });
 
   data.pressoes.forEach(p => {
     const id = `pres_${p.setor}`;
     const bar = convertToBar(p.pressao);
-    document.getElementById(`${id}_valor`).textContent =
-      bar == null ? "--" : bar.toFixed(2);
+    const el = document.getElementById(`${id}_valor`);
+    const card = document.getElementById(id);
+
+    el.textContent = bar == null ? "--" : bar.toFixed(2);
+
+    card.classList.remove("pressao-baixa", "pressao-ok", "pressao-alta", "sem-dado");
+
+    if (bar == null) card.classList.add("sem-dado");
+    else if (bar < 2) card.classList.add("pressao-baixa");
+    else if (bar < 6) card.classList.add("pressao-ok");
+    else card.classList.add("pressao-alta");
   });
 }
 
@@ -121,11 +179,7 @@ function verificarAtraso(lastUpdate) {
 
   const diff = Date.now() - new Date(lastUpdate).getTime();
 
-  if (diff > WARNING_TIMEOUT) {
-    avisoEl.style.display = "block";
-  } else {
-    avisoEl.style.display = "none";
-  }
+  avisoEl.style.display = diff > WARNING_TIMEOUT ? "block" : "none";
 }
 
 // Atualizador principal
@@ -142,7 +196,6 @@ async function atualizar() {
 
     atualizarValores(data);
 
-    // Atualiza hora de atualização
     lastUpdateEl.textContent =
       "Última atualização: " +
       new Date(data.lastUpdate).toLocaleString("pt-BR");
