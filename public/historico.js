@@ -1,102 +1,104 @@
-const API_HIST = "/historico";
-const API_CONSUMO = "/consumo/5dias";
+// === CONFIGURAÇÕES ===
+const API_URL = window.location.origin + "/historico"; // rota no servidor
 
 const select = document.getElementById("reservatorioSelect");
-let grafico = null;
+const tabela = document.getElementById("consumoCorpo");
 
-// =====================================
-// 📊 CARREGAR GRÁFICO DO HISTÓRICO
-// =====================================
-async function carregarGrafico() {
-  try {
-    const reservatorio = select.value;
 
-    const resp = await fetch(API_HIST);
-    const dados = await resp.json();
+// === GRÁFICO ===
+const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-    const filtrado = dados
-      .filter(d => d.reservatorio === reservatorio)
-      .sort((a, b) => a.timestamp - b.timestamp);
-
-    const labels = filtrado.map(p =>
-      new Date(p.timestamp).toLocaleString("pt-BR")
-    );
-
-    const valores = filtrado.map(p => p.valor);
-
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
-
-    if (grafico) grafico.destroy();
-
-    grafico = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
+let chart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [],
         datasets: [{
-          label: `Nível – ${reservatorio}`,
-          data: valores,
-          borderWidth: 2,
-          borderColor: "#007b83",
-          backgroundColor: "rgba(0,123,131,0.25)",
-          tension: 0.3
+            label: "",
+            data: [],
+            borderWidth: 3,
+            fill: false,
+            tension: 0.2
         }]
-      },
-      options: {
+    },
+    options: {
         responsive: true,
-        maintainAspectRatio: false,   // <<< FUNDAMENTAL PARA FICAR GRANDE
+        maintainAspectRatio: false,
         scales: {
-          y: {
-            beginAtZero: false
-          }
+            y: { beginAtZero: false },
+            x: { ticks: { maxRotation: 0, minRotation: 0 } }
         }
-      }
-    });
-  } catch (err) {
-    console.error("Erro no gráfico:", err);
-  }
-}
-
-// =====================================
-// 📅 CONSUMO DIÁRIO (APENAS Elevador / Osmose)
-// =====================================
-async function carregarConsumo() {
-  const reservatorio = select.value;
-
-  if (!["elevador", "osmose"].includes(reservatorio)) {
-    document.getElementById("tabelaConsumo").innerHTML =
-      "<tr><td colspan='3'>Consumo disponível apenas para Elevador e Osmose</td></tr>";
-    return;
-  }
-
-  try {
-    const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
-    const dados = await resp.json();
-
-    const tabela = document.getElementById("tabelaConsumo");
-    tabela.innerHTML = "";
-
-    dados.forEach(item => {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${item.dia}</td>
-        <td>${reservatorio}</td>
-        <td>${item.consumo >= 0 ? item.consumo : 0}</td>
-      `;
-
-      tabela.appendChild(tr);
-    });
-
-  } catch (err) {
-    console.error("Erro no consumo:", err);
-  }
-}
-
-select.addEventListener("change", () => {
-  carregarGrafico();
-  carregarConsumo();
+    }
 });
 
-// Inicialização
-carregarGrafico();
-carregarConsumo();
+
+// === FUNÇÃO PRINCIPAL ===
+async function carregarHistorico(reservatorio) {
+
+    // Bloqueia Geral e Irrigação no gráfico
+    if (reservatorio === "geral" || reservatorio === "irrigacao") {
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="3" style="text-align:center; padding:20px;">
+                    Consumo disponível apenas para Elevador e Osmose
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API_URL}?reservatorio=${reservatorio}`);
+        const dados = await resp.json();
+
+        if (!dados || dados.length === 0) {
+            chart.data.labels = [];
+            chart.data.datasets[0].data = [];
+            chart.update();
+
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align:center; padding:20px;">
+                        Nenhum dado encontrado.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Preenche o gráfico
+        chart.data.labels = dados.map(item => item.dataHoraFormatada);
+        chart.data.datasets[0].label = `Nível – ${reservatorio}`;
+        chart.data.datasets[0].data = dados.map(item => item.nivel);
+        chart.update();
+
+        // Preenche tabela de consumo
+        tabela.innerHTML = "";
+
+        dados.forEach(row => {
+            tabela.innerHTML += `
+                <tr>
+                    <td>${row.dia}</td>
+                    <td>${reservatorio}</td>
+                    <td>${row.consumo ?? 0}</td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error("Erro ao carregar histórico:", e);
+    }
+}
+
+
+// === EVENTO DE ALTERAÇÃO DE RESERVATÓRIO ===
+select.addEventListener("change", () => {
+    carregarHistorico(select.value);
+});
+
+
+// === CARREGAR INICIALMENTE ===
+carregarHistorico(select.value);
