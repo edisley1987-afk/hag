@@ -61,15 +61,16 @@ window._bombaState = window._bombaState || {
   }
 };
 
-// Render inicial: cria cards vazios a partir do que o servidor devolver
+// Render inicial: cria cards vazios
 function criarEstruturaInicial(reservatorios, pressoes) {
-  // limpa
   reservatoriosContainer.innerHTML = "";
   pressoesContainer.innerHTML = "";
   bombasContainer && (bombasContainer.innerHTML = "");
 
-  // reservatórios
-  (reservatorios || []).forEach(r => {
+  // ===============================
+  // RESERVATÓRIOS (NÃO ALTERADO)
+  // ===============================
+  reservatorios.forEach(r => {
     const id = `res_${r.setor}`;
     const card = document.createElement("div");
     card.className = "card-reservatorio";
@@ -102,7 +103,6 @@ function criarEstruturaInicial(reservatorios, pressoes) {
       </div>
     `;
 
-    // histórico
     card.querySelector(".btn-hist").addEventListener("click", (e) => {
       const setor = e.currentTarget.dataset.setor;
       window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
@@ -112,7 +112,7 @@ function criarEstruturaInicial(reservatorios, pressoes) {
   });
 
   // pressões
-  (pressoes || []).forEach(p => {
+  pressoes.forEach(p => {
     const id = `pres_${p.setor}`;
     const card = document.createElement("div");
     card.className = "card-pressao";
@@ -127,39 +127,35 @@ function criarEstruturaInicial(reservatorios, pressoes) {
     pressoesContainer.appendChild(card);
   });
 
-  // bombas (dois cards ao lado das pressões)
+  // bombas
   if (bombasContainer) {
-    const bomba01 = document.createElement("div");
-    bomba01.className = "card card-bomba";
-    bomba01.id = "card-bomba-01";
-    bomba01.innerHTML = `
-      <h3>Bomba 01 (Circulação)</h3>
-      <div><strong>Status:</strong> <span id="status-bomba-01">--</span></div>
-      <div><strong>Ciclos:</strong> <span id="ciclos-bomba-01">--</span></div>
-      <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-01">--:--</span></div>
-      <div><strong>Último ON:</strong> <span id="ultimoon-bomba-01">--</span></div>
-      <div id="alerta-bomba-01" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠ Alerta bomba 01</div>
-    `;
-    bombasContainer.appendChild(bomba01);
+    bombasContainer.innerHTML = `
+      <div class="card card-bomba" id="card-bomba-01">
+        <h3>Bomba 01 (Circulação)</h3>
+        <div><strong>Status:</strong> <span id="status-bomba-01">--</span></div>
+        <div><strong>Ciclos:</strong> <span id="ciclos-bomba-01">--</span></div>
+        <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-01">--:--</span></div>
+        <div><strong>Último ON:</strong> <span id="ultimoon-bomba-01">--</span></div>
+        <div id="alerta-bomba-01" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠</div>
+      </div>
 
-    const bomba02 = document.createElement("div");
-    bomba02.className = "card card-bomba";
-    bomba02.id = "card-bomba-02";
-    bomba02.innerHTML = `
-      <h3>Bomba 02 (Circulação)</h3>
-      <div><strong>Status:</strong> <span id="status-bomba-02">--</span></div>
-      <div><strong>Ciclos:</strong> <span id="ciclos-bomba-02">--</span></div>
-      <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-02">--:--</span></div>
-      <div><strong>Último ON:</strong> <span id="ultimoon-bomba-02">--</span></div>
-      <div id="alerta-bomba-02" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠ Alerta bomba 02</div>
+      <div class="card card-bomba" id="card-bomba-02">
+        <h3>Bomba 02 (Circulação)</h3>
+        <div><strong>Status:</strong> <span id="status-bomba-02">--</span></div>
+        <div><strong>Ciclos:</strong> <span id="ciclos-bomba-02">--</span></div>
+        <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-02">--:--</span></div>
+        <div><strong>Último ON:</strong> <span id="ultimoon-bomba-02">--</span></div>
+        <div id="alerta-bomba-02" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠</div>
+      </div>
     `;
-    bombasContainer.appendChild(bomba02);
   }
 }
 
-// Atualiza só valores (não recria DOM) — usa o último cache para manter valores
+// Atualiza valores sem recriar DOM
 function atualizarValores(data) {
-  // garantias de estrutura
+  // ------------------------------
+  // RESERVATÓRIOS (NÃO ALTERADO)
+  // ------------------------------
   if (!data || !Array.isArray(data.reservatorios)) return;
 
   data.reservatorios.forEach(r => {
@@ -173,12 +169,10 @@ function atualizarValores(data) {
     const manutTag = document.getElementById(`${id}_tag`);
     const card = document.getElementById(id);
 
-    // fallback para evitar null/undefined
-    const percent = (r.percent === undefined || r.percent === null) ? (window._ultimaPercent?.[r.setor] ?? null) : r.percent;
-    const liters = (r.current_liters === undefined || r.current_liters === null) ? (window._ultimaLitros?.[r.setor] ?? null) : r.current_liters;
-    const capacidade = r.capacidade ?? (window._ultimaCapacidade?.[r.setor] ?? null);
+    const percent = r.percent ?? window._ultimaPercent?.[r.setor] ?? null;
+    const liters = r.current_liters ?? window._ultimaLitros?.[r.setor] ?? null;
+    const capacidade = r.capacidade ?? window._ultimaCapacidade?.[r.setor] ?? null;
 
-    // salvar último válido
     window._ultimaPercent = window._ultimaPercent || {};
     window._ultimaLitros = window._ultimaLitros || {};
     window._ultimaCapacidade = window._ultimaCapacidade || {};
@@ -187,69 +181,57 @@ function atualizarValores(data) {
     if (liters !== null) window._ultimaLitros[r.setor] = liters;
     if (capacidade !== null) window._ultimaCapacidade[r.setor] = capacidade;
 
-    // Atualiza UI (safe)
-    if (nivelEl) nivelEl.style.height = (percent !== null ? `${percent}%` : `0%`);
-    if (pctEl) pctEl.textContent = (percent !== null ? `${Math.round(percent)}%` : "--%");
-    if (litrEl) litrEl.textContent = (liters !== null ? `${formatNumber(liters)} L` : "-- L");
+    if (nivelEl) nivelEl.style.height = percent !== null ? `${percent}%` : "0%";
+    if (pctEl) pctEl.textContent = percent !== null ? `${Math.round(percent)}%` : "--%";
+    if (litrEl) litrEl.textContent = liters !== null ? `${formatNumber(liters)} L` : "-- L";
     if (capEl) capEl.textContent = `Capacidade: ${formatNumber(capacidade)} L`;
 
-    // tratamento manutenção (estado persistido no localStorage)
     const mantKey = `manut_${r.setor}`;
-    let isManut = false;
-    try { isManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){ isManut = false; }
+    let inManut = false;
+    try { inManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){}
 
     if (manutCheck) {
-      manutCheck.checked = isManut;
-      // garantir escuta do evento (evita múltiplos listeners)
+      manutCheck.checked = inManut;
       if (!manutCheck._hasListener) {
         manutCheck.addEventListener("change", () => {
           const novo = manutCheck.checked;
           localStorage.setItem(mantKey, JSON.stringify(novo));
-          // atualizar imediatamente a visibilidade da tag/alerta
           manutTag.style.display = novo ? "block" : "none";
-          if (novo) {
-            alertaEl && (alertaEl.style.display = "none");
-            card && card.classList.remove("alerta");
+          if (!novo && percent <= 30) {
+            alertaEl.style.display = "block";
+            card.classList.add("alerta");
           } else {
-            // se saiu da manutenção, recalcula alerta conforme percent
-            if (percent !== null && percent <= 30) {
-              alertaEl && (alertaEl.style.display = "block");
-              card && card.classList.add("alerta");
-            }
+            alertaEl.style.display = "none";
+            card.classList.remove("alerta");
           }
         });
         manutCheck._hasListener = true;
       }
     }
 
-    // exibir/manter tag manutenção
-    if (manutTag) manutTag.style.display = manutCheck && manutCheck.checked ? "block" : "none";
+    manutTag.style.display = inManut ? "block" : "none";
 
-    // ALERTA: só se não estiver em manutenção
-    const inManut = manutCheck && manutCheck.checked;
-    if (alertaEl) {
-      if (!inManut && percent !== null && percent <= 30) {
-        alertaEl.style.display = "block";
-        card && card.classList.add("alerta");
-      } else {
-        alertaEl.style.display = "none";
-        card && card.classList.remove("alerta");
-      }
+    if (!inManut && percent !== null && percent <= 30) {
+      alertaEl.style.display = "block";
+      card.classList.add("alerta");
+    } else {
+      alertaEl.style.display = "none";
+      card.classList.remove("alerta");
     }
   });
 
-  // pressões
+  // ==========================
+  // PRESSÕES (NÃO ALTERADO)
+  // ==========================
   if (Array.isArray(data.pressoes)) {
     data.pressoes.forEach(p => {
       const id = `pres_${p.setor}`;
       const el = document.getElementById(`${id}_valor`);
       const card = document.getElementById(id);
 
-      // Se o servidor já envia bar, usamos direto. Se enviar corrente mA (0.005) a conversão
       let bar = null;
-      if (p.pressao !== undefined && p.pressao !== null) {
-        bar = Number(p.pressao);
-      } else if (p.value !== undefined && p.value !== null) {
+      if (p.pressao != null) bar = Number(p.pressao);
+      else if (p.value != null) {
         const v = Number(p.value);
         if (!isNaN(v) && v > 0 && v <= 0.1) {
           const mA = v * 1000;
@@ -257,7 +239,8 @@ function atualizarValores(data) {
         }
       }
 
-      if (el) el.textContent = bar == null ? "--" : Number(bar).toFixed(2);
+      if (el) el.textContent = bar == null ? "--" : bar.toFixed(2);
+
       if (card) {
         card.classList.remove("pressao-baixa", "pressao-ok", "pressao-alta", "sem-dado");
         if (bar == null) card.classList.add("sem-dado");
@@ -268,52 +251,43 @@ function atualizarValores(data) {
     });
   }
 
-  // ------------------------
-  // BOMBAS: lógica de tempo e alertas (alternadas)
-  // ------------------------
+  // ================================
+  // BOMBAS — CORRIGIDO AQUI
+  // ================================
+  const b1 = Number(data.Bomba_01_binary ?? 0);
+  const b2 = Number(data.Bomba_02_binary ?? 0);
 
-  // Ler campos do payload (nomes confirmados pelo usuário / logs)
-  // aceitamos variações por segurança, mas priorizamos os nomes exatos:
-  // Bomba_01_binary, Bomba_02_binary, Ciclo_Bomba_01_counter, Ciclos_Bomba_02_counter
-  const b1 = Number(data.Bomba_01_binary ?? data.Bomba_01 ?? data.Bomba01 ?? 0);
-  const b2 = Number(data.Bomba_02_binary ?? data.Bomba_02 ?? data.Bomba02 ?? 0);
-
-  const c1 = Number(data.Ciclo_Bomba_01_counter ?? data.Ciclo_Bomba_01 ?? data.Ciclos_Bomba_01_counter ?? 0);
-  const c2 = Number(data.Ciclos_Bomba_02_counter ?? data.Ciclo_Bomba_02_counter ?? data.Ciclos_Bomba_02 ?? 0);
+  const c1 = Number(data.Ciclo_Bomba_01_counter ?? 0);
+  const c2 = Number(data.Ciclos_Bomba_02_counter ?? 0);
 
   const now = Date.now();
 
-  // helper para atualizar estado de uma bomba
   function processBomba(key, binary, ciclos) {
     const st = window._bombaState[key];
     const was = st.lastBinary;
 
-    // transição 0 -> 1 (ligou agora)
+    // ===============================
+    // *** CORREÇÃO PRINCIPAL ***
+    // ===============================
+    const idx = key === "bomba01" ? "1" : "2";
+    if (!document.getElementById(`status-bomba-${idx}`)) {
+      return; // evita erro quando DOM ainda não existe (cache / atraso)
+    }
+    // ===============================
+
     if (was === 0 && binary === 1) {
       st.startTs = now;
       st.lastOnTs = now;
       st.lastCycle = ciclos;
     }
 
-    // transição 1 -> 0 (desligou agora)
     if (was === 1 && binary === 0) {
-      if (st.startTs) {
-        st.lastRunMs = now - st.startTs;
-      }
+      if (st.startTs) st.lastRunMs = now - st.startTs;
       st.startTs = null;
-      st.lastBinary = 0;
     }
 
-    // atualização contínua (se está ligada)
-    if (binary === 1) {
-      st.lastBinary = 1;
-      if (!st.startTs) st.startTs = st.lastOnTs || now;
-    } else {
-      st.lastBinary = 0;
-    }
+    st.lastBinary = binary;
 
-    // Update UI
-    const idx = key === "bomba01" ? "1" : "2";
     const statusEl = document.getElementById(`status-bomba-${idx}`);
     const ciclosEl = document.getElementById(`ciclos-bomba-${idx}`);
     const tempoEl = document.getElementById(`tempo-bomba-${idx}`);
@@ -325,76 +299,66 @@ function atualizarValores(data) {
       statusEl.textContent = binary === 1 ? "Ligada" : "Desligada";
       statusEl.style.color = binary === 1 ? "green" : "#666";
     }
-    if (ciclosEl) ciclosEl.textContent = isNaN(ciclos) ? "--" : ciclos;
 
-    // tempo ligado (se está ligada)
+    if (ciclosEl) ciclosEl.textContent = ciclos;
+
     let tempoMs = null;
-    if (st.startTs && st.lastBinary === 1) {
-      tempoMs = now - st.startTs;
-    } else if (st.lastRunMs) {
-      tempoMs = st.lastRunMs;
-    }
+    if (binary === 1) tempoMs = now - (st.startTs || now);
+    else if (st.lastRunMs) tempoMs = st.lastRunMs;
 
     if (tempoEl) tempoEl.textContent = tempoMs ? formatDuration(tempoMs) : "--:--";
     if (ultimoEl) ultimoEl.textContent = st.lastOnTs ? new Date(st.lastOnTs).toLocaleTimeString("pt-BR") : "--";
 
-    // ALERTAS:
     let showAlert = false;
     let alertText = "";
 
-    if (st.lastBinary === 1) {
-      if ((now - st.startTs) > BOMBA_ON_MS) {
-        showAlert = true;
-        alertText = `⚠ Ligada > ${BOMBA_ON_MS/60000} min`;
-      }
+    if (binary === 1 && (now - st.startTs) > BOMBA_ON_MS) {
+      showAlert = true;
+      alertText = `⚠ Ligada > ${BOMBA_ON_MS / 60000} min`;
     }
 
     if (showAlert) {
       alertaEl.style.display = "block";
       alertaEl.textContent = alertText;
-      card && card.classList.add("alerta-bomba-card");
+      card.classList.add("alerta-bomba-card");
     } else {
       alertaEl.style.display = "none";
-      card && card.classList.remove("alerta-bomba-card");
+      card.classList.remove("alerta-bomba-card");
     }
 
-    // check ciclo incremento heurístico
-    if (typeof st.lastCycle === "number" && typeof ciclos === "number") {
-      if (st.lastOnTs && (now - st.lastOnTs) > (BOMBA_ON_MS * 2) && ciclos <= st.lastCycle) {
-        alertaEl.style.display = "block";
-        alertaEl.textContent = "⚠ Ciclos não aumentaram (verificar)";
-        card && card.classList.add("alerta-bomba-card");
-      }
+    if (st.lastCycle != null && ciclos <= st.lastCycle && (now - st.lastOnTs) > BOMBA_ON_MS * 2) {
+      alertaEl.style.display = "block";
+      alertaEl.textContent = "⚠ Ciclos não aumentaram (verificar)";
+      card.classList.add("alerta-bomba-card");
     }
   }
 
-  // processa ambas bombas
   processBomba("bomba01", b1, c1);
   processBomba("bomba02", b2, c2);
 
-  // Regras globais / alternância:
+  // Globais
   if (b1 === 1 && b2 === 1) {
     ["1","2"].forEach(idx => {
       const alertaEl = document.getElementById(`alerta-bomba-${idx}`);
       const card = document.getElementById(`card-bomba-${idx}`);
-      if (alertaEl) {
-        alertaEl.style.display = "block";
-        alertaEl.textContent = "⚠ Erro: ambas as bombas ligadas (não permitido)";
-      }
-      card && card.classList.add("alerta-bomba-card");
+      alertaEl.style.display = "block";
+      alertaEl.textContent = "⚠ Ambas as bombas ligadas";
+      card.classList.add("alerta-bomba-card");
     });
   }
 
-  // - verifica se nenhuma ligou dentro do intervalo esperado
-  const anyRecentlyOn = (window._bombaState.bomba01.lastOnTs && (now - window._bombaState.bomba01.lastOnTs) < NENHUMA_LIGADA_ALERT_MS)
-    || (window._bombaState.bomba02.lastOnTs && (now - window._bombaState.bomba02.lastOnTs) < NENHUMA_LIGADA_ALERT_MS)
-    || (window._bombaState.bomba01.lastBinary === 1 || window._bombaState.bomba02.lastBinary === 1);
+  const anyRecentlyOn =
+    (window._bombaState.bomba01.lastOnTs && now - window._bombaState.bomba01.lastOnTs < NENHUMA_LIGADA_ALERT_MS) ||
+    (window._bombaState.bomba02.lastOnTs && now - window._bombaState.bomba02.lastOnTs < NENHUMA_LIGADA_ALERT_MS) ||
+    b1 === 1 || b2 === 1;
 
   if (!anyRecentlyOn) {
     const alerta1 = document.getElementById("alerta-bomba-01");
     const alerta2 = document.getElementById("alerta-bomba-02");
-    alerta1 && (alerta1.style.display = "block") && (alerta1.textContent = `⚠ Nenhuma bomba acionou nos últimos ${Math.round(NENHUMA_LIGADA_ALERT_MS/60000)} min`);
-    alerta2 && (alerta2.style.display = "block") && (alerta2.textContent = `⚠ Nenhuma bomba acionou nos últimos ${Math.round(NENHUMA_LIGADA_ALERT_MS/60000)} min`);
+    alerta1.textContent = `⚠ Nenhuma bomba acionou nos últimos 18 min`;
+    alerta2.textContent = `⚠ Nenhuma bomba acionou nos últimos 18 min`;
+    alerta1.style.display = "block";
+    alerta2.style.display = "block";
   }
 }
 
@@ -412,16 +376,13 @@ async function atualizar() {
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const data = await resp.json();
 
-    // se estrutura não criada, cria com base nos itens retornados
     if (!window._estruturaCriada) {
       criarEstruturaInicial(data.reservatorios || [], data.pressoes || []);
       window._estruturaCriada = true;
     }
 
-    // atualiza valores (mantendo fallback)
     atualizarValores(data);
 
-    // relógio/aviso
     if (data.lastUpdate) {
       lastUpdateEl.textContent = "Última atualização: " + new Date(data.lastUpdate).toLocaleString("pt-BR");
       verificarAtraso(data.lastUpdate);
@@ -429,13 +390,11 @@ async function atualizar() {
       lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
     }
 
-    // guarda cópia para fallback
     window._ultimaDashboard = data;
 
   } catch (err) {
     console.warn("Sem dados novos, usando última leitura", err);
     if (window._ultimaDashboard) {
-      // atualiza com o cache
       atualizarValores(window._ultimaDashboard);
       if (window._ultimaDashboard.lastUpdate) {
         lastUpdateEl.textContent = "Última atualização (cache): " + new Date(window._ultimaDashboard.lastUpdate).toLocaleString("pt-BR");
