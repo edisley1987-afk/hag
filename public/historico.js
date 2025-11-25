@@ -4,9 +4,9 @@ const API_CONSUMO = "/consumo/5dias";
 const select = document.getElementById("reservatorioSelect");
 let grafico = null;
 
-// =========================
-// 📌 CARREGAR GRÁFICO
-// =========================
+// =====================================
+// 📊 CARREGAR GRÁFICO DO HISTÓRICO
+// =====================================
 async function carregarGrafico() {
   try {
     const reservatorio = select.value;
@@ -18,7 +18,10 @@ async function carregarGrafico() {
       .filter(d => d.reservatorio === reservatorio)
       .sort((a, b) => a.timestamp - b.timestamp);
 
-    const labels = filtrado.map(p => new Date(p.timestamp).toLocaleString("pt-BR"));
+    const labels = filtrado.map(p =>
+      new Date(p.timestamp).toLocaleString("pt-BR")
+    );
+
     const valores = filtrado.map(p => p.valor);
 
     const ctx = document.getElementById("graficoHistorico").getContext("2d");
@@ -30,31 +33,34 @@ async function carregarGrafico() {
       data: {
         labels,
         datasets: [{
-          label: "Nível (litros)",
+          label: `Nível – ${reservatorio}`,
           data: valores,
           borderWidth: 2,
-          borderColor: "blue",
-          backgroundColor: "rgba(0,0,255,0.2)",
-          tension: 0.2
+          borderColor: "#007b83",
+          backgroundColor: "rgba(0,123,131,0.25)",
+          tension: 0.3
         }]
       },
-      options: {
-        responsive: true
-      }
+      options: { responsive: true }
     });
-
   } catch (err) {
-    console.error("Erro gráfico:", err);
+    console.error("Erro no gráfico:", err);
   }
 }
 
-// ===============================
-// 📌 TABELA DE CONSUMO DIÁRIO
-// ===============================
+// =====================================
+// 📅 CONSUMO DIÁRIO (APENAS Elevador / Osmose)
+// =====================================
 async function carregarConsumo() {
-  try {
-    const reservatorio = select.value;
+  const reservatorio = select.value;
 
+  if (!["elevador", "osmose"].includes(reservatorio)) {
+    document.getElementById("tabelaConsumo").innerHTML =
+      "<tr><td colspan='3'>Consumo disponível apenas para Elevador e Osmose</td></tr>";
+    return;
+  }
+
+  try {
     const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
     const dados = await resp.json();
 
@@ -74,13 +80,10 @@ async function carregarConsumo() {
     });
 
   } catch (err) {
-    console.error("Erro consumo:", err);
+    console.error("Erro no consumo:", err);
   }
 }
 
-// ===========================
-// Evento ao trocar reservatório
-// ===========================
 select.addEventListener("change", () => {
   carregarGrafico();
   carregarConsumo();
