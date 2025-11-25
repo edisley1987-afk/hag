@@ -1,5 +1,5 @@
 // public/dashboard.js
-// Dashboard frontend — compatível com seu server.js (/api/dashboard)
+// Dashboard frontend — compatível com /api/dashboard
 
 const API_URL = window.location.origin + "/api/dashboard";
 const UPDATE_INTERVAL = 5000; // ms
@@ -9,13 +9,11 @@ const reservatoriosContainer = document.getElementById("reservatoriosContainer")
 const pressoesContainer = document.getElementById("pressoesContainer");
 const lastUpdateEl = document.getElementById("lastUpdate");
 
-// Banner de aviso
+// Banner de aviso (global)
 let avisoEl = document.getElementById("aviso-atraso");
 if (!avisoEl) {
   avisoEl = document.createElement("div");
   avisoEl.id = "aviso-atraso";
-  avisoEl.style =
-    "display:none; background:#b30000; color:white; padding:10px; text-align:center; font-weight:bold;";
   avisoEl.textContent = "⚠ Sem atualização há mais de 10 minutos";
   document.body.prepend(avisoEl);
 }
@@ -23,31 +21,19 @@ if (!avisoEl) {
 // utilitário
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-// Converte 4–20 mA para BAR
-function convertToBar(rawValue) {
-  if (rawValue == null || isNaN(rawValue)) return null;
-
-  const v = Number(rawValue);
-
-  // caso venha em ampère (ex.: 0.005 → 5 mA)
-  if (v > 0 && v <= 0.1) {
-    const mA = v * 1000;
-    const bar = ((mA - 4) / 16) * 10;
-    return Number(clamp(bar, 0, 10).toFixed(2));
-  }
-
-  // caso venha em 0–20 já convertido
-  if (v >= 0 && v <= 25) return Number((v / 2).toFixed(2));
-
-  return null;
+function formatNumber(n) {
+  if (n == null || n === "--") return "--";
+  return Number(n).toLocaleString("pt-BR");
 }
 
-// Cria estrutura inicial uma única vez
+// Render inicial: cria cards vazios a partir do que o servidor devolver
 function criarEstruturaInicial(reservatorios, pressoes) {
+  // limpa
   reservatoriosContainer.innerHTML = "";
   pressoesContainer.innerHTML = "";
 
-  reservatorios.forEach(r => {
+  // reservatórios
+  (reservatorios || []).forEach(r => {
     const id = `res_${r.setor}`;
     const card = document.createElement("div");
     card.className = "card-reservatorio";
@@ -57,46 +43,40 @@ function criarEstruturaInicial(reservatorios, pressoes) {
       <h3 class="titulo-card">${r.nome}</h3>
 
       <div class="tanque-visu">
-        <div class="nivel-agua" id="${id}_nivel"></div>
+        <div class="nivel-agua" id="${id}_nivel" style="height:0%"></div>
         <div class="overlay-info">
-          <div class="percent-text" id="${id}_percent"></div>
-          <div class="liters-text" id="${id}_litros"></div>
+          <div class="percent-text" id="${id}_percent">--%</div>
+          <div class="liters-text" id="${id}_litros">-- L</div>
         </div>
       </div>
 
-      <!-- ALERTA -->
-      <div class="alerta-msg" id="${id}_alerta" style="display:none;">
-        ⚠ Nível crítico (abaixo de 30%)
-      </div>
+      <div class="alerta-msg" id="${id}_alerta" style="display:none;">⚠ Nível crítico (abaixo de 30%)</div>
 
-      <!-- MANUTENÇÃO -->
       <div class="manutencao-container">
         <label>
           <input type="checkbox" class="manutencao-check" id="${id}_manut">
           Em manutenção
         </label>
-        <div class="manutencao-tag" id="${id}_tag" style="display:none;">
-          EM MANUTENÇÃO
-        </div>
+        <div class="manutencao-tag" id="${id}_tag" style="display:none;">EM MANUTENÇÃO</div>
       </div>
 
       <div class="card-actions">
-        <div class="capacidade" id="${id}_cap"></div>
+        <div class="capacidade" id="${id}_cap">Capacidade: ${formatNumber(r.capacidade ?? "--")} L</div>
         <button class="btn-hist" data-setor="${r.setor}">Ver histórico</button>
       </div>
     `;
 
-    // botão histórico
+    // histórico
     card.querySelector(".btn-hist").addEventListener("click", (e) => {
       const setor = e.currentTarget.dataset.setor;
-      window.location.href =
-        `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
+      window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
     });
 
     reservatoriosContainer.appendChild(card);
   });
 
-  pressoes.forEach(p => {
+  // pressões
+  (pressoes || []).forEach(p => {
     const id = `pres_${p.setor}`;
     const card = document.createElement("div");
     card.className = "card-pressao";
@@ -112,107 +92,176 @@ function criarEstruturaInicial(reservatorios, pressoes) {
   });
 }
 
-// Atualiza somente valores (mantém última leitura)
+// Atualiza só valores (não recria DOM) — usa o último cache para manter valores
 function atualizarValores(data) {
+  // garantias de estrutura
+  if (!data || !Array.isArray(data.reservatorios)) return;
+
   data.reservatorios.forEach(r => {
     const id = `res_${r.setor}`;
-    const nivel = document.getElementById(`${id}_nivel`);
-    const pct = document.getElementById(`${id}_percent`);
-    const lit = document.getElementById(`${id}_litros`);
-    const cap = document.getElementById(`${id}_cap`);
-    const alerta = document.getElementById(`${id}_alerta`);
+    const nivelEl = document.getElementById(`${id}_nivel`);
+    const pctEl = document.getElementById(`${id}_percent`);
+    const litrEl = document.getElementById(`${id}_litros`);
+    const capEl = document.getElementById(`${id}_cap`);
+    const alertaEl = document.getElementById(`${id}_alerta`);
     const manutCheck = document.getElementById(`${id}_manut`);
     const manutTag = document.getElementById(`${id}_tag`);
     const card = document.getElementById(id);
 
-    nivel.style.height = `${r.percent}%`;
-    pct.textContent = `${r.percent}%`;
-    lit.textContent = `${r.current_liters} L`;
-    cap.textContent = `Capacidade: ${r.capacidade.toLocaleString("pt-BR")} L`;
+    // fallback para evitar null/undefined
+    const percent = (r.percent === undefined || r.percent === null) ? (window._ultimaPercent?.[r.setor] ?? null) : r.percent;
+    const liters = (r.current_liters === undefined || r.current_liters === null) ? (window._ultimaLitros?.[r.setor] ?? null) : r.current_liters;
+    const capacidade = r.capacidade ?? (window._ultimaCapacidade?.[r.setor] ?? null);
 
-    // ALERTA DE 30%
-    if (!manutCheck.checked && r.percent <= 30) {
-      alerta.style.display = "block";
-      card.classList.add("alerta");
-    } else {
-      alerta.style.display = "none";
+    // salvar último válido
+    window._ultimaPercent = window._ultimaPercent || {};
+    window._ultimaLitros = window._ultimaLitros || {};
+    window._ultimaCapacidade = window._ultimaCapacidade || {};
+
+    if (percent !== null) window._ultimaPercent[r.setor] = percent;
+    if (liters !== null) window._ultimaLitros[r.setor] = liters;
+    if (capacidade !== null) window._ultimaCapacidade[r.setor] = capacidade;
+
+    // Atualiza UI (safe)
+    if (nivelEl) nivelEl.style.height = (percent !== null ? `${percent}%` : `0%`);
+    if (pctEl) pctEl.textContent = (percent !== null ? `${Math.round(percent)}%` : "--%");
+    if (litrEl) litrEl.textContent = (liters !== null ? `${formatNumber(liters)} L` : "-- L");
+    if (capEl) capEl.textContent = `Capacidade: ${formatNumber(capacidade)} L`;
+
+    // tratamento manutenção (estado persistido no localStorage)
+    const mantKey = `manut_${r.setor}`;
+    let isManut = false;
+    try { isManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){ isManut = false; }
+
+    if (manutCheck) {
+      manutCheck.checked = isManut;
+      // garantir escuta do evento (evita múltiplos listeners)
+      if (!manutCheck._hasListener) {
+        manutCheck.addEventListener("change", () => {
+          const novo = manutCheck.checked;
+          localStorage.setItem(mantKey, JSON.stringify(novo));
+          // atualizar imediatamente a visibilidade da tag/alerta
+          manutTag.style.display = novo ? "block" : "none";
+          if (novo) {
+            alertaEl && (alertaEl.style.display = "none");
+            card && card.classList.remove("alerta");
+          } else {
+            // se saiu da manutenção, recalcula alerta conforme percent
+            if (percent !== null && percent <= 30) {
+              alertaEl && (alertaEl.style.display = "block");
+              card && card.classList.add("alerta");
+            }
+          }
+        });
+        manutCheck._hasListener = true;
+      }
+    }
+
+    // exibir/manter tag manutenção
+    if (manutTag) manutTag.style.display = manutCheck && manutCheck.checked ? "block" : "none";
+
+    // ALERTA: só se não estiver em manutenção
+    const inManut = manutCheck && manutCheck.checked;
+    if (alertaEl) {
+      if (!inManut && percent !== null && percent <= 30) {
+        alertaEl.style.display = "block";
+        card && card.classList.add("alerta");
+      } else {
+        alertaEl.style.display = "none";
+        card && card.classList.remove("alerta");
+      }
+    }
+
+    // se subiu pra >=31% e estava em manutenção -> não forçar auto-desligar manutenção,
+    // apenas não mostrar alerta. (se preferir auto-desligar manutenção, posso ativar)
+    // caso queira auto-desligar: descomente o bloco abaixo
+    /*
+    if (manutCheck && manutCheck.checked && percent !== null && percent >= 31) {
+      manutCheck.checked = false;
+      localStorage.setItem(mantKey, JSON.stringify(false));
+      manutTag.style.display = "none";
+      alertaEl.style.display = "none";
       card.classList.remove("alerta");
     }
+    */
+  });
 
-    // MANUTENÇÃO
-    manutCheck.addEventListener("change", () => {
-      if (manutCheck.checked) {
-        manutTag.style.display = "block";
-        alerta.style.display = "none";
-        card.classList.remove("alerta");
-      } else {
-        manutTag.style.display = "none";
+  // pressões
+  if (Array.isArray(data.pressoes)) {
+    data.pressoes.forEach(p => {
+      const id = `pres_${p.setor}`;
+      const el = document.getElementById(`${id}_valor`);
+      const card = document.getElementById(id);
+
+      // Se o servidor já envia bar, usamos direto. Se enviar corrente mA (0.005) a conversão
+      // foi mantida por segurança abaixo — mas se seu server já converte, pode vir value em bar.
+      let bar = null;
+      if (p.pressao !== undefined && p.pressao !== null) {
+        bar = Number(p.pressao);
+      } else if (p.value !== undefined && p.value !== null) {
+        // tentativa de conversão automática (ex.: 0.005 A -> 5 mA -> 0..10 bar)
+        const v = Number(p.value);
+        if (!isNaN(v) && v > 0 && v <= 0.1) {
+          const mA = v * 1000;
+          bar = ((mA - 4) / 16) * 10;
+        }
+      }
+
+      if (el) el.textContent = bar == null ? "--" : Number(bar).toFixed(2);
+      if (card) {
+        card.classList.remove("pressao-baixa", "pressao-ok", "pressao-alta", "sem-dado");
+        if (bar == null) card.classList.add("sem-dado");
+        else if (bar < 2) card.classList.add("pressao-baixa");
+        else if (bar < 6) card.classList.add("pressao-ok");
+        else card.classList.add("pressao-alta");
       }
     });
-
-    // se a manutenção estiver ativa, sempre exibir a TAG
-    if (manutCheck.checked) {
-      manutTag.style.display = "block";
-    }
-  });
-
-  data.pressoes.forEach(p => {
-    const id = `pres_${p.setor}`;
-    const bar = convertToBar(p.pressao);
-    const el = document.getElementById(`${id}_valor`);
-    const card = document.getElementById(id);
-
-    el.textContent = bar == null ? "--" : bar.toFixed(2);
-
-    card.classList.remove("pressao-baixa", "pressao-ok", "pressao-alta", "sem-dado");
-
-    if (bar == null) card.classList.add("sem-dado");
-    else if (bar < 2) card.classList.add("pressao-baixa");
-    else if (bar < 6) card.classList.add("pressao-ok");
-    else card.classList.add("pressao-alta");
-  });
+  }
 }
 
-// Verifica atraso no recebimento de dados
+// verifica se a última atualização está vencida (> WARNING_TIMEOUT)
 function verificarAtraso(lastUpdate) {
   if (!lastUpdate) return;
-
   const diff = Date.now() - new Date(lastUpdate).getTime();
-
   avisoEl.style.display = diff > WARNING_TIMEOUT ? "block" : "none";
 }
 
-// Atualizador principal
+// ciclo principal
 async function atualizar() {
   try {
     const resp = await fetch(API_URL, { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
     const data = await resp.json();
 
+    // se estrutura não criada, cria com base nos itens retornados
     if (!window._estruturaCriada) {
-      criarEstruturaInicial(data.reservatorios, data.pressoes);
+      criarEstruturaInicial(data.reservatorios || [], data.pressoes || []);
       window._estruturaCriada = true;
     }
 
+    // atualiza valores (mantendo fallback)
     atualizarValores(data);
 
-    lastUpdateEl.textContent =
-      "Última atualização: " +
-      new Date(data.lastUpdate).toLocaleString("pt-BR");
+    // relógio/aviso
+    if (data.lastUpdate) {
+      lastUpdateEl.textContent = "Última atualização: " + new Date(data.lastUpdate).toLocaleString("pt-BR");
+      verificarAtraso(data.lastUpdate);
+    } else {
+      lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
+    }
 
-    verificarAtraso(data.lastUpdate);
-
+    // guarda cópia para fallback
     window._ultimaDashboard = data;
+
   } catch (err) {
-    console.warn("Sem dados novos, usando última leitura");
-
+    console.warn("Sem dados novos, usando última leitura", err);
     if (window._ultimaDashboard) {
+      // atualiza com o cache
       atualizarValores(window._ultimaDashboard);
-      verificarAtraso(window._ultimaDashboard.lastUpdate);
-
-      lastUpdateEl.textContent =
-        "Última atualização (cache): " +
-        new Date(window._ultimaDashboard.lastUpdate).toLocaleString("pt-BR");
+      if (window._ultimaDashboard.lastUpdate) {
+        lastUpdateEl.textContent = "Última atualização (cache): " + new Date(window._ultimaDashboard.lastUpdate).toLocaleString("pt-BR");
+        verificarAtraso(window._ultimaDashboard.lastUpdate);
+      }
     }
   }
 }
