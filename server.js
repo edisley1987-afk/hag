@@ -398,6 +398,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "elevador",
       percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
       current_liters: dados["Reservatorio_Elevador_current"],
+      capacidade: 20000,               // ← ADICIONADO
       manutencao: false
     },
     {
@@ -405,6 +406,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "osmose",
       percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
       current_liters: dados["Reservatorio_Osmose_current"],
+      capacidade: 200,                 // ← ADICIONADO
       manutencao: false
     },
     {
@@ -412,6 +414,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "cme",
       percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
       current_liters: dados["Reservatorio_CME_current"],
+      capacidade: 1000,                // ← ADICIONADO
       manutencao: false
     },
     {
@@ -419,6 +422,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "abrandada",
       percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
       current_liters: dados["Reservatorio_Agua_Abrandada_current"],
+      capacidade: 9000,                // ← ADICIONADO
       manutencao: false
     }
   ];
