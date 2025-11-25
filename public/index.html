@@ -1,38 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento - Sistema de Água</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento - Sistema de Água</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <header>
-    <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento de Reservatórios e Pressões</h1>
-    <p id="lastUpdate">Última atualização: --</p>
-  </header>
 
-  <!-- =============================== -->
-  <!-- 1ª LINHA — CARDS DE NÍVEL       -->
-  <!-- =============================== -->
-  <section>
-    <h2>Reservatórios</h2>
-    <div id="reservatoriosContainer" class="cards-container"></div>
-  </section>
+    <!-- AVISO DE ATRASO (injetado e usado pelo JS) -->
+    <div id="aviso-atraso" style="display:none;">⚠ Sem atualização há mais de 10 minutos</div>
 
-  <!-- =============================== -->
-  <!-- 2ª LINHA — CARDS DE PRESSÃO     -->
-  <!-- =============================== -->
-  <section>
-    <h2>Pressões</h2>
-    <div id="pressoesContainer" class="cards-container"></div>
-  </section>
+    <header>
+        <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento de Reservatórios e Pressões</h1>
+        <div id="lastUpdate">Última atualização: --</div>
+    </header>
 
-  <footer>
-    <p>© 2025 Hospital Arnaldo Gavazza</p>
-  </footer>
+    <main>
+        <!-- Título dos reservatórios -->
+        <h2 class="titulo-card" style="margin-bottom: 15px;">Reservatórios</h2>
 
-  <script src="dashboard.js"></script>
+        <!-- Onde o JavaScript renderiza os cards -->
+        <div id="reservatoriosContainer"></div>
+
+        <!-- Pressões -->
+        <h2 class="titulo-card" style="margin: 30px 0 15px;">Pressões</h2>
+
+        <div id="pressoesContainer"></div>
+    </main>
+
+    <script src="dashboard.js"></script>
 </body>
 </html>
