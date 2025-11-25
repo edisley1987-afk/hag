@@ -5,58 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico e Consumo Diário</title>
 
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Chart.js -->
+    <link rel="stylesheet" href="style-historico.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        .grafico-container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        canvas {
-            width: 100% !important;
-            height: 350px !important;
-        }
-    </style>
 </head>
 
 <body>
 
-    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar para Reservatórios</button>
+<a class="btn-voltar" href="/">< Voltar para Reservatórios</a>
 
-    <h1 class="titulo-centro">
-        <i class="fas fa-chart-line"></i> Histórico e Consumo Diário
-    </h1>
+<h1 class="titulo">📊 Histórico e Consumo Diário</h1>
 
-    <div style="text-align:center; margin-bottom:15px;">
-        Reservatório:
-        <select id="reservatorioSelect">
-            <option value="elevador">Elevador</option>
-            <option value="osmose">Osmose</option>
-            <option value="cme">CME</option>
-            <option value="abrandada">Abrandada</option>
+<div class="container">
 
-            <!-- Ocultados -->
-            <option value="geral" style="display:none;">Geral</option>
-            <option value="irrigacao" style="display:none;">Irrigação</option>
-        </select>
-    </div>
+    <label>Reservatório:</label>
+    <select id="reservatorioSelect">
+        <option value="elevador">Elevador</option>
+        <option value="osmose">Osmose</option>
+        <option value="cme">CME</option>
+        <option value="abrandada">Abrandada</option>
+    </select>
 
-    <!-- Área do gráfico -->
-    <div class="grafico-container">
+    <div class="grafico-box">
         <canvas id="graficoHistorico"></canvas>
     </div>
 
-    <h2 class="titulo-centro">
-        <i class="fas fa-table"></i> Consumo Diário
-    </h2>
+    <h2 class="titulo-sec">📅 Consumo Diário</h2>
 
-    <table class="tabela-historico">
+    <table class="tabela">
         <thead>
             <tr>
                 <th>Dia</th>
@@ -64,9 +39,11 @@
                 <th>Consumo (Litros)</th>
             </tr>
         </thead>
-        <tbody id="consumoCorpo"></tbody>
+        <tbody id="tabelaConsumo"></tbody>
     </table>
+</div>
 
-    <script src="historico.js"></script>
+<script src="historico.js"></script>
+
 </body>
 </html>
