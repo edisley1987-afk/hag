@@ -68,13 +68,7 @@ main {
   display: flex;
   flex-direction: column;
   border-top: 6px solid var(--verde-principal);
-}
-
-.titulo-card {
-  margin: 0 0 10px 0;
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--verde-escuro);
+  position: relative;
 }
 
 /* ===== TANQUE VISUAL ===== */
@@ -132,6 +126,41 @@ main {
   border-left: 6px solid #d9534f;
 }
 
+/* ========================================================================= */
+/* ===== OPÇÃO C — OVERLAY DE ATRASO SUAVE ===== */
+/* ========================================================================= */
+
+.atraso-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(250, 180, 80, 0.25);
+  backdrop-filter: blur(2px);
+  border-radius: 15px;
+  border: 2px solid #f0ad4e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #8a5200;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease-out;
+}
+
+/* visível */
+.atraso-overlay.visivel {
+  opacity: 1;
+  animation: piscaSuave 0.9s infinite alternate ease-in-out;
+}
+
+/* piscar */
+@keyframes piscaSuave {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
 /* ===== MANUTENÇÃO ===== */
 .manutencao-container {
   margin-top: 5px;
@@ -146,6 +175,15 @@ main {
   font-weight: bold;
   color: #fff;
   display: none;
+}
+
+.blink {
+  animation: blinkAnim 1s infinite alternate;
+}
+
+@keyframes blinkAnim {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
 }
 
 /* ===== AÇÕES ===== */
@@ -175,7 +213,7 @@ main {
   background: var(--verde-escuro);
 }
 
-/* ===== CARDS DE PRESSÃO ===== */
+/* ===== PRESSÕES ===== */
 .card-pressao {
   background: #fff;
   width: 220px;
@@ -183,11 +221,6 @@ main {
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   border-top: 6px solid var(--verde-principal);
-}
-
-.card-pressao .titulo-card {
-  margin-bottom: 10px;
-  color: var(--verde-escuro);
 }
 
 .pressao-valor {
@@ -209,7 +242,7 @@ main {
 .pressao-alta  { border-left: 6px solid #f0ad4e; }
 .sem-dado      { border-left: 6px solid #999; }
 
-/* ===== AVISO DE ATRASO ===== */
+/* ===== AVISO DE ATRASO GLOBAL ===== */
 #aviso-atraso {
   background: #d9534f;
   padding: 10px;
@@ -219,29 +252,7 @@ main {
   font-weight: bold;
 }
 
-/* ========================================================================= */
-/* ===== CORES DOS CARDS POR NÍVEL (MODELO B – PALETA DO HOSPITAL) ===== */
-/* ========================================================================= */
-
-.card-reservatorio.nivel-alto {
-  border-left: 6px solid var(--verde-agua);
-}
-
-.card-reservatorio.nivel-normal {
-  border-left: 6px solid var(--verde-principal);
-}
-
-.card-reservatorio.nivel-atencao {
-  border-left: 6px solid var(--verde-suave);
-}
-
-.card-reservatorio.nivel-critico {
-  border-left: 6px solid #d9534f;
-}
-
-/* ========================================================================= */
 /* ===== RODAPÉ ===== */
-/* ========================================================================= */
 footer {
   margin-top: 40px;
   width: 100%;
