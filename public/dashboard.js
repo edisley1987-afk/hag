@@ -97,12 +97,16 @@ async function atualizarValores() {
     document.getElementById("lastUpdate").textContent =
       "Última atualização: " + new Date().toLocaleString();
 
-    dados.forEach(r => {
+    // 👉 CORRIGIDO: agora percorre um OBJETO
+    Object.keys(dados).forEach(ref => {
+      const r = dados[ref];
+      if (!r) return;
+
       const id = r.ref;
 
-      // ==========================
+      // ==============================
       // TRATAMENTO DA CAPACIDADE
-      // ==========================
+      // ==============================
       let capacidade = r.capacidade;
 
       if (capacidade == null) {
@@ -145,7 +149,7 @@ async function atualizarValores() {
 
       // Pressões
       if (PRESSOES[id]) {
-        document.getElementById(`pres_${id}`).textContent = r.value.toFixed(2);
+        document.getElementById(`pres_${id}`).textContent = Number(r.value).toFixed(2);
       }
     });
   } catch (err) {
