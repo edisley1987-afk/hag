@@ -5,9 +5,30 @@ const API_URL = window.location.origin + "/api/dashboard";
 const UPDATE_INTERVAL = 5000; // ms
 const WARNING_TIMEOUT = 10 * 60 * 1000; // 10 minutos (para overlay por card)
 
-const reservatoriosContainer = document.getElementById("reservatoriosContainer");
-const pressoesContainer = document.getElementById("pressoesContainer");
-const lastUpdateEl = document.getElementById("lastUpdate");
+let reservatoriosContainer = document.getElementById("reservatoriosContainer");
+let pressoesContainer = document.getElementById("pressoesContainer");
+let lastUpdateEl = document.getElementById("lastUpdate");
+
+// =====================================================
+// PATCH: garantir que os containers existam e evitar erro
+// =====================================================
+
+function garantirElemento(id) {
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement("div");
+    el.id = id;
+    el.style.display = "none"; // invisível, não afeta layout
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+reservatoriosContainer = garantirElemento("reservatoriosContainer");
+pressoesContainer = garantirElemento("pressoesContainer");
+lastUpdateEl = garantirElemento("lastUpdate");
+
+// =====================================================
 
 // Banner global (mantém igual)
 let avisoEl = document.getElementById("aviso-atraso");
@@ -51,7 +72,6 @@ function criarEstruturaInicial(reservatorios, pressoes) {
 
       <div class="alerta-msg" id="${id}_alerta" style="display:none;">⚠ Nível crítico (abaixo de 30%)</div>
 
-      <!-- Overlay de atraso (Opção C) -->
       <div class="atraso-overlay" id="${id}_atr_overlay">
         <span>⚠ Sem atualização recente</span>
       </div>
@@ -70,7 +90,6 @@ function criarEstruturaInicial(reservatorios, pressoes) {
       </div>
     `;
 
-    // histórico
     card.querySelector(".btn-hist").addEventListener("click", (e) => {
       const setor = e.currentTarget.dataset.setor;
       window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
@@ -118,7 +137,6 @@ function atualizarValores(data) {
     const liters = r.current_liters ?? (window._ultimaLitros?.[r.setor] ?? null);
     const capacidade = r.capacidade ?? (window._ultimaCapacidade?.[r.setor] ?? null);
 
-    // salva valores em cache
     window._ultimaPercent = window._ultimaPercent || {};
     window._ultimaLitros = window._ultimaLitros || {};
     window._ultimaCapacidade = window._ultimaCapacidade || {};
@@ -127,15 +145,10 @@ function atualizarValores(data) {
     if (liters !== null) window._ultimaLitros[r.setor] = liters;
     if (capacidade !== null) window._ultimaCapacidade[r.setor] = capacidade;
 
-    // nivel visual
     if (nivelEl) nivelEl.style.height = percent !== null ? `${percent}%` : "0%";
     if (pctEl) pctEl.textContent = percent !== null ? `${Math.round(percent)}%` : "--%";
     if (litrEl) litrEl.textContent = liters !== null ? `${formatNumber(liters)} L` : "-- L";
     if (capEl) capEl.textContent = `Capacidade: ${formatNumber(capacidade)} L`;
-
-    /* ================================================================
-       🔥 OPÇÃO C – DETECÇÃO DE ATRASO INDIVIDUAL (overlay piscando)
-       ================================================================ */
 
     const ultimo = r.lastUpdate ? new Date(r.lastUpdate).getTime() : null;
 
@@ -145,9 +158,6 @@ function atualizarValores(data) {
       atrasoOverlay.classList.remove("visivel");
     }
 
-    /* ================================================================ */
-
-    // manutenção
     const mantKey = `manut_${r.setor}`;
     let isManut = false;
     try { isManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){}
@@ -169,12 +179,10 @@ function atualizarValores(data) {
       }
     }
 
-    // estado visual da manutenção
     manutTag.style.display = isManut ? "block" : "none";
     if (isManut) manutTag.classList.add("blink");
     else manutTag.classList.remove("blink");
 
-    // alerta de nível
     if (alertaEl) {
       if (!isManut && percent !== null && percent <= 30) {
         alertaEl.style.display = "block";
@@ -186,7 +194,6 @@ function atualizarValores(data) {
     }
   });
 
-  // pressões (mantém igual)
   if (Array.isArray(data.pressoes)) {
     data.pressoes.forEach(p => {
       const id = `pres_${p.setor}`;
@@ -208,14 +215,12 @@ function atualizarValores(data) {
   }
 }
 
-// aviso global
 function verificarAtraso(lastUpdate) {
   if (!lastUpdate) return;
   const diff = Date.now() - new Date(lastUpdate).getTime();
   avisoEl.style.display = diff > WARNING_TIMEOUT ? "block" : "none";
 }
 
-// ciclo
 async function atualizar() {
   try {
     const resp = await fetch(API_URL, { cache: "no-store" });
