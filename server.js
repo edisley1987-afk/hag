@@ -1,11 +1,16 @@
 // ============================================================================
-//  SERVER.JS — VERSÃO COMPLETA E ATUALIZADA
+//  SERVER.JS — VERSÃO ES MODULE (IMPORT / EXPORT) COMPATÍVEL COM RENDER
 // ============================================================================
 
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const cors = require("cors");
+import express from "express";
+import path from "path";
+import fs from "fs";
+import cors from "cors";
+import { fileURLToPath } from "url";
+
+// Corrigir __dirname no ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,20 +21,17 @@ app.use(express.json());
 // ============================================================================
 //  ARQUIVOS EM DISCO
 // ============================================================================
-
 const DATA_FILE = path.join(__dirname, "dados.json");
 const HIST_FILE = path.join(__dirname, "historico.json");
 const CONSUMO_FILE = path.join(__dirname, "consumo.json");
 
-// Garantir arquivos criados
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "[]");
 if (!fs.existsSync(HIST_FILE)) fs.writeFileSync(HIST_FILE, "{}");
 if (!fs.existsSync(CONSUMO_FILE)) fs.writeFileSync(CONSUMO_FILE, "{}");
 
 // ============================================================================
-//  MAPA DE RESERVATÓRIOS (Mesmo usado no dashboard e histórico)
+//  MAPA
 // ============================================================================
-
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -38,34 +40,27 @@ const MAPA_RESERVATORIOS = {
 };
 
 // ============================================================================
-//  SERVIR ARQUIVOS ESTÁTICOS
+//  STATIC
 // ============================================================================
 app.use(express.static(path.join(__dirname, "public")));
 
 // ============================================================================
-//  ROTA: RECEBER DADOS DO GATEWAY LoRaWAN
+//  POST /api/dados
 // ============================================================================
-
 app.post("/api/dados", (req, res) => {
   let dados = req.body;
-
-  if (!Array.isArray(dados)) {
-    dados = [dados];
-  }
+  if (!Array.isArray(dados)) dados = [dados];
 
   const existentes = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-
-  dados.forEach(item => existentes.push(item));
+  existentes.push(...dados);
 
   fs.writeFileSync(DATA_FILE, JSON.stringify(existentes, null, 2));
-
   res.json({ status: "ok" });
 });
 
 // ============================================================================
-//  ROTA: FORNECE ÚLTIMAS LEITURAS PARA O DASHBOARD
+//  GET /dados
 // ============================================================================
-
 app.get("/dados", (req, res) => {
   const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   const ultimos = {};
@@ -78,16 +73,16 @@ app.get("/dados", (req, res) => {
 });
 
 // ============================================================================
-//  HISTÓRICO — SALVAMENTO AUTOMÁTICO (chamado pelo dashboard)
+//  POST /api/historico
 // ============================================================================
-
 app.post("/api/historico", (req, res) => {
   const { reservatorio, valor, hora, data } = req.body;
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
 
   if (!historico[data]) historico[data] = {};
-  if (!historico[data][reservatorio]) historico[data][reservatorio] = { min: valor, max: valor, pontos: [] };
+  if (!historico[data][reservatorio])
+    historico[data][reservatorio] = { min: valor, max: valor, pontos: [] };
 
   historico[data][reservatorio].pontos.push({ hora, valor });
 
@@ -95,64 +90,51 @@ app.post("/api/historico", (req, res) => {
   if (valor > historico[data][reservatorio].max) historico[data][reservatorio].max = valor;
 
   fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
-
   res.json({ status: "ok" });
 });
 
 // ============================================================================
-//  *** NOVA ROTA ***  → usada pelo historico.js
-//  /dados-historico?reservatorio=x&data=YYYY-MM-DD
+//  GET /dados-historico
 // ============================================================================
-
 app.get("/dados-historico", (req, res) => {
   const { reservatorio, data } = req.query;
 
-  if (!reservatorio || !data) {
-    return res.status(400).json({ erro: "Parâmetros inválidos" });
-  }
-
-  if (!fs.existsSync(HIST_FILE)) {
-    return res.json([]);
-  }
+  if (!reservatorio || !data) return res.status(400).json({ erro: "Parâmetros inválidos" });
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  const ref = MAPA_RESERVATORIOS[reservatorio];
 
-  if (!ref) return res.status(400).json({ erro: "Reservatório desconhecido" });
+  const ref = MAPA_RESERVATORIOS[reservatorio];
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
 
   const dadosDia = historico[data]?.[ref];
-
   if (!dadosDia) return res.json([]);
 
   const lista = [];
 
-  // Ponto mínimo
+  // mínimo
   if (typeof dadosDia.min === "number") {
     lista.push({ hora: "00:00", valor: dadosDia.min });
   }
 
-  // Pontos salvos
+  // pontos
   (dadosDia.pontos || []).forEach(p => lista.push({ hora: p.hora, valor: p.valor }));
 
-  // Ordenar
   lista.sort((a, b) => a.hora.localeCompare(b.hora));
 
   res.json(lista);
 });
 
 // ============================================================================
-//  CONSUMO DIÁRIO — ROTA DIRETA
+//  GET /api/consumo
 // ============================================================================
-
 app.get("/api/consumo", (req, res) => {
   const consumo = JSON.parse(fs.readFileSync(CONSUMO_FILE, "utf-8"));
   res.json(consumo);
 });
 
 // ============================================================================
-//  INICIAR SERVIDOR
+//  INICIA O SERVIDOR
 // ============================================================================
-
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
