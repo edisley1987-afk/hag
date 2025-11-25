@@ -1,39 +1,40 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento – Sistema de Água</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
+    <title>Monitoramento - Sistema de Água</title>
 
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
 
-<header class="topbar">
-    <div class="brand">
-        <i class="fa-solid fa-hospital"></i>
-        <span>Hospital Arnaldo Gavazza – Monitoramento de Reservatórios</span>
-    </div>
-    <div id="ultimaAtualizacao" class="last-update">Atualizando…</div>
-</header>
+    <!-- AVISO DE ATRASO (controlado pelo JS) -->
+    <div id="aviso-atraso" style="display:none;">⚠ Sem atualização há mais de 10 minutos</div>
 
-<main class="conteudo">
+    <header>
+        <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento de Reservatórios e Pressões</h1>
+        <div id="lastUpdate">Última atualização: --</div>
+    </header>
 
-    <h2 class="secao-titulo"><i class="fa-solid fa-water"></i> Reservatórios</h2>
+    <main>
+        <!-- Título dos reservatórios -->
+        <h2 class="titulo-card">Reservatórios</h2>
 
-    <div id="cardsReservatorios" class="grid-cards"></div>
+        <!-- Onde o JavaScript renderiza os cards -->
+        <div id="reservatoriosContainer"></div>
 
-    <h2 class="secao-titulo" style="margin-top:40px;">
-        <i class="fa-solid fa-gauge-high"></i> Pressões
-    </h2>
+        <!-- Pressões -->
+        <h2 class="titulo-card">Pressões</h2>
 
-    <div id="cardsPressoes" class="grid-cards-pressoes"></div>
+        <div id="pressoesContainer"></div>
+    </main>
 
-</main>
+    <!-- === RODAPÉ ADICIONADO === -->
+    <footer>
+        © 2025 Hospital Arnaldo Gavazza — Sistema de Monitoramento 
+    </footer>
 
-<script src="dashboard.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 </html>

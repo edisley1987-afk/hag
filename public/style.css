@@ -1,202 +1,213 @@
-/* =========================== */
-/* PALETA PREMIUM HOSPITALAR   */
-/* =========================== */
-
+/* ===== VARIÁVEIS DE COR ===== */
 :root {
-    --verde-escuro: #0B3D2E;
-    --verde-medio: #146A4E;
-    --verde-claro: #1CA97A;
-    --cinza-texto: #4A4A4A;
-    --cinza-fraco: #C9C9C9;
-    --fundo: #F4F6F6;
-    --branco: #ffffff;
+  --verde-principal: #4DA492;
+  --verde-escuro: #006D5B;
+  --verde-agua: #7ED6D1;
+  --verde-agua-claro: #AEE8E3;
+  --verde-suave: #87C8BA;
 
-    --sombra-profunda: 0 6px 20px rgba(0,0,0,0.12);
+  --cinza-fundo: #F5F7FA;
+  --texto-principal: #333;
+  --texto-secundario: #555;
 }
 
-
-/* =========================== */
-/* LAYOUT GERAL                */
-/* =========================== */
-
+/* ===== RESET ===== */
 body {
-    margin: 0;
-    padding: 0;
-    background: var(--fundo);
-    font-family: "Segoe UI", sans-serif;
-    color: var(--cinza-texto);
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--cinza-fundo);
+  color: var(--texto-principal);
 }
 
-
-/* =========================== */
-/* BARRA SUPERIOR PREMIUM      */
-/* =========================== */
-
-.topbar {
-    width: 100%;
-    background: var(--verde-escuro);
-    color: var(--branco);
-    padding: 14px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: var(--sombra-profunda);
+/* ===== HEADER ===== */
+header {
+  background: #fff;
+  padding: 20px;
+  border-bottom: 3px solid var(--verde-principal);
 }
 
-.brand {
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--verde-escuro);
 }
 
-
-/* =========================== */
-/* TITULOS DE SEÇÃO            */
-/* =========================== */
-
-.secao-titulo {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 20px 0 20px;
-    color: var(--verde-escuro);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+#lastUpdate {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--texto-secundario);
 }
 
-
-/* =========================== */
-/* GRID DE CARDS               */
-/* =========================== */
-
-.grid-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
+/* ===== CONTAINERS ===== */
+main {
+  padding: 20px;
 }
 
-.grid-cards-pressoes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 24px;
+#reservatoriosContainer,
+#pressoesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-
-/* =========================== */
-/* CARD PREMIUM                */
-/* =========================== */
-
-.card {
-    background: var(--branco);
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: var(--sombra-profunda);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
+/* ===== CARD DO RESERVATÓRIO ===== */
+.card-reservatorio {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 20px;
+  width: 260px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  border-top: 6px solid var(--verde-principal);
 }
 
-.card-titulo {
-    font-size: 18px;
-    color: var(--verde-escuro);
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.titulo-card {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--verde-escuro);
 }
 
-.percentual {
-    font-size: 34px;
-    font-weight: 800;
-    color: var(--verde-medio);
+/* ===== TANQUE VISUAL ===== */
+.tanque-visu {
+  width: 100%;
+  height: 180px;
+  background: var(--verde-agua-claro);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
 }
 
-.litros {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--cinza-texto);
+.nivel-agua {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(var(--verde-agua), var(--verde-principal));
+  height: 0%;
+  transition: height 0.7s ease-out;
 }
 
-
-/* =========================== */
-/* BARRA DE NÍVEL PREMIUM      */
-/* =========================== */
-
-.barra {
-    width: 100%;
-    height: 10px;
-    background: var(--cinza-fraco);
-    border-radius: 100px;
-    overflow: hidden;
+.overlay-info {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 8px;
 }
 
-.barra-inner {
-    height: 100%;
-    background: var(--verde-claro);
-    border-radius: 100px;
-    transition: 0.6s ease;
+.percent-text {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--verde-escuro);
 }
 
+.liters-text {
+  font-size: 14px;
+  margin-top: 2px;
+  color: var(--texto-secundario);
+}
 
-/* =========================== */
-/* CAPACIDADE                  */
-/* =========================== */
+/* ===== ALERTA ===== */
+.alerta-msg {
+  padding: 8px;
+  background: #d9534f;
+  color: white;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.card-reservatorio.alerta {
+  border-left: 6px solid #d9534f;
+}
+
+/* ===== MANUTENÇÃO ===== */
+.manutencao-container {
+  margin-top: 5px;
+}
+
+.manutencao-tag {
+  margin-top: 5px;
+  background: var(--verde-suave);
+  padding: 5px;
+  text-align: center;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #fff;
+  display: none;
+}
+
+/* ===== AÇÕES ===== */
+.card-actions {
+  margin-top: 10px;
+}
 
 .capacidade {
-    font-size: 14px;
-    color: #666;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--texto-secundario);
 }
 
-
-/* =========================== */
-/* BOTÃO PREMIUM               */
-/* =========================== */
-
-.btn {
-    border: none;
-    background: var(--verde-escuro);
-    padding: 10px 14px;
-    color: white;
-    border-radius: 30px;
-    cursor: pointer;
-    font-weight: 600;
-    width: 100%;
-    transition: 0.3s;
+.btn-hist {
+  background: var(--verde-principal);
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
-.btn:hover {
-    background: var(--verde-medio);
+.btn-hist:hover {
+  background: var(--verde-escuro);
 }
 
+/* ===== CARDS DE PRESSÃO ===== */
+.card-pressao {
+  background: #fff;
+  width: 220px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-top: 6px solid var(--verde-principal);
+}
 
-/* =========================== */
-/* PRESSÕES                    */
-/* =========================== */
+.card-pressao .titulo-card {
+  margin-bottom: 10px;
+  color: var(--verde-escuro);
+}
 
 .pressao-valor {
-    font-size: 32px;
-    font-weight: bold;
-    color: var(--verde-escuro);
+  font-size: 32px;
+  text-align: center;
+  font-weight: bold;
+  color: var(--verde-escuro);
 }
 
-.pressao-bar {
-    font-size: 14px;
-    color: #666;
+.pressao-unidade {
+  text-align: center;
+  margin-top: 5px;
+  font-size: 14px;
+  color: var(--texto-secundario);
 }
 
-.card.red {
-    border-left: 5px solid red;
-}
+.pressao-baixa { border-left: 6px solid #d9534f; }
+.pressao-ok    { border-left: 6px solid var(--verde-principal); }
+.pressao-alta  { border-left: 6px solid #f0ad4e; }
+.sem-dado      { border-left: 6px solid #999; }
 
-.badge-manut {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #FFD93D;
-    padding: 4px 12px;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 10px;
+/* ===== AVISO DE ATRASO ===== */
+#aviso-atraso {
+  background: #d9534f;
+  padding: 10px;
+  color: white;
+  text-align: center;
+  display: none;
+  font-weight: bold;
 }
