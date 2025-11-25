@@ -1,102 +1,166 @@
-// ===== dashboard.js =====
-// API retorna OBJETO com { chave: valor }
+// public/dashboard.js
+// Dashboard frontend — compatível com seu server.js (/api/dashboard)
 
-const API_URL = window.location.origin + "/dados";
-const UPDATE_INTERVAL = 5000;
+const API_URL = window.location.origin + "/api/dashboard";
+const UPDATE_INTERVAL = 5000; // ms
 
-// MAPA DE RESERVATÓRIOS E SUAS CAPACIDADES
-const RES_MAP = {
-  Reservatorio_Elevador_current: {
-    nome: "Reservatório Elevador",
-    capacidade: 20000
-  },
-  Reservatorio_Osmose_current: {
-    nome: "Reservatório Osmose",
-    capacidade: 200
-  },
-  Reservatorio_CME_current: {
-    nome: "Reservatório CME",
-    capacidade: 1000
-  },
-  Reservatorio_Agua_Abrandada_current: {
-    nome: "Reservatório Abrandada",
-    capacidade: 9000
-  }
-};
+const reservatoriosContainer = document.getElementById("reservatoriosContainer");
+const pressoesContainer = document.getElementById("pressoesContainer");
+const lastUpdateEl = document.getElementById("lastUpdate");
 
-// PRESSÕES
-const PRESS_MAP = {
-  Pressao_Saida_Osmose_current: "Pressão Saída (296)",
-  Pressao_Retorno_Osmose_current: "Pressão Retorno (296)",
-  Pressao_Saida_CME_current: "Pressão Saída CME"
-};
+// utilitário
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-// =======================================
-// Atualização principal
-// =======================================
-async function atualizarValores() {
-  try {
-    const resp = await fetch(API_URL);
-    const dados = await resp.json();   // <-- OBJETO
+// Formata número com separador de milhares
+function formatNumberWithSep(n) {
+  if (n == null) return "--";
+  return Number(n).toLocaleString('pt-BR');
+}
 
-    if (typeof dados !== "object" || Array.isArray(dados)) {
-      console.error("❌ ERRO: API deveria retornar OBJETO, mas retornou:", dados);
-      return;
+// --- Cria / atualiza DOM ---
+function criarCardsBase(reservatorios, pressoes) {
+
+  // ============================
+  // RESERVATÓRIOS
+  // ============================
+
+  reservatoriosContainer.innerHTML = "";
+  reservatorios.forEach(r => {
+    const id = `res_${r.setor}`;
+    const card = document.createElement("div");
+    card.className = "card-reservatorio";
+    card.id = id;
+
+    card.innerHTML = `
+      <h3 class="titulo-card">${r.nome}</h3>
+
+      <div class="tanque-visu">
+        <div class="nivel-agua" id="${id}_nivel" style="height: ${r.percent}%"></div>
+        <div class="overlay-info">
+          <div class="percent-text" id="${id}_percent">${r.percent}%</div>
+          <div class="liters-text" id="${id}_litros">${formatNumberWithSep(r.current_liters)} L</div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <div class="capacidade">Capacidade: ${formatNumberWithSep(r.capacidade ?? "—")} L</div>
+        <button class="btn-hist" data-setor="${r.setor}">Ver histórico</button>
+      </div>
+    `;
+
+    // botão histórico
+    card.querySelector(".btn-hist").addEventListener("click", (e) => {
+      const setor = e.currentTarget.dataset.setor;
+      window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
+    });
+
+    reservatoriosContainer.appendChild(card);
+  });
+
+  // ============================
+  // PRESSÕES — 3 SENSORES
+  // ============================
+  pressoesContainer.innerHTML = "";
+  pressoes.forEach((p) => {
+    const id = `pres_${p.setor}`;
+    const card = document.createElement("div");
+    card.className = "card-pressao";
+    card.id = id;
+
+    // valor já vem em bar pelo servidor
+    const bar = (p.pressao == null || isNaN(p.pressao)) ? null : Number(p.pressao);
+
+    card.innerHTML = `
+      <h3 class="titulo-card">${p.nome}</h3>
+      <div class="pressao-valor" id="${id}_valor">${bar == null ? "--" : bar.toFixed(2)}</div>
+      <div class="pressao-unidade">bar</div>
+    `;
+
+    // cores
+    if (bar == null) {
+      card.classList.add("sem-dado");
+    } else if (bar < 2.0) {
+      card.classList.add("pressao-baixa");
+    } else if (bar < 6.0) {
+      card.classList.add("pressao-ok");
+    } else {
+      card.classList.add("pressao-alta");
     }
 
-    // Atualiza relógio
-    document.getElementById("lastUpdate").textContent =
-      "Última atualização: " + new Date().toLocaleString("pt-BR");
+    pressoesContainer.appendChild(card);
+  });
+}
 
-    // Converte para pares [chave, valor]
-    const entradas = Object.entries(dados);
 
-    entradas.forEach(([id, valorBruto]) => {
-      if (id === "timestamp") return; // ignora campo timestamp
+// ===============================
+// ATUALIZAR (CHAMA API)
+// ===============================
+async function atualizar() {
+  try {
+    const resp = await fetch(API_URL, { cache: "no-store" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-      const valor = Number(valorBruto);
+    const data = await resp.json();
 
-      // ===============================
-      // RESERVATÓRIOS
-      // ===============================
-      if (RES_MAP[id]) {
-        const cap = RES_MAP[id].capacidade;
-        const perc = Math.min(100, Math.max(0, (valor / cap) * 100));
+    // garante arrays
+    const reserv = Array.isArray(data.reservatorios) ? data.reservatorios : [];
+    let press = Array.isArray(data.pressoes) ? data.pressoes : [];
 
-        const pctEl   = document.getElementById(`percent_${id}`);
-        const litEl   = document.getElementById(`litros_${id}`);
-        const nivelEl = document.getElementById(`nivel_${id}`);
-        const alertaEl = document.getElementById(`alert_${id}`);
-        const cardEl  = document.getElementById(`card_${id}`);
-
-        if (pctEl) pctEl.textContent = perc.toFixed(0) + "%";
-        if (litEl) litEl.textContent = valor + " L";
-        if (nivelEl) nivelEl.style.height = perc + "%";
-
-        // ALERTA visual
-        if (perc <= 30) {
-          if (alertaEl) alertaEl.style.display = "block";
-          if (cardEl) cardEl.classList.add("alerta");
-        } else {
-          if (alertaEl) alertaEl.style.display = "none";
-          if (cardEl) cardEl.classList.remove("alerta");
-        }
-      }
-
-      // ===============================
-      // PRESSÕES
-      // ===============================
-      if (PRESS_MAP[id]) {
-        const presEl = document.getElementById(`pres_${id}`);
-        if (presEl) presEl.textContent = valor.toFixed(2);
+    // corrige capacidades faltando
+    reserv.forEach(r => {
+      if (!r.capacidade && r.setor) {
+        const caps = {
+          elevador: 20000,
+          osmose: 200,
+          cme: 1000,
+          abrandada: 9000
+        };
+        r.capacidade = caps[r.setor] ?? null;
       }
     });
 
-  } catch (e) {
-    console.error("❌ Erro ao atualizar dashboard:", e);
+    // ============================
+    // MANTER APENAS 3 SENSORES
+    // ============================
+
+    const mapaSetores = {
+      "Pressao_Saida_Osmose_current": "saida_osmose",
+      "Pressao_Retorno_Osmose_current": "retorno_osmose",
+      "Pressao_Saida_CME_current": "saida_cme"
+    };
+
+    press = press
+      .filter(p => mapaSetores[p.setor])       // mantém só os 3
+      .map(p => ({
+        ...p,
+        setor: mapaSetores[p.setor]           // renomeia setor
+      }));
+
+    criarCardsBase(reserv, press);
+
+    // relógio
+    if (data.lastUpdate) {
+      const dt = new Date(data.lastUpdate);
+      lastUpdateEl.textContent = "Última atualização: " + dt.toLocaleString("pt-BR");
+    } else {
+      lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
+    }
+
+    window._ultimaDashboard = data;
+
+  } catch (err) {
+    console.error("Erro ao atualizar dashboard:", err);
+
+    if (window._ultimaDashboard) {
+      criarCardsBase(
+        window._ultimaDashboard.reservatorios || [],
+        window._ultimaDashboard.pressoes || []
+      );
+      lastUpdateEl.textContent =
+        "Última atualização: (cache) " + new Date().toLocaleTimeString("pt-BR");
+    }
   }
 }
 
-// Rodar imediatamente
-atualizarValores();
-setInterval(atualizarValores, UPDATE_INTERVAL);
+setInterval(atualizar, UPDATE_INTERVAL);
+atualizar();
