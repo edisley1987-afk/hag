@@ -28,17 +28,19 @@ const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // ============================================================================
-// 🔥 TABELA DE SENSORES — CALIBRAÇÃO AJUSTADA E CONFIRMADA
+// 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS
 // ============================================================================
+
 const SENSORES = {
+  // ======== RESERVATÓRIOS ========
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
-    leituraCheio: 0.009480,
+    leituraCheio: 0.008742,
     capacidade: 20000
   },
   "Reservatorio_Osmose_current": {
     leituraVazio: 0.005050,
-    leituraCheio: 0.006693,
+    leituraCheio: 0.006492,
     capacidade: 200
   },
   "Reservatorio_CME_current": {
@@ -47,15 +49,28 @@ const SENSORES = {
     capacidade: 1000
   },
   "Reservatorio_Agua_Abrandada_current": {
-    leituraVazio: 0.004008,
-    leituraCheio: 0.004929,
+    leituraVazio: 0.004048,
+    leituraCheio: 0.006515,
     capacidade: 9000
   },
 
-  // Pressões
+  // 🔥🔥🔥 **LAVANDERIA CORRIGIDO AQUI**
+  "Reservatorio_lavanderia_current": {
+    leituraVazio: 0.006012,
+    leituraCheio: 0.010541, // leitura cheia REAL confirmada
+    capacidade: 10000       // capacidade REAL 10.000 L
+  },
+
+  // ======== PRESSÕES ========
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
-  "Pressao_Saida_CME_current": { tipo: "pressao" }
+  "Pressao_Saida_CME_current": { tipo: "pressao" },
+
+  // ======== BOMBAS ========
+  "Bomba_01": { tipo: "bomba" },
+  "Ciclo_Bomba_01": { tipo: "ciclo" },
+  "Bomba_02": { tipo: "bomba" },
+  "Ciclo_Bomba_02": { tipo: "ciclo" }
 };
 
 // === Função para salvar última leitura ===
@@ -65,8 +80,9 @@ function salvarDados(dados) {
 }
 
 // ============================================================================
-// === registrarHistorico()
+// registrarHistorico()
 // ============================================================================
+
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
   let historico = {};
@@ -82,10 +98,12 @@ function registrarHistorico(dados) {
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dados).forEach(([ref, valor]) => {
-    if (ref === "timestamp" || typeof valor !== "number") return;
+    if (ref === "timestamp") return;
 
     const sensor = SENSORES[ref];
-    const capacidade = sensor?.capacidade || null;
+
+    if (!sensor) return;
+    if (!sensor.capacidade) return;
 
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = {
@@ -100,15 +118,13 @@ function registrarHistorico(dados) {
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
-    if (!capacidade || capacidade <= 1) return;
-
-    const variacaoMinima = capacidade * 0.02;
+    const variacao = sensor.capacidade * 0.02;
     const ultimo = reg.pontos.at(-1);
 
-    if (!ultimo || Math.abs(valor - ultimo.valor) >= variacaoMinima) {
+    if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
       reg.pontos.push({
         hora: new Date().toLocaleTimeString("pt-BR"),
-        valor: valor
+        valor
       });
     }
   });
@@ -117,8 +133,9 @@ function registrarHistorico(dados) {
 }
 
 // ============================================================================
-// === Endpoint universal /atualizar
+// Endpoint universal /atualizar
 // ============================================================================
+
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path}`);
 
@@ -141,21 +158,21 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       dataArray = body;
     } else if (body && Array.isArray(body.data)) {
       dataArray = body.data;
-    } else if (typeof body === "object" && body !== null) {
-      dataArray = Object.keys(body)
-        .filter((k) => k.includes("_current"))
-        .map((k) => ({ ref: k, value: Number(body[k]) }));
+    } else if (body && typeof body === "object") {
+      dataArray = Object.keys(body).map(k => ({
+        ref: k,
+        value: Number(body[k])
+      }));
     }
 
     if (!dataArray.length) {
-      console.warn("Nenhum dado válido:", body);
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
     const dadosConvertidos = {};
 
     for (const item of dataArray) {
-      const ref = item.ref || item.name;
+      const ref = item.ref;
       const valor = Number(item.value);
 
       if (!ref || isNaN(valor)) continue;
@@ -167,26 +184,37 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         continue;
       }
 
-      const { leituraVazio, leituraCheio, capacidade, tipo } = sensor;
+      let convertido = valor;
 
-      let leituraConvertida;
-
-      if (tipo === "pressao") {
-        leituraConvertida = ((valor - 0.004) / 0.016) * 20;
-        leituraConvertida = Math.max(0, Math.min(20, leituraConvertida));
-        leituraConvertida = Number(leituraConvertida.toFixed(3));
-      } else if (capacidade > 1) {
-        leituraConvertida =
-          ((valor - leituraVazio) / (leituraCheio - leituraVazio)) *
-          capacidade;
-
-        leituraConvertida = Math.max(0, Math.min(capacidade, leituraConvertida));
-        leituraConvertida = Math.round(leituraConvertida);
-      } else {
-        leituraConvertida = Number(valor.toFixed(5));
+      // PRESSÃO
+      if (sensor.tipo === "pressao") {
+        convertido = ((valor - 0.004) / 0.016) * 20;
+        convertido = Math.max(0, Math.min(20, convertido));
+        convertido = Number(convertido.toFixed(2));
       }
 
-      dadosConvertidos[ref] = leituraConvertida;
+      // BOMBA
+      else if (sensor.tipo === "bomba") {
+        convertido = valor === 1 ? 1 : 0;
+      }
+
+      // CICLO
+      else if (sensor.tipo === "ciclo") {
+        convertido = Math.max(0, Math.round(valor));
+      }
+
+      // RESERVATÓRIO
+      else if (sensor.capacidade > 1) {
+        convertido =
+          ((valor - sensor.leituraVazio) /
+            (sensor.leituraCheio - sensor.leituraVazio)) *
+          sensor.capacidade;
+
+        convertido = Math.max(0, Math.min(sensor.capacidade, convertido));
+        convertido = Math.round(convertido);
+      }
+
+      dadosConvertidos[ref] = convertido;
     }
 
     dadosConvertidos.timestamp = new Date().toISOString();
@@ -202,21 +230,24 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 });
 
 // ============================================================================
-// === /dados
+// /dados
 // ============================================================================
+
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
 // ============================================================================
-// === /historico
+// /historico
 // ============================================================================
+
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
   cme: "Reservatorio_CME_current",
-  abrandada: "Reservatorio_Agua_Abrandada_current"
+  abrandada: "Reservatorio_Agua_Abrandada_current",
+  lavanderia: "Reservatorio_lavanderia_current"
 };
 
 app.get("/historico", (req, res) => {
@@ -227,8 +258,9 @@ app.get("/historico", (req, res) => {
 
   for (const [data, sensores] of Object.entries(historico)) {
     for (const [ref, dados] of Object.entries(sensores)) {
-      const nome = Object.keys(MAPA_RESERVATORIOS)
-        .find(key => MAPA_RESERVATORIOS[key] === ref);
+      const nome = Object.keys(MAPA_RESERVATORIOS).find(
+        key => MAPA_RESERVATORIOS[key] === ref
+      );
 
       if (!nome) continue;
 
@@ -257,8 +289,9 @@ app.get("/historico", (req, res) => {
 });
 
 // ============================================================================
-// === /historico/24h/:reservatorio
+// /historico/24h/:reservatorio
 // ============================================================================
+
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
@@ -292,8 +325,9 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// === /consumo/5dias/:reservatorio
+// /consumo/5dias/:reservatorio
 // ============================================================================
+
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
@@ -311,9 +345,7 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
     const valores = [];
 
     if (typeof reg.min === "number") valores.push(reg.min);
-    if (Array.isArray(reg.pontos)) {
-      reg.pontos.forEach(p => valores.push(p.valor));
-    }
+    if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
 
     if (valores.length >= 2) {
       dias.push({
@@ -334,8 +366,9 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// === /api/consumo — usado pelo dashboard
+// /api/consumo — usado pelo dashboard
 // ============================================================================
+
 app.get("/api/consumo", (req, res) => {
   const qtdDias = Number(req.query.dias || 5);
 
@@ -343,18 +376,13 @@ app.get("/api/consumo", (req, res) => {
     return res.json({
       dias: [],
       elevador: [],
-      osmose: []
+      osmose: [],
+      lavanderia: []
     });
   }
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
   const dias = Object.keys(historico).sort().slice(-qtdDias);
-
-  const resultado = {
-    dias,
-    elevador: [],
-    osmose: []
-  };
 
   function calcularConsumo(ref) {
     return dias.map(data => {
@@ -372,21 +400,25 @@ app.get("/api/consumo", (req, res) => {
     });
   }
 
-  resultado.elevador = calcularConsumo("Reservatorio_Elevador_current");
-  resultado.osmose = calcularConsumo("Reservatorio_Osmose_current");
-
-  res.json(resultado);
+  res.json({
+    dias,
+    elevador: calcularConsumo("Reservatorio_Elevador_current"),
+    osmose: calcularConsumo("Reservatorio_Osmose_current"),
+    lavanderia: calcularConsumo("Reservatorio_lavanderia_current")
+  });
 });
 
 // ============================================================================
-// === /api/dashboard — resumo usado no dashboard
+// /api/dashboard — resumo usado no dashboard
 // ============================================================================
+
 app.get("/api/dashboard", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) {
     return res.json({
       lastUpdate: "-",
       reservatorios: [],
-      pressoes: []
+      pressoes: [],
+      bombas: []
     });
   }
 
@@ -398,7 +430,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "elevador",
       percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
       current_liters: dados["Reservatorio_Elevador_current"],
-      capacidade: 20000,               // ← ADICIONADO
+      capacidade: 20000,
       manutencao: false
     },
     {
@@ -406,7 +438,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "osmose",
       percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
       current_liters: dados["Reservatorio_Osmose_current"],
-      capacidade: 200,                 // ← ADICIONADO
+      capacidade: 200,
       manutencao: false
     },
     {
@@ -414,7 +446,7 @@ app.get("/api/dashboard", (req, res) => {
       setor: "cme",
       percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
       current_liters: dados["Reservatorio_CME_current"],
-      capacidade: 1000,                // ← ADICIONADO
+      capacidade: 1000,
       manutencao: false
     },
     {
@@ -422,7 +454,17 @@ app.get("/api/dashboard", (req, res) => {
       setor: "abrandada",
       percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
       current_liters: dados["Reservatorio_Agua_Abrandada_current"],
-      capacidade: 9000,                // ← ADICIONADO
+      capacidade: 9000,
+      manutencao: false
+    },
+
+    // 🔥🔥🔥 LAVANDERIA CORRIGIDA AQUI
+    {
+      nome: "Lavanderia",
+      setor: "lavanderia",
+      percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
+      current_liters: dados["Reservatorio_lavanderia_current"],
+      capacidade: 10000,
       manutencao: false
     }
   ];
@@ -445,16 +487,33 @@ app.get("/api/dashboard", (req, res) => {
     }
   ];
 
+  const bombas = [
+    {
+      nome: "Bomba 01",
+      estado: dados["Bomba_01"] === 1 ? "ligada" : "desligada",
+      estado_num: dados["Bomba_01"] || 0,
+      ciclo: dados["Ciclo_Bomba_01"] || 0
+    },
+    {
+      nome: "Bomba 02",
+      estado: dados["Bomba_02"] === 1 ? "ligada" : "desligada",
+      estado_num: dados["Bomba_02"] || 0,
+      ciclo: dados["Ciclo_Bomba_02"] || 0
+    }
+  ];
+
   res.json({
     lastUpdate: dados.timestamp,
     reservatorios,
-    pressoes
+    pressoes,
+    bombas
   });
 });
 
 // ============================================================================
-// === Interface estática
+// Interface estática
 // ============================================================================
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) =>
@@ -474,8 +533,9 @@ app.get("/login", (req, res) =>
 );
 
 // ============================================================================
-// === Inicialização
+// Inicialização
 // ============================================================================
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor HAG ativo na porta ${PORT}`);
