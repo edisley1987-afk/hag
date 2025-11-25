@@ -1,28 +1,42 @@
+/* ===== VARIÁVEIS DE COR ===== */
+:root {
+  --verde-principal: #4DA492;
+  --verde-escuro: #006D5B;
+  --verde-agua: #7ED6D1;
+  --verde-agua-claro: #AEE8E3;
+  --verde-suave: #87C8BA;
+
+  --cinza-fundo: #F5F7FA;
+  --texto-principal: #333;
+  --texto-secundario: #555;
+}
+
 /* ===== RESET ===== */
 body {
   margin: 0;
   padding: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #f5f7fa;
-  color: #333;
+  background: var(--cinza-fundo);
+  color: var(--texto-principal);
 }
 
 /* ===== HEADER ===== */
 header {
   background: #fff;
   padding: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 3px solid var(--verde-principal);
 }
 
 header h1 {
   margin: 0;
   font-size: 22px;
+  color: var(--verde-escuro);
 }
 
 #lastUpdate {
   margin-top: 4px;
   font-size: 14px;
-  color: #555;
+  color: var(--texto-secundario);
 }
 
 /* ===== CONTAINERS ===== */
@@ -46,19 +60,21 @@ main {
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
+  border-top: 6px solid var(--verde-principal);
 }
 
 .titulo-card {
   margin: 0 0 10px 0;
   font-size: 18px;
   font-weight: bold;
+  color: var(--verde-escuro);
 }
 
 /* ===== TANQUE VISUAL ===== */
 .tanque-visu {
   width: 100%;
   height: 180px;
-  background: #e6e6e6;
+  background: var(--verde-agua-claro);
   border-radius: 12px;
   position: relative;
   overflow: hidden;
@@ -69,7 +85,7 @@ main {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: linear-gradient(#70b9ff, #007bff);
+  background: linear-gradient(var(--verde-agua), var(--verde-principal));
   height: 0%;
   transition: height 0.7s ease-out;
 }
@@ -84,11 +100,13 @@ main {
 .percent-text {
   font-size: 26px;
   font-weight: bold;
+  color: var(--verde-escuro);
 }
 
 .liters-text {
   font-size: 14px;
   margin-top: 2px;
+  color: var(--texto-secundario);
 }
 
 /* ===== ALERTA ===== */
@@ -114,12 +132,12 @@ main {
 
 .manutencao-tag {
   margin-top: 5px;
-  background: #f0ad4e;
+  background: var(--verde-suave);
   padding: 5px;
   text-align: center;
   border-radius: 6px;
   font-weight: bold;
-  color: white;
+  color: #fff;
   display: none;
 }
 
@@ -131,10 +149,11 @@ main {
 .capacidade {
   font-size: 14px;
   margin-bottom: 8px;
+  color: var(--texto-secundario);
 }
 
 .btn-hist {
-  background: #007bff;
+  background: var(--verde-principal);
   color: white;
   border: none;
   width: 100%;
@@ -146,7 +165,7 @@ main {
 }
 
 .btn-hist:hover {
-  background: #005dc4;
+  background: var(--verde-escuro);
 }
 
 /* ===== CARDS DE PRESSÃO ===== */
@@ -156,27 +175,30 @@ main {
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-top: 6px solid var(--verde-principal);
 }
 
 .card-pressao .titulo-card {
   margin-bottom: 10px;
+  color: var(--verde-escuro);
 }
 
 .pressao-valor {
   font-size: 32px;
   text-align: center;
   font-weight: bold;
+  color: var(--verde-escuro);
 }
 
 .pressao-unidade {
   text-align: center;
   margin-top: 5px;
   font-size: 14px;
-  color: #666;
+  color: var(--texto-secundario);
 }
 
 .pressao-baixa { border-left: 6px solid #d9534f; }
-.pressao-ok    { border-left: 6px solid #5cb85c; }
+.pressao-ok    { border-left: 6px solid var(--verde-principal); }
 .pressao-alta  { border-left: 6px solid #f0ad4e; }
 .sem-dado      { border-left: 6px solid #999; }
 
