@@ -62,6 +62,7 @@ section h2{
   padding:14px;
   display:flex;
   flex-direction:column;
+  transition: border 0.3s ease;
 }
 
 .titulo-card{
@@ -105,7 +106,7 @@ section h2{
 .percent-text{ font-size:28px; font-weight:700; }
 .liters-text{ font-size:14px; opacity:0.95 }
 
-/* ===== Ações ===== */
+/* Ações */
 .card-actions{
   margin-top:10px;
   display:flex;
@@ -123,18 +124,10 @@ section h2{
   font-weight:600;
 }
 
-/* ===== Capacidade ===== */
-.capacidade{
-  font-size:14px;
-  color:#123846;
-  font-weight:500;
-  margin-top:8px;
-}
-
-/* ===== Alerta ===== */
+/* ===== ALERTA ===== */
 .card-reservatorio.alerta{
-  border: 2px solid #ff3b30;
-  box-shadow:0 0 14px rgba(255,59,48,0.35);
+  border: 3px solid #ff3b30;
+  box-shadow:0 0 20px rgba(255,59,48,0.45);
 }
 
 .alerta-msg{
@@ -148,7 +141,7 @@ section h2{
   display:none;
 }
 
-/* ===== Manutenção ===== */
+/* Manutenção */
 .manutencao-container{
   margin-top:8px;
 }
@@ -188,7 +181,7 @@ section h2{
 .card-pressao.pressao-ok{ border-left:6px solid #f4b400 }
 .card-pressao.pressao-alta{ border-left:6px solid #1ca44c }
 
-/* ===== Rodapé ===== */
+/* Rodapé */
 footer{
   padding:18px;
   text-align:center;
@@ -199,7 +192,7 @@ footer{
   font-weight:600;
 }
 
-/* ===== Responsivo ===== */
+/* Responsivo */
 @media (max-width:900px){
   .card-reservatorio, .card-pressao{ width:48% }
 }
