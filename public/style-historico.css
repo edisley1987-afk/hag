@@ -75,13 +75,11 @@ body {
    🔽 AJUSTE DO TAMANHO DO GRÁFICO (NOVO)
    =========================================== */
 #grafico-container {
-  width: 100%;
-  max-width: 1100px; /* aumenta o limite máximo */
-  margin: 30px auto;
-  padding: 20px;
+  width: 98%;
+  margin: 20px auto;
 }
 
 #graficoHistorico {
   width: 100% !important;
-  height: 420px !important;  /* altura grande */
+  height: 500px !important;
 }
