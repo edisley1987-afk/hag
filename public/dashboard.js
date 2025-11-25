@@ -1,166 +1,140 @@
-// public/dashboard.js
-// Dashboard frontend — compatível com seu server.js (/api/dashboard)
+// =======================
+// CONFIGURAÇÕES
+// =======================
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000;
 
-const API_URL = window.location.origin + "/api/dashboard";
-const UPDATE_INTERVAL = 5000; // ms
+// Capacidade dos reservatórios
+const RESERVATORIOS = {
+  Reservatorio_Elevador_current: { nome: "Elevador", capacidade: 20000 },
+  Reservatorio_CME_current: { nome: "CME", capacidade: 5000 },
+  Reservatorio_Osmose_current: { nome: "Osmose", capacidade: 200 }
+};
 
-const reservatoriosContainer = document.getElementById("reservatoriosContainer");
-const pressoesContainer = document.getElementById("pressoesContainer");
-const lastUpdateEl = document.getElementById("lastUpdate");
+// Apenas 3 sensores de pressão
+const PRESSOES = {
+  Pressao_Saida_CME_current: "Pressão Saída CME",
+  Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
+  Pressao_Saida_Osmose_current: "Pressão Saída Osmose"
+};
 
-// utilitário
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+// Manutenção local
+let manut = JSON.parse(localStorage.getItem("manutencao")) || {};
 
-// Formata número com separador de milhares
-function formatNumberWithSep(n) {
-  if (n == null) return "--";
-  return Number(n).toLocaleString('pt-BR');
+function salvarManutencao() {
+  localStorage.setItem("manutencao", JSON.stringify(manut));
 }
 
-// --- Cria / atualiza DOM ---
-function criarCardsBase(reservatorios, pressoes) {
-
-  // ============================
-  // RESERVATÓRIOS
-  // ============================
-
-  reservatoriosContainer.innerHTML = "";
-  reservatorios.forEach(r => {
-    const id = `res_${r.setor}`;
-    const card = document.createElement("div");
-    card.className = "card-reservatorio";
-    card.id = id;
-
-    card.innerHTML = `
-      <h3 class="titulo-card">${r.nome}</h3>
-
-      <div class="tanque-visu">
-        <div class="nivel-agua" id="${id}_nivel" style="height: ${r.percent}%"></div>
-        <div class="overlay-info">
-          <div class="percent-text" id="${id}_percent">${r.percent}%</div>
-          <div class="liters-text" id="${id}_litros">${formatNumberWithSep(r.current_liters)} L</div>
-        </div>
-      </div>
-
-      <div class="card-actions">
-        <div class="capacidade">Capacidade: ${formatNumberWithSep(r.capacidade ?? "—")} L</div>
-        <button class="btn-hist" data-setor="${r.setor}">Ver histórico</button>
-      </div>
-    `;
-
-    // botão histórico
-    card.querySelector(".btn-hist").addEventListener("click", (e) => {
-      const setor = e.currentTarget.dataset.setor;
-      window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
-    });
-
-    reservatoriosContainer.appendChild(card);
-  });
-
-  // ============================
-  // PRESSÕES — 3 SENSORES
-  // ============================
-  pressoesContainer.innerHTML = "";
-  pressoes.forEach((p) => {
-    const id = `pres_${p.setor}`;
-    const card = document.createElement("div");
-    card.className = "card-pressao";
-    card.id = id;
-
-    // valor já vem em bar pelo servidor
-    const bar = (p.pressao == null || isNaN(p.pressao)) ? null : Number(p.pressao);
-
-    card.innerHTML = `
-      <h3 class="titulo-card">${p.nome}</h3>
-      <div class="pressao-valor" id="${id}_valor">${bar == null ? "--" : bar.toFixed(2)}</div>
-      <div class="pressao-unidade">bar</div>
-    `;
-
-    // cores
-    if (bar == null) {
-      card.classList.add("sem-dado");
-    } else if (bar < 2.0) {
-      card.classList.add("pressao-baixa");
-    } else if (bar < 6.0) {
-      card.classList.add("pressao-ok");
-    } else {
-      card.classList.add("pressao-alta");
-    }
-
-    pressoesContainer.appendChild(card);
-  });
-}
-
-
-// ===============================
-// ATUALIZAR (CHAMA API)
-// ===============================
+// =======================
+// FUNÇÃO PRINCIPAL
+// =======================
 async function atualizar() {
   try {
-    const resp = await fetch(API_URL, { cache: "no-store" });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const resp = await fetch(API_URL);
+    const dados = await resp.json();
 
-    const data = await resp.json();
+    document.getElementById("lastUpdate").innerText =
+      "Última atualização: " + new Date().toLocaleTimeString();
 
-    // garante arrays
-    const reserv = Array.isArray(data.reservatorios) ? data.reservatorios : [];
-    let press = Array.isArray(data.pressoes) ? data.pressoes : [];
+    atualizarReservatorios(dados);
+    atualizarPressoes(dados);
 
-    // corrige capacidades faltando
-    reserv.forEach(r => {
-      if (!r.capacidade && r.setor) {
-        const caps = {
-          elevador: 20000,
-          osmose: 200,
-          cme: 1000,
-          abrandada: 9000
-        };
-        r.capacidade = caps[r.setor] ?? null;
-      }
-    });
-
-    // ============================
-    // MANTER APENAS 3 SENSORES
-    // ============================
-
-    const mapaSetores = {
-      "Pressao_Saida_Osmose_current": "saida_osmose",
-      "Pressao_Retorno_Osmose_current": "retorno_osmose",
-      "Pressao_Saida_CME_current": "saida_cme"
-    };
-
-    press = press
-      .filter(p => mapaSetores[p.setor])       // mantém só os 3
-      .map(p => ({
-        ...p,
-        setor: mapaSetores[p.setor]           // renomeia setor
-      }));
-
-    criarCardsBase(reserv, press);
-
-    // relógio
-    if (data.lastUpdate) {
-      const dt = new Date(data.lastUpdate);
-      lastUpdateEl.textContent = "Última atualização: " + dt.toLocaleString("pt-BR");
-    } else {
-      lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
-    }
-
-    window._ultimaDashboard = data;
-
-  } catch (err) {
-    console.error("Erro ao atualizar dashboard:", err);
-
-    if (window._ultimaDashboard) {
-      criarCardsBase(
-        window._ultimaDashboard.reservatorios || [],
-        window._ultimaDashboard.pressoes || []
-      );
-      lastUpdateEl.textContent =
-        "Última atualização: (cache) " + new Date().toLocaleTimeString("pt-BR");
-    }
+  } catch (e) {
+    console.warn("Falha ao atualizar:", e);
   }
 }
 
 setInterval(atualizar, UPDATE_INTERVAL);
 atualizar();
+
+// =======================
+// RESERVATÓRIOS
+// =======================
+function atualizarReservatorios(d) {
+  const container = document.getElementById("reservatoriosContainer");
+  container.innerHTML = "";
+
+  for (const ref in RESERVATORIOS) {
+    const cfg = RESERVATORIOS[ref];
+    const litros = d[ref] ?? null;
+
+    const perc = litros !== null
+      ? Math.min(100, Math.max(0, (litros / cfg.capacidade) * 100))
+      : null;
+
+    const alerta = perc !== null && perc <= 30;
+    const isManut = manut[ref] === true;
+
+    // COR DO CARD
+    let cor = "normal";
+    if (alerta) cor = "alerta";
+    if (isManut) cor = "manutencao";
+
+    // AFECTIONS
+    const alertaMsg =
+      alerta && !isManut ? `<div class="alerta-msg">⚠ Nível abaixo de 30%</div>` : "";
+
+    const litrosTxt = litros === null ? "N/D" : `${litros} L`;
+    const percTxt = perc === null ? "--%" : `${perc.toFixed(0)}%`;
+
+    // HTML
+    const card = document.createElement("div");
+    card.className = `card-res ${cor}`;
+    card.innerHTML = `
+      <h3>${cfg.nome}</h3>
+      <div class="valores">${litrosTxt} — ${percTxt}</div>
+
+      <div class="nivel-barra">
+        <div class="nivel-preenchido" style="height:${perc || 0}%;"></div>
+      </div>
+
+      ${alertaMsg}
+
+      <button class="btn-manut" data-ref="${ref}">
+        ${isManut ? "Em Manutenção" : "Marcar Manutenção"}
+      </button>
+    `;
+
+    container.appendChild(card);
+
+    // LÓGICA DE AUTO-DESATIVAR MANUTENÇÃO
+    if (isManut && perc > 31) {
+      manut[ref] = false;
+      salvarManutencao();
+    }
+  }
+
+  // EVENTO DOS BOTÕES
+  document.querySelectorAll(".btn-manut").forEach(btn => {
+    btn.onclick = () => {
+      const ref = btn.getAttribute("data-ref");
+      manut[ref] = !manut[ref];
+      salvarManutencao();
+      atualizar(); // redesenhar
+    };
+  });
+}
+
+// =======================
+// PRESSÕES
+// =======================
+function atualizarPressoes(d) {
+  const container = document.getElementById("pressoesContainer");
+  container.innerHTML = "";
+
+  for (const ref in PRESSOES) {
+    const nome = PRESSOES[ref];
+    const val = d[ref];
+
+    const valorTxt = val == null ? "N/D" : val.toFixed(2) + " bar";
+
+    const card = document.createElement("div");
+    card.className = "card-pres";
+    card.innerHTML = `
+      <h3>${nome}</h3>
+      <div class="valor-pressao">${valorTxt}</div>
+    `;
+
+    container.appendChild(card);
+  }
+}
