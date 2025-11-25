@@ -8,9 +8,16 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
+    /* === GRÁFICO REDUZIDO === */
     #grafico-container {
-      width: 95%;
-      margin: 20px auto;
+      width: 55%;               /* gráfico mais estreito */
+      max-width: 600px;         /* limite máximo */
+      margin: 10px auto;        /* centralizado */
+      height: 180px !important; /* altura menor */
+    }
+
+    #graficoHistorico {
+      max-height: 150px !important; /* limita altura real do canvas */
     }
 
     table {
@@ -83,7 +90,6 @@
     <tbody id="tabelaConsumo"></tbody>
   </table>
 
-  <!-- Corrigido: arquivo correto -->
   <script src="historico.js"></script>
 </body>
 </html>
