@@ -1,44 +1,19 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Histórico Diário</title>
+<select id="reservatorioSelect">
+  <option value="elevador">Elevador</option>
+  <option value="osmose">Osmose</option>
+  <option value="cme">CME</option>
+  <option value="abrandada">Abrandada</option>
+</select>
 
-  <!-- CSS Moderno -->
-  <link rel="stylesheet" href="./historico.css">
-</head>
+<table>
+  <thead>
+    <tr>
+      <th>Data/Hora</th>
+      <th>Valor (L)</th>
+      <th>Reservatório</th>
+    </tr>
+  </thead>
+  <tbody id="tabelaHistorico"></tbody>
+</table>
 
-<body>
-
-  <div class="toolbar">
-    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar</button>
-  </div>
-
-  <h2 class="titulo-centro">Histórico Diário de Níveis</h2>
-
-  <div class="card filtro-card">
-      <label for="reservatorioSelect">Reservatório:</label>
-      <select id="reservatorioSelect">
-        <option value="elevador">Elevador</option>
-        <option value="osmose">Osmose</option>
-        <option value="cme">CME</option>
-        <option value="abrandada">Abrandada</option>
-      </select>
-
-      <label for="dataSelect">Data:</label>
-      <input type="date" id="dataSelect">
-
-      <button id="btnCarregar">Carregar</button>
-  </div>
-
-  <div class="card">
-    <canvas id="grafico"></canvas>
-  </div>
-
-  <div id="tabelaContainer" class="card tabela-card"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="./historico.js"></script>
-</body>
-</html>
+<script src="historico.js"></script>
