@@ -70,3 +70,17 @@ body {
 #tabelaContainer th {
   background: #f0f3f7;
 }
+
+/* ===========================================
+   🔽 AJUSTE DO TAMANHO DO GRÁFICO (NOVO)
+   =========================================== */
+#grafico-container {
+  width: 75%;               /* reduz a largura */
+  max-width: 850px;         /* impede largura exagerada */
+  margin: 20px auto;
+  height: 300px;            /* altura mais baixa */
+}
+
+#graficoHistorico {
+  max-height: 260px !important;  /* força tamanho menor */
+}
