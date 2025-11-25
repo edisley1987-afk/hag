@@ -1,51 +1,191 @@
-/* CONTÊINER DOS RESERVATÓRIOS */
-.reservatorios {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+/* ===== RESET ===== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f5f7fa;
+  color: #333;
+}
+
+/* ===== HEADER ===== */
+header {
+  background: #fff;
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+#lastUpdate {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* ===== CONTAINERS ===== */
+main {
   padding: 20px;
 }
 
-/* CARD PRINCIPAL */
+#reservatoriosContainer,
+#pressoesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* ===== CARD DO RESERVATÓRIO ===== */
 .card-reservatorio {
   background: #ffffff;
   border-radius: 15px;
   padding: 20px;
-  width: 230px;
+  width: 260px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
 }
 
-/* TÍTULO DO CARD */
-.card-reservatorio h3 {
+.titulo-card {
   margin: 0 0 10px 0;
-  font-size: 20px;
-}
-
-/* PORCENTAGEM */
-.card-reservatorio .percent {
-  font-size: 32px;
+  font-size: 18px;
   font-weight: bold;
 }
 
-/* LITRAGEM */
-.card-reservatorio .litros {
-  font-size: 16px;
+/* ===== TANQUE VISUAL ===== */
+.tanque-visu {
+  width: 100%;
+  height: 180px;
+  background: #e6e6e6;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.nivel-agua {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(#70b9ff, #007bff);
+  height: 0%;
+  transition: height 0.7s ease-out;
+}
+
+.overlay-info {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 8px;
+}
+
+.percent-text {
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.liters-text {
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+/* ===== ALERTA ===== */
+.alerta-msg {
+  padding: 8px;
+  background: #d9534f;
+  color: white;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.card-reservatorio.alerta {
+  border-left: 6px solid #d9534f;
+}
+
+/* ===== MANUTENÇÃO ===== */
+.manutencao-container {
+  margin-top: 5px;
+}
+
+.manutencao-tag {
+  margin-top: 5px;
+  background: #f0ad4e;
+  padding: 5px;
+  text-align: center;
+  border-radius: 6px;
+  font-weight: bold;
+  color: white;
+  display: none;
+}
+
+/* ===== AÇÕES ===== */
+.card-actions {
+  margin-top: 10px;
+}
+
+.capacidade {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.btn-hist {
+  background: #007bff;
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-hist:hover {
+  background: #005dc4;
+}
+
+/* ===== CARDS DE PRESSÃO ===== */
+.card-pressao {
+  background: #fff;
+  width: 220px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-pressao .titulo-card {
   margin-bottom: 10px;
 }
 
-/* CHECK E BOTÃO */
-.card-reservatorio label {
-  font-size: 14px;
+.pressao-valor {
+  font-size: 32px;
+  text-align: center;
+  font-weight: bold;
 }
 
-.card-reservatorio button {
-  margin-top: 10px;
-  padding: 5px 12px;
-  border-radius: 8px;
-  border: none;
-  background: #007bff;
-  color: #fff;
-  cursor: pointer;
+.pressao-unidade {
+  text-align: center;
+  margin-top: 5px;
+  font-size: 14px;
+  color: #666;
+}
+
+.pressao-baixa { border-left: 6px solid #d9534f; }
+.pressao-ok    { border-left: 6px solid #5cb85c; }
+.pressao-alta  { border-left: 6px solid #f0ad4e; }
+.sem-dado      { border-left: 6px solid #999; }
+
+/* ===== AVISO DE ATRASO ===== */
+#aviso-atraso {
+  background: #d9534f;
+  padding: 10px;
+  color: white;
+  text-align: center;
+  display: none;
+  font-weight: bold;
 }
