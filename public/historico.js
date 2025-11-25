@@ -41,7 +41,16 @@ async function carregarGrafico() {
           tension: 0.3
         }]
       },
-      options: { responsive: true }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,   //  ⬅⬅⬅ AQUI FAZ O GRÁFICO FICAR GRANDE
+        scales: {
+          y: { beginAtZero: false }
+        },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } }
+        }
+      }
     });
   } catch (err) {
     console.error("Erro no gráfico:", err);
@@ -51,6 +60,7 @@ async function carregarGrafico() {
 // =====================================
 // 📅 CONSUMO DIÁRIO (APENAS Elevador / Osmose)
 // =====================================
+
 async function carregarConsumo() {
   const reservatorio = select.value;
 
@@ -68,14 +78,17 @@ async function carregarConsumo() {
     tabela.innerHTML = "";
 
     dados.forEach(item => {
-      const tr = document.createElement("tr");
+      let consumo = item.consumo;
 
+      // 🔥 Se der negativo, corrige automaticamente
+      if (consumo < 0) consumo = 0;
+
+      const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${item.dia}</td>
         <td>${reservatorio}</td>
-        <td>${item.consumo}</td>
+        <td>${consumo}</td>
       `;
-
       tabela.appendChild(tr);
     });
 
