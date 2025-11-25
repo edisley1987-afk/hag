@@ -1,96 +1,161 @@
-// ===== dashboard.js =====
-// Leitura direta da rota /dados (backend retorna um objeto)
+/* === dashboard.js FINAL === */
 
 const API_URL = window.location.origin + "/dados";
 const UPDATE_INTERVAL = 5000;
 
-// Mapeamento dos reservatórios visíveis no dashboard
-const RES_MAP = {
-  Reservatorio_Elevador_current: {
+/* ================================
+   CONFIGURAÇÃO DOS RESERVATÓRIOS
+================================= */
+const RESERVATORIOS = {
+  Reservatorio_elevador: {
     nome: "Reservatório Elevador",
-    capacidade: 20000
+    capacidade: 20000,
+    altura: 1.45,
+    leituraVazio: 0.004168,
+    ref: "Reservatorio_elevador_current"
   },
-  Reservatorio_Osmose_current: {
+
+  RESERVATORIO_Osmose: {
     nome: "Reservatório Osmose",
-    capacidade: 200
+    capacidade: 200,
+    altura: 1.0,
+    leituraVazio: 0.00505,
+    ref: "RESERVATORIO_Osmose_current"
   },
-  Reservatorio_CME_current: {
+
+  RESERVATORIO_CME: {
     nome: "Reservatório CME",
-    capacidade: 1000
+    capacidade: 1000,
+    altura: 0.45,
+    leituraVazio: 0.004088,
+    ref: "RESERVATORIO_CME_current"
   },
-  Reservatorio_Agua_Abrandada_current: {
-    nome: "Água Abrandada",
-    capacidade: 9000
+
+  RESERVATORIO_Abrandada: {
+    nome: "Reservatório Abrandada",
+    capacidade: 9000,
+    altura: 0.6,
+    leituraVazio: 0.004008,
+    ref: "RESERVATORIO_Abrandada_current"
   }
 };
 
-// Mapeamento das pressões
-const PRESS_MAP = {
-  Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
-  Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
-  Pressao_Saida_CME_current: "Pressão Saída CME"
+/* ================================
+   CONFIG DOS SENSORES DE PRESSÃO
+================================= */
+const PRESSOES = {
+  Pressao_saida_296: {
+    nome: "Pressão Saída (296)",
+    ref: "Pressao_Saida_296_current"
+  },
+
+  Pressao_retorno_296: {
+    nome: "Pressão Retorno (296)",
+    ref: "Pressao_Retorno_296_current"
+  },
+
+  Pressao_Saida_CME: {
+    nome: "Pressão Saída CME",
+    ref: "Pressao_Saida_CME_current"
+  }
 };
 
-// Atualização dos valores
-async function atualizarValores() {
-  try {
-    const resp = await fetch(API_URL);
-    const dados = await resp.json();
+/* =============================
+    CRIAR OS CARDS DINAMICAMENTE
+============================= */
+function criarCards() {
+  const rContainer = document.getElementById("reservatoriosContainer");
+  const pContainer = document.getElementById("pressoesContainer");
 
-    if (!dados || typeof dados !== "object") {
-      console.error("Formato inesperado:", dados);
-      return;
-    }
+  rContainer.innerHTML = "";
+  pContainer.innerHTML = "";
 
-    // Atualiza relógio
-    document.getElementById("lastUpdate").textContent =
-      "Última atualização: " + new Date().toLocaleString("pt-BR");
+  Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
+    rContainer.innerHTML += `
+      <div class="card" id="card-${key}">
+        <h3>${cfg.nome}</h3>
+        <div class="nivel">
+          <div class="nivel-barra" id="nivel-${key}"></div>
+        </div>
+        <p class="valor" id="valor-${key}">--</p>
+      </div>
+    `;
+  });
 
-    // ========================================
-    // RESERVATÓRIOS
-    // ========================================
-    Object.entries(RES_MAP).forEach(([id, info]) => {
-      const valor = Number(dados[id] || 0); // pega direto do objeto
-      const cap = info.capacidade;
+  Object.entries(PRESSOES).forEach(([key, cfg]) => {
+    pContainer.innerHTML += `
+      <div class="card" id="card-${key}">
+        <h3>${cfg.nome}</h3>
+        <p class="valor" id="valor-${key}">--</p>
+      </div>
+    `;
+  });
+}
 
-      const perc = Math.min(100, Math.max(0, (valor / cap) * 100));
+/* =============================
+    ATUALIZAR NÍVEIS E PRESSÕES
+============================= */
+function atualizarValores(dados) {
+  if (!Array.isArray(dados)) {
+    console.error("ERRO: API não retornou array:", dados);
+    return;
+  }
 
-      const pctEl = document.getElementById(`percent_${id}`);
-      const litEl = document.getElementById(`litros_${id}`);
-      const nivelEl = document.getElementById(`nivel_${id}`);
-      const alertaEl = document.getElementById(`alert_${id}`);
-      const cardEl = document.getElementById(`card_${id}`);
+  dados.forEach(item => {
+    const ref = item.ref;
+    const valor = item.value;
 
-      if (!pctEl) return; // card ainda não carregado
+    /* --- RESERVATÓRIOS --- */
+    Object.entries(RESERVATORIOS).forEach(([key, cfg]) => {
+      if (cfg.ref === ref) {
+        const percentual = calcularPercentual(valor, cfg.leituraVazio, cfg.altura);
+        const litros = Math.round((percentual / 100) * cfg.capacidade);
 
-      pctEl.textContent = perc.toFixed(0) + "%";
-      litEl.textContent = valor + " L";
-      nivelEl.style.height = perc + "%";
+        document.getElementById(`valor-${key}`).innerText =
+          `${percentual.toFixed(1)}% (${litros} L)`;
 
-      // ALERTA
-      if (perc <= 30) {
-        alertaEl.style.display = "block";
-        cardEl.classList.add("alerta");
-      } else {
-        alertaEl.style.display = "none";
-        cardEl.classList.remove("alerta");
+        document.getElementById(`nivel-${key}`).style.height = `${percentual}%`;
       }
     });
 
-    // ========================================
-    // PRESSÕES
-    // ========================================
-    Object.entries(PRESS_MAP).forEach(([id, nome]) => {
-      const valor = Number(dados[id] || 0);
-      const presEl = document.getElementById(`pres_${id}`);
-      if (presEl) presEl.textContent = valor.toFixed(2);
+    /* --- PRESSÕES --- */
+    Object.entries(PRESSOES).forEach(([key, cfg]) => {
+      if (cfg.ref === ref) {
+        document.getElementById(`valor-${key}`).innerText =
+          valor.toFixed(3) + " bar";
+      }
     });
+  });
 
+  document.getElementById("lastUpdate").innerText =
+    "Última atualização: " + new Date().toLocaleString("pt-BR");
+}
+
+/* =============================
+     CÁLCULO DE NÍVEL (%)
+============================= */
+function calcularPercentual(leitura, leituraVazio, alturaRes) {
+  const alturaAtual = leitura - leituraVazio;
+  let perc = (alturaAtual / alturaRes) * 100;
+
+  if (perc < 0) perc = 0;
+  if (perc > 100) perc = 100;
+  return perc;
+}
+
+/* =============================
+         LOOP PRINCIPAL
+============================= */
+async function atualizarLoop() {
+  try {
+    const resp = await fetch(API_URL);
+    const dados = await resp.json();
+    atualizarValores(dados);
   } catch (e) {
-    console.error("Erro ao atualizar dashboard:", e);
+    console.error("Erro ao buscar dados:", e);
   }
 }
 
-// Chamada inicial
-atualizarValores();
-setInterval(atualizarValores, UPDATE_INTERVAL);
+criarCards();
+atualizarLoop();
+setInterval(atualizarLoop, UPDATE_INTERVAL);
