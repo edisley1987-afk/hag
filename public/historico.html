@@ -30,18 +30,39 @@
       background: #007b83;
       color: white;
     }
+
+    .btn-voltar {
+      display: inline-block;
+      margin: 20px;
+      padding: 10px 18px;
+      background: #007b83;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .btn-voltar:hover {
+      background: #015a66;
+    }
   </style>
 
 </head>
 <body>
 
+  <a href="index.html" class="btn-voltar">⬅ Voltar para Reservatórios</a>
+
   <h1 style="text-align:center;">📊 Histórico e Consumo Diário</h1>
 
-  <div style="text-align:center;">
+  <div style="text-align:center; margin-top:10px;">
     <label>Reservatório:</label>
     <select id="reservatorioSelect">
       <option value="elevador">Elevador</option>
       <option value="osmose">Osmose</option>
+      <option value="cme">CME</option>
+      <option value="abrandada">Abrandada</option>
+      <option value="geral">Geral</option>
+      <option value="irrigacao">Irrigação</option>
     </select>
   </div>
 
@@ -62,6 +83,7 @@
     <tbody id="tabelaConsumo"></tbody>
   </table>
 
-  <script src="historico-grafico.js"></script>
+  <!-- Corrigido: arquivo correto -->
+  <script src="historico.js"></script>
 </body>
 </html>
