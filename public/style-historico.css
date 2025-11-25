@@ -75,12 +75,12 @@ body {
    🔽 AJUSTE DO TAMANHO DO GRÁFICO (NOVO)
    =========================================== */
 #grafico-container {
-  width: 75%;               /* reduz a largura */
-  max-width: 850px;         /* impede largura exagerada */
-  margin: 20px auto;
-  height: 300px;            /* altura mais baixa */
+  width: 55%;              /* gráfico bem mais estreito */
+  max-width: 600px;        /* limite máximo */
+  margin: 10px auto;
+  height: 180px !important; /* altura bem pequena */
 }
 
 #graficoHistorico {
-  max-height: 260px !important;  /* força tamanho menor */
+  max-height: 150px !important;  /* força Chart.js a caber */
 }
