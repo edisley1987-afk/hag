@@ -1,6 +1,6 @@
 // public/dashboard.js
 // Dashboard frontend — compatível com /api/dashboard
-// Versão com suporte completo a bombas de circulação (alternadas, 15 min)
+// Versão final: suporte completo a bombas de circulação (alternadas, 15 min)
 
 const API_URL = window.location.origin + "/api/dashboard";
 const UPDATE_INTERVAL = 5000; // ms
@@ -49,13 +49,15 @@ window._bombaState = window._bombaState || {
     lastBinary: 0,
     startTs: null,
     lastOnTs: null,
-    lastCycle: null
+    lastCycle: null,
+    lastRunMs: null
   },
   bomba02: {
     lastBinary: 0,
     startTs: null,
     lastOnTs: null,
-    lastCycle: null
+    lastCycle: null,
+    lastRunMs: null
   }
 };
 
@@ -270,22 +272,19 @@ function atualizarValores(data) {
   // BOMBAS: lógica de tempo e alertas (alternadas)
   // ------------------------
 
-  // Ler campos do payload (suporta variações de nomes)
-  const b1 = Number(data.Bomba_01_binary ?? data.Bomba_01 ?? 0);
-  const b2 = Number(data.Bomba_02_binary ?? data.Bomba_02 ?? 0);
+  // Ler campos do payload (nomes confirmados pelo usuário / logs)
+  // aceitamos variações por segurança, mas priorizamos os nomes exatos:
+  // Bomba_01_binary, Bomba_02_binary, Ciclo_Bomba_01_counter, Ciclos_Bomba_02_counter
+  const b1 = Number(data.Bomba_01_binary ?? data.Bomba_01 ?? data.Bomba01 ?? 0);
+  const b2 = Number(data.Bomba_02_binary ?? data.Bomba_02 ?? data.Bomba02 ?? 0);
 
-  // ciclos: suporta "Ciclo_Bomba_01_counter" ou "Ciclo_Bomba_01" etc.
-  const c1 = Number(data.Ciclo_Bomba_01_counter ?? data.Ciclo_Bomba_01_counter ?? data.Ciclo_Bomba_01 ?? data.Ciclo_Bomba_01_counter ?? data.Ciclo_Bomba_01 ?? 0);
-  const c2 = Number(data.Ciclos_Bomba_02_counter ?? data.Ciclo_Bomba_02_counter ?? data.Ciclo_Bomba_02 ?? data.Ciclos_Bomba_02 ?? 0);
-
-  // Níveis para decidir se deveria ter acionamento (opcional, mas usamos para inferência)
-  const nivelAbrandada = Number(data.Reservatorio_Agua_Abrandada_current ?? data.abrandada ?? NaN);
-  const nivelLavanderia = Number(data.Reservatorio_lavanderia_current ?? data.lavanderia ?? NaN);
+  const c1 = Number(data.Ciclo_Bomba_01_counter ?? data.Ciclo_Bomba_01 ?? data.Ciclos_Bomba_01_counter ?? 0);
+  const c2 = Number(data.Ciclos_Bomba_02_counter ?? data.Ciclo_Bomba_02_counter ?? data.Ciclos_Bomba_02 ?? 0);
 
   const now = Date.now();
 
   // helper para atualizar estado de uma bomba
-  function processBomba(key, binary, ciclos, nivelRef) {
+  function processBomba(key, binary, ciclos) {
     const st = window._bombaState[key];
     const was = st.lastBinary;
 
@@ -293,16 +292,13 @@ function atualizarValores(data) {
     if (was === 0 && binary === 1) {
       st.startTs = now;
       st.lastOnTs = now;
-      // store lastCycle observed to detect increment
       st.lastCycle = ciclos;
     }
 
     // transição 1 -> 0 (desligou agora)
     if (was === 1 && binary === 0) {
-      // compute last run duration if startTs present
       if (st.startTs) {
-        const dur = now - st.startTs;
-        st.lastRunMs = dur;
+        st.lastRunMs = now - st.startTs;
       }
       st.startTs = null;
       st.lastBinary = 0;
@@ -311,7 +307,6 @@ function atualizarValores(data) {
     // atualização contínua (se está ligada)
     if (binary === 1) {
       st.lastBinary = 1;
-      // if startTs missing (server restarted mid-run), set startTs as lastOnTs or now
       if (!st.startTs) st.startTs = st.lastOnTs || now;
     } else {
       st.lastBinary = 0;
@@ -330,7 +325,7 @@ function atualizarValores(data) {
       statusEl.textContent = binary === 1 ? "Ligada" : "Desligada";
       statusEl.style.color = binary === 1 ? "green" : "#666";
     }
-    if (ciclosEl) ciclosEl.textContent = ciclos ?? "--";
+    if (ciclosEl) ciclosEl.textContent = isNaN(ciclos) ? "--" : ciclos;
 
     // tempo ligado (se está ligada)
     let tempoMs = null;
@@ -344,22 +339,15 @@ function atualizarValores(data) {
     if (ultimoEl) ultimoEl.textContent = st.lastOnTs ? new Date(st.lastOnTs).toLocaleTimeString("pt-BR") : "--";
 
     // ALERTAS:
-    // 1) Tempo ligado maior que BOMBA_ON_MS -> alerta (ficou presa ligada)
-    // 2) Ciclo não incrementou (observação): se st.lastCycle defined and cycles did not increase after expected cycle -> alert (we'll check elsewhere)
     let showAlert = false;
     let alertText = "";
 
     if (st.lastBinary === 1) {
-      // tempo ligado excessivo
       if ((now - st.startTs) > BOMBA_ON_MS) {
         showAlert = true;
         alertText = `⚠ Ligada > ${BOMBA_ON_MS/60000} min`;
       }
     }
-
-    // if level low and pump off -> maybe should have run: we decide that circulating pumps should alternate,
-    // but if neither turned on in expected window higher layer handles that check.
-    // we'll show additional alert if the other pump was on and this one did not start in expected time -> handled separately.
 
     if (showAlert) {
       alertaEl.style.display = "block";
@@ -370,12 +358,9 @@ function atualizarValores(data) {
       card && card.classList.remove("alerta-bomba-card");
     }
 
-    // check cycle increment: if previously recorded a lastCycle and it hasn't incremented after a full expected cycle window,
-    // we mark a warning (this is heuristic).
+    // check ciclo incremento heurístico
     if (typeof st.lastCycle === "number" && typeof ciclos === "number") {
-      // if pump is off and cycles haven't increased since lastOnTs + expected period*2 -> possible failure
       if (st.lastOnTs && (now - st.lastOnTs) > (BOMBA_ON_MS * 2) && ciclos <= st.lastCycle) {
-        // show a mild warning on UI (reuse same alertaEl)
         alertaEl.style.display = "block";
         alertaEl.textContent = "⚠ Ciclos não aumentaram (verificar)";
         card && card.classList.add("alerta-bomba-card");
@@ -384,13 +369,11 @@ function atualizarValores(data) {
   }
 
   // processa ambas bombas
-  processBomba("bomba01", b1, c1, nivelAbrandada);
-  processBomba("bomba02", b2, c2, nivelLavanderia);
+  processBomba("bomba01", b1, c1);
+  processBomba("bomba02", b2, c2);
 
   // Regras globais / alternância:
-  // - nunca as duas ligadas; se acontecer, alerta crítico
   if (b1 === 1 && b2 === 1) {
-    // alerta visual em ambos
     ["1","2"].forEach(idx => {
       const alertaEl = document.getElementById(`alerta-bomba-${idx}`);
       const card = document.getElementById(`card-bomba-${idx}`);
@@ -408,7 +391,6 @@ function atualizarValores(data) {
     || (window._bombaState.bomba01.lastBinary === 1 || window._bombaState.bomba02.lastBinary === 1);
 
   if (!anyRecentlyOn) {
-    // mostrar alerta global no topo das bombas (ou em cards)
     const alerta1 = document.getElementById("alerta-bomba-01");
     const alerta2 = document.getElementById("alerta-bomba-02");
     alerta1 && (alerta1.style.display = "block") && (alerta1.textContent = `⚠ Nenhuma bomba acionou nos últimos ${Math.round(NENHUMA_LIGADA_ALERT_MS/60000)} min`);
