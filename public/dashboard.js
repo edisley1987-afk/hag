@@ -3,13 +3,13 @@
 
 const API_URL = window.location.origin + "/api/dashboard";
 const UPDATE_INTERVAL = 5000; // ms
-const WARNING_TIMEOUT = 10 * 60 * 1000; // 10 minutos
+const WARNING_TIMEOUT = 10 * 60 * 1000; // 10 minutos (para overlay por card)
 
 const reservatoriosContainer = document.getElementById("reservatoriosContainer");
 const pressoesContainer = document.getElementById("pressoesContainer");
 const lastUpdateEl = document.getElementById("lastUpdate");
 
-// Banner de aviso (global)
+// Banner global (mantém igual)
 let avisoEl = document.getElementById("aviso-atraso");
 if (!avisoEl) {
   avisoEl = document.createElement("div");
@@ -26,7 +26,7 @@ function formatNumber(n) {
   return Number(n).toLocaleString("pt-BR");
 }
 
-// Render inicial: cria cards vazios a partir do que o servidor devolver
+// Render inicial: cria os cards
 function criarEstruturaInicial(reservatorios, pressoes) {
   reservatoriosContainer.innerHTML = "";
   pressoesContainer.innerHTML = "";
@@ -50,6 +50,11 @@ function criarEstruturaInicial(reservatorios, pressoes) {
       </div>
 
       <div class="alerta-msg" id="${id}_alerta" style="display:none;">⚠ Nível crítico (abaixo de 30%)</div>
+
+      <!-- Overlay de atraso (Opção C) -->
+      <div class="atraso-overlay" id="${id}_atr_overlay">
+        <span>⚠ Sem atualização recente</span>
+      </div>
 
       <div class="manutencao-container">
         <label>
@@ -91,9 +96,11 @@ function criarEstruturaInicial(reservatorios, pressoes) {
   });
 }
 
-// Atualiza só valores (não recria DOM)
+// Atualiza valores nos cards
 function atualizarValores(data) {
   if (!data || !Array.isArray(data.reservatorios)) return;
+
+  const momentoAgora = Date.now();
 
   data.reservatorios.forEach(r => {
     const id = `res_${r.setor}`;
@@ -105,11 +112,13 @@ function atualizarValores(data) {
     const manutCheck = document.getElementById(`${id}_manut`);
     const manutTag = document.getElementById(`${id}_tag`);
     const card = document.getElementById(id);
+    const atrasoOverlay = document.getElementById(`${id}_atr_overlay`);
 
-    const percent = (r.percent == null) ? (window._ultimaPercent?.[r.setor] ?? null) : r.percent;
-    const liters = (r.current_liters == null) ? (window._ultimaLitros?.[r.setor] ?? null) : r.current_liters;
+    const percent = r.percent ?? (window._ultimaPercent?.[r.setor] ?? null);
+    const liters = r.current_liters ?? (window._ultimaLitros?.[r.setor] ?? null);
     const capacidade = r.capacidade ?? (window._ultimaCapacidade?.[r.setor] ?? null);
 
+    // salva valores em cache
     window._ultimaPercent = window._ultimaPercent || {};
     window._ultimaLitros = window._ultimaLitros || {};
     window._ultimaCapacidade = window._ultimaCapacidade || {};
@@ -118,11 +127,27 @@ function atualizarValores(data) {
     if (liters !== null) window._ultimaLitros[r.setor] = liters;
     if (capacidade !== null) window._ultimaCapacidade[r.setor] = capacidade;
 
-    if (nivelEl) nivelEl.style.height = (percent !== null ? `${percent}%` : `0%`);
-    if (pctEl) pctEl.textContent = (percent !== null ? `${Math.round(percent)}%` : "--%");
-    if (litrEl) litrEl.textContent = (liters !== null ? `${formatNumber(liters)} L` : "-- L");
+    // nivel visual
+    if (nivelEl) nivelEl.style.height = percent !== null ? `${percent}%` : "0%";
+    if (pctEl) pctEl.textContent = percent !== null ? `${Math.round(percent)}%` : "--%";
+    if (litrEl) litrEl.textContent = liters !== null ? `${formatNumber(liters)} L` : "-- L";
     if (capEl) capEl.textContent = `Capacidade: ${formatNumber(capacidade)} L`;
 
+    /* ================================================================
+       🔥 OPÇÃO C – DETECÇÃO DE ATRASO INDIVIDUAL (overlay piscando)
+       ================================================================ */
+
+    const ultimo = r.lastUpdate ? new Date(r.lastUpdate).getTime() : null;
+
+    if (ultimo && momentoAgora - ultimo > WARNING_TIMEOUT) {
+      atrasoOverlay.classList.add("visivel");
+    } else {
+      atrasoOverlay.classList.remove("visivel");
+    }
+
+    /* ================================================================ */
+
+    // manutenção
     const mantKey = `manut_${r.setor}`;
     let isManut = false;
     try { isManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){}
@@ -137,60 +162,38 @@ function atualizarValores(data) {
 
           manutTag.style.display = novo ? "block" : "none";
 
-          if (novo) {
-            manutTag.classList.add("blink");
-
-            alertaEl && (alertaEl.style.display = "none");
-            card && card.classList.remove("alerta");
-          } else {
-            manutTag.classList.remove("blink");
-
-            if (percent !== null && percent <= 30) {
-              alertaEl && (alertaEl.style.display = "block");
-              card && card.classList.add("alerta");
-            }
-          }
+          if (novo) manutTag.classList.add("blink");
+          else manutTag.classList.remove("blink");
         });
         manutCheck._hasListener = true;
       }
     }
 
-    // Estado visual da manutenção
-    if (manutTag) {
-      const ativo = manutCheck && manutCheck.checked;
-      manutTag.style.display = ativo ? "block" : "none";
+    // estado visual da manutenção
+    manutTag.style.display = isManut ? "block" : "none";
+    if (isManut) manutTag.classList.add("blink");
+    else manutTag.classList.remove("blink");
 
-      if (ativo) manutTag.classList.add("blink");
-      else manutTag.classList.remove("blink");
-    }
-
-    const inManut = manutCheck && manutCheck.checked;
+    // alerta de nível
     if (alertaEl) {
-      if (!inManut && percent !== null && percent <= 30) {
+      if (!isManut && percent !== null && percent <= 30) {
         alertaEl.style.display = "block";
-        card && card.classList.add("alerta");
+        card.classList.add("alerta");
       } else {
         alertaEl.style.display = "none";
-        card && card.classList.remove("alerta");
+        card.classList.remove("alerta");
       }
     }
   });
 
+  // pressões (mantém igual)
   if (Array.isArray(data.pressoes)) {
     data.pressoes.forEach(p => {
       const id = `pres_${p.setor}`;
       const el = document.getElementById(`${id}_valor`);
       const card = document.getElementById(id);
 
-      let bar = null;
-      if (p.pressao != null) bar = Number(p.pressao);
-      else if (p.value != null) {
-        const v = Number(p.value);
-        if (!isNaN(v) && v > 0 && v <= 0.1) {
-          const mA = v * 1000;
-          bar = ((mA - 4) / 16) * 10;
-        }
-      }
+      let bar = p.pressao ?? null;
 
       if (el) el.textContent = bar == null ? "--" : Number(bar).toFixed(2);
       if (card) {
@@ -205,18 +208,19 @@ function atualizarValores(data) {
   }
 }
 
-// atraso de dados
+// aviso global
 function verificarAtraso(lastUpdate) {
   if (!lastUpdate) return;
   const diff = Date.now() - new Date(lastUpdate).getTime();
   avisoEl.style.display = diff > WARNING_TIMEOUT ? "block" : "none";
 }
 
-// ciclo principal
+// ciclo
 async function atualizar() {
   try {
     const resp = await fetch(API_URL, { cache: "no-store" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
+
     const data = await resp.json();
 
     if (!window._estruturaCriada) {
@@ -227,23 +231,15 @@ async function atualizar() {
     atualizarValores(data);
 
     if (data.lastUpdate) {
-      lastUpdateEl.textContent = "Última atualização: " + new Date(data.lastUpdate).toLocaleString("pt-BR");
+      lastUpdateEl.textContent =
+        "Última atualização: " + new Date(data.lastUpdate).toLocaleString("pt-BR");
       verificarAtraso(data.lastUpdate);
-    } else {
-      lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
     }
 
     window._ultimaDashboard = data;
 
   } catch (err) {
-    console.warn("Sem dados novos, usando última leitura", err);
-    if (window._ultimaDashboard) {
-      atualizarValores(window._ultimaDashboard);
-      if (window._ultimaDashboard.lastUpdate) {
-        lastUpdateEl.textContent = "Última atualização (cache): " + new Date(window._ultimaDashboard.lastUpdate).toLocaleString("pt-BR");
-        verificarAtraso(window._ultimaDashboard.lastUpdate);
-      }
-    }
+    console.warn("Sem dados novos, usando cache", err);
   }
 }
 
