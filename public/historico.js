@@ -1,54 +1,91 @@
 const API_HIST = "/historico";
+const API_CONSUMO = "/consumo/5dias";
+
 const select = document.getElementById("reservatorioSelect");
-const tabela = document.getElementById("tabelaHistorico");
+let grafico = null;
 
-async function carregarHistorico() {
+// =========================
+// 📌 CARREGAR GRÁFICO
+// =========================
+async function carregarGrafico() {
   try {
-    const resposta = await fetch(API_HIST);
-    const dados = await resposta.json();
-
-    if (!Array.isArray(dados)) {
-      console.error("Formato inválido:", dados);
-      return;
-    }
-
     const reservatorio = select.value;
 
-    // Filtra apenas o reservatório selecionado
-    const filtrado = dados.filter(d => d.reservatorio === reservatorio);
+    const resp = await fetch(API_HIST);
+    const dados = await resp.json();
 
-    // Ordena por timestamp
-    filtrado.sort((a, b) => a.timestamp - b.timestamp);
+    const filtrado = dados
+      .filter(d => d.reservatorio === reservatorio)
+      .sort((a, b) => a.timestamp - b.timestamp);
 
-    atualizarTabela(filtrado);
+    const labels = filtrado.map(p => new Date(p.timestamp).toLocaleString("pt-BR"));
+    const valores = filtrado.map(p => p.valor);
 
-  } catch (erro) {
-    console.error("Erro ao carregar histórico:", erro);
+    const ctx = document.getElementById("graficoHistorico").getContext("2d");
+
+    if (grafico) grafico.destroy();
+
+    grafico = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Nível (litros)",
+          data: valores,
+          borderWidth: 2,
+          borderColor: "blue",
+          backgroundColor: "rgba(0,0,255,0.2)",
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+
+  } catch (err) {
+    console.error("Erro gráfico:", err);
   }
 }
 
-function atualizarTabela(lista) {
-  tabela.innerHTML = "";
+// ===============================
+// 📌 TABELA DE CONSUMO DIÁRIO
+// ===============================
+async function carregarConsumo() {
+  try {
+    const reservatorio = select.value;
 
-  if (!lista.length) {
-    tabela.innerHTML = "<tr><td colspan='3'>Nenhum dado encontrado.</td></tr>";
-    return;
-  }
+    const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
+    const dados = await resp.json();
 
-  for (const item of lista) {
-    const dataHora = new Date(item.timestamp).toLocaleString("pt-BR");
+    const tabela = document.getElementById("tabelaConsumo");
+    tabela.innerHTML = "";
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${dataHora}</td>
-      <td>${item.valor}</td>
-      <td>${item.reservatorio}</td>
-    `;
-    tabela.appendChild(tr);
+    dados.forEach(item => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${item.dia}</td>
+        <td>${reservatorio}</td>
+        <td>${item.consumo}</td>
+      `;
+
+      tabela.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("Erro consumo:", err);
   }
 }
 
-select.addEventListener("change", carregarHistorico);
+// ===========================
+// Evento ao trocar reservatório
+// ===========================
+select.addEventListener("change", () => {
+  carregarGrafico();
+  carregarConsumo();
+});
 
-// Carregar ao abrir a página
-carregarHistorico();
+// Inicialização
+carregarGrafico();
+carregarConsumo();
