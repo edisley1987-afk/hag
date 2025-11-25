@@ -52,13 +52,25 @@ main {
 }
 
 #reservatoriosContainer,
-#pressoesContainer {
+#pressoesContainer,
+#bombasContainer {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
 }
 
+/* ===== TÍTULOS ===== */
+.titulo-card {
+  margin-top: 25px;
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--verde-escuro);
+}
+
+/* ========================================================================= */
 /* ===== CARD DO RESERVATÓRIO ===== */
+/* ========================================================================= */
 .card-reservatorio {
   background: #ffffff;
   border-radius: 15px;
@@ -127,7 +139,7 @@ main {
 }
 
 /* ========================================================================= */
-/* ===== OPÇÃO C — OVERLAY DE ATRASO SUAVE ===== */
+/* ===== OVERLAY DE ATRASO SUAVE ===== */
 /* ========================================================================= */
 
 .atraso-overlay {
@@ -149,23 +161,17 @@ main {
   transition: opacity 0.4s ease-out;
 }
 
-/* visível */
 .atraso-overlay.visivel {
   opacity: 1;
   animation: piscaSuave 0.9s infinite alternate ease-in-out;
 }
 
-/* piscar */
 @keyframes piscaSuave {
   from { opacity: 0.6; }
   to   { opacity: 1; }
 }
 
 /* ===== MANUTENÇÃO ===== */
-.manutencao-container {
-  margin-top: 5px;
-}
-
 .manutencao-tag {
   margin-top: 5px;
   background: var(--verde-suave);
@@ -180,40 +186,15 @@ main {
 .blink {
   animation: blinkAnim 1s infinite alternate;
 }
-
 @keyframes blinkAnim {
   from { opacity: 0.6; }
   to { opacity: 1; }
 }
 
-/* ===== AÇÕES ===== */
-.card-actions {
-  margin-top: 10px;
-}
-
-.capacidade {
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: var(--texto-secundario);
-}
-
-.btn-hist {
-  background: var(--verde-principal);
-  color: white;
-  border: none;
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s;
-}
-
-.btn-hist:hover {
-  background: var(--verde-escuro);
-}
-
+/* ========================================================================= */
 /* ===== PRESSÕES ===== */
+/* ========================================================================= */
+
 .card-pressao {
   background: #fff;
   width: 220px;
@@ -240,9 +221,58 @@ main {
 .pressao-baixa { border-left: 6px solid #d9534f; }
 .pressao-ok    { border-left: 6px solid var(--verde-principal); }
 .pressao-alta  { border-left: 6px solid #f0ad4e; }
-.sem-dado      { border-left: 6px solid #999; }
 
-/* ===== AVISO DE ATRASO GLOBAL ===== */
+/* ========================================================================= */
+/* ===== BOMBA DE CIRCULAÇÃO (NOVO) ===== */
+/* ========================================================================= */
+
+.card-bomba {
+  background: #fff;
+  width: 260px;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-top: 6px solid var(--verde-principal);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-bomba h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: var(--verde-escuro);
+}
+
+.bomba-status {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.bomba-status.on { color: #0a8a35; }
+.bomba-status.off { color: #b30000; }
+
+.bomba-info {
+  font-size: 14px;
+  color: var(--texto-secundario);
+  margin-top: 4px;
+}
+
+.bomba-alerta {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  text-align: center;
+  background: #d9534f;
+  color: white;
+  font-weight: bold;
+  display: none;
+}
+
+/* ========================================================================= */
+/* ===== AVISO GLOBAL DE ATRASO ===== */
+/* ========================================================================= */
+
 #aviso-atraso {
   background: #d9534f;
   padding: 10px;
@@ -252,7 +282,9 @@ main {
   font-weight: bold;
 }
 
+/* ========================================================================= */
 /* ===== RODAPÉ ===== */
+/* ========================================================================= */
 footer {
   margin-top: 40px;
   width: 100%;
