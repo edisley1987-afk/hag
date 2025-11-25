@@ -56,27 +56,18 @@ main {
 #bombasContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-}
-
-/* ===== TÍTULOS ===== */
-.titulo-card {
-  margin-top: 25px;
-  margin-bottom: 10px;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--verde-escuro);
+  gap: 22px;
 }
 
 /* ========================================================================= */
-/* ===== CARD DO RESERVATÓRIO ===== */
+/* ===== CARD DO RESERVATÓRIO — LAYOUT ORIGINAL RESTAURADO ===== */
 /* ========================================================================= */
 .card-reservatorio {
   background: #ffffff;
   border-radius: 15px;
-  padding: 20px;
-  width: 260px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  padding: 18px;
+  width: 235px;             /* 🎯 largura original restaurada */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   border-top: 6px solid var(--verde-principal);
@@ -86,9 +77,9 @@ main {
 /* ===== TANQUE VISUAL ===== */
 .tanque-visu {
   width: 100%;
-  height: 180px;
+  height: 150px;           /* 🎯 altura original do tanque */
   background: var(--verde-agua-claro);
-  border-radius: 12px;
+  border-radius: 10px;
   position: relative;
   overflow: hidden;
   margin-bottom: 12px;
@@ -100,25 +91,25 @@ main {
   width: 100%;
   background: linear-gradient(var(--verde-agua), var(--verde-principal));
   height: 0%;
-  transition: height 0.7s ease-out;
+  transition: height 0.6s ease-out;
 }
 
 .overlay-info {
   position: absolute;
   width: 100%;
   text-align: center;
-  top: 8px;
+  top: 10px;
 }
 
 .percent-text {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: bold;
   color: var(--verde-escuro);
 }
 
 .liters-text {
   font-size: 14px;
-  margin-top: 2px;
+  margin-top: 4px;
   color: var(--texto-secundario);
 }
 
@@ -134,67 +125,9 @@ main {
   display: none;
 }
 
-.card-reservatorio.alerta {
-  border-left: 6px solid #d9534f;
-}
-
-/* ========================================================================= */
-/* ===== OVERLAY DE ATRASO SUAVE ===== */
-/* ========================================================================= */
-
-.atraso-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(250, 180, 80, 0.25);
-  backdrop-filter: blur(2px);
-  border-radius: 15px;
-  border: 2px solid #f0ad4e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #8a5200;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease-out;
-}
-
-.atraso-overlay.visivel {
-  opacity: 1;
-  animation: piscaSuave 0.9s infinite alternate ease-in-out;
-}
-
-@keyframes piscaSuave {
-  from { opacity: 0.6; }
-  to   { opacity: 1; }
-}
-
-/* ===== MANUTENÇÃO ===== */
-.manutencao-tag {
-  margin-top: 5px;
-  background: var(--verde-suave);
-  padding: 5px;
-  text-align: center;
-  border-radius: 6px;
-  font-weight: bold;
-  color: #fff;
-  display: none;
-}
-
-.blink {
-  animation: blinkAnim 1s infinite alternate;
-}
-@keyframes blinkAnim {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
-}
-
 /* ========================================================================= */
 /* ===== PRESSÕES ===== */
 /* ========================================================================= */
-
 .card-pressao {
   background: #fff;
   width: 220px;
@@ -218,68 +151,26 @@ main {
   color: var(--texto-secundario);
 }
 
-.pressao-baixa { border-left: 6px solid #d9534f; }
-.pressao-ok    { border-left: 6px solid var(--verde-principal); }
-.pressao-alta  { border-left: 6px solid #f0ad4e; }
-
 /* ========================================================================= */
-/* ===== BOMBA DE CIRCULAÇÃO (NOVO) ===== */
+/* ===== BOMBAS DE CIRCULAÇÃO ===== */
 /* ========================================================================= */
-
 .card-bomba {
   background: #fff;
   width: 260px;
-  padding: 20px;
+  padding: 15px;
   border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   border-top: 6px solid var(--verde-principal);
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .card-bomba h3 {
-  margin: 0 0 8px 0;
   font-size: 18px;
   color: var(--verde-escuro);
 }
 
-.bomba-status {
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.bomba-status.on { color: #0a8a35; }
-.bomba-status.off { color: #b30000; }
-
-.bomba-info {
-  font-size: 14px;
-  color: var(--texto-secundario);
+.card-bomba .linha {
   margin-top: 4px;
-}
-
-.bomba-alerta {
-  margin-top: 10px;
-  padding: 8px;
-  border-radius: 8px;
-  text-align: center;
-  background: #d9534f;
-  color: white;
-  font-weight: bold;
-  display: none;
-}
-
-/* ========================================================================= */
-/* ===== AVISO GLOBAL DE ATRASO ===== */
-/* ========================================================================= */
-
-#aviso-atraso {
-  background: #d9534f;
-  padding: 10px;
-  color: white;
-  text-align: center;
-  display: none;
-  font-weight: bold;
+  font-size: 14px;
 }
 
 /* ========================================================================= */
