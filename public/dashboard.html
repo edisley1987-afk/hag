@@ -1,71 +1,43 @@
-<div class="reservatorios">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento - Sistema de Água</title>
 
-  <!-- ======== RESERVATÓRIO ELEVADOR ======== -->
-  <div class="card-reservatorio" id="Reservatorio_Elevador_current">
-    <h3>Reservatório Elevador</h3>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-    <div class="percent">--%</div>
-    <div class="litros">-- L</div>
+    <!-- AVISO DE ATRASO (controlado pelo JS) -->
+    <div id="aviso-atraso" style="display:none;">⚠ Sem atualização há mais de 10 minutos</div>
 
-    <label class="manut-label">
-      <input type="checkbox" class="manut-checkbox" data-res="Reservatorio_Elevador_current">
-      Em manutenção
-    </label>
+    <header>
+        <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento de Reservatórios e Pressões</h1>
+        <div id="lastUpdate">Última atualização: --</div>
+    </header>
 
-    <div class="capacidade">Capacidade: -- L</div>
+    <main>
 
-    <button class="btn-historico" data-res="elevador">Ver histórico</button>
-  </div>
+        <!-- TITULO -->
+        <h2 class="titulo-card">Reservatórios</h2>
 
-  <!-- ======== RESERVATÓRIO OSMOSE ======== -->
-  <div class="card-reservatorio" id="Reservatorio_Osmose_current">
-    <h3>Reservatório Osmose</h3>
+        <!-- JS insere os cards aqui -->
+        <div id="reservatoriosContainer"></div>
 
-    <div class="percent">--%</div>
-    <div class="litros">-- L</div>
+        <!-- TITULO PRESSÕES -->
+        <h2 class="titulo-card">Pressões</h2>
 
-    <label class="manut-label">
-      <input type="checkbox" class="manut-checkbox" data-res="Reservatorio_Osmose_current">
-      Em manutenção
-    </label>
+        <!-- JS insere os cards de pressão aqui -->
+        <div id="pressoesContainer"></div>
 
-    <div class="capacidade">Capacidade: -- L</div>
+    </main>
 
-    <button class="btn-historico" data-res="osmose">Ver histórico</button>
-  </div>
+    <!-- RODAPÉ -->
+    <footer>
+        Hospital Arnaldo Gavazza – Sistema de Monitoramento © 2025
+    </footer>
 
-  <!-- ======== RESERVATÓRIO CME ======== -->
-  <div class="card-reservatorio" id="Reservatorio_CME_current">
-    <h3>Reservatório CME</h3>
-
-    <div class="percent">--%</div>
-    <div class="litros">-- L</div>
-
-    <label class="manut-label">
-      <input type="checkbox" class="manut-checkbox" data-res="Reservatorio_CME_current">
-      Em manutenção
-    </label>
-
-    <div class="capacidade">Capacidade: -- L</div>
-
-    <button class="btn-historico" data-res="cme">Ver histórico</button>
-  </div>
-
-  <!-- ======== ÁGUA ABRANDADA ======== -->
-  <div class="card-reservatorio" id="Reservatorio_Abrandada_current">
-    <h3>Água Abrandada</h3>
-
-    <div class="percent">--%</div>
-    <div class="litros">-- L</div>
-
-    <label class="manut-label">
-      <input type="checkbox" class="manut-checkbox" data-res="Reservatorio_Abrandada_current">
-      Em manutenção
-    </label>
-
-    <div class="capacidade">Capacidade: -- L</div>
-
-    <button class="btn-historico" data-res="abrandada">Ver histórico</button>
-  </div>
-
-</div>
+    <script src="dashboard.js"></script>
+</body>
+</html>
