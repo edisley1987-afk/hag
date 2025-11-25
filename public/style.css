@@ -1,232 +1,120 @@
-:root{
-  --bg: #eef6fb;
-  --card-bg: #ffffff;
-  --accent: #0a6fe0;
-  --ok: #1ca44c;
-  --warn: #f4b400;
-  --danger: #ff3b30;
-  --muted: #9aa7b2;
-}
-
-*{box-sizing: border-box}
-body{
-  margin:0;
+/* ================================
+   ESTILO GERAL
+================================ */
+body {
   font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--bg);
-  color:#18333b;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+  color: #222;
 }
 
-/* header */
-header{
-  background: var(--accent);
-  color:#fff;
-  padding:18px 20px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-}
-header h1{ margin:0; font-size:20px }
-#lastUpdate{ font-size:13px; opacity:0.95 }
-
-/* sections */
-section{ padding:18px 22px; }
-section h2{ margin: 0 0 12px 0; color:var(--accent) }
-
-/* containers */
-.container-linhas, .cards-container{
-  display:flex;
-  gap:18px;
-  flex-wrap:wrap;
-  align-items:flex-start;
+/* ================================
+   CABEÇALHO
+================================ */
+header {
+  background: #0c8c6a; /* VERDE DO HOSPITAL */
+  color: white;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* --------------------------
-   CARD RESERVATÓRIO (GRANDE)
-   -------------------------- */
-.card-reservatorio{
-  width: 260px;
-  background: var(--card-bg);
-  border-radius:12px;
-  box-shadow: 0 6px 18px rgba(8,32,50,0.06);
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-}
-
-/* título */
-.card-reservatorio .titulo-card{
-  margin:0 0 8px 0;
-  font-size:16px;
-  color:#123846;
-}
-
-/* tanque (visual) */
-.tanque-visu{
-  position:relative;
-  height:180px;
-  border-radius:10px;
-  background: linear-gradient(180deg,#e9f6ff,#d9eefc);
-  border: 1px solid rgba(10,110,200,0.12);
-  overflow:hidden;
-}
-
-/* nível - altura é atualizada inline */
-.nivel-agua{
-  position:absolute;
-  left:0;
-  bottom:0;
-  width:100%;
-  height:0%;
-  background: linear-gradient(180deg,#45c3ff,#0077cc);
-  transition:height 700ms ease;
-}
-
-/* overlay com percent e litros */
-.overlay-info{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  pointer-events:none;
-  color:#ffffff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-.percent-text{ font-size:28px; font-weight:700; margin-bottom:6px }
-.liters-text{ font-size:14px; opacity:0.95 }
-
-/* ações do card */
-.card-actions{
-  margin-top:10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.capacidade{ font-size:13px; color:var(--muted) }
-
-.btn-hist{
-  background:var(--accent);
-  color:#fff;
-  border:none;
-  padding:8px 10px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-  font-size:13px;
-}
-
-/* estado alerta (nível baixo) */
-.card-reservatorio.alerta{
-  box-shadow: 0 6px 22px rgba(255,59,48,0.12);
-  border: 1px solid rgba(255,59,48,0.12);
-}
-
-/* --------------------------
-   CARD PRESSÃO (MENORES)
-   Metade da altura dos reservatórios
-   -------------------------- */
-.card-pressao{
-  width: 260px;            /* mesma largura dos reservatórios */
-  height: 90px;            /* metade/menor: ajustado conforme pedido */
-  background: var(--card-bg);
-  border-radius:10px;
-  padding:10px 12px;
-  box-shadow: 0 6px 18px rgba(8,32,50,0.05);
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-/* título e valor */
-.card-pressao .titulo-card{ font-size:14px; margin:0; color:#0d3340 }
-.pressao-valor{ font-size:20px; font-weight:700; color:#0b5fa8 }
-.pressao-unidade{ font-size:12px; color:var(--muted) }
-
-/* estado visual por faixa */
-.card-pressao.pressao-baixa{ border-left:6px solid var(--danger) }
-.card-pressao.pressao-ok{ border-left:6px solid var(--warn) }
-.card-pressao.pressao-alta{ border-left:6px solid var(--ok) }
-
-/* sem dado */
-.card-pressao.sem-dado .pressao-valor{ color:#999 }
-
-/* responsividade */
-@media (max-width:900px){
-  .card-reservatorio, .card-pressao{ width: 48% }
-}
-
-@media (max-width:520px){
-  .card-reservatorio, .card-pressao{ width: 100% }
-}
-
-/* rodapé */
-footer{ padding:18px; text-align:center; color:#fff; background:var(--accent); margin-top:20px }
-
-/* ============================
-   ALERTA DE RESERVATÓRIO (≤30%)
-   ============================ */
-.card-reservatorio.alerta {
-  border: 2px solid var(--danger);
-  box-shadow: 0 0 14px rgba(255, 59, 48, 0.35);
-}
-
-.alerta-msg {
-  margin-top: 8px;
-  padding: 6px 10px;
-  background: #ffe6e6;
-  border-left: 4px solid var(--danger);
-  color: #b30000;
+header h1 {
+  margin: 0;
+  font-size: 26px;
   font-weight: 600;
-  border-radius: 6px;
-  display: none; /* aparece via JS */
 }
 
-/* ============================
-   EM MANUTENÇÃO
-   ============================ */
-.manutencao-container {
-  margin-top: 8px;
-  margin-bottom: -4px;
+#lastUpdate {
+  margin-top: 5px;
+  font-size: 14px;
+  opacity: 0.9;
 }
 
-.manutencao-container label {
-  cursor: pointer;
-  font-size: 13px;
-  color: #444;
+/* ================================
+   SEÇÕES
+================================ */
+section {
+  padding: 20px;
 }
 
-.manutencao-check {
-  transform: scale(1.0);
-  margin-right: 6px;
+section h2 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #0c8c6a;
 }
 
-.manutencao-tag {
-  margin-top: 6px;
-  display: inline-block;
-  background: #ffaa00;
-  color: #fff;
-  padding: 3px 8px;
-  font-size: 12px;
-  border-radius: 6px;
+/* ================================
+   CARDS
+================================ */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-/* aviso global sem atualização */
-#aviso-atraso {
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  z-index:9999;
-  text-align:center;
-  padding:8px 12px;
-  background:#b30000;
-  color:white;
-  font-weight:700;
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  width: 280px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-/* fim do CSS */
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.card p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+/* ================================
+   CORES DOS CARDS DE ALERTA
+================================ */
+.card.alerta {
+  border-left: 10px solid #ff4444;
+  background: #ffe5e5;
+}
+
+.card.manutencao {
+  border-left: 10px solid #ffaa00;
+  background: #fff3d1;
+}
+
+/* ================================
+   INDICADOR DE NÍVEL (BARRA)
+================================ */
+.nivel-barra {
+  width: 100%;
+  height: 18px;
+  border-radius: 10px;
+  background: #e3e3e3;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.nivel-barra-fill {
+  height: 100%;
+  background: #0c8c6a;
+  transition: width 0.5s ease;
+}
+
+/* ================================
+   RODAPÉ
+================================ */
+footer {
+  background: #0c8c6a; /* VERDE DO HOSPITAL */
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+  font-size: 14px;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+}
