@@ -21,11 +21,11 @@ body {
 }
 
 /* ========================================================================= */
-/* ===== CABEÇALHO AJUSTADO (IGUAL À 2ª IMAGEM) ===== */
+/* ===== CABEÇALHO ===== */
 /* ========================================================================= */
 header {
   width: 100%;
-  background-color: #0f7a5b; /* verde escuro da 2ª imagem */
+  background-color: #0f7a5b;
   color: white;
   padding: 25px 0;
   text-align: center;
@@ -220,7 +220,27 @@ main {
 }
 
 /* ========================================================================= */
-/* ===== RODAPÉ AJUSTADO (IGUAL À 2ª IMAGEM) ===== */
+/* ===== CORES DOS CARDS POR NÍVEL (MODELO B – PALETA DO HOSPITAL) ===== */
+/* ========================================================================= */
+
+.card-reservatorio.nivel-alto {
+  border-left: 6px solid var(--verde-agua);
+}
+
+.card-reservatorio.nivel-normal {
+  border-left: 6px solid var(--verde-principal);
+}
+
+.card-reservatorio.nivel-atencao {
+  border-left: 6px solid var(--verde-suave);
+}
+
+.card-reservatorio.nivel-critico {
+  border-left: 6px solid #d9534f;
+}
+
+/* ========================================================================= */
+/* ===== RODAPÉ ===== */
 /* ========================================================================= */
 footer {
   margin-top: 40px;
