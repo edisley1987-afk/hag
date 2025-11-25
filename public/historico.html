@@ -1,19 +1,67 @@
-<select id="reservatorioSelect">
-  <option value="elevador">Elevador</option>
-  <option value="osmose">Osmose</option>
-  <option value="cme">CME</option>
-  <option value="abrandada">Abrandada</option>
-</select>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Histórico - Gráfico e Consumo</title>
 
-<table>
-  <thead>
-    <tr>
-      <th>Data/Hora</th>
-      <th>Valor (L)</th>
-      <th>Reservatório</th>
-    </tr>
-  </thead>
-  <tbody id="tabelaHistorico"></tbody>
-</table>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
 
-<script src="historico.js"></script>
+  <style>
+    #grafico-container {
+      width: 95%;
+      margin: 20px auto;
+    }
+
+    table {
+      width: 95%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #007b83;
+      color: white;
+    }
+  </style>
+
+</head>
+<body>
+
+  <h1 style="text-align:center;">📊 Histórico e Consumo Diário</h1>
+
+  <div style="text-align:center;">
+    <label>Reservatório:</label>
+    <select id="reservatorioSelect">
+      <option value="elevador">Elevador</option>
+      <option value="osmose">Osmose</option>
+    </select>
+  </div>
+
+  <div id="grafico-container">
+    <canvas id="graficoHistorico"></canvas>
+  </div>
+
+  <h2 style="text-align:center;">📅 Consumo Diário</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Dia</th>
+        <th>Reservatório</th>
+        <th>Consumo (Litros)</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaConsumo"></tbody>
+  </table>
+
+  <script src="historico-grafico.js"></script>
+</body>
+</html>
