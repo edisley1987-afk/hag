@@ -1,86 +1,54 @@
-const API_URL = "/dados-historico";  // CORRIGIDO
-
-document.getElementById("btnCarregar").addEventListener("click", carregarHistorico);
+const API_HIST = "/historico";
+const select = document.getElementById("reservatorioSelect");
+const tabela = document.getElementById("tabelaHistorico");
 
 async function carregarHistorico() {
-  const reservatorio = document.getElementById("reservatorioSelect").value;
-  const data = document.getElementById("dataSelect").value;
-
-  if (!data) {
-    alert("Selecione uma data.");
-    return;
-  }
-
   try {
-    const url = `${API_URL}?reservatorio=${reservatorio}&data=${data}`;
-    const resposta = await fetch(url);
-
-    if (!resposta.ok) {
-      throw new Error(`Erro HTTP ${resposta.status}`);
-    }
-
+    const resposta = await fetch(API_HIST);
     const dados = await resposta.json();
 
-    desenharGrafico(dados);
-    gerarTabela(dados);
+    if (!Array.isArray(dados)) {
+      console.error("Formato inválido:", dados);
+      return;
+    }
 
-  } catch (err) {
-    console.error("Erro ao carregar histórico:", err);
-    alert("Não foi possível carregar o histórico.");
+    const reservatorio = select.value;
+
+    // Filtra apenas o reservatório selecionado
+    const filtrado = dados.filter(d => d.reservatorio === reservatorio);
+
+    // Ordena por timestamp
+    filtrado.sort((a, b) => a.timestamp - b.timestamp);
+
+    atualizarTabela(filtrado);
+
+  } catch (erro) {
+    console.error("Erro ao carregar histórico:", erro);
   }
 }
 
-let graficoAtual = null;
+function atualizarTabela(lista) {
+  tabela.innerHTML = "";
 
-function desenharGrafico(dados) {
-  const ctx = document.getElementById("grafico").getContext("2d");
-
-  if (graficoAtual) graficoAtual.destroy();
-
-  graficoAtual = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: dados.map(p => p.hora),
-      datasets: [{
-        label: "Nível (L)",
-        data: dados.map(p => p.valor),
-        borderWidth: 3,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      }
-    }
-  });
-}
-
-function gerarTabela(dados) {
-  if (dados.length === 0) {
-    document.getElementById("tabelaContainer").innerHTML = "<p>Nenhum dado disponível.</p>";
+  if (!lista.length) {
+    tabela.innerHTML = "<tr><td colspan='3'>Nenhum dado encontrado.</td></tr>";
     return;
   }
 
-  let html = `
-    <table>
-      <tr>
-        <th>Hora</th>
-        <th>Nível (L)</th>
-      </tr>
-  `;
+  for (const item of lista) {
+    const dataHora = new Date(item.timestamp).toLocaleString("pt-BR");
 
-  dados.forEach(p => {
-    html += `
-      <tr>
-        <td>${p.hora}</td>
-        <td>${p.valor}</td>
-      </tr>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${dataHora}</td>
+      <td>${item.valor}</td>
+      <td>${item.reservatorio}</td>
     `;
-  });
-
-  html += "</table>";
-
-  document.getElementById("tabelaContainer").innerHTML = html;
+    tabela.appendChild(tr);
+  }
 }
+
+select.addEventListener("change", carregarHistorico);
+
+// Carregar ao abrir a página
+carregarHistorico();
