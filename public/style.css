@@ -20,23 +20,30 @@ body {
   color: var(--texto-principal);
 }
 
-/* ===== HEADER ===== */
+/* ========================================================================= */
+/* ===== CABEÇALHO AJUSTADO (IGUAL À 2ª IMAGEM) ===== */
+/* ========================================================================= */
 header {
-  background: #fff;
-  padding: 20px;
-  border-bottom: 3px solid var(--verde-principal);
+  width: 100%;
+  background-color: #0f7a5b; /* verde escuro da 2ª imagem */
+  color: white;
+  padding: 25px 0;
+  text-align: center;
+  border-bottom: 3px solid #0d6b50;
 }
 
 header h1 {
   margin: 0;
   font-size: 22px;
-  color: var(--verde-escuro);
+  font-weight: 600;
+  color: white;
 }
 
 #lastUpdate {
   margin-top: 4px;
   font-size: 14px;
-  color: var(--texto-secundario);
+  color: white;
+  opacity: 0.9;
 }
 
 /* ===== CONTAINERS ===== */
@@ -210,4 +217,18 @@ main {
   text-align: center;
   display: none;
   font-weight: bold;
+}
+
+/* ========================================================================= */
+/* ===== RODAPÉ AJUSTADO (IGUAL À 2ª IMAGEM) ===== */
+/* ========================================================================= */
+footer {
+  margin-top: 40px;
+  width: 100%;
+  background-color: #0f7a5b;
+  color: white;
+  text-align: center;
+  padding: 18px 0;
+  font-size: 14px;
+  border-top: 3px solid #0d6b50;
 }
