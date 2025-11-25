@@ -1,13 +1,12 @@
-// === CONFIG ===
 const API_HIST = "/historico";
 const API_CONSUMO = "/consumo/5dias";
 
 const select = document.getElementById("reservatorioSelect");
 let grafico = null;
 
-// ============================================================
-// 📊 CARREGAR GRÁFICO DO HISTÓRICO
-// ============================================================
+// ===============================
+// 📊 CARREGAR GRÁFICO MELHORADO
+// ===============================
 async function carregarGrafico() {
   try {
     const reservatorio = select.value;
@@ -33,25 +32,38 @@ async function carregarGrafico() {
       type: "line",
       data: {
         labels,
-        datasets: [
-          {
-            label: `Nível – ${reservatorio}`,
-            data: valores,
-            borderWidth: 3,
-            borderColor: "#008b9a",
-            backgroundColor: "rgba(0,139,154,0.25)",
-            tension: 0.35,
-            pointRadius: 4,
-          }
-        ]
+        datasets: [{
+          label: `Nível – ${reservatorio}`,
+          data: valores,
+          borderWidth: 4,
+          borderColor: "#007b83",
+          backgroundColor: "rgba(0,123,131,0.12)",
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          tension: 0.3,
+        }]
       },
       options: {
         responsive: true,
-        animation: false,
         maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { font: { size: 16 } }
+          },
+          tooltip: {
+            backgroundColor: "#004d50",
+            titleColor: "#fff",
+            bodyColor: "#fff",
+          }
+        },
         scales: {
+          x: {
+            ticks: { font: { size: 12 }},
+            grid: { color: "rgba(0,0,0,0.05)" }
+          },
           y: {
-            beginAtZero: false
+            ticks: { font: { size: 14 }},
+            grid: { color: "rgba(0,0,0,0.05)" }
           }
         }
       }
@@ -62,17 +74,14 @@ async function carregarGrafico() {
   }
 }
 
-// ============================================================
-// 📅 CONSUMO DIÁRIO (APENAS Elevador / Osmose)
-// ============================================================
+// ===============================
+// 📅 CONSUMO DIÁRIO (Corrigido)
+// ===============================
 async function carregarConsumo() {
   const reservatorio = select.value;
 
-  const tabela = document.getElementById("tabelaConsumo");
-  tabela.innerHTML = "";
-
   if (!["elevador", "osmose"].includes(reservatorio)) {
-    tabela.innerHTML =
+    document.getElementById("tabelaConsumo").innerHTML =
       "<tr><td colspan='3'>Consumo disponível apenas para Elevador e Osmose</td></tr>";
     return;
   }
@@ -81,17 +90,19 @@ async function carregarConsumo() {
     const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
     const dados = await resp.json();
 
+    const tabela = document.getElementById("tabelaConsumo");
     tabela.innerHTML = "";
 
     dados.forEach(item => {
-      const dia = item.dia ?? "---";
-      const consumo = item.consumo ?? 0;
+      // corrige consumo negativo
+      let consumoCorrigido = item.consumo;
+      if (consumoCorrigido < 0) consumoCorrigido = Math.abs(consumoCorrigido);
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${dia}</td>
+        <td>${item.dia}</td>
         <td>${reservatorio}</td>
-        <td>${consumo}</td>
+        <td>${consumoCorrigido}</td>
       `;
       tabela.appendChild(tr);
     });
@@ -101,12 +112,10 @@ async function carregarConsumo() {
   }
 }
 
-// =============================================
 select.addEventListener("change", () => {
   carregarGrafico();
   carregarConsumo();
 });
 
-// Inicialização
 carregarGrafico();
 carregarConsumo();
