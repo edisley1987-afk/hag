@@ -1,265 +1,202 @@
-/* ===== VARIÁVEIS DE COR ===== */
+/* =========================== */
+/* PALETA PREMIUM HOSPITALAR   */
+/* =========================== */
+
 :root {
-  --verde-principal: #4DA492;
-  --verde-escuro: #006D5B;
-  --verde-agua: #7ED6D1;
-  --verde-agua-claro: #AEE8E3;
-  --verde-suave: #87C8BA;
+    --verde-escuro: #0B3D2E;
+    --verde-medio: #146A4E;
+    --verde-claro: #1CA97A;
+    --cinza-texto: #4A4A4A;
+    --cinza-fraco: #C9C9C9;
+    --fundo: #F4F6F6;
+    --branco: #ffffff;
 
-  --cinza-fundo: #F5F7FA;
-  --texto-principal: #333;
-  --texto-secundario: #555;
+    --sombra-profunda: 0 6px 20px rgba(0,0,0,0.12);
 }
 
-/* ===== RESET ===== */
+
+/* =========================== */
+/* LAYOUT GERAL                */
+/* =========================== */
+
 body {
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--cinza-fundo);
-  color: var(--texto-principal);
+    margin: 0;
+    padding: 0;
+    background: var(--fundo);
+    font-family: "Segoe UI", sans-serif;
+    color: var(--cinza-texto);
 }
 
-/* ========================================================================= */
-/* ===== CABEÇALHO ===== */
-/* ========================================================================= */
-header {
-  width: 100%;
-  background-color: #0f7a5b;
-  color: white;
-  padding: 25px 0;
-  text-align: center;
-  border-bottom: 3px solid #0d6b50;
+
+/* =========================== */
+/* BARRA SUPERIOR PREMIUM      */
+/* =========================== */
+
+.topbar {
+    width: 100%;
+    background: var(--verde-escuro);
+    color: var(--branco);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--sombra-profunda);
 }
 
-header h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  color: white;
+.brand {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-#lastUpdate {
-  margin-top: 4px;
-  font-size: 14px;
-  color: white;
-  opacity: 0.9;
+
+/* =========================== */
+/* TITULOS DE SEÇÃO            */
+/* =========================== */
+
+.secao-titulo {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 20px 0 20px;
+    color: var(--verde-escuro);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-/* ===== CONTAINERS ===== */
-main {
-  padding: 20px;
+
+/* =========================== */
+/* GRID DE CARDS               */
+/* =========================== */
+
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
 }
 
-#reservatoriosContainer,
-#pressoesContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+.grid-cards-pressoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
 }
 
-/* ===== CARD DO RESERVATÓRIO ===== */
-.card-reservatorio {
-  background: #ffffff;
-  border-radius: 15px;
-  padding: 20px;
-  width: 260px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  border-top: 6px solid var(--verde-principal);
-  position: relative;
+
+/* =========================== */
+/* CARD PREMIUM                */
+/* =========================== */
+
+.card {
+    background: var(--branco);
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: var(--sombra-profunda);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
 }
 
-/* ===== TANQUE VISUAL ===== */
-.tanque-visu {
-  width: 100%;
-  height: 180px;
-  background: var(--verde-agua-claro);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 12px;
+.card-titulo {
+    font-size: 18px;
+    color: var(--verde-escuro);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.nivel-agua {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(var(--verde-agua), var(--verde-principal));
-  height: 0%;
-  transition: height 0.7s ease-out;
+.percentual {
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--verde-medio);
 }
 
-.overlay-info {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  top: 8px;
+.litros {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cinza-texto);
 }
 
-.percent-text {
-  font-size: 26px;
-  font-weight: bold;
-  color: var(--verde-escuro);
+
+/* =========================== */
+/* BARRA DE NÍVEL PREMIUM      */
+/* =========================== */
+
+.barra {
+    width: 100%;
+    height: 10px;
+    background: var(--cinza-fraco);
+    border-radius: 100px;
+    overflow: hidden;
 }
 
-.liters-text {
-  font-size: 14px;
-  margin-top: 2px;
-  color: var(--texto-secundario);
+.barra-inner {
+    height: 100%;
+    background: var(--verde-claro);
+    border-radius: 100px;
+    transition: 0.6s ease;
 }
 
-/* ===== ALERTA ===== */
-.alerta-msg {
-  padding: 8px;
-  background: #d9534f;
-  color: white;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 10px;
-  display: none;
-}
 
-.card-reservatorio.alerta {
-  border-left: 6px solid #d9534f;
-}
-
-/* ========================================================================= */
-/* ===== OPÇÃO C — OVERLAY DE ATRASO SUAVE ===== */
-/* ========================================================================= */
-
-.atraso-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(250, 180, 80, 0.25);
-  backdrop-filter: blur(2px);
-  border-radius: 15px;
-  border: 2px solid #f0ad4e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #8a5200;
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease-out;
-}
-
-/* visível */
-.atraso-overlay.visivel {
-  opacity: 1;
-  animation: piscaSuave 0.9s infinite alternate ease-in-out;
-}
-
-/* piscar */
-@keyframes piscaSuave {
-  from { opacity: 0.6; }
-  to   { opacity: 1; }
-}
-
-/* ===== MANUTENÇÃO ===== */
-.manutencao-container {
-  margin-top: 5px;
-}
-
-.manutencao-tag {
-  margin-top: 5px;
-  background: var(--verde-suave);
-  padding: 5px;
-  text-align: center;
-  border-radius: 6px;
-  font-weight: bold;
-  color: #fff;
-  display: none;
-}
-
-.blink {
-  animation: blinkAnim 1s infinite alternate;
-}
-
-@keyframes blinkAnim {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
-}
-
-/* ===== AÇÕES ===== */
-.card-actions {
-  margin-top: 10px;
-}
+/* =========================== */
+/* CAPACIDADE                  */
+/* =========================== */
 
 .capacidade {
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: var(--texto-secundario);
+    font-size: 14px;
+    color: #666;
 }
 
-.btn-hist {
-  background: var(--verde-principal);
-  color: white;
-  border: none;
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s;
+
+/* =========================== */
+/* BOTÃO PREMIUM               */
+/* =========================== */
+
+.btn {
+    border: none;
+    background: var(--verde-escuro);
+    padding: 10px 14px;
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    transition: 0.3s;
 }
 
-.btn-hist:hover {
-  background: var(--verde-escuro);
+.btn:hover {
+    background: var(--verde-medio);
 }
 
-/* ===== PRESSÕES ===== */
-.card-pressao {
-  background: #fff;
-  width: 220px;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  border-top: 6px solid var(--verde-principal);
-}
+
+/* =========================== */
+/* PRESSÕES                    */
+/* =========================== */
 
 .pressao-valor {
-  font-size: 32px;
-  text-align: center;
-  font-weight: bold;
-  color: var(--verde-escuro);
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--verde-escuro);
 }
 
-.pressao-unidade {
-  text-align: center;
-  margin-top: 5px;
-  font-size: 14px;
-  color: var(--texto-secundario);
+.pressao-bar {
+    font-size: 14px;
+    color: #666;
 }
 
-.pressao-baixa { border-left: 6px solid #d9534f; }
-.pressao-ok    { border-left: 6px solid var(--verde-principal); }
-.pressao-alta  { border-left: 6px solid #f0ad4e; }
-.sem-dado      { border-left: 6px solid #999; }
-
-/* ===== AVISO DE ATRASO GLOBAL ===== */
-#aviso-atraso {
-  background: #d9534f;
-  padding: 10px;
-  color: white;
-  text-align: center;
-  display: none;
-  font-weight: bold;
+.card.red {
+    border-left: 5px solid red;
 }
 
-/* ===== RODAPÉ ===== */
-footer {
-  margin-top: 40px;
-  width: 100%;
-  background-color: #0f7a5b;
-  color: white;
-  text-align: center;
-  padding: 18px 0;
-  font-size: 14px;
-  border-top: 3px solid #0d6b50;
+.badge-manut {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #FFD93D;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 10px;
 }
