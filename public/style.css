@@ -1,201 +1,51 @@
-/* ================================
-   ESTILO GERAL
-================================ */
-body{
-  margin:0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #eef6fb;
-  color:#18333b;
+/* CONTÊINER DOS RESERVATÓRIOS */
+.reservatorios {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
 }
 
-/* ================================
-   CABEÇALHO (VERDE DO HOSPITAL)
-================================ */
-header{
-  background: #0c8c6a; /* VERDE HOSPITAL ARNALDO GAVAZZA */
-  color:#fff;
-  padding:18px 20px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
+/* CARD PRINCIPAL */
+.card-reservatorio {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 20px;
+  width: 230px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
 }
 
-header h1{
-  margin:0;
-  font-size:24px;
-  font-weight:600;
+/* TÍTULO DO CARD */
+.card-reservatorio h3 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
 }
 
-#lastUpdate{
-  font-size:14px;
-  opacity:0.95;
+/* PORCENTAGEM */
+.card-reservatorio .percent {
+  font-size: 32px;
+  font-weight: bold;
 }
 
-/* ================================
-   SEÇÕES
-================================ */
-section{
-  padding:18px 22px;
+/* LITRAGEM */
+.card-reservatorio .litros {
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
-section h2{
-  margin: 0 0 12px 0;
-  color: #0c8c6a; /* verde hospital */
+/* CHECK E BOTÃO */
+.card-reservatorio label {
+  font-size: 14px;
 }
 
-/* ================================
-   CARDS
-================================ */
-.cards-container{
-  display:flex;
-  flex-wrap:wrap;
-  gap:20px;
-}
-
-/* ===== CARD RESERVATÓRIO ===== */
-.card-reservatorio{
-  width:260px;
-  background:#ffffff;
-  border-radius:12px;
-  box-shadow:0 6px 18px rgba(8,32,50,0.06);
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  transition: border 0.3s ease;
-}
-
-.titulo-card{
-  font-size:16px;
-  margin:0 0 8px 0;
-  color:#123846;
-}
-
-/* Tanque visual */
-.tanque-visu{
-  position:relative;
-  height:180px;
-  border-radius:10px;
-  background: linear-gradient(180deg,#e9f6ff,#d9eefc);
-  border:1px solid rgba(10,110,200,0.12);
-  overflow:hidden;
-}
-
-.nivel-agua{
-  position:absolute;
-  left:0;
-  bottom:0;
-  width:100%;
-  height:0%;
-  background: linear-gradient(180deg,#45c3ff,#0077cc);
-  transition:height 700ms ease;
-}
-
-.overlay-info{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  pointer-events:none;
-  color:#fff;
-  text-shadow:0 2px 8px rgba(0,0,0,0.25);
-}
-
-.percent-text{ font-size:28px; font-weight:700; }
-.liters-text{ font-size:14px; opacity:0.95 }
-
-/* Ações */
-.card-actions{
-  margin-top:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.btn-hist{
-  background:#0c8c6a;
-  color:#fff;
-  border:none;
-  padding:7px 12px;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-/* ===== ALERTA ===== */
-.card-reservatorio.alerta{
-  border: 3px solid #ff3b30;
-  box-shadow:0 0 20px rgba(255,59,48,0.45);
-}
-
-.alerta-msg{
-  margin-top:8px;
-  padding:6px 10px;
-  background:#ffe6e6;
-  border-left:4px solid #ff3b30;
-  color:#b30000;
-  font-weight:600;
-  border-radius:6px;
-  display:none;
-}
-
-/* Manutenção */
-.manutencao-container{
-  margin-top:8px;
-}
-
-.manutencao-tag{
-  margin-top:6px;
-  display:inline-block;
-  background:#ffaa00;
-  color:#fff;
-  padding:3px 8px;
-  font-size:12px;
-  border-radius:6px;
-}
-
-/* ===== CARD PRESSÃO ===== */
-.card-pressao{
-  width:260px;
-  height:90px;
-  background:#ffffff;
-  border-radius:10px;
-  padding:10px 12px;
-  box-shadow:0 6px 18px rgba(8,32,50,0.05);
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.card-pressao .titulo-card{
-  font-size:14px;
-  color:#0d3340;
-}
-
-.pressao-valor{ font-size:20px; font-weight:700; }
-.pressao-unidade{ font-size:12px; color:#777; }
-
-.card-pressao.pressao-baixa{ border-left:6px solid #ff3b30 }
-.card-pressao.pressao-ok{ border-left:6px solid #f4b400 }
-.card-pressao.pressao-alta{ border-left:6px solid #1ca44c }
-
-/* Rodapé */
-footer{
-  padding:18px;
-  text-align:center;
-  color:white;
-  background:#0c8c6a; /* VERDE HOSPITAL */
-  margin-top:20px;
-  font-size:14px;
-  font-weight:600;
-}
-
-/* Responsivo */
-@media (max-width:900px){
-  .card-reservatorio, .card-pressao{ width:48% }
-}
-@media (max-width:520px){
-  .card-reservatorio, .card-pressao{ width:100% }
+.card-reservatorio button {
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
 }
