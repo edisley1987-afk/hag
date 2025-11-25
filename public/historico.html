@@ -1,99 +1,72 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Histórico - Gráfico e Consumo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico e Consumo Diário</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
 
-  <style>
-    /* Área do gráfico */
-    #grafico-container {
-      width: 95%;
-      max-width: 1200px;
-      height: 420px;             /* AUMENTA O GRÁFICO */
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    #graficoHistorico {
-      width: 100% !important;
-      height: 100% !important;   /* força tamanho real */
-    }
+    <style>
+        .grafico-container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    table {
-      width: 95%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #007b83;
-      color: white;
-    }
-
-    .btn-voltar {
-      display: inline-block;
-      margin: 20px;
-      padding: 10px 18px;
-      background: #007b83;
-      color: white;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-  </style>
-
+        canvas {
+            width: 100% !important;
+            height: 350px !important;
+        }
+    </style>
 </head>
+
 <body>
 
-  <a href="index.html" class="btn-voltar">⬅ Voltar para Reservatórios</a>
+    <button class="btn-voltar" onclick="location.href='index.html'">⬅ Voltar para Reservatórios</button>
 
-  <h1 style="text-align:center;">📊 Histórico e Consumo Diário</h1>
+    <h1 class="titulo-centro">
+        <i class="fas fa-chart-line"></i> Histórico e Consumo Diário
+    </h1>
 
-  <div style="text-align:center; margin-top:10px;">
-    <label>Reservatório:</label>
-    <select id="reservatorioSelect">
-      <option value="elevador">Elevador</option>
-      <option value="osmose">Osmose</option>
-      <option value="cme">CME</option>
-      <option value="abrandada">Abrandada</option>
-      <option value="geral">Geral</option>
-      <option value="irrigacao">Irrigação</option>
-    </select>
-  </div>
+    <div style="text-align:center; margin-bottom:15px;">
+        Reservatório:
+        <select id="reservatorioSelect">
+            <option value="elevador">Elevador</option>
+            <option value="osmose">Osmose</option>
+            <option value="cme">CME</option>
+            <option value="abrandada">Abrandada</option>
 
-  <div id="grafico-container">
-    <canvas id="graficoHistorico"></canvas>
-  </div>
+            <!-- Ocultados -->
+            <option value="geral" style="display:none;">Geral</option>
+            <option value="irrigacao" style="display:none;">Irrigação</option>
+        </select>
+    </div>
 
-  <h2 style="text-align:center;">📅 Consumo Diário</h2>
+    <!-- Área do gráfico -->
+    <div class="grafico-container">
+        <canvas id="graficoHistorico"></canvas>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Dia</th>
-        <th>Reservatório</th>
-        <th>Consumo (Litros)</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaConsumo"></tbody>
-  </table>
+    <h2 class="titulo-centro">
+        <i class="fas fa-table"></i> Consumo Diário
+    </h2>
 
-  <script src="historico.js"></script>
+    <table class="tabela-historico">
+        <thead>
+            <tr>
+                <th>Dia</th>
+                <th>Reservatório</th>
+                <th>Consumo (Litros)</th>
+            </tr>
+        </thead>
+        <tbody id="consumoCorpo"></tbody>
+    </table>
+
+    <script src="historico.js"></script>
 </body>
 </html>
