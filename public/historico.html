@@ -8,16 +8,21 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* === GRÁFICO REDUZIDO === */
+    /* Área do gráfico */
     #grafico-container {
-      width: 55%;               /* gráfico mais estreito */
-      max-width: 600px;         /* limite máximo */
-      margin: 10px auto;        /* centralizado */
-      height: 180px !important; /* altura menor */
+      width: 95%;
+      max-width: 1200px;
+      height: 420px;             /* AUMENTA O GRÁFICO */
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     #graficoHistorico {
-      max-height: 150px !important; /* limita altura real do canvas */
+      width: 100% !important;
+      height: 100% !important;   /* força tamanho real */
     }
 
     table {
@@ -25,11 +30,14 @@
       margin: 20px auto;
       border-collapse: collapse;
       background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
     }
 
@@ -47,10 +55,6 @@
       border-radius: 6px;
       text-decoration: none;
       font-weight: bold;
-    }
-
-    .btn-voltar:hover {
-      background: #015a66;
     }
   </style>
 
