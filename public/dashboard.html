@@ -1,29 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitoramento dos Reservatórios</title>
-  <link rel="stylesheet" href="style.css">
-  <script defer src="dashboard.js"></script>
-</head>
+<div class="reservatorios">
 
-<body>
+  <div class="card-reservatorio" id="Reservatorio_Elevador_current">
+    <h3>Reservatório Elevador</h3>
+    <div class="percent">--%</div>
+    <div class="litros">-- L</div>
+    <label><input type="checkbox"> Em manutenção</label>
+    <div>Capacidade: -- L</div>
+    <button>Ver histórico</button>
+  </div>
 
-  <header class="topo">
-    <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
-    <div id="lastUpdate">Última atualização: --</div>
-  </header>
+  <div class="card-reservatorio" id="Reservatorio_Osmose_current">
+    <h3>Reservatório Osmose</h3>
+    <div class="percent">--%</div>
+    <div class="litros">-- L</div>
+    <label><input type="checkbox"> Em manutenção</label>
+    <div>Capacidade: -- L</div>
+    <button>Ver histórico</button>
+  </div>
 
-  <h2>Reservatórios</h2>
-  <div id="reservatoriosContainer" class="container-linhas"></div>
+  <div class="card-reservatorio" id="Reservatorio_CME_current">
+    <h3>Reservatório CME</h3>
+    <div class="percent">--%</div>
+    <div class="litros">-- L</div>
+    <label><input type="checkbox"> Em manutenção</label>
+    <div>Capacidade: -- L</div>
+    <button>Ver histórico</button>
+  </div>
 
-  <h2>Pressões</h2>
-  <div id="pressoesContainer" class="container-linhas"></div>
+  <div class="card-reservatorio" id="Reservatorio_Abrandada_current">
+    <h3>Água Abrandada</h3>
+    <div class="percent">--%</div>
+    <div class="litros">-- L</div>
+    <label><input type="checkbox"> Em manutenção</label>
+    <div>Capacidade: -- L</div>
+    <button>Ver histórico</button>
+  </div>
 
-  <footer class="rodape">
-    © 2025 Sistema de Monitoramento Hospitalar
-  </footer>
-
-</body>
-</html>
+</div>
