@@ -60,21 +60,20 @@ h1, h2 {
 }
 
 /* ============================  
-      RESERVATÓRIOS – GRID 100% RESPONSIVO  
+      RESERVATÓRIOS – GRID RESPONSIVO  
 ============================= */
 
 #reservatoriosContainer {
     display: grid !important;
-    gap: 22px;
     width: 100%;
     margin-top: 20px;
+    gap: 28px;  /* Ajuste fino do espaçamento entre cards */
 
-    /* AUTO-FIT = adapta sozinho  
-       minmax 240px / 1fr = quebra conforme tela */
+    /* Layout adaptativo */
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-/* Forçar 5 por linha em telas MUITO grandes (TVs) */
+/* Forçar 5 por linha em telas muito grandes */
 @media (min-width: 1650px) {
     #reservatoriosContainer {
         grid-template-columns: repeat(5, 1fr);
@@ -89,15 +88,14 @@ h1, h2 {
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     backdrop-filter: blur(6px);
     color: white;
-    transition: 0.2s ease;
     text-align: center;
-
-    width: 100%;
+    transition: 0.2s ease;
 }
 .card-reservatorio:hover {
     transform: scale(1.03);
 }
 
+/* Tanque visual */
 .tanque-visu {
     width: 100%;
     height: 160px;
@@ -118,13 +116,12 @@ h1, h2 {
     background: var(--verde-claro);
 }
 
-/* Overlay */
+/* Overlay (texto dentro do tanque) */
 .overlay-info {
     position: absolute;
     top: 8px;
     width: 100%;
     text-align: center;
-    color: white;
     text-shadow: 0 1px 3px black;
 }
 .percent-text {
@@ -169,16 +166,14 @@ h1, h2 {
     color: white;
     box-shadow: 0 6px 15px rgba(0,0,0,0.2);
     border-left: 5px solid var(--verde-principal);
-    transition: transform 0.2s ease-in-out;
+    transition: 0.2s ease-in-out;
 }
 .card-pressao:hover {
     transform: scale(1.03);
 }
-
 .card-pressao h3 {
     margin: 0 0 10px;
     font-size: 19px;
-    font-weight: 600;
 }
 .valor-pressao {
     font-size: 32px;
