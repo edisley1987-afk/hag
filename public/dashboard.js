@@ -2,7 +2,10 @@ const API = "/api/dashboard";   // <<< URL ACERTADA
 let cache = JSON.parse(localStorage.getItem("DATA_CACHE")) || {};
 
 let tempoLigada = JSON.parse(localStorage.getItem("TEMPO_BOMBAS")) || {};
-let ultimaMudanca = {}; // controla a última troca de estado
+let tempoDesligada = JSON.parse(localStorage.getItem("TEMPO_DESLIGADAS")) || {};
+let ultimaMudanca = JSON.parse(localStorage.getItem("ULTIMA_MUDANCA")) || {};
+let ultimoEstado = JSON.parse(localStorage.getItem("ULTIMO_ESTADO")) || {};
+let ultimoCiclo = JSON.parse(localStorage.getItem("ULTIMO_CICLO")) || {};
 
 async function atualizar(){
     try{
@@ -99,48 +102,84 @@ function renderPressao(lista){
 }
 
 /* ===================== BOMBAS ===================== */
+function normalizarEstado(estado){
+    if(!estado) return "";
+    return estado.toString().trim().toUpperCase();
+}
 
 function processarBombas(bombas){
     bombas.forEach(b => {
+        const nome = b.nome;
+        const estadoAtual = normalizarEstado(b.estado);
+        const agora = Date.now();
 
-        if(!(b.nome in tempoLigada)){
-            tempoLigada[b.nome] = 0; // segundos
-            ultimaMudanca[b.nome] = Date.now();
+        if(!(nome in tempoLigada)) tempoLigada[nome] = 0;
+        if(!(nome in tempoDesligada)) tempoDesligada[nome] = 0;
+        if(!(nome in ultimaMudanca)) ultimaMudanca[nome] = agora;
+        if(!(nome in ultimoEstado)) ultimoEstado[nome] = estadoAtual;
+        if(!(nome in ultimoCiclo)) ultimoCiclo[nome] = { ligado: 0, desligado: 0 };
+
+        const passou = (agora - ultimaMudanca[nome]) / 1000;
+
+        if(estadoAtual !== ultimoEstado[nome]){
+
+            if(ultimoEstado[nome] === "LIGADA"){
+                ultimoCiclo[nome].ligado = passou;
+            } else {
+                ultimoCiclo[nome].desligado = passou;
+            }
+            ultimoEstado[nome] = estadoAtual;
+            ultimaMudanca[nome] = agora;
         }
 
-        if(b.estado === "LIGADA"){
-            const passou = (Date.now() - (ultimaMudanca[b.nome] || Date.now())) / 1000;
-            tempoLigada[b.nome] += passou;
+        if(estadoAtual === "LIGADA"){
+            tempoLigada[nome] += passou;
+        } else {
+            tempoDesligada[nome] += passou;
         }
 
-        ultimaMudanca[b.nome] = Date.now();
+        ultimaMudanca[nome] = agora;
     });
 
     localStorage.setItem("TEMPO_BOMBAS", JSON.stringify(tempoLigada));
+    localStorage.setItem("TEMPO_DESLIGADAS", JSON.stringify(tempoDesligada));
+    localStorage.setItem("ULTIMA_MUDANCA", JSON.stringify(ultimaMudanca));
+    localStorage.setItem("ULTIMO_ESTADO", JSON.stringify(ultimoEstado));
+    localStorage.setItem("ULTIMO_CICLO", JSON.stringify(ultimoCiclo));
 }
 
 function renderBombas(lista){
     const box=document.getElementById("bombasContainer");
 
     const ciclos = lista.map(b => b.ciclo);
-    const alertaCiclos = !ciclos.every(v => v === ciclos[0]); // se forem diferentes
+    const alertaCiclos = !ciclos.every(v => v === ciclos[0]);
 
     box.innerHTML = lista.map(b => {
 
-        let tempo = tempoLigada[b.nome] || 0;
-        let min = Math.floor(tempo / 60);
-        let seg = Math.floor(tempo % 60);
+        const nome = b.nome;
+        const estado = normalizarEstado(b.estado);
+
+        let tLig = ultimoCiclo[nome]?.ligado || 0;
+        let tDes = ultimoCiclo[nome]?.desligado || 0;
+
+        const minL = Math.floor(tLig / 60);
+        const segL = Math.floor(tLig % 60);
+
+        const minD = Math.floor(tDes / 60);
+        const segD = Math.floor(tDes % 60);
 
         return `
-        <div class="card-bomba" 
-             style="${ b.estado === "LIGADA" 
+        <div class="card-bomba"
+             style="${ estado === "LIGADA" 
                 ? 'background:#28a745;color:white;border:2px solid #1e7e34;' 
                 : '' }">
 
             <h3>${b.nome}</h3>
             <div class="linha">Status: <b>${b.estado}</b></div>
             <div class="linha">Ciclos: ${b.ciclo}</div>
-            <div class="linha">Tempo ligada: ${min}m ${seg}s</div>
+
+            <div class="linha">Último ciclo ligada: ${minL}m ${segL}s</div>
+            <div class="linha">Último ciclo desligada: ${minD}m ${segD}s</div>
 
             ${alertaCiclos ? 
                 `<div style="margin-top:8px;padding:6px;background:#ff4444;color:white;
