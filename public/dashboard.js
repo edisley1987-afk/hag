@@ -33,6 +33,7 @@ function formatDuration(ms){
 // ============================================================================
 //  BOMBA — CONFIG & ESTADO LOCAL
 // ============================================================================
+
 const BOMBA_ON_MS = 15*60*1000;
 const BOMBA_TOLERANCIA_MS = 3*60*1000;
 const NENHUMA_LIGADA_ALERT_MS = BOMBA_ON_MS + BOMBA_TOLERANCIA_MS;
@@ -45,6 +46,7 @@ window._bombaState = window._bombaState || {
 // ============================================================================
 //  GERAR UI INICIAL
 // ============================================================================
+
 function criarEstruturaInicial(reservatorios,pressoes){
   reservatoriosContainer.innerHTML="";
   pressoesContainer.innerHTML="";
@@ -96,11 +98,15 @@ function criarEstruturaInicial(reservatorios,pressoes){
 // ============================================================================
 //  ATUALIZAÇÃO — RESERVATÓRIOS / PRESSÕES
 // ============================================================================
+
 function atualizarValores(d){
 
 // RESERVATÓRIOS
 d.reservatorios?.forEach(r=>{
-  const id=`res_${r.setor}`; const pct=r.percent; const lit=r.current_liters;
+  const id=`res_${r.setor}`;
+  const pct=r.percent;
+  const lit=r.current_liters;
+
   document.getElementById(`${id}_nivel`).style.height=pct+"%";
   document.getElementById(`${id}_percent`).innerText=Math.round(pct)+"%";
   document.getElementById(`${id}_litros`).innerText=formatNumber(lit)+" L";
@@ -111,24 +117,25 @@ d.reservatorios?.forEach(r=>{
 
 // PRESSÕES
 d.pressoes?.forEach(p=>{
-  const id=`pres_${p.setor}`; const v=Number(p.pressao??0);
+  const id=`pres_${p.setor}`;
+  const v=Number(p.pressao??0);
   const el=document.getElementById(`${id}_valor`);
   if(el) el.innerText=isNaN(v)?"--":v.toFixed(2);
 });
 
 // ============================================================================
-//  🔥 BOMBA — ATUALIZAÇÃO DE VALORES (CORRIGIDO)
+//  🔥 BOMBA — ATUALIZAÇÃO DE VALORES
 // ============================================================================
+
 const b1=Number(d.Bomba_01_binary??0);
 const b2=Number(d.Bomba_02_binary??0);
-
-const c1=Number(d.Ciclos_Bomba_01_counter??0); // corrigido!
+const c1=Number(d.Ciclos_Bomba_01_counter??0);
 const c2=Number(d.Ciclos_Bomba_02_counter??0);
-
 const now=Date.now();
 
 function proc(key,bin,cyc){
-  const st=window._bombaState[key]; const n=key==="bomba01"?"1":"2";
+  const st=window._bombaState[key];
+  const n=key==="bomba01"?"1":"2";
 
   if(st.lastBinary==0 && bin==1){ st.startTs=now; st.lastOnTs=now; st.lastCycle=cyc }
   if(st.lastBinary==1 && bin==0){ st.lastRunMs=now-st.startTs; st.startTs=null }
@@ -142,10 +149,46 @@ function proc(key,bin,cyc){
   document.getElementById(`tempo-bomba-${n}`).innerText=formatDuration(run);
   document.getElementById(`ultimoon-bomba-${n}`).innerText=st.lastOnTs?new Date(st.lastOnTs).toLocaleTimeString():"--";
 }
-
 proc("bomba01",b1,c1);
 proc("bomba02",b2,c2);
-}
+
+
+// ============================================================================
+// 🔥 REGRAS NOVAS — MANUTENÇÃO + CORES POR NÍVEL (30% / 31%)
+// ============================================================================
+
+d.reservatorios?.forEach(r => {
+  const id = `res_${r.setor}`;
+  const pct = r.percent;
+  const card = document.getElementById(id);
+  const manut = document.getElementById(`${id}_manut`);
+  const alerta = document.getElementById(`${id}_alerta`);
+  const nivelDiv = document.getElementById(`${id}_nivel`);
+  const tag = document.getElementById(`${id}_tag`);
+
+  // 🔥 Se marcar manutenção → alerta some
+  if (manut.checked) {
+      alerta.style.display = "none";
+      tag.style.display = "block";
+      card.style.opacity = "0.55";
+      nivelDiv.style.background = "#9e9e9e"; // cinza
+  } else {
+      tag.style.display = "none";
+      card.style.opacity = "1";
+
+      // 🎨 Se não estiver em manutenção, aplica cores por nível
+      if (pct < 30) nivelDiv.style.background = "#d9534f"; // vermelho
+      else if (pct <= 70) nivelDiv.style.background = "#f0ad4e"; // amarelo
+      else nivelDiv.style.background = "#4CAF50"; // verde
+  }
+
+  // 🔄 AUTO-DESMARCA MANUTENÇÃO QUANDO CHEGAR EM 31%
+  if (manut.checked && pct >= 31) manut.checked = false;
+});
+
+
+} // fim atualizarValores
+
 
 // ============================================================================
 //  ATUALIZAÇÃO LOOP
