@@ -88,20 +88,47 @@ h1, h2 {
 
 
 /* ============================
-   CARDS TRANSPARENTES
+   CARDS (APENAS ESTA PARTE FOI MELHORADA)
    ============================ */
 .card {
-  background: rgba(255, 255, 255, 0.18);
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.22);
+  padding: 22px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
   color: white;
-  transition: 0.2s ease;
+  transition: all 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.28);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .card:hover {
-  transform: scale(1.03);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255,255,255,0.45);
+}
+
+.card h2, .card h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.card p, .card span {
+  font-size: 15px;
+  opacity: 0.95;
+}
+
+.card hr {
+  border: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.25);
+  margin: 6px 0;
 }
 
 
