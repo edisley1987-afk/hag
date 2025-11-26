@@ -1,189 +1,135 @@
-/* ============================================
-   ESTILOS GERAIS
-============================================ */
-:root {
-    --verde-principal: #4DA492;
-    --verde-escuro: #006D5B;
-    --verde-agua: #7ED6D1;
-    --verde-agua-claro: #AEE8E3;
-    --verde-suave: #87C8BA;
-
-    --cinza-fundo: #F5F7FA;
-    --cinza-borda: #D9E2EC;
-    --texto-principal: #1A2E35;
-    --texto-suave: #5A6B73;
-    --danger: #D9534F;
-    --warning: #F0AD4E;
-    --ok: #4CAF50;
-}
-
+/* ============================
+   CONFIGURAÇÃO GLOBAL
+============================ */
 body {
     margin: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: var(--cinza-fundo);
-    color: var(--texto-principal);
+    padding: 0;
+    font-family: Arial, sans-serif;
+
+    background: url("hospital.jpg") no-repeat center center fixed;
+    background-size: cover;
+
+    backdrop-filter: blur(3px); /* efeito fosco */
+    -webkit-backdrop-filter: blur(3px);
 }
 
-/* ============================================
+h1, h2 {
+    color: #004c3f;
+    margin-bottom: 15px;
+}
+
+/* ============================
    HEADER
-============================================ */
+============================ */
 header {
-    background: var(--verde-principal);
+    background: rgba(0, 90, 70, 0.85);
+    padding: 15px 20px;
     color: white;
-    padding: 18px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 18px;
 }
 
-header h1 {
-    margin: 0;
-    font-weight: 600;
+/* ============================
+   LAYOUT DAS DUAS LINHAS
+============================ */
+
+/* Linha 1 – apenas reservatórios */
+#linha-reservatorios {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
 }
 
-#lastUpdate {
-    font-size: 14px;
-    opacity: 0.9;
+#reservatoriosContainer {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
 }
 
-/* ============================================
-   CONTAINERS PRINCIPAIS
-============================================ */
-main {
-    padding: 20px 25px;
-}
-
-h2 {
-    color: var(--verde-escuro);
+/* Linha 2 — pressões + bombas lado a lado */
+#linha-pressao-bombas {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
     margin-top: 25px;
 }
 
-/* Área de grid dos cards */
-#reservatoriosContainer,
 #pressoesContainer,
 #bombasContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
+    flex: 1;
 }
 
-/* ============================================
-   CARD PADRÃO
-============================================ */
+/* ============================
+   CARDS (reservatórios, pressões e bombas)
+============================ */
 .card {
-    background: white;
-    border: 1px solid var(--cinza-borda);
-    border-radius: 14px;
-    padding: 15px 18px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    transition: .2s;
-}
-
-.card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-}
-
-.card h3 {
-    margin: 0 0 10px 0;
-    font-weight: 600;
-    color: var(--texto-principal);
-}
-
-/* ============================================
-   RESERVATÓRIOS (MEDIDOR)
-============================================ */
-.reservatorio {
-    display: flex;
-    flex-direction: column;
-}
-
-.nivelBox {
-    height: 160px;
+    background: rgba(255, 255, 255, 0.87);
     border-radius: 10px;
-    background: var(--verde-agua-claro);
-    border: 1px solid var(--verde-agua);
-    display: flex;
-    flex-direction: column-reverse;
-    overflow: hidden;
+    padding: 18px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-align: center;
+    min-width: 260px;
 }
 
-.nivelInterno {
+/* Barras de nível */
+.barraNivel {
     width: 100%;
-    background: var(--verde-escuro);
-    transition: height .5s;
-}
-
-.infoReservatorio {
+    height: 28px;
+    border-radius: 6px;
+    background: #ddd;
     margin-top: 10px;
-    font-size: 14px;
-    color: var(--texto-suave);
 }
 
-/* ============================================
-   PRESSÕES
-============================================ */
-.pressaoValor {
-    font-size: 28px;
-    font-weight: bold;
-    color: var(--verde-escuro);
+.barraNivel preenche {
+    height: 100%;
+    border-radius: 6px;
 }
 
-.pressaoUnidade {
-    font-size: 14px;
-    color: var(--texto-suave);
-}
-
-/* Cores de alerta */
-.alerta-baixo {
-    color: var(--danger) !important;
-}
-.alerta-medio {
-    color: var(--warning) !important;
-}
-.alerta-normal {
-    color: var(--ok) !important;
-}
-
-/* ============================================
-   BOMBAS
-============================================ */
-.bombaStatus {
-    font-size: 22px;
-    font-weight: 700;
-}
-
-.bomba-on {
-    color: var(--ok);
-}
-
-.bomba-off {
-    color: var(--danger);
-}
-
-/* Pequena bolinha indicadora */
-.indicador-bomba {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
+/* Historico botão */
+.btn-historico {
+    background: #006d5b;
+    color: white;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 8px;
     display: inline-block;
-    margin-right: 6px;
 }
 
-.indicador-on {
-    background: var(--ok);
-}
-.indicador-off {
-    background: var(--danger);
+.btn-historico:hover {
+    background: #00594a;
 }
 
-/* ============================================
-   RODAPÉ
-============================================ */
+/* ============================
+   BOMBAS — cores
+============================ */
+.bomba-card {
+    padding: 15px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.9);
+}
+
+.bomba-ligada {
+    background: #47b86f !important;
+    color: white;
+}
+
+.bomba-desligada {
+    background: #b63030 !important;
+    color: white;
+}
+
+/* ============================
+   FOOTER
+============================ */
 footer {
     text-align: center;
-    padding: 15px;
-    font-size: 14px;
-    color: var(--texto-suave);
     margin-top: 40px;
+    padding: 18px;
+    background: rgba(0, 90, 70, 0.85);
+    color: white;
 }
