@@ -1,188 +1,102 @@
-/* ===== VARIÁVEIS DE COR ===== */
+/* ================= PALETA ================= */
 :root {
-  --verde-principal: #4DA492;
-  --verde-escuro: #006D5B;
-  --verde-agua: #7ED6D1;
-  --verde-agua-claro: #AEE8E3;
-  --verde-suave: #87C8BA;
+  --verde-principal:#4DA492;
+  --verde-escuro:#006D5B;
+  --verde-agua:#7ED6D1;
+  --verde-agua-claro:#AEE8E3;
+  --verde-suave:#87C8BA;
 
-  --cinza-fundo: #F5F7FA;
-  --texto-principal: #333;
-  --texto-secundario: #555;
+  --cinza-fundo:#F5F7FA;
+  --texto-principal:#333;
+  --texto-secundario:#555;
 }
 
-/* ===== RESET ===== */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: var(--cinza-fundo);
-  color: var(--texto-principal);
+/* ================= BASE ================= */
+body{
+  margin:0;
+  padding:0;
+  font-family:Segoe UI,Arial,sans-serif;
+  background:var(--cinza-fundo);
+  color:var(--texto-principal);
 }
 
-/* ========================================================================= */
-/* ===== CABEÇALHO ===== */
-/* ========================================================================= */
-header {
-  width: 100%;
-  background-color: #0f7a5b;
-  color: white;
-  padding: 25px 0;
-  text-align: center;
-  border-bottom: 3px solid #0d6b50;
+/* ================= HEADER ================= */
+header{
+  width:100%;
+  background:#0f7a5b;
+  color:white;
+  padding:25px 0;
+  text-align:center;
+  border-bottom:3px solid #0d6b50;
+}
+header h1{ margin:0;font-size:22px;font-weight:600;color:white;}
+#lastUpdate{opacity:.8;font-size:13px;margin-top:4px;}
+
+main{padding:20px;}
+#reservatoriosContainer,#pressoesContainer,#bombasContainer{
+  display:flex;flex-wrap:wrap;gap:22px;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 600;
-  color: white;
+/* ================= RESERVATÓRIOS ================= */
+.card-reservatorio{
+  background:#fff;
+  width:240px;
+  padding:18px;
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  border-top:6px solid var(--verde-principal);
+  display:flex;flex-direction:column;
 }
 
-#lastUpdate {
-  margin-top: 4px;
-  font-size: 14px;
-  color: white;
-  opacity: 0.9;
+/* Caixa */
+.tanque-visu{
+  height:160px;width:100%;background:#dceff1;
+  border-radius:10px;overflow:hidden;position:relative;margin-bottom:12px;
 }
 
-/* ===== CONTAINERS ===== */
-main {
-  padding: 20px;
+/* Água */
+.nivel-agua{
+  bottom:0;left:0;width:100%;
+  position:absolute;height:0%;
+  transition:.8s ease-in-out;
 }
 
-#reservatoriosContainer,
-#pressoesContainer,
-#bombasContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
+/* Texto dentro */
+.overlay-info{position:absolute;top:10px;width:100%;text-align:center;}
+.percent-text{font-size:26px;font-weight:bold;color:#003b32;}
+.liters-text{font-size:14px;color:#333;margin-top:3px;}
+
+/* ALERTA */
+.alerta-msg{
+  display:none;
+  padding:7px;border-radius:7px;
+  background:#cc2b2b;color:white;text-align:center;font-size:14px;margin-bottom:6px;
 }
 
-/* ========================================================================= */
-/* ===== CARD DO RESERVATÓRIO — LAYOUT ORIGINAL RESTAURADO ===== */
-/* ========================================================================= */
-.card-reservatorio {
-  background: #ffffff;
-  border-radius: 15px;
-  padding: 18px;
-  width: 235px;             /* 🎯 largura original restaurada */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  border-top: 6px solid var(--verde-principal);
-  position: relative;
-}
+/* ===== Cores automáticas conforme nível ===== */
+.card-reservatorio.nv-critico .nivel-agua{background:linear-gradient(#ff4d4d,#9e0000);}
+.card-reservatorio.nv-alerta  .nivel-agua{background:linear-gradient(#ffe16a,#ff8c00);}
+.card-reservatorio.nv-normal  .nivel-agua{background:linear-gradient(#72c3ff,#004fa1);}
+.card-reservatorio.nv-cheio   .nivel-agua{background:linear-gradient(#3cd46b,#007a31);}
+.card-reservatorio.nv-critico .alerta-msg{display:block;}
 
-/* ===== TANQUE VISUAL ===== */
-.tanque-visu {
-  width: 100%;
-  height: 150px;           /* 🎯 altura original do tanque */
-  background: var(--verde-agua-claro);
-  border-radius: 10px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 12px;
+/* ================= PRESSÕES ================= */
+.card-pressao{
+  width:230px;background:#fff;padding:18px;border-radius:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
 }
+.pressao-valor{font-size:32px;font-weight:bold;color:#00664d;text-align:center;}
+.pressao-unidade{text-align:center;color:#444;margin-top:4px;}
 
-.nivel-agua {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(var(--verde-agua), var(--verde-principal));
-  height: 0%;
-  transition: height 0.6s ease-out;
+/* ================= BOMBAS ================= */
+.card-bomba{
+  width:250px;background:#fff;padding:15px;border-radius:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
 }
+.card-bomba h3{color:#005244;margin:0 0 6px;}
+.linha{font-size:14px;margin-top:4px;}
 
-.overlay-info {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  top: 10px;
-}
-
-.percent-text {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--verde-escuro);
-}
-
-.liters-text {
-  font-size: 14px;
-  margin-top: 4px;
-  color: var(--texto-secundario);
-}
-
-/* ===== ALERTA ===== */
-.alerta-msg {
-  padding: 8px;
-  background: #d9534f;
-  color: white;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 10px;
-  display: none;
-}
-
-/* ========================================================================= */
-/* ===== PRESSÕES ===== */
-/* ========================================================================= */
-.card-pressao {
-  background: #fff;
-  width: 220px;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  border-top: 6px solid var(--verde-principal);
-}
-
-.pressao-valor {
-  font-size: 32px;
-  text-align: center;
-  font-weight: bold;
-  color: var(--verde-escuro);
-}
-
-.pressao-unidade {
-  text-align: center;
-  margin-top: 5px;
-  font-size: 14px;
-  color: var(--texto-secundario);
-}
-
-/* ========================================================================= */
-/* ===== BOMBAS DE CIRCULAÇÃO ===== */
-/* ========================================================================= */
-.card-bomba {
-  background: #fff;
-  width: 260px;
-  padding: 15px;
-  border-radius: 15px;
-  border-top: 6px solid var(--verde-principal);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.card-bomba h3 {
-  font-size: 18px;
-  color: var(--verde-escuro);
-}
-
-.card-bomba .linha {
-  margin-top: 4px;
-  font-size: 14px;
-}
-
-/* ========================================================================= */
-/* ===== RODAPÉ ===== */
-/* ========================================================================= */
-footer {
-  margin-top: 40px;
-  width: 100%;
-  background-color: #0f7a5b;
-  color: white;
-  text-align: center;
-  padding: 18px 0;
-  font-size: 14px;
-  border-top: 3px solid #0d6b50;
+footer{
+  margin-top:35px;background:#0f7a5b;color:white;
+  text-align:center;padding:12px 0;border-top:3px solid #0d6b50;
 }
