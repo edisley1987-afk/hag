@@ -169,6 +169,17 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
     }
 
+    // ---------------------------------------------
+    // 🔥 PATCH ANTI-NULL
+    // ---------------------------------------------
+    let ultimo = {};
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        ultimo = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+      } catch {}
+    }
+    // ---------------------------------------------
+
     const dadosConvertidos = {};
 
     for (const item of dataArray) {
@@ -193,12 +204,12 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         convertido = Number(convertido.toFixed(2));
       }
 
-      // BOMBA (CORRIGIDO)
+      // BOMBA
       else if (sensor.tipo === "bomba") {
         convertido = valor === 1 ? 1 : 0;
       }
 
-      // CICLO (CORRIGIDO)
+      // CICLO
       else if (sensor.tipo === "ciclo") {
         convertido = Math.max(0, Math.round(valor));
       }
@@ -216,6 +227,16 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
       dadosConvertidos[ref] = convertido;
     }
+
+    // ---------------------------------------------
+    // 🔥 PATCH ANTI-NULL — MANTÉM VALORES ANTIGOS SE NÃO VIERAM NA REQUISIÇÃO
+    // ---------------------------------------------
+    for (const ref in SENSORES) {
+      if (dadosConvertidos[ref] === undefined && ultimo[ref] !== undefined) {
+        dadosConvertidos[ref] = ultimo[ref];
+      }
+    }
+    // ---------------------------------------------
 
     dadosConvertidos.timestamp = new Date().toISOString();
 
