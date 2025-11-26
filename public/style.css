@@ -61,29 +61,39 @@ h1, h2 {
     color: white;
 }
 
-/* ============================ 
-   AJUSTE DE GRID DOS CARDS 
-============================ */
-#reservatoriosContainer,
-#pressoesContainer,
-#bombasContainer {
+/* ============================  
+   RESERVATÓRIOS — 5 CARDS NA MESMA LINHA  
+============================= */
+#reservatoriosContainer {
     display: flex !important;
-    flex-wrap: wrap;
+    flex-wrap: nowrap !important;        /* impede quebrar linha */
     gap: 22px;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;                    /* scroll horizontal */
+    padding-bottom: 10px;
+    scrollbar-width: thin;               /* firefox */
+}
+#reservatoriosContainer::-webkit-scrollbar {
+    height: 8px;
+}
+#reservatoriosContainer::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 8px;
 }
 
 /* ============================ CARD DO RESERVATÓRIO ============================ */
 .card-reservatorio {
     background: rgba(255, 255, 255, 0.18);
-    padding: 15px; /* reduzido */
+    padding: 15px;
     border-radius: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     backdrop-filter: blur(6px);
     color: white;
     transition: 0.2s ease;
     text-align: center;
-    width: 260px; /* reduzido */
+    width: 260px !important;
+    min-width: 260px !important;      /* impede encolher */
+    flex-shrink: 0 !important;        /* impede comprimir */
 }
 .card-reservatorio:hover {
     transform: scale(1.03);
@@ -91,7 +101,7 @@ h1, h2 {
 
 .tanque-visu {
     width: 100%;
-    height: 160px; /* reduzido */
+    height: 160px;
     border-radius: 12px;
     background: rgba(255,255,255,0.25);
     border: 3px solid var(--verde-medio);
@@ -109,7 +119,7 @@ h1, h2 {
     background: var(--verde-claro);
 }
 
-/* Overlay de informações */
+/* Overlay */
 .overlay-info {
     position: absolute;
     top: 8px;
@@ -127,7 +137,7 @@ h1, h2 {
     margin-top: 4px;
 }
 
-/* Cores de acordo com o nível */
+/* Cores do nível */
 .nv-critico {
     border-color: var(--erro) !important;
 }
@@ -156,7 +166,7 @@ h1, h2 {
 /* ============================ PRESSÕES ============================ */
 .pressao-container {
     width: 90%;
-    margin: 20px auto 0; /* reduzido */
+    margin: 20px auto 0;
     display: flex;
     justify-content: center;
     gap: 25px;
@@ -198,7 +208,7 @@ h1, h2 {
 /* ============================ BOMBAS ============================ */
 .bombas-container {
     width: 90%;
-    margin: 20px auto 40px; /* reduzido */
+    margin: 20px auto 40px;
     display: flex;
     flex-wrap: wrap;
     gap: 25px;
@@ -259,8 +269,11 @@ h1, h2 {
     .card-pressao {
         width: 90%;
     }
+
+    /* RESERVATÓRIOS continuam em linha com scroll */
     .card-reservatorio {
-        width: 95% !important;
+        width: 260px !important;
+        min-width: 260px !important;
     }
 }
 
