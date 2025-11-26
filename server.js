@@ -54,11 +54,11 @@ const SENSORES = {
     capacidade: 9000
   },
 
-  // 🔥🔥🔥 **LAVANDERIA CORRIGIDO AQUI**
+  // 🔥🔥🔥 LAVANDERIA
   "Reservatorio_lavanderia_current": {
     leituraVazio: 0.006012,
-    leituraCheio: 0.010541, // leitura cheia REAL confirmada
-    capacidade: 10000       // capacidade REAL 10.000 L
+    leituraCheio: 0.010541,
+    capacidade: 10000
   },
 
   // ======== PRESSÕES ========
@@ -457,8 +457,6 @@ app.get("/api/dashboard", (req, res) => {
       capacidade: 9000,
       manutencao: false
     },
-
-    // 🔥🔥🔥 LAVANDERIA CORRIGIDA AQUI
     {
       nome: "Lavanderia",
       setor: "lavanderia",
@@ -487,18 +485,19 @@ app.get("/api/dashboard", (req, res) => {
     }
   ];
 
+  // 🔥🔥🔥 CORREÇÃO OFICIAL DAS BOMBAS — 100% precisa
   const bombas = [
     {
       nome: "Bomba 01",
-      estado: dados["Bomba_01"] === 1 ? "ligada" : "desligada",
-      estado_num: dados["Bomba_01"] || 0,
-      ciclo: dados["Ciclos_Bomba_01"] || 0
+      estado_num: Number(dados["Bomba_01"]) || 0,
+      estado: Number(dados["Bomba_01"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_01"]) || 0
     },
     {
       nome: "Bomba 02",
-      estado: dados["Bomba_02"] === 1 ? "ligada" : "desligada",
-      estado_num: dados["Bomba_02"] || 0,
-      ciclo: dados["Ciclos_Bomba_02"] || 0
+      estado_num: Number(dados["Bomba_02"]) || 0,
+      estado: Number(dados["Bomba_02"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_02"]) || 0
     }
   ];
 
