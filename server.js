@@ -68,9 +68,9 @@ const SENSORES = {
 
   // ======== BOMBAS ========
   "Bomba_01": { tipo: "bomba" },
-  "Ciclo_Bomba_01": { tipo: "ciclo" },
+  "Ciclos_Bomba_01": { tipo: "ciclo" },
   "Bomba_02": { tipo: "bomba" },
-  "Ciclo_Bomba_02": { tipo: "ciclo" }
+  "Ciclos_Bomba_02": { tipo: "ciclo" }
 };
 
 // === Função para salvar última leitura ===
@@ -492,13 +492,13 @@ app.get("/api/dashboard", (req, res) => {
       nome: "Bomba 01",
       estado: dados["Bomba_01"] === 1 ? "ligada" : "desligada",
       estado_num: dados["Bomba_01"] || 0,
-      ciclo: dados["Ciclo_Bomba_01"] || 0
+      ciclo: dados["Ciclos_Bomba_01"] || 0
     },
     {
       nome: "Bomba 02",
       estado: dados["Bomba_02"] === 1 ? "ligada" : "desligada",
       estado_num: dados["Bomba_02"] || 0,
-      ciclo: dados["Ciclo_Bomba_02"] || 0
+      ciclo: dados["Ciclos_Bomba_02"] || 0
     }
   ];
 
