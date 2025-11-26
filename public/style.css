@@ -41,7 +41,6 @@ body::before {
   --ok: #5cb85c;
 }
 
-
 /* ============================
    HEADER
    ============================ */
@@ -74,7 +73,6 @@ h1, h2 {
   color: white;
 }
 
-/* GRIDS */
 #reservatoriosContainer,
 #pressoesContainer,
 #bombasContainer {
@@ -84,8 +82,9 @@ h1, h2 {
 }
 
 /* ============================
-   CARD GERAL
+   CARD DO RESERVATÓRIO (NOVO MODELO)
    ============================ */
+
 .card-reservatorio {
   background: rgba(255, 255, 255, 0.18);
   padding: 20px;
@@ -101,11 +100,6 @@ h1, h2 {
   transform: scale(1.03);
 }
 
-/* ============================
-   RESERVATÓRIO — TANQUE NOVO
-   (compatível COM O dashboard.js)
-   ============================ */
-
 .tanque-visu {
   width: 100%;
   height: 180px;
@@ -116,7 +110,7 @@ h1, h2 {
   position: relative;
 }
 
-/* ÁGUA */
+/* Nível de água */
 .nivel-agua {
   position: absolute;
   bottom: 0;
@@ -126,7 +120,7 @@ h1, h2 {
   background: var(--verde-claro);
 }
 
-/* OVERLAY */
+/* Overlay de informações */
 .overlay-info {
   position: absolute;
   top: 8px;
@@ -136,7 +130,6 @@ h1, h2 {
   text-shadow: 0 1px 3px black;
 }
 
-/* Números */
 .percent-text {
   font-size: 22px;
   font-weight: bold;
@@ -147,11 +140,10 @@ h1, h2 {
   margin-top: 4px;
 }
 
-/* CORES POR NÍVEL */
+/* Cores de acordo com o nível */
 .nv-critico {
   border-color: var(--erro) !important;
 }
-
 .nv-critico .nivel-agua {
   background: var(--erro) !important;
 }
@@ -159,7 +151,6 @@ h1, h2 {
 .nv-alerta {
   border-color: var(--alerta) !important;
 }
-
 .nv-alerta .nivel-agua {
   background: var(--alerta) !important;
 }
@@ -167,7 +158,6 @@ h1, h2 {
 .nv-normal {
   border-color: var(--ok) !important;
 }
-
 .nv-normal .nivel-agua {
   background: var(--ok) !important;
 }
@@ -175,54 +165,133 @@ h1, h2 {
 .nv-cheio {
   border-color: var(--verde-claro) !important;
 }
-
 .nv-cheio .nivel-agua {
   background: var(--verde-claro) !important;
 }
 
 /* ============================
-   PRESSÕES
+   PRESSÕES — NOVO MODELO
    ============================ */
-.press-bar {
-  width: 100%;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.28);
-  border-radius: 6px;
-  overflow: hidden;
+
+.pressao-container {
+    width: 90%;
+    margin: 40px auto 0;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
 }
 
-.press-fill {
-  height: 100%;
-  background: var(--verde-medio);
-  transition: width .8s ease;
+.card-pressao {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 18px 25px;
+    width: 260px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    border-left: 5px solid var(--verde-principal);
+    transition: transform 0.2s ease-in-out;
 }
 
-.press-txt {
-  margin-top: 8px;
-  text-align: center;
-  font-weight: bold;
-  color: white;
+.card-pressao:hover {
+    transform: scale(1.03);
+}
+
+.card-pressao h3 {
+    margin: 0 0 10px;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.valor-pressao {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--verde-suave);
+}
+
+.unidade {
+    font-size: 14px;
+    opacity: 0.8;
 }
 
 /* ============================
-   BOMBAS
+   BOMBAS — NOVO MODELO
    ============================ */
-.bomba-card {
-  background: rgba(255,255,255,0.18);
-  padding: 18px;
-  border-radius: 12px;
-  text-align: center;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  color: white;
+
+.bombas-container {
+    width: 90%;
+    margin: 30px auto 60px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
 }
 
-.bomba-on {
-  background: rgba(50, 150, 80, 0.55) !important;
+.card-bomba {
+    width: 420px;
+    padding: 25px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(7px);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
 }
 
-.bomba-off {
-  background: rgba(200, 40, 40, 0.65) !important;
+.card-bomba h3 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+.bomba-ligada {
+    background: rgba(0, 140, 40, 0.85) !important;
+    border-left: 6px solid #00ff73;
+}
+
+.bomba-desligada {
+    background: rgba(140, 0, 0, 0.75) !important;
+    border-left: 6px solid #ff4f4f;
+}
+
+.card-bomba p {
+    margin: 4px 0;
+    font-size: 15px;
+}
+
+.alerta-bomba {
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #d64545;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ============================
+   RESPONSIVIDADE
+   ============================ */
+@media (max-width: 700px) {
+    .pressao-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bombas-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card-bomba {
+        width: 95%;
+    }
+
+    .card-pressao {
+        width: 90%;
+    }
 }
 
 /* ============================
