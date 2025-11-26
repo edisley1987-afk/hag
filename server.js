@@ -32,7 +32,6 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 // ============================================================================
 
 const SENSORES = {
-  // ======== RESERVATÓRIOS ========
   "Reservatorio_Elevador_current": {
     leituraVazio: 0.004168,
     leituraCheio: 0.008742,
@@ -53,20 +52,18 @@ const SENSORES = {
     leituraCheio: 0.006515,
     capacidade: 9000
   },
-
-  // 🔥🔥🔥 LAVANDERIA
   "Reservatorio_lavanderia_current": {
     leituraVazio: 0.006012,
     leituraCheio: 0.010541,
     capacidade: 10000
   },
 
-  // ======== PRESSÕES ========
+  // PRESSÕES
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" },
 
-  // ======== BOMBAS CORRIGIDAS ========
+  // BOMBAS
   "Bomba_01_binary": { tipo: "bomba" },
   "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
   "Bomba_02_binary": { tipo: "bomba" },
@@ -101,9 +98,7 @@ function registrarHistorico(dados) {
     if (ref === "timestamp") return;
 
     const sensor = SENSORES[ref];
-
-    if (!sensor) return;
-    if (!sensor.capacidade) return;
+    if (!sensor || !sensor.capacidade) return;
 
     if (!historico[hoje][ref]) {
       historico[hoje][ref] = {
@@ -142,6 +137,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   try {
     let body = req.body;
 
+    // 🔥 CORREÇÃO: body pode vir como texto no Render
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
 
     if (typeof body === "string") {
@@ -186,25 +182,15 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
       let convertido = valor;
 
-      // PRESSÃO
       if (sensor.tipo === "pressao") {
         convertido = ((valor - 0.004) / 0.016) * 20;
         convertido = Math.max(0, Math.min(20, convertido));
         convertido = Number(convertido.toFixed(2));
-      }
-
-      // BOMBA (CORRIGIDO)
-      else if (sensor.tipo === "bomba") {
+      } else if (sensor.tipo === "bomba") {
         convertido = valor === 1 ? 1 : 0;
-      }
-
-      // CICLO (CORRIGIDO)
-      else if (sensor.tipo === "ciclo") {
-        convertido = Math.max(0, Math.round(valor));
-      }
-
-      // RESERVATÓRIO
-      else if (sensor.capacidade > 1) {
+      } else if (sensor.tipo === "ciclo") {
+        converted = Math.max(0, Math.round(valor));
+      } else if (sensor.capacidade > 1) {
         convertido =
           ((valor - sensor.leituraVazio) /
             (sensor.leituraCheio - sensor.leituraVazio)) *
@@ -409,7 +395,7 @@ app.get("/api/consumo", (req, res) => {
 });
 
 // ============================================================================
-// /api/dashboard — resumo usado no dashboard
+// /api/dashboard — resumo usado no dashboard (CORRIGIDO SEM ALTERAR ESTRUTURA)
 // ============================================================================
 
 app.get("/api/dashboard", (req, res) => {
@@ -428,40 +414,40 @@ app.get("/api/dashboard", (req, res) => {
     {
       nome: "Reservatório Elevador",
       setor: "elevador",
-      percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
-      current_liters: dados["Reservatorio_Elevador_current"],
+      percent: Math.round(((dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100),
+      current_liters: dados["Reservatorio_Elevador_current"] || 0,
       capacidade: 20000,
       manutencao: false
     },
     {
       nome: "Reservatório Osmose",
       setor: "osmose",
-      percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
-      current_liters: dados["Reservatorio_Osmose_current"],
+      percent: Math.round(((dados["Reservatorio_Osmose_current"] || 0) / 200) * 100),
+      current_liters: dados["Reservatorio_Osmose_current"] || 0,
       capacidade: 200,
       manutencao: false
     },
     {
       nome: "Reservatório CME",
       setor: "cme",
-      percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
-      current_liters: dados["Reservatorio_CME_current"],
+      percent: Math.round(((dados["Reservatorio_CME_current"] || 0) / 1000) * 100),
+      current_liters: dados["Reservatorio_CME_current"] || 0,
       capacidade: 1000,
       manutencao: false
     },
     {
       nome: "Água Abrandada",
       setor: "abrandada",
-      percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
-      current_liters: dados["Reservatorio_Agua_Abrandada_current"],
+      percent: Math.round(((dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100),
+      current_liters: dados["Reservatorio_Agua_Abrandada_current"] || 0,
       capacidade: 9000,
       manutencao: false
     },
     {
       nome: "Lavanderia",
       setor: "lavanderia",
-      percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
-      current_liters: dados["Reservatorio_lavanderia_current"],
+      percent: Math.round(((dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100),
+      current_liters: dados["Reservatorio_lavanderia_current"] || 0,
       capacidade: 10000,
       manutencao: false
     }
@@ -471,21 +457,20 @@ app.get("/api/dashboard", (req, res) => {
     {
       nome: "Pressão Saída Osmose",
       setor: "saida_osmose",
-      pressao: dados["Pressao_Saida_Osmose_current"]
+      pressao: dados["Pressao_Saida_Osmose_current"] || 0
     },
     {
       nome: "Pressão Retorno Osmose",
       setor: "retorno_osmose",
-      pressao: dados["Pressao_Retorno_Osmose_current"]
+      pressao: dados["Pressao_Retorno_Osmose_current"] || 0
     },
     {
       nome: "Pressão Saída CME",
       setor: "saida_cme",
-      pressao: dados["Pressao_Saida_CME_current"]
+      pressao: dados["Pressao_Saida_CME_current"] || 0
     }
   ];
 
-  // 🔥🔥🔥 CORREÇÃO OFICIAL DAS BOMBAS — 100% precisa
   const bombas = [
     {
       nome: "Bomba 01",
