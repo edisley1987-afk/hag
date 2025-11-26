@@ -1,117 +1,205 @@
-/* ================= PALETA ================= */
+/* ============================
+   BACKGROUND COM FOTO DO HOSPITAL
+   ============================ */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+
+  /* FOTO DE FUNDO */
+  background: url("image.png") no-repeat center center fixed;
+  background-size: cover;
+
+  /* CAMADA ESCURA PARA FACILITAR A LEITURA */
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 40, 25, 0.55); /* verde escuro transparente */
+  backdrop-filter: blur(3px);
+  z-index: -1;
+}
+
+/* ============================
+   PALETA DE CORES
+   ============================ */
 :root {
-  --verde-principal:#0E8A64;        /* Verde profissional */
-  --verde-escuro:#0A6249;
-  --verde-claro:#14B88A;
-  --verde-suave:#A8E7D3;
-
-  --cinza-fundo:rgba(255,255,255,0.90);
-  --texto-principal:#222;
-  --texto-secundario:#555;
+  --verde-principal: #0b5e45;
+  --verde-claro: #2e8b70;
+  --verde-medio: #3fa58b;
+  --verde-suave: #d9f4ec;
+  --branco: #ffffff;
+  --cinza-claro: #f2f2f2;
+  --cinza-texto: #222;
+  --erro: #d9534f;
+  --alerta: #f0ad4e;
+  --ok: #5cb85c;
 }
 
-/* ================= FUNDO DO SITE ================= */
-body{
-  margin:0;
-  padding:0;
-  font-family:Segoe UI,Arial,sans-serif;
-  color:var(--texto-principal);
 
-  /* Imagem de fundo do hospital */
-  background:url("hospital.jpg") no-repeat center center fixed;
-  background-size:cover;
-
-  /* Filme branco suave para leitura */
-  position:relative;
+/* ============================
+   HEADER
+   ============================ */
+header {
+  background: rgba(0, 90, 60, 0.85);
+  color: var(--branco);
+  padding: 22px;
+  text-align: center;
+  border-bottom: 3px solid var(--verde-medio);
+  backdrop-filter: blur(4px);
 }
 
-body::before{
-  content:"";
-  position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:rgba(255,255,255,0.85); /* controle da transparência */
-  backdrop-filter:blur(2px);
-  z-index:-1;
+#headerImage {
+  width: 180px;
+  border-radius: 6px;
+  margin-bottom: 10px;
 }
 
-/* ================= HEADER ================= */
-header{
-  width:100%;
-  background:var(--verde-principal);
-  color:white;
-  padding:25px 0;
-  text-align:center;
-  border-bottom:3px solid var(--verde-escuro);
-}
-header h1{ margin:0;font-size:22px;font-weight:600;color:white;}
-#lastUpdate{opacity:.9;font-size:13px;margin-top:4px;}
 
-main{padding:20px;}
-#reservatoriosContainer,#pressoesContainer,#bombasContainer{
-  display:flex;flex-wrap:wrap;gap:22px;
+/* ============================
+   CONTEÚDO
+   ============================ */
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  color: white;
 }
 
-/* ================= RESERVATÓRIOS ================= */
-.card-reservatorio{
-  background:#fff;
-  width:240px;
-  padding:18px;
-  border-radius:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  border-top:6px solid var(--verde-principal);
-  display:flex;flex-direction:column;
+h1, h2 {
+  color: white;
 }
 
-/* Caixa */
-.tanque-visu{
-  height:160px;width:100%;background:#e8f5f2;
-  border-radius:10px;overflow:hidden;position:relative;margin-bottom:12px;
+
+/* GRIDS */
+#reservatoriosContainer,
+#pressoesContainer,
+#bombasContainer {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-/* Água */
-.nivel-agua{
-  bottom:0;left:0;width:100%;
-  position:absolute;height:0%;
-  transition:.8s ease-in-out;
+
+/* ============================
+   CARDS TRANSPARENTES
+   ============================ */
+.card {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  color: white;
+  transition: 0.2s ease;
 }
 
-/* Texto dentro */
-.overlay-info{position:absolute;top:10px;width:100%;text-align:center;}
-.percent-text{font-size:26px;font-weight:bold;color:#005745;}
-.liters-text{font-size:14px;color:#333;margin-top:3px;}
-
-/* ALERTA */
-.alerta-msg{
-  display:none;
-  padding:7px;border-radius:7px;
-  background:#cc2b2b;color:white;text-align:center;font-size:14px;margin-bottom:6px;
+.card:hover {
+  transform: scale(1.03);
 }
 
-/* ===== Cores automáticas conforme nível ===== */
-.card-reservatorio.nv-critico .nivel-agua{background:linear-gradient(#ff4d4d,#9e0000);}
-.card-reservatorio.nv-alerta  .nivel-agua{background:linear-gradient(#ffe16a,#ff8c00);}
-.card-reservatorio.nv-normal  .nivel-agua{background:linear-gradient(#81e6c7,#0E8A64);}
-.card-reservatorio.nv-cheio   .nivel-agua{background:linear-gradient(#4be68a,#0E8A64);}
-.card-reservatorio.nv-critico .alerta-msg{display:block;}
 
-/* ================= PRESSÕES ================= */
-.card-pressao{
-  width:230px;background:#fff;padding:18px;border-radius:15px;
-  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
+/* ============================
+   RESERVATÓRIO (TANQUE)
+   ============================ */
+.tanque {
+  width: 100%;
+  height: 160px;
+  background: rgba(255, 255, 255, 0.25);
+  border: 3px solid var(--verde-medio);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
 }
-.pressao-valor{font-size:32px;font-weight:bold;color:var(--verde-escuro);text-align:center;}
-.pressao-unidade{text-align:center;color:#444;margin-top:4px;}
 
-/* ================= BOMBAS ================= */
-.card-bomba{
-  width:250px;background:#fff;padding:15px;border-radius:15px;
-  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
+.nivel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--verde-claro);
+  transition: height 1s ease;
 }
-.card-bomba h3{color:var(--verde-escuro);margin:0 0 6px;}
-.linha{font-size:14px;margin-top:4px;}
 
-/* ================= FOOTER ================= */
-footer{
-  margin-top:35px;background:var(--verde-principal);color:white;
-  text-align:center;padding:12px 0;border-top:3px solid var(--verde-escuro);
+.porcentagem {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+  color: white;
+}
+
+/* ALERTAS */
+.alerta-baixo {
+  border-color: var(--erro) !important;
+}
+
+.alerta-baixo .nivel {
+  background: var(--erro) !important;
+}
+
+
+/* ============================
+   PRESSÕES
+   ============================ */
+.press-bar {
+  width: 100%;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.press-fill {
+  height: 100%;
+  background: var(--verde-medio);
+  transition: width .8s ease;
+}
+
+.press-txt {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+}
+
+
+/* ============================
+   BOMBAS
+   ============================ */
+.bomba-status {
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 12px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.bomba-on {
+  background: rgba(50, 150, 80, 0.55);
+}
+
+.bomba-off {
+  background: rgba(200, 40, 40, 0.65);
+}
+
+
+/* ============================
+   FOOTER
+   ============================ */
+footer {
+  background: rgba(0, 90, 60, 0.85);
+  padding: 12px;
+  text-align: center;
+  color: white;
+  border-top: 2px solid var(--verde-medio);
+  margin-top: 40px;
 }
