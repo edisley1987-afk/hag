@@ -1,183 +1,116 @@
-// === dashboard.js (completo e atualizado) ===
-
-// URL da API
-const API_URL = window.location.origin + "/dados";
+// ======================= CONFIG ===========================
+const API_URL = "/dados";
 const UPDATE_INTERVAL = 5000;
 
-let ultimaLeitura = 0;
-
-// Configuração dos reservatórios (capacidades)
+// Capacidade dos reservatórios
 const RESERVATORIOS = {
-    Reservatorio_Agua_Abrandada_current: { nome: "Água Abrandada", capacidade: 5000 },
-    Reservatorio_Elevador_current: { nome: "Elevador", capacidade: 20000 },
-    Reservatorio_CME_current: { nome: "CME", capacidade: 5000 },
-    Reservatorio_Osmose_current: { nome: "Osmose", capacidade: 200 },
+    Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
+    Reservatorio_Osmose_current: { nome: "Reservatório Osmose", capacidade: 200 },
+    Reservatorio_CME_current: { nome: "Reservatório CME", capacidade: 1000 },
+    Reservatorio_Agua_Abrandada_current: { nome: "Água Abrandada", capacidade: 9000 },
+    Reservatorio_Lavanderia_current: { nome: "Lavanderia", capacidade: 10000 }
 };
 
-// Dados internos para ciclos
-let estadoAnterior = {
-    bomba1: null,
-    bomba2: null
+// Pressões
+const PRESSOES = {
+    Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
+    Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
+    Pressao_Saida_CME_current: "Pressão Saída CME"
 };
 
-let ciclos = {
-    bomba1: 0,
-    bomba2: 0
-};
+// Bombas
+const BOMBAS = [
+    { id: "Bomba_01", ciclos: "Ciclos_Bomba_01", name: "Bomba 01" },
+    { id: "Bomba_02", ciclos: "Ciclos_Bomba_02", name: "Bomba 02" }
+];
 
-let tempoLigada = {
-    bomba1: 0,
-    bomba2: 0
-};
+// ===========================================================
 
-let tempoDesligada = {
-    bomba1: 0,
-    bomba2: 0
-};
-
-let timestampEstado = {
-    bomba1: Date.now(),
-    bomba2: Date.now()
-};
-
-
-// ========================================
-// FUNÇÃO PARA ATUALIZAR A TELA
-// ========================================
-async function atualizarDashboard() {
+async function carregarDados() {
     try {
-        const resp = await fetch(API_URL);
-        const dados = await resp.json();
+        const response = await fetch(API_URL);
+        const dados = await response.json();
 
-        if (!dados) return;
-
-        // Atualiza reservatórios
         atualizarReservatorios(dados);
-
-        // Atualiza bombas
+        atualizarPressoes(dados);
         atualizarBombas(dados);
 
-    } catch (err) {
-        console.error("Erro ao atualizar dashboard:", err);
+        document.getElementById("lastUpdate").innerText =
+            "Última atualização: " + new Date().toLocaleString();
+
+    } catch (e) {
+        console.error("Erro ao carregar dados:", e);
     }
 }
 
+function atualizarReservatorios(d) {
+    const container = document.getElementById("reservatoriosContainer");
+    container.innerHTML = "";
 
-// ========================================
-// RESERVATÓRIOS
-// ========================================
-function atualizarReservatorios(dados) {
     Object.keys(RESERVATORIOS).forEach(key => {
-        const elem = document.getElementById(key);
-        const barra = document.getElementById(key + "_barra");
+        const valor = d[key] || 0;
         const cap = RESERVATORIOS[key].capacidade;
+        const pct = Math.min(100, Math.round((valor / cap) * 100));
 
-        if (!elem || !barra) return;
-
-        const valor = dados[key] ?? 0;
-        const perc = Math.min(100, Math.max(0, (valor / cap) * 100));
-
-        elem.textContent = `${valor} L`;
-        barra.style.height = perc + "%";
-
-        barra.style.background =
-            perc < 30 ? "#d9534f" :
-            perc < 60 ? "#f0ad4e" :
-                        "#4DA492";
-    });
-}
-
-
-// ========================================
-// BOMBAS (ciclos, cores, estados)
-// ========================================
-function atualizarBombas(dados) {
-
-    const bombas = [
-        { id: "bomba1", estado: dados.Bomba_01_current },
-        { id: "bomba2", estado: dados.Bomba_02_current }
-    ];
-
-    bombas.forEach(b => {
-        const cont = document.getElementById(b.id);
-
-        if (!cont) return;
-
-        // Estado atual
-        const ligado = b.estado === 1;
-        const estadoTxt = ligado ? "LIGADA" : "DESLIGADA";
-
-        // Detectar mudança de estado
-        if (estadoAnterior[b.id] !== null && estadoAnterior[b.id] !== ligado) {
-            ciclos[b.id]++;
-
-            const agora = Date.now();
-            const duracao = agora - timestampEstado[b.id];
-
-            if (ligado) {
-                tempoDesligada[b.id] = duracao;
-            } else {
-                tempoLigada[b.id] = duracao;
-            }
-
-            timestampEstado[b.id] = agora;
-        }
-
-        estadoAnterior[b.id] = ligado;
-
-        // aplicar cor: verde quando ligada
-        const bg = ligado ? "background:#28a745;color:white;border:2px solid #1e7e34;" : "";
-
-        cont.innerHTML = `
-            <div class="card-bomba" style="${bg}">
-                <h3>${b.id === "bomba1" ? "Bomba 01" : "Bomba 02"}</h3>
-                <p><strong>Estado:</strong> ${estadoTxt}</p>
-                <p><strong>Ciclos:</strong> ${ciclos[b.id]}</p>
-                <p><strong>Último ciclo ligada:</strong> ${fmtTempo(tempoLigada[b.id])}</p>
-                <p><strong>Último ciclo desligada:</strong> ${fmtTempo(tempoDesligada[b.id])}</p>
+        container.innerHTML += `
+            <div class="card-reservatorio">
+                <div class="barra" style="height:${pct}%"></div>
+                <div class="texto">
+                    <h3>${RESERVATORIOS[key].nome}</h3>
+                    <p class="pct">${pct}%</p>
+                    <p class="litros">${valor} L</p>
+                    <a href="historico.html?res=${key}" class="btnHistorico">📊 Histórico</a>
+                </div>
             </div>
         `;
     });
-
-    validarDiferencaCiclos();
 }
 
+function atualizarPressoes(d) {
+    const container = document.getElementById("pressoesContainer");
+    container.innerHTML = "";
 
-// ========================================
-// ALERTA DE DIFERENÇA DE CICLOS (> 2)
-// ========================================
-function validarDiferencaCiclos() {
-    const diff = Math.abs(ciclos.bomba1 - ciclos.bomba2);
+    Object.keys(PRESSOES).forEach(key => {
+        const valor = d[key] || 0;
 
-    const aviso = document.getElementById("aviso-ciclos");
-
-    if (!aviso) return;
-
-    if (diff > 2) {
-        aviso.style.display = "block";
-        aviso.textContent = `⚠ Diferença de ciclos detectada: ${diff} ciclos`;
-    } else {
-        aviso.style.display = "none";
-    }
+        container.innerHTML += `
+            <div class="card-pressao">
+                <h3>${PRESSOES[key]}</h3>
+                <p class="valor">${valor}</p>
+                <p class="unidade">bar</p>
+            </div>
+        `;
+    });
 }
 
+function atualizarBombas(d) {
+    const container = document.getElementById("bombasContainer");
+    container.innerHTML = "";
 
-// ========================================
-// FORMATAÇÃO DO TEMPO
-// ========================================
-function fmtTempo(ms) {
-    if (!ms || ms < 1000) return "0m 0s";
+    const ciclos1 = d["Ciclos_Bomba_01"] || 0;
+    const ciclos2 = d["Ciclos_Bomba_02"] || 0;
 
-    const s = Math.floor(ms / 1000);
-    const m = Math.floor(s / 60);
-    const ss = s % 60;
+    const diff = Math.abs(ciclos1 - ciclos2);
+    const mostrarAlerta = diff > 2; // ALERTA SOMENTE SE DIFERENÇA > 2
 
-    return `${m}m ${ss}s`;
+    BOMBAS.forEach(b => {
+        const ligado = d[b.id] == 1;
+        const ciclos = d[b.ciclos] || 0;
+
+        container.innerHTML += `
+            <div class="card-bomba ${ligado ? "ligada" : ""}">
+                <h3>${b.name}</h3>
+                <p>Status: <b>${ligado ? "ligada" : "desligada"}</b></p>
+                <p>Ciclos: ${ciclos}</p>
+                ${
+                    mostrarAlerta
+                    ? `<div class="alerta">⚠ Diferença de ciclos detectada (${diff})</div>`
+                    : ""
+                }
+            </div>
+        `;
+    });
 }
 
-
-// ========================================
-// LOOP AUTOMÁTICO
-// ========================================
-atualizarDashboard();
-setInterval(atualizarDashboard, UPDATE_INTERVAL);
+setInterval(carregarDados, UPDATE_INTERVAL);
+carregarDados();
