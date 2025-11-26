@@ -1,75 +1,60 @@
 const API = "/api/dashboard";   // <<< URL ACERTADA
 let cache = JSON.parse(localStorage.getItem("DATA_CACHE")) || {};
 
-let tempoAtivo = {}; // <<< ARMAZENA TEMPO DE FUNCIONAMENTO
-let ultEstado = {};  // <<< GUARDA O ESTADO ANTERIOR PARA CONTAR TEMPO
+let tempoLigada = JSON.parse(localStorage.getItem("TEMPO_BOMBAS")) || {};
+let ultimaMudanca = {}; // controla a última troca de estado
 
-async function atualizar() {
-    try {
-        const r = await fetch(API, { cache: "no-store" });
-        if (!r.ok) throw 0;
+async function atualizar(){
+    try{
+        const r = await fetch(API,{cache:"no-store"});
+        if(!r.ok) throw 0;
         const dados = await r.json();
 
         cache = dados;
-        localStorage.setItem("DATA_CACHE", JSON.stringify(dados));
+        localStorage.setItem("DATA_CACHE",JSON.stringify(dados));
 
-        processarTempo(dados.bombas);   // <<< NOVO
+        processarBombas(dados.bombas);  // <<< ADICIONADO
         render(dados);
 
         document.getElementById("lastUpdate").textContent =
             "Atualizado " + new Date().toLocaleTimeString();
-    } catch {
+
+    }catch{
         console.warn("Sem atualização, usando valores armazenados.");
+
+        processarBombas(cache.bombas || []); // <<< ADICIONADO
         render(cache);
 
         document.getElementById("lastUpdate").textContent =
             "SEM SINAL — exibindo última leitura";
     }
 }
-setInterval(atualizar, 5000);
+setInterval(atualizar,5000);
 atualizar();
 
-/* =======================================================
-                     PROCESSA TEMPO DAS BOMBAS
-   ======================================================= */
-function processarTempo(lista) {
-    lista.forEach(b => {
-        if (!tempoAtivo[b.nome]) tempoAtivo[b.nome] = 0;
-        if (!ultEstado[b.nome]) ultEstado[b.nome] = b.estado;
-
-        if (b.estado === "Ligada") {
-            // Incrementa tempo ativo
-            tempoAtivo[b.nome] += 5; // 5s do intervalo
-        }
-
-        ultEstado[b.nome] = b.estado;
-    });
-}
-
 /* =================== RENDER =================== */
-function render(d) {
+function render(d){
+    if(!d) return;
     renderReservatorios(d.reservatorios);
     renderPressao(d.pressoes);
     renderBombas(d.bombas);
 }
 
-/* =======================================================
-                     RESERVATÓRIOS
-======================================================= */
-function renderReservatorios(lista) {
-    const box = document.getElementById("reservatoriosContainer");
-    box.innerHTML = "";
+/* RESERVATÓRIOS */
+function renderReservatorios(lista){
+    const box=document.getElementById("reservatoriosContainer");
+    box.innerHTML="";
 
-    lista.forEach(r => {
-        const card = document.createElement("div");
-        card.className = "card-reservatorio";
+    lista.forEach(r=>{
+        const card=document.createElement("div");
+        card.className="card-reservatorio";
 
-        if (r.percent <= 30) card.classList.add("nv-critico");
-        else if (r.percent <= 60) card.classList.add("nv-alerta");
-        else if (r.percent <= 90) card.classList.add("nv-normal");
+        if(r.percent<=30) card.classList.add("nv-critico");
+        else if(r.percent<=60) card.classList.add("nv-alerta");
+        else if(r.percent<=90) card.classList.add("nv-normal");
         else card.classList.add("nv-cheio");
 
-        card.innerHTML = `
+        card.innerHTML=`
         <h3>${r.nome}</h3>
 
         <div class="tanque-visu">
@@ -82,7 +67,7 @@ function renderReservatorios(lista) {
 
         <div class="alerta-msg">⚠ Nível abaixo de 30%</div>
 
-        <button onclick="abrirHistorico('${r.setor}')"
+        <button onclick="abrirHistorico('${r.setor}')" 
             style="width:100%;padding:9px;border:none;border-radius:8px;
             background:#0f7a5b;color:white;font-weight:bold;margin-top:5px;">
             📊 Histórico
@@ -97,65 +82,71 @@ function renderReservatorios(lista) {
     });
 }
 
-function abrirHistorico(x) {
+function abrirHistorico(x){
     location.href = `/historico.html?setor=${x}`;
 }
 
-/* =======================================================
-                     PRESSÕES
-======================================================= */
-function renderPressao(lista) {
-    const box = document.getElementById("pressoesContainer");
-    box.innerHTML = lista
-        .map(
-            p => `
+/* PRESSÕES */
+function renderPressao(lista){
+    const box=document.getElementById("pressoesContainer");
+    box.innerHTML = lista.map(p=>`
         <div class="card-pressao">
             <h3>${p.nome}</h3>
             <div class="pressao-valor">${p.pressao}</div>
             <div class="pressao-unidade">bar</div>
         </div>
-        `
-        )
-        .join("");
+    `).join("");
 }
 
-/* =======================================================
-                     BOMBAS + MELHORIAS
-======================================================= */
-function renderBombas(lista) {
-    const box = document.getElementById("bombasContainer");
+/* ===================== BOMBAS ===================== */
 
-    // ====== ALERTA DE CICLOS DIFERENTES ======
-    let ciclos = lista.map(b => b.ciclo);
-    let alertaCiclos = !(ciclos.every(v => v === ciclos[0])); // se diferentes
+function processarBombas(bombas){
+    bombas.forEach(b => {
 
-    box.innerHTML = lista
-        .map(b => {
-            let tempoSeg = tempoAtivo[b.nome];
-            let min = Math.floor(tempoSeg / 60);
-            let seg = tempoSeg % 60;
-            let tempoFmt = `${min}m ${seg}s`;
+        if(!(b.nome in tempoLigada)){
+            tempoLigada[b.nome] = 0; // segundos
+            ultimaMudanca[b.nome] = Date.now();
+        }
 
-            return `
-        <div class="card-bomba" 
-             style="border:2px solid #000; padding:10px; border-radius:10px;
-             ${b.estado === "Ligada" ? "background:#1dd16a;color:#000;" : ""}">
+        // Se está ligando agora
+        if(b.estado === "LIGADA"){
+            const passou = (Date.now() - (ultimaMudanca[b.nome] || Date.now())) / 1000;
+            tempoLigada[b.nome] += passou;
+        }
 
+        ultimaMudanca[b.nome] = Date.now();
+    });
+
+    localStorage.setItem("TEMPO_BOMBAS", JSON.stringify(tempoLigada));
+}
+
+
+function renderBombas(lista){
+    const box=document.getElementById("bombasContainer");
+
+    const ciclos = lista.map(b => b.ciclo);
+    const alertaCiclos = !ciclos.every(v => v === ciclos[0]); // se forem diferentes
+
+    box.innerHTML = lista.map(b => {
+
+        let tempo = tempoLigada[b.nome] || 0;
+        let min = Math.floor(tempo / 60);
+        let seg = Math.floor(tempo % 60);
+
+        return `
+        <div class="card-bomba" style="${ b.estado === "LIGADA" ? "background:#00c851;color:white;" : "" }">
             <h3>${b.nome}</h3>
-
             <div class="linha">Status: <b>${b.estado}</b></div>
             <div class="linha">Ciclos: ${b.ciclo}</div>
-            <div class="linha">Tempo ligada: <b>${tempoFmt}</b></div>
+            <div class="linha">Tempo ligada: ${min}m ${seg}s</div>
 
-            ${
-                alertaCiclos
-                    ? `<div style="margin-top:8px;color:red;font-weight:bold;font-size:14px;">
-                        ⚠ As bombas não possuem o mesmo número de ciclos!
-                       </div>`
-                    : ""
-            }
+            ${alertaCiclos ? 
+                `<div style="margin-top:8px;padding:6px;background:#ff4444;color:white;
+                border-radius:6px;font-weight:bold;text-align:center;">
+                    ⚠ Diferença de ciclos detectada
+                </div>` 
+            : ""}
         </div>
         `;
-        })
-        .join("");
+    }).join("");
 }
