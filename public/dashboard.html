@@ -1,41 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento - Sistema de Água</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Monitoramento - Reservatórios HAG</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="dashboard.js"></script>
 </head>
+
 <body>
 
-    <div id="aviso-atraso" class="aviso-atraso" style="display:none;">
-        ⚠ Sem atualização há mais de 10 minutos
-    </div>
+<header>
+    <h1>Monitoramento dos Reservatórios — H.A.G</h1>
+    <div id="lastUpdate">--</div>
+</header>
 
-    <header>
-        <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento</h1>
-        <div id="lastUpdate">Última atualização: --</div>
-    </header>
+<main>
 
-    <main>
+    <h2>Reservatórios</h2>
+    <div id="reservatoriosContainer"></div>
 
-        <h2 class="titulo-card">Reservatórios</h2>
-        <div id="reservatoriosContainer" class="area-cards">
-            <!-- Os cards são gerados automaticamente pelo JS -->
-        </div>
+    <h2 style="margin-top:35px">Pressões</h2>
+    <div id="pressoesContainer"></div>
 
-        <h2 class="titulo-card">Pressões</h2>
-        <div id="pressoesContainer" class="area-cards"></div>
+    <h2 style="margin-top:35px">Bombas</h2>
+    <div id="bombasContainer"></div>
 
-        <h2 class="titulo-card">Bombas de Circulação</h2>
-        <div id="bombasContainer" class="area-cards"></div>
+</main>
 
-    </main>
+<footer>
+    Hospital Arnaldo Gavazza — Sistema de Monitoramento © 2025
+</footer>
 
-    <footer>
-        Hospital Arnaldo Gavazza – Sistema de Monitoramento © 2025
-    </footer>
-
-    <script src="dashboard.js"></script>
 </body>
 </html>
