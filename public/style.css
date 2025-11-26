@@ -1,276 +1,186 @@
-/* ============================ BACKGROUND COM FOTO DO HOSPITAL ============================ */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: "Segoe UI", sans-serif;
-
-    /* FOTO DE FUNDO */
-    background: url("image.png") no-repeat center center fixed;
-    background-size: cover;
-
-    /* CAMADA ESCURECIDA */
-    position: relative;
-}
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 40, 25, 0.55);
-    backdrop-filter: blur(3px);
-    z-index: -1;
-}
-
-/* ============================ PALETA DE CORES ============================ */
+/* ===== VARIÁVEIS DE COR ===== */
 :root {
-    --verde-principal: #0b5e45;
-    --verde-claro: #2e8b70;
-    --verde-medio: #3fa58b;
-    --verde-suave: #d9f4ec;
-    --branco: #ffffff;
-    --erro: #d9534f;
-    --alerta: #f0ad4e;
-    --ok: #5cb85c;
+  --verde-principal: #4DA492;
+  --verde-escuro: #006D5B;
+  --verde-agua: #7ED6D1;
+  --verde-agua-claro: #AEE8E3;
+  --verde-suave: #87C8BA;
+
+  --cinza-fundo: #F5F7FA;
+  --texto-principal: #333;
+  --texto-claro: #FFF;
+
+  --alerta: #E74C3C;
+  --sucesso: #27AE60;
 }
 
-/* ============================ HEADER ============================ */
-header {
-    background: rgba(0, 90, 60, 0.85);
-    color: var(--branco);
-    padding: 22px;
-    text-align: center;
-    border-bottom: 3px solid var(--verde-medio);
-    backdrop-filter: blur(4px);
-}
-#headerImage {
-    width: 180px;
-    border-radius: 6px;
-    margin-bottom: 10px;
+/* ===== BACKGROUND ===== */
+body {
+  margin: 0;
+  background: url('bg.jpg') center/cover fixed;
+  font-family: Arial, sans-serif;
+  color: var(--texto-claro);
 }
 
-/* ============================ CONTEÚDO ============================ */
+/* ===== CONTÊINER GERAL ===== */
 main {
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-    color: white;
-}
-h1, h2 {
-    color: white;
+  padding: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* ============================ 
-   AJUSTE DE GRID DOS CARDS 
-   (CORREÇÃO DOS CARDS GIGANTES)
-============================ */
-#reservatoriosContainer,
-#pressoesContainer,
-#bombasContainer {
-    display: flex !important;
-    flex-wrap: wrap;
-    gap: 22px;
-    justify-content: center;
+/* ===== TÍTULOS ===== */
+h2, h3, h1 {
+  text-align: center;
+  color: white;
 }
 
-/* ============================ CARD DO RESERVATÓRIO (NOVO MODELO) ============================ */
+/* ================================================================= */
+/* ====================  GRID DE RESERVATÓRIOS  ===================== */
+/* ================================================================= */
+
+.reservatorios-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+}
+
+/* ===== CARD DOS RESERVATÓRIOS ===== */
 .card-reservatorio {
-    background: rgba(255, 255, 255, 0.18);
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    backdrop-filter: blur(6px);
-    color: white;
-    transition: 0.2s ease;
-    text-align: center;
-    width: 280px; /* CORREÇÃO DO TAMANHO */
-}
-.card-reservatorio:hover {
-    transform: scale(1.03);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  padding: 18px;
+  border-radius: 16px;
+
+  width: 260px;
+  min-height: 310px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 
-.tanque-visu {
-    width: 100%;
-    height: 180px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.25);
-    border: 3px solid var(--verde-medio);
-    overflow: hidden;
-    position: relative;
+/* Barra verde do nível */
+.nivel-bar {
+  width: 100%;
+  height: 120px;
+  background: var(--verde-principal);
+  border-radius: 10px;
+  position: relative;
+  margin: 10px 0;
 }
 
-/* Nível de água */
-.nivel-agua {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    transition: height 1s ease;
-    background: var(--verde-claro);
+.nivel-bar .percent {
+  position: absolute;
+  top: 12px;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  font-size: 22px;
 }
 
-/* Overlay de informações */
-.overlay-info {
-    position: absolute;
-    top: 8px;
-    width: 100%;
-    text-align: center;
-    color: white;
-    text-shadow: 0 1px 3px black;
-}
-.percent-text {
-    font-size: 22px;
-    font-weight: bold;
-}
-.liters-text {
-    font-size: 16px;
-    margin-top: 4px;
+/* Botão histórico */
+.btn-historico {
+  margin-top: 10px;
+  background: var(--verde-escuro);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 90%;
+  font-weight: bold;
 }
 
-/* Cores de acordo com o nível */
-.nv-critico {
-    border-color: var(--erro) !important;
-}
-.nv-critico .nivel-agua {
-    background: var(--erro) !important;
-}
-.nv-alerta {
-    border-color: var(--alerta) !important;
-}
-.nv-alerta .nivel-agua {
-    background: var(--alerta) !important;
-}
-.nv-normal {
-    border-color: var(--ok) !important;
-}
-.nv-normal .nivel-agua {
-    background: var(--ok) !important;
-}
-.nv-cheio {
-    border-color: var(--verde-claro) !important;
-}
-.nv-cheio .nivel-agua {
-    background: var(--verde-claro) !important;
+/* Aviso de alerta */
+.alerta {
+  color: #ffcccc;
+  font-size: 14px;
+  margin-top: 5px;
 }
 
-/* ============================ PRESSÕES — NOVO MODELO ============================ */
-.pressao-container {
-    width: 90%;
-    margin: 40px auto 0;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    flex-wrap: wrap;
+/* ================================================================= */
+/* ============================ PRESSÕES ============================ */
+/* ================================================================= */
+
+.pressoes-container {
+  margin-top: 40px;
+  width: 100%;
+  max-width: 1200px;
+
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
 }
 
 .card-pressao {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-    border-radius: 14px;
-    padding: 18px 25px;
-    width: 260px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    border-left: 5px solid var(--verde-principal);
-    transition: transform 0.2s ease-in-out;
-}
-.card-pressao:hover {
-    transform: scale(1.03);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 18px;
+  width: 260px;
+  text-align: center;
+  border-radius: 15px;
 }
 
-.card-pressao h3 {
-    margin: 0 0 10px;
-    font-size: 19px;
-    font-weight: 600;
-}
-.valor-pressao {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: var(--verde-suave);
-}
-.unidade {
-    font-size: 14px;
-    opacity: 0.8;
-}
+/* ================================================================= */
+/* ========================== BOMBAS =============================== */
+/* ================================================================= */
 
-/* ============================ BOMBAS — NOVO MODELO ============================ */
 .bombas-container {
-    width: 90%;
-    margin: 30px auto 60px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
-    justify-content: center;
+  margin-top: 35px;
+  width: 100%;
+  max-width: 900px;
+
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
 }
 
+/* ====== BOMBAS – CARDS REDUZIDOS ====== */
 .card-bomba {
-    width: 420px;
-    padding: 25px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(7px);
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
-}
-.card-bomba h3 {
-    margin-top: 0;
-    font-size: 20px;
+  width: 260px;          /* reduzido */
+  padding: 14px;         /* reduzido */
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  color: white;
 }
 
-.bomba-ligada {
-    background: rgba(0, 140, 40, 0.85) !important;
-    border-left: 6px solid #00ff73;
-}
-.bomba-desligada {
-    background: rgba(140, 0, 0, 0.75) !important;
-    border-left: 6px solid #ff4f4f;
+.card-bomba.ligada {
+  background: rgba(0, 150, 0, 0.55);
 }
 
-.card-bomba p {
-    margin: 4px 0;
-    font-size: 15px;
+.card-bomba.desligada {
+  background: rgba(120, 0, 0, 0.45);
 }
+
+/* ALERTA BOMBA */
 .alerta-bomba {
-    width: 100%;
-    margin-top: 14px;
-    padding: 10px;
-    border-radius: 8px;
-    background: #d64545;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 600;
+  margin-top: 12px;
+  background: #ff4444;
+  padding: 6px 5px; /* reduzido */
+  text-align: center;
+  font-weight: bold;
+  border-radius: 8px;
+  width: 100%;
 }
 
-/* ============================ RESPONSIVIDADE ============================ */
-@media (max-width: 700px) {
-    .pressao-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    .bombas-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    .card-bomba {
-        width: 95%;
-    }
-    .card-pressao {
-        width: 90%;
-    }
-    .card-reservatorio {
-        width: 95% !important;
-    }
-}
-
-/* ============================ FOOTER ============================ */
+/* Rodapé */
 footer {
-    background: rgba(0, 90, 60, 0.85);
-    padding: 12px;
-    text-align: center;
-    color: white;
-    border-top: 2px solid var(--verde-medio);
-    margin-top: 40px;
+  margin-top: 40px;
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  background: var(--verde-escuro);
+  color: white;
 }
