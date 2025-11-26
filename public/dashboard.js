@@ -1,142 +1,131 @@
-const API_URL = "/api/dados"; 
-const INTERVALO_ATUALIZACAO = 5000;
+// ==================== CONFIG ======================
+const API_URL = "/api/dashboard"; 
+const INTERVALO_ATUALIZACAO = 5000; // 5s
 
-// ====== CAPACIDADES FIXAS ======
-const limites = {
-    elevador:20000,
-    osmose:200,
-    cme:1000,
-    lavanderia:10000,
-    abrandada:9000
-};
+// Carrega cache salvo sem apagar quando falhar conexão
+let cache = JSON.parse(localStorage.getItem("HAG_CACHE_DASH")) || null;
 
-// ========= CARREGA CACHE =========
-let cache = JSON.parse(localStorage.getItem("HAG_CACHE")) || {};
 
-// =================================================
+// ==================== ATUALIZADOR ======================
 async function atualizar(){
     try{
         const r = await fetch(API_URL,{cache:"no-store"});
-        if(!r.ok) throw "sem resposta";
+        if(!r.ok) throw 0;
+
         const dados = await r.json();
 
         cache = dados;
-        localStorage.setItem("HAG_CACHE",JSON.stringify(dados));
+        localStorage.setItem("HAG_CACHE_DASH",JSON.stringify(dados));
 
         render(dados);
+
     }catch{
         console.warn("Sem atualização, usando último valor salvo");
-        render(cache);
+        if(cache) render(cache);
     }
 }
+
 setInterval(atualizar,INTERVALO_ATUALIZACAO);
 atualizar();
 
-// =================================================
-//   RENDER GERAL
-// =================================================
-function render(d){
-    renderReservatorios(d);
-    renderPessoas(d);
-    renderBombas(d);
+
+// ======================== RENDER GERAL ========================
+function render(dados){
+    renderReservatorios(dados.reservatorios);
+    renderPressoes(dados.pressoes);
+    renderBombas(dados.bombas);
 }
 
-// =================================================
-//   RESERVATÓRIOS
-// =================================================
-function renderReservatorios(d){
 
+
+// ===============================================================
+//  RESERVATÓRIOS + botão HISTÓRICO + trava/manutenção 31%
+// ===============================================================
+function renderReservatorios(lista){
     const box = document.getElementById("reservatoriosContainer");
-    box.innerHTML="";
+    box.innerHTML = "";
 
-    const lista = [
-        ["Reservatório Elevador","Reservatorio_Elevador_current","elevador"],
-        ["Reservatório Osmose","Reservatorio_Osmose_current","osmose"],
-        ["Reservatório CME","Reservatorio_CME_current","cme"],
-        ["Água Abrandada","Reservatorio_Agua_Abrandada_current","abrandada"],
-        ["Lavanderia","Reservatorio_lavanderia_current","lavanderia"]
-    ];
+    lista.forEach(r=>{
 
-    lista.forEach(([nome,key,id])=>{
+        let manut = localStorage.getItem(`manut_${r.setor}`)=="1";
 
-        const atual = d[key] ?? 0;
-        const cap = limites[id];
-        const nivel = ((atual/cap)*100).toFixed(0);
-
-        const manut = localStorage.getItem(`manut_${id}`)=="1";
-
-        // remove manutenção automática quando passa de 31%
-        let mostrarManut = manut;
-        if(manut && nivel>=31){
-            localStorage.setItem(`manut_${id}`,"0");
-            mostrarManut=false;
+        // Se estava em manutenção e agora passou 31% → libera automático
+        if(manut && r.percent >=31){
+            localStorage.setItem(`manut_${r.setor}`,"0");
+            manut=false;
         }
 
-        let cor = nivel<30 ? "#e34c4c" : "#1ca46d";
-        if(mostrarManut) cor="#9c9c9c";
+        let cor = manut ? "#888" : (r.percent<30 ? "#d63838" : "#0e9c57");
 
-        const card=document.createElement("div");
+        const card = document.createElement("div");
         card.className="card-reservatorio";
-        card.style.borderColor=cor;
-        
-        card.innerHTML=`
-            <h3>${nome}</h3>
+        card.style.borderColor = cor;
+
+        card.innerHTML = `
+            <h3>${r.nome}</h3>
 
             <div class="grafico" style="background:${cor}22">
-               <b>${nivel}%</b><br>${atual} L
+                 <b>${r.percent}%</b><br>${r.current_liters} L
             </div>
 
-            ${(!mostrarManut && nivel<30)? `<div class='alerta'>⚠ Nível < 30%</div>`:""}
+            ${(!manut && r.percent<30) ? `<div class='alerta'>⚠ Nível abaixo de 30%</div>` : ""}
 
             <label>
-              <input type="checkbox" ${mostrarManut?"checked":""}
-                onclick="toggleManut('${id}')"> Em manutenção
+                <input type="checkbox" ${manut?"checked":""}
+                onclick="toggleManut('${r.setor}')"> Em manutenção
             </label><br>
 
-            Capacidade: ${cap}L
+            Capacidade: ${r.capacidade} L<br><br>
+
+            <button class="btnHistorico"
+                onclick="location.href='historico.html?setor=${r.setor}'">
+                📊 Ver histórico
+            </button>
         `;
 
         box.appendChild(card);
     });
 }
 
-function toggleManut(nome){
-    const atual = localStorage.getItem(`manut_${nome}`)=="1";
-    localStorage.setItem(`manut_${nome}`, atual?"0":"1");
-    renderReservatorios(cache);
+function toggleManut(id){
+    const atual = localStorage.getItem(`manut_${id}`)=="1";
+    localStorage.setItem(`manut_${id}`, atual?"0":"1");
+    if(cache) renderReservatorios(cache.reservatorios);
 }
 
-// =================================================
-//   PRESSÕES
-// =================================================
-function renderPessoas(d){
-    document.getElementById("pressoesContainer").innerHTML=`
-      ${cardPressao("Pressão Saída Osmose",d.Pressao_Saida_Osmose_current)}
-      ${cardPressao("Pressão Retorno Osmose",d.Pressao_Retorno_Osmose_current)}
-      ${cardPressao("Pressão Saída CME",d.Pressao_Saida_CME_current)}
-    `;
+
+
+// ===============================================================
+//  PRESSÕES
+// ===============================================================
+function renderPressoes(lista){
+    const box = document.getElementById("pressoesContainer");
+    box.innerHTML="";
+
+    lista.forEach(p=>{
+        box.innerHTML+= `
+        <div class="card-pressao">
+            <h3>${p.nome}</h3>
+            <b>${p.pressao}</b><br>bar
+        </div>`;
+    });
 }
 
-function cardPressao(nome,val="--"){
-    return `<div class="card-pressao"><h3>${nome}</h3><b>${val}</b><br>bar</div>`;
-}
 
-// =================================================
-//   BOMBAS
-// =================================================
-function renderBombas(d){
-    const box=document.getElementById("bombasContainer");
-    box.innerHTML=`
-       ${cardBomba("Bomba 01",d.Bomba_01_binary,d.Ciclos_Bomba_01_counter)}
-       ${cardBomba("Bomba 02",d.Bomba_02_binary,d.Ciclos_Bomba_02_counter)}
-    `;
-}
 
-function cardBomba(nome,on,ciclos){
-    return `
-    <div class="card-bomba">
-        <h3>${nome}</h3>
-        Status: <b>${on==1?"Ligada":"Desligada"}</b><br>
-        Ciclos: ${ciclos ?? "--"}<br>
-    </div>`;
+// ===============================================================
+//  BOMBAS
+// ===============================================================
+function renderBombas(lista){
+    const box = document.getElementById("bombasContainer");
+    box.innerHTML ="";
+
+    lista.forEach(b=>{
+        box.innerHTML+= `
+        <div class="card-bomba">
+              <h3>${b.nome}</h3>
+              Status: <b>${b.estado}</b><br>
+              Ciclos: ${b.ciclo ?? "--"}<br>
+        </div>`;
+    });
 }
