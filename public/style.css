@@ -63,7 +63,6 @@ h1, h2 {
 
 /* ============================ 
    AJUSTE DE GRID DOS CARDS 
-   (CORREÇÃO DOS CARDS GIGANTES)
 ============================ */
 #reservatoriosContainer,
 #pressoesContainer,
@@ -74,17 +73,17 @@ h1, h2 {
     justify-content: center;
 }
 
-/* ============================ CARD DO RESERVATÓRIO (NOVO MODELO) ============================ */
+/* ============================ CARD DO RESERVATÓRIO ============================ */
 .card-reservatorio {
     background: rgba(255, 255, 255, 0.18);
-    padding: 20px;
+    padding: 15px; /* reduzido */
     border-radius: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     backdrop-filter: blur(6px);
     color: white;
     transition: 0.2s ease;
     text-align: center;
-    width: 280px; /* CORREÇÃO DO TAMANHO */
+    width: 260px; /* reduzido */
 }
 .card-reservatorio:hover {
     transform: scale(1.03);
@@ -92,7 +91,7 @@ h1, h2 {
 
 .tanque-visu {
     width: 100%;
-    height: 180px;
+    height: 160px; /* reduzido */
     border-radius: 12px;
     background: rgba(255,255,255,0.25);
     border: 3px solid var(--verde-medio);
@@ -154,10 +153,10 @@ h1, h2 {
     background: var(--verde-claro) !important;
 }
 
-/* ============================ PRESSÕES — NOVO MODELO ============================ */
+/* ============================ PRESSÕES ============================ */
 .pressao-container {
     width: 90%;
-    margin: 40px auto 0;
+    margin: 20px auto 0; /* reduzido */
     display: flex;
     justify-content: center;
     gap: 25px;
@@ -196,10 +195,10 @@ h1, h2 {
     opacity: 0.8;
 }
 
-/* ============================ BOMBAS — NOVO MODELO ============================ */
+/* ============================ BOMBAS ============================ */
 .bombas-container {
     width: 90%;
-    margin: 30px auto 60px;
+    margin: 20px auto 40px; /* reduzido */
     display: flex;
     flex-wrap: wrap;
     gap: 25px;
