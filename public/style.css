@@ -37,108 +37,64 @@ main{padding:20px;}
   display:flex;flex-wrap:wrap;gap:22px;
 }
 
-/* ================= RESERVATÓRIOS (MODELO A) ================= */
-
+/* ================= RESERVATÓRIOS ================= */
 .card-reservatorio{
   background:#fff;
-  width:260px;
+  width:240px;
   padding:18px;
-  border-radius:18px;
-  box-shadow:0 6px 16px rgba(0,0,0,.15);
-  border-top:6px solid var(--verde-agua);
+  border-radius:15px;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  border-top:6px solid var(--verde-principal);
   display:flex;flex-direction:column;
-  position:relative;
-  overflow:hidden;
 }
 
-/* Tanque visual */
+/* Caixa */
 .tanque-visu{
-  height:160px;width:100%;
-  background:#cfe9f0;
-  border-radius:12px;
-  overflow:hidden;
-  position:relative;
-  margin-bottom:12px;
-  box-shadow: inset 0 0 10px rgba(0,0,0,.15);
+  height:160px;width:100%;background:#dceff1;
+  border-radius:10px;overflow:hidden;position:relative;margin-bottom:12px;
 }
 
-/* Água (gradientes iguais ao modelo antigo) */
+/* Água */
 .nivel-agua{
   bottom:0;left:0;width:100%;
   position:absolute;height:0%;
-  transition:.7s ease-in-out;
+  transition:.8s ease-in-out;
 }
 
-/* Gradientes conforme nível */
-.card-reservatorio.nv-critico  .nivel-agua{background:linear-gradient(#ff6666,#8a0000);}
-.card-reservatorio.nv-alerta   .nivel-agua{background:linear-gradient(#ffe16a,#e09c00);}
-.card-reservatorio.nv-normal   .nivel-agua{background:linear-gradient(#6dbbff,#005fa3);}
-.card-reservatorio.nv-cheio    .nivel-agua{background:linear-gradient(#3cd46b,#007a31);}
+/* Texto dentro */
+.overlay-info{position:absolute;top:10px;width:100%;text-align:center;}
+.percent-text{font-size:26px;font-weight:bold;color:#003b32;}
+.liters-text{font-size:14px;color:#333;margin-top:3px;}
 
-.overlay-info{
-  position:absolute;top:10px;width:100%;text-align:center;
+/* ALERTA */
+.alerta-msg{
+  display:none;
+  padding:7px;border-radius:7px;
+  background:#cc2b2b;color:white;text-align:center;font-size:14px;margin-bottom:6px;
 }
-.percent-text{font-size:28px;font-weight:bold;color:#003b32;text-shadow:0 0 3px white;}
-.liters-text{font-size:15px;color:#222;margin-top:3px;}
 
-/* Botão Histórico */
-.btn-historico{
-  margin-top:10px;
-  display:block;
-  width:100%;
-  background:#0f7a5b;
-  padding:10px 0;
-  border-radius:10px;
-  text-align:center;
-  color:white;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  text-decoration:none;
-  box-shadow:0 3px 8px rgba(0,0,0,.2);
-  transition:.2s;
-}
-.btn-historico:hover{background:#0c654b;}
+/* ===== Cores automáticas conforme nível ===== */
+.card-reservatorio.nv-critico .nivel-agua{background:linear-gradient(#ff4d4d,#9e0000);}
+.card-reservatorio.nv-alerta  .nivel-agua{background:linear-gradient(#ffe16a,#ff8c00);}
+.card-reservatorio.nv-normal  .nivel-agua{background:linear-gradient(#72c3ff,#004fa1);}
+.card-reservatorio.nv-cheio   .nivel-agua{background:linear-gradient(#3cd46b,#007a31);}
+.card-reservatorio.nv-critico .alerta-msg{display:block;}
 
 /* ================= PRESSÕES ================= */
 .card-pressao{
-  width:260px;background:#fff;padding:20px;border-radius:15px;
-  box-shadow:0 4px 14px rgba(0,0,0,.12);
-  border-top:6px solid var(--verde-principal);
+  width:230px;background:#fff;padding:18px;border-radius:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
 }
-.card-pressao h3{margin:0 0 8px;color:#005244;font-size:17px;}
-.pressao-valor{font-size:34px;font-weight:bold;color:#00664d;text-align:center;}
+.pressao-valor{font-size:32px;font-weight:bold;color:#00664d;text-align:center;}
 .pressao-unidade{text-align:center;color:#444;margin-top:4px;}
 
 /* ================= BOMBAS ================= */
-
 .card-bomba{
-  width:270px;background:#fff;padding:18px;border-radius:15px;
-  box-shadow:0 4px 14px rgba(0,0,0,.12);
-  border-top:6px solid var(--verde-principal);
+  width:250px;background:#fff;padding:15px;border-radius:15px;
+  box-shadow:0 4px 10px rgba(0,0,0,.1);border-top:6px solid var(--verde-principal);
 }
-
-.card-bomba h3{
-  color:#005244;
-  margin:0 0 6px;
-  font-size:18px;
-}
-
-.linha{
-  font-size:15px;
-  margin:4px 0;
-}
-
-.bomba-alerta{
-  background:#d62c2c;
-  color:#fff;
-  padding:8px;
-  border-radius:10px;
-  text-align:center;
-  margin-top:10px;
-  font-weight:600;
-  box-shadow:0 3px 7px rgba(0,0,0,.2);
-}
+.card-bomba h3{color:#005244;margin:0 0 6px;}
+.linha{font-size:14px;margin-top:4px;}
 
 footer{
   margin-top:35px;background:#0f7a5b;color:white;
