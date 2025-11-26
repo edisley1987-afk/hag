@@ -49,8 +49,9 @@ const SENSORES = {
     capacidade: 1000
   },
   "Reservatorio_Agua_Abrandada_current": {
+    // <-- corrigido: leituraCheio ajustada para 0.004229 conforme tabela fornecida
     leituraVazio: 0.004048,
-    leituraCheio: 0.006515,
+    leituraCheio: 0.004229,
     capacidade: 9000
   },
 
