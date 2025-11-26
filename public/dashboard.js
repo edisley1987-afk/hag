@@ -13,7 +13,7 @@ async function atualizar(){
         cache = dados;
         localStorage.setItem("DATA_CACHE",JSON.stringify(dados));
 
-        processarBombas(dados.bombas);  // <<< ADICIONADO
+        processarBombas(dados.bombas);  
         render(dados);
 
         document.getElementById("lastUpdate").textContent =
@@ -22,7 +22,7 @@ async function atualizar(){
     }catch{
         console.warn("Sem atualização, usando valores armazenados.");
 
-        processarBombas(cache.bombas || []); // <<< ADICIONADO
+        processarBombas(cache.bombas || []);
         render(cache);
 
         document.getElementById("lastUpdate").textContent =
@@ -108,7 +108,6 @@ function processarBombas(bombas){
             ultimaMudanca[b.nome] = Date.now();
         }
 
-        // Se está ligando agora
         if(b.estado === "LIGADA"){
             const passou = (Date.now() - (ultimaMudanca[b.nome] || Date.now())) / 1000;
             tempoLigada[b.nome] += passou;
@@ -119,7 +118,6 @@ function processarBombas(bombas){
 
     localStorage.setItem("TEMPO_BOMBAS", JSON.stringify(tempoLigada));
 }
-
 
 function renderBombas(lista){
     const box=document.getElementById("bombasContainer");
@@ -134,7 +132,11 @@ function renderBombas(lista){
         let seg = Math.floor(tempo % 60);
 
         return `
-        <div class="card-bomba" style="${ b.estado === "LIGADA" ? "background:#00c851;color:white;" : "" }">
+        <div class="card-bomba" 
+             style="${ b.estado === "LIGADA" 
+                ? 'background:#28a745;color:white;border:2px solid #1e7e34;' 
+                : '' }">
+
             <h3>${b.nome}</h3>
             <div class="linha">Status: <b>${b.estado}</b></div>
             <div class="linha">Ciclos: ${b.ciclo}</div>
