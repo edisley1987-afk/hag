@@ -1,116 +1,193 @@
-// ======================= CONFIG ===========================
-const API_URL = "/dados";
-const UPDATE_INTERVAL = 5000;
+const API = "/api/dashboard";   // <<< URL ACERTADA
+let cache = JSON.parse(localStorage.getItem("DATA_CACHE")) || {};
 
-// Capacidade dos reservatórios
-const RESERVATORIOS = {
-    Reservatorio_Elevador_current: { nome: "Reservatório Elevador", capacidade: 20000 },
-    Reservatorio_Osmose_current: { nome: "Reservatório Osmose", capacidade: 200 },
-    Reservatorio_CME_current: { nome: "Reservatório CME", capacidade: 1000 },
-    Reservatorio_Agua_Abrandada_current: { nome: "Água Abrandada", capacidade: 9000 },
-    Reservatorio_Lavanderia_current: { nome: "Lavanderia", capacidade: 10000 }
-};
+let tempoLigada = JSON.parse(localStorage.getItem("TEMPO_BOMBAS")) || {};
+let tempoDesligada = JSON.parse(localStorage.getItem("TEMPO_DESLIGADAS")) || {};
+let ultimaMudanca = JSON.parse(localStorage.getItem("ULTIMA_MUDANCA")) || {};
+let ultimoEstado = JSON.parse(localStorage.getItem("ULTIMO_ESTADO")) || {};
+let ultimoCiclo = JSON.parse(localStorage.getItem("ULTIMO_CICLO")) || {};
 
-// Pressões
-const PRESSOES = {
-    Pressao_Saida_Osmose_current: "Pressão Saída Osmose",
-    Pressao_Retorno_Osmose_current: "Pressão Retorno Osmose",
-    Pressao_Saida_CME_current: "Pressão Saída CME"
-};
+async function atualizar(){
+    try{
+        const r = await fetch(API,{cache:"no-store"});
+        if(!r.ok) throw 0;
+        const dados = await r.json();
 
-// Bombas
-const BOMBAS = [
-    { id: "Bomba_01", ciclos: "Ciclos_Bomba_01", name: "Bomba 01" },
-    { id: "Bomba_02", ciclos: "Ciclos_Bomba_02", name: "Bomba 02" }
-];
+        cache = dados;
+        localStorage.setItem("DATA_CACHE",JSON.stringify(dados));
 
-// ===========================================================
+        processarBombas(dados.bombas);  
+        render(dados);
 
-async function carregarDados() {
-    try {
-        const response = await fetch(API_URL);
-        const dados = await response.json();
+        document.getElementById("lastUpdate").textContent =
+            "Atualizado " + new Date().toLocaleTimeString();
 
-        atualizarReservatorios(dados);
-        atualizarPressoes(dados);
-        atualizarBombas(dados);
+    }catch{
+        console.warn("Sem atualização, usando valores armazenados.");
 
-        document.getElementById("lastUpdate").innerText =
-            "Última atualização: " + new Date().toLocaleString();
+        processarBombas(cache.bombas || []);
+        render(cache);
 
-    } catch (e) {
-        console.error("Erro ao carregar dados:", e);
+        document.getElementById("lastUpdate").textContent =
+            "SEM SINAL — exibindo última leitura";
     }
 }
+setInterval(atualizar,5000);
+atualizar();
 
-function atualizarReservatorios(d) {
-    const container = document.getElementById("reservatoriosContainer");
-    container.innerHTML = "";
+/* =================== RENDER =================== */
+function render(d){
+    if(!d) return;
+    renderReservatorios(d.reservatorios);
+    renderPressao(d.pressoes);
+    renderBombas(d.bombas);
+}
 
-    Object.keys(RESERVATORIOS).forEach(key => {
-        const valor = d[key] || 0;
-        const cap = RESERVATORIOS[key].capacidade;
-        const pct = Math.min(100, Math.round((valor / cap) * 100));
+/* RESERVATÓRIOS */
+function renderReservatorios(lista){
+    const box=document.getElementById("reservatoriosContainer");
+    box.innerHTML="";
 
-        container.innerHTML += `
-            <div class="card-reservatorio">
-                <div class="barra" style="height:${pct}%"></div>
-                <div class="texto">
-                    <h3>${RESERVATORIOS[key].nome}</h3>
-                    <p class="pct">${pct}%</p>
-                    <p class="litros">${valor} L</p>
-                    <a href="historico.html?res=${key}" class="btnHistorico">📊 Histórico</a>
-                </div>
+    lista.forEach(r=>{
+        const card=document.createElement("div");
+        card.className="card-reservatorio";
+
+        if(r.percent<=30) card.classList.add("nv-critico");
+        else if(r.percent<=60) card.classList.add("nv-alerta");
+        else if(r.percent<=90) card.classList.add("nv-normal");
+        else card.classList.add("nv-cheio");
+
+        card.innerHTML=`
+        <h3>${r.nome}</h3>
+
+        <div class="tanque-visu">
+            <div class="nivel-agua" style="height:${r.percent}%"></div>
+            <div class="overlay-info">
+                <div class="percent-text">${r.percent}%</div>
+                <div class="liters-text">${r.current_liters} L</div>
             </div>
+        </div>
+
+        <div class="alerta-msg">⚠ Nível abaixo de 30%</div>
+
+        <button onclick="abrirHistorico('${r.setor}')" 
+            style="width:100%;padding:9px;border:none;border-radius:8px;
+            background:#0f7a5b;color:white;font-weight:bold;margin-top:5px;">
+            📊 Histórico
+        </button>
+
+        <p style="margin-top:8px;font-size:13px;color:#444">
+            Capacidade: ${r.capacidade} L
+        </p>
         `;
+
+        box.appendChild(card);
     });
 }
 
-function atualizarPressoes(d) {
-    const container = document.getElementById("pressoesContainer");
-    container.innerHTML = "";
-
-    Object.keys(PRESSOES).forEach(key => {
-        const valor = d[key] || 0;
-
-        container.innerHTML += `
-            <div class="card-pressao">
-                <h3>${PRESSOES[key]}</h3>
-                <p class="valor">${valor}</p>
-                <p class="unidade">bar</p>
-            </div>
-        `;
-    });
+function abrirHistorico(x){
+    location.href = `/historico.html?setor=${x}`;
 }
 
-function atualizarBombas(d) {
-    const container = document.getElementById("bombasContainer");
-    container.innerHTML = "";
-
-    const ciclos1 = d["Ciclos_Bomba_01"] || 0;
-    const ciclos2 = d["Ciclos_Bomba_02"] || 0;
-
-    const diff = Math.abs(ciclos1 - ciclos2);
-    const mostrarAlerta = diff > 2; // ALERTA SOMENTE SE DIFERENÇA > 2
-
-    BOMBAS.forEach(b => {
-        const ligado = d[b.id] == 1;
-        const ciclos = d[b.ciclos] || 0;
-
-        container.innerHTML += `
-            <div class="card-bomba ${ligado ? "ligada" : ""}">
-                <h3>${b.name}</h3>
-                <p>Status: <b>${ligado ? "ligada" : "desligada"}</b></p>
-                <p>Ciclos: ${ciclos}</p>
-                ${
-                    mostrarAlerta
-                    ? `<div class="alerta">⚠ Diferença de ciclos detectada (${diff})</div>`
-                    : ""
-                }
-            </div>
-        `;
-    });
+/* PRESSÕES */
+function renderPressao(lista){
+    const box=document.getElementById("pressoesContainer");
+    box.innerHTML = lista.map(p=>`
+        <div class="card-pressao">
+            <h3>${p.nome}</h3>
+            <div class="pressao-valor">${p.pressao}</div>
+            <div class="pressao-unidade">bar</div>
+        </div>
+    `).join("");
 }
 
-setInterval(carregarDados, UPDATE_INTERVAL);
-carregarDados();
+/* ===================== BOMBAS ===================== */
+function normalizarEstado(estado){
+    if(!estado) return "";
+    return estado.toString().trim().toUpperCase();
+}
+
+function processarBombas(bombas){
+    bombas.forEach(b => {
+        const nome = b.nome;
+        const estadoAtual = normalizarEstado(b.estado);
+        const agora = Date.now();
+
+        if(!(nome in tempoLigada)) tempoLigada[nome] = 0;
+        if(!(nome in tempoDesligada)) tempoDesligada[nome] = 0;
+        if(!(nome in ultimaMudanca)) ultimaMudanca[nome] = agora;
+        if(!(nome in ultimoEstado)) ultimoEstado[nome] = estadoAtual;
+        if(!(nome in ultimoCiclo)) ultimoCiclo[nome] = { ligado: 0, desligado: 0 };
+
+        const passou = (agora - ultimaMudanca[nome]) / 1000;
+
+        if(estadoAtual !== ultimoEstado[nome]){
+
+            if(ultimoEstado[nome] === "LIGADA"){
+                ultimoCiclo[nome].ligado = passou;
+            } else {
+                ultimoCiclo[nome].desligado = passou;
+            }
+            ultimoEstado[nome] = estadoAtual;
+            ultimaMudanca[nome] = agora;
+        }
+
+        if(estadoAtual === "LIGADA"){
+            tempoLigada[nome] += passou;
+        } else {
+            tempoDesligada[nome] += passou;
+        }
+
+        ultimaMudanca[nome] = agora;
+    });
+
+    localStorage.setItem("TEMPO_BOMBAS", JSON.stringify(tempoLigada));
+    localStorage.setItem("TEMPO_DESLIGADAS", JSON.stringify(tempoDesligada));
+    localStorage.setItem("ULTIMA_MUDANCA", JSON.stringify(ultimaMudanca));
+    localStorage.setItem("ULTIMO_ESTADO", JSON.stringify(ultimoEstado));
+    localStorage.setItem("ULTIMO_CICLO", JSON.stringify(ultimoCiclo));
+}
+
+function renderBombas(lista){
+    const box=document.getElementById("bombasContainer");
+
+    const ciclos = lista.map(b => b.ciclo);
+    const alertaCiclos = !ciclos.every(v => v === ciclos[0]);
+
+    box.innerHTML = lista.map(b => {
+
+        const nome = b.nome;
+        const estado = normalizarEstado(b.estado);
+
+        let tLig = ultimoCiclo[nome]?.ligado || 0;
+        let tDes = ultimoCiclo[nome]?.desligado || 0;
+
+        const minL = Math.floor(tLig / 60);
+        const segL = Math.floor(tLig % 60);
+
+        const minD = Math.floor(tDes / 60);
+        const segD = Math.floor(tDes % 60);
+
+        return `
+        <div class="card-bomba"
+             style="${ estado === "LIGADA" 
+                ? 'background:#28a745;color:white;border:2px solid #1e7e34;' 
+                : '' }">
+
+            <h3>${b.nome}</h3>
+            <div class="linha">Status: <b>${b.estado}</b></div>
+            <div class="linha">Ciclos: ${b.ciclo}</div>
+
+            <div class="linha">Último ciclo ligada: ${minL}m ${segL}s</div>
+            <div class="linha">Último ciclo desligada: ${minD}m ${segD}s</div>
+
+            ${alertaCiclos ? 
+                `<div style="margin-top:8px;padding:6px;background:#ff4444;color:white;
+                border-radius:6px;font-weight:bold;text-align:center;">
+                    ⚠ Diferença de ciclos detectada
+                </div>` 
+            : ""}
+        </div>
+        `;
+    }).join("");
+}
