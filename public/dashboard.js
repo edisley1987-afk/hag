@@ -1,408 +1,547 @@
-// public/dashboard.js
-// Dashboard frontend — compatível com /api/dashboard
-// Versão final: suporte completo a bombas de circulação (alternadas, 15 min)
+// ======= Servidor Universal HAG - compatível com Gateway ITG e Render =======
+// Versão estável ESModules + logs compatíveis com Render
 
-const API_URL = window.location.origin + "/api/dashboard";
-const UPDATE_INTERVAL = 5000; // ms
-const WARNING_TIMEOUT = 10 * 60 * 1000; // 10 minutos
+import express from "express";
+import fs from "fs";
+import path from "path";
+import cors from "cors";
+import { fileURLToPath } from "url";
 
-const reservatoriosContainer = document.getElementById("reservatoriosContainer");
-const pressoesContainer = document.getElementById("pressoesContainer");
-const bombasContainer = document.getElementById("bombasContainer"); // container no HTML
-const lastUpdateEl = document.getElementById("lastUpdate");
+// === Corrigir __dirname no ESModules (ESSENCIAL NO RENDER) ===
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Banner de aviso (global)
-let avisoEl = document.getElementById("aviso-atraso");
-if (!avisoEl) {
-  avisoEl = document.createElement("div");
-  avisoEl.id = "aviso-atraso";
-  avisoEl.textContent = "⚠ Sem atualização há mais de 10 minutos";
-  document.body.prepend(avisoEl);
-}
+const app = express();
 
-// utilitário
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+// === Middleware universal (aceita qualquer formato do Gateway) ===
+app.use(cors());
+app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.text({ type: "*/*", limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.raw({ type: "*/*", limit: "10mb" }));
 
-function formatNumber(n) {
-  if (n == null || n === "--") return "--";
-  return Number(n).toLocaleString("pt-BR");
-}
+// === Pastas ===
+const DATA_DIR = path.join(__dirname, "data");
+const DATA_FILE = path.join(DATA_DIR, "readings.json");
+const HIST_FILE = path.join(DATA_DIR, "historico.json");
 
-function formatDuration(ms) {
-  if (ms == null || isNaN(ms)) return "--:--";
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, "0")}`;
-}
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-// -----------------------------------------------------------------------------
-// Configurações de comportamento das bombas
-// -----------------------------------------------------------------------------
-const BOMBA_ON_MS = 15 * 60 * 1000;   // 15 minutos em ms
-const BOMBA_TOLERANCIA_MS = 3 * 60 * 1000; // 3 minutos tolerância
-const NENHUMA_LIGADA_ALERT_MS = BOMBA_ON_MS + BOMBA_TOLERANCIA_MS; // 18 min
+// ============================================================================
+// 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS
+// ============================================================================
 
-// Estado local para acompanhar transições/tempos
-window._bombaState = window._bombaState || {
-  bomba01: {
-    lastBinary: 0,
-    startTs: null,
-    lastOnTs: null,
-    lastCycle: null,
-    lastRunMs: null
+const SENSORES = {
+  // ======== RESERVATÓRIOS ========
+  "Reservatorio_Elevador_current": {
+    leituraVazio: 0.004168,
+    leituraCheio: 0.008742,
+    capacidade: 20000
   },
-  bomba02: {
-    lastBinary: 0,
-    startTs: null,
-    lastOnTs: null,
-    lastCycle: null,
-    lastRunMs: null
-  }
+  "Reservatorio_Osmose_current": {
+    leituraVazio: 0.005050,
+    leituraCheio: 0.006492,
+    capacidade: 200
+  },
+  // CME / SME ajustado para 5000 conforme solicitado
+  "Reservatorio_CME_current": {
+    leituraVazio: 0.004088,
+    leituraCheio: 0.004408,
+    capacidade: 5000
+  },
+  "Reservatorio_Agua_Abrandada_current": {
+    leituraVazio: 0.004048,
+    leituraCheio: 0.006515,
+    capacidade: 9000
+  },
+  "Reservatorio_lavanderia_current": {
+    leituraVazio: 0.006012,
+    leituraCheio: 0.009458,
+    capacidade: 10000
+  },
+
+  // ======== PRESSÕES ========
+  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
+  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
+  "Pressao_Saida_CME_current": { tipo: "pressao" },
+
+  // ======== BOMBAS (NOVO) ========
+  // valores binários e contadores (suporta nomes variados do gateway)
+  "Bomba_01_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
+
+  "Bomba_02_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_02_counter": { tipo: "ciclo" }
 };
 
-// Render inicial: cria cards vazios
-function criarEstruturaInicial(reservatorios, pressoes) {
-  reservatoriosContainer.innerHTML = "";
-  pressoesContainer.innerHTML = "";
-  bombasContainer && (bombasContainer.innerHTML = "");
-
-  // ===============================
-  // RESERVATÓRIOS (NÃO ALTERADO)
-  // ===============================
-  reservatorios.forEach(r => {
-    const id = `res_${r.setor}`;
-    const card = document.createElement("div");
-    card.className = "card-reservatorio";
-    card.id = id;
-
-    card.innerHTML = `
-      <h3 class="titulo-card">${r.nome}</h3>
-
-      <div class="tanque-visu">
-        <div class="nivel-agua" id="${id}_nivel" style="height:0%"></div>
-        <div class="overlay-info">
-          <div class="percent-text" id="${id}_percent">--%</div>
-          <div class="liters-text" id="${id}_litros">-- L</div>
-        </div>
-      </div>
-
-      <div class="alerta-msg" id="${id}_alerta" style="display:none;">⚠ Nível crítico (abaixo de 30%)</div>
-
-      <div class="manutencao-container">
-        <label>
-          <input type="checkbox" class="manutencao-check" id="${id}_manut">
-          Em manutenção
-        </label>
-        <div class="manutencao-tag" id="${id}_tag" style="display:none;">EM MANUTENÇÃO</div>
-      </div>
-
-      <div class="card-actions">
-        <div class="capacidade" id="${id}_cap">Capacidade: ${formatNumber(r.capacidade ?? "--")} L</div>
-        <button class="btn-hist" data-setor="${r.setor}">Ver histórico</button>
-      </div>
-    `;
-
-    card.querySelector(".btn-hist").addEventListener("click", (e) => {
-      const setor = e.currentTarget.dataset.setor;
-      window.location.href = `/historico-view?reservatorio=${encodeURIComponent(setor)}`;
-    });
-
-    reservatoriosContainer.appendChild(card);
-  });
-
-  // pressões
-  pressoes.forEach(p => {
-    const id = `pres_${p.setor}`;
-    const card = document.createElement("div");
-    card.className = "card-pressao";
-    card.id = id;
-
-    card.innerHTML = `
-      <h3 class="titulo-card">${p.nome}</h3>
-      <div class="pressao-valor" id="${id}_valor">--</div>
-      <div class="pressao-unidade">bar</div>
-    `;
-
-    pressoesContainer.appendChild(card);
-  });
-
-  // bombas
-  if (bombasContainer) {
-    bombasContainer.innerHTML = `
-      <div class="card card-bomba" id="card-bomba-01">
-        <h3>Bomba 01 (Circulação)</h3>
-        <div><strong>Status:</strong> <span id="status-bomba-01">--</span></div>
-        <div><strong>Ciclos:</strong> <span id="ciclos-bomba-01">--</span></div>
-        <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-01">--:--</span></div>
-        <div><strong>Último ON:</strong> <span id="ultimoon-bomba-01">--</span></div>
-        <div id="alerta-bomba-01" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠</div>
-      </div>
-
-      <div class="card card-bomba" id="card-bomba-02">
-        <h3>Bomba 02 (Circulação)</h3>
-        <div><strong>Status:</strong> <span id="status-bomba-02">--</span></div>
-        <div><strong>Ciclos:</strong> <span id="ciclos-bomba-02">--</span></div>
-        <div><strong>Tempo ligada:</strong> <span id="tempo-bomba-02">--:--</span></div>
-        <div><strong>Último ON:</strong> <span id="ultimoon-bomba-02">--</span></div>
-        <div id="alerta-bomba-02" class="alerta" style="display:none;color:#b71c1c;font-weight:bold;">⚠</div>
-      </div>
-    `;
-  }
+// === Função para salvar última leitura ===
+function salvarDados(dados) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+  console.log("Leituras:", JSON.stringify(dados));
 }
 
-// Atualiza valores sem recriar DOM
-function atualizarValores(data) {
-  // ------------------------------
-  // RESERVATÓRIOS (NÃO ALTERADO)
-  // ------------------------------
-  if (!data || !Array.isArray(data.reservatorios)) return;
+// ============================================================================
+// === registrarHistorico()
+// ============================================================================
 
-  data.reservatorios.forEach(r => {
-    const id = `res_${r.setor}`;
-    const nivelEl = document.getElementById(`${id}_nivel`);
-    const pctEl = document.getElementById(`${id}_percent`);
-    const litrEl = document.getElementById(`${id}_litros`);
-    const capEl = document.getElementById(`${id}_cap`);
-    const alertaEl = document.getElementById(`${id}_alerta`);
-    const manutCheck = document.getElementById(`${id}_manut`);
-    const manutTag = document.getElementById(`${id}_tag`);
-    const card = document.getElementById(id);
+function registrarHistorico(dados) {
+  const hoje = new Date().toISOString().split("T")[0];
+  let historico = {};
 
-    const percent = r.percent ?? window._ultimaPercent?.[r.setor] ?? null;
-    const liters = r.current_liters ?? window._ultimaLitros?.[r.setor] ?? null;
-    const capacidade = r.capacidade ?? window._ultimaCapacidade?.[r.setor] ?? null;
+  if (fs.existsSync(HIST_FILE)) {
+    try {
+      historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+    } catch {
+      historico = {};
+    }
+  }
 
-    window._ultimaPercent = window._ultimaPercent || {};
-    window._ultimaLitros = window._ultimaLitros || {};
-    window._ultimaCapacidade = window._ultimaCapacidade || {};
+  if (!historico[hoje]) historico[hoje] = {};
 
-    if (percent !== null) window._ultimaPercent[r.setor] = percent;
-    if (liters !== null) window._ultimaLitros[r.setor] = liters;
-    if (capacidade !== null) window._ultimaCapacidade[r.setor] = capacidade;
+  Object.entries(dados).forEach(([ref, valor]) => {
+    if (ref === "timestamp" || typeof valor !== "number") return;
 
-    if (nivelEl) nivelEl.style.height = percent !== null ? `${percent}%` : "0%";
-    if (pctEl) pctEl.textContent = percent !== null ? `${Math.round(percent)}%` : "--%";
-    if (litrEl) litrEl.textContent = liters !== null ? `${formatNumber(liters)} L` : "-- L";
-    if (capEl) capEl.textContent = `Capacidade: ${formatNumber(capacidade)} L`;
+    const sensor = SENSORES[ref];
 
-    const mantKey = `manut_${r.setor}`;
-    let inManut = false;
-    try { inManut = JSON.parse(localStorage.getItem(mantKey)) === true; } catch(e){}
+    // só registra histórico para sensores com capacidade (reservatórios)
+    if (!sensor || !sensor.capacidade) return;
 
-    if (manutCheck) {
-      manutCheck.checked = inManut;
-      if (!manutCheck._hasListener) {
-        manutCheck.addEventListener("change", () => {
-          const novo = manutCheck.checked;
-          localStorage.setItem(mantKey, JSON.stringify(novo));
-          manutTag.style.display = novo ? "block" : "none";
-          if (!novo && percent <= 30) {
-            alertaEl.style.display = "block";
-            card.classList.add("alerta");
-          } else {
-            alertaEl.style.display = "none";
-            card.classList.remove("alerta");
-          }
-        });
-        manutCheck._hasListener = true;
-      }
+    if (!historico[hoje][ref]) {
+      historico[hoje][ref] = {
+        min: valor,
+        max: valor,
+        pontos: []
+      };
     }
 
-    manutTag.style.display = inManut ? "block" : "none";
+    const reg = historico[hoje][ref];
 
-    if (!inManut && percent !== null && percent <= 30) {
-      alertaEl.style.display = "block";
-      card.classList.add("alerta");
-    } else {
-      alertaEl.style.display = "none";
-      card.classList.remove("alerta");
+    reg.min = Math.min(reg.min, valor);
+    reg.max = Math.max(reg.max, valor);
+
+    const variacao = sensor.capacidade * 0.02;
+    const ultimo = reg.pontos.at(-1);
+
+    if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
+      reg.pontos.push({
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        valor: valor
+      });
     }
   });
 
-  // ==========================
-  // PRESSÕES (NÃO ALTERADO)
-  // ==========================
-  if (Array.isArray(data.pressoes)) {
-    data.pressoes.forEach(p => {
-      const id = `pres_${p.setor}`;
-      const el = document.getElementById(`${id}_valor`);
-      const card = document.getElementById(id);
-
-      let bar = null;
-      if (p.pressao != null) bar = Number(p.pressao);
-      else if (p.value != null) {
-        const v = Number(p.value);
-        if (!isNaN(v) && v > 0 && v <= 0.1) {
-          const mA = v * 1000;
-          bar = ((mA - 4) / 16) * 10;
-        }
-      }
-
-      if (el) el.textContent = bar == null ? "--" : bar.toFixed(2);
-
-      if (card) {
-        card.classList.remove("pressao-baixa", "pressao-ok", "pressao-alta", "sem-dado");
-        if (bar == null) card.classList.add("sem-dado");
-        else if (bar < 2) card.classList.add("pressao-baixa");
-        else if (bar < 6) card.classList.add("pressao-ok");
-        else card.classList.add("pressao-alta");
-      }
-    });
-  }
-
-  // ================================
-  // BOMBAS — CORRIGIDO AQUI
-  // ================================
-  const b1 = Number(data.Bomba_01_binary ?? 0);
-  const b2 = Number(data.Bomba_02_binary ?? 0);
-
-  const c1 = Number(data.Ciclo_Bomba_01_counter ?? 0);
-  const c2 = Number(data.Ciclos_Bomba_02_counter ?? 0);
-
-  const now = Date.now();
-
-  function processBomba(key, binary, ciclos) {
-    const st = window._bombaState[key];
-    const was = st.lastBinary;
-
-    // ===============================
-    // *** CORREÇÃO PRINCIPAL ***
-    // ===============================
-    const idx = key === "bomba01" ? "1" : "2";
-    if (!document.getElementById(`status-bomba-${idx}`)) {
-      return; // evita erro quando DOM ainda não existe (cache / atraso)
-    }
-    // ===============================
-
-    if (was === 0 && binary === 1) {
-      st.startTs = now;
-      st.lastOnTs = now;
-      st.lastCycle = ciclos;
-    }
-
-    if (was === 1 && binary === 0) {
-      if (st.startTs) st.lastRunMs = now - st.startTs;
-      st.startTs = null;
-    }
-
-    st.lastBinary = binary;
-
-    const statusEl = document.getElementById(`status-bomba-${idx}`);
-    const ciclosEl = document.getElementById(`ciclos-bomba-${idx}`);
-    const tempoEl = document.getElementById(`tempo-bomba-${idx}`);
-    const ultimoEl = document.getElementById(`ultimoon-bomba-${idx}`);
-    const alertaEl = document.getElementById(`alerta-bomba-${idx}`);
-    const card = document.getElementById(`card-bomba-${idx}`);
-
-    if (statusEl) {
-      statusEl.textContent = binary === 1 ? "Ligada" : "Desligada";
-      statusEl.style.color = binary === 1 ? "green" : "#666";
-    }
-
-    if (ciclosEl) ciclosEl.textContent = ciclos;
-
-    let tempoMs = null;
-    if (binary === 1) tempoMs = now - (st.startTs || now);
-    else if (st.lastRunMs) tempoMs = st.lastRunMs;
-
-    if (tempoEl) tempoEl.textContent = tempoMs ? formatDuration(tempoMs) : "--:--";
-    if (ultimoEl) ultimoEl.textContent = st.lastOnTs ? new Date(st.lastOnTs).toLocaleTimeString("pt-BR") : "--";
-
-    let showAlert = false;
-    let alertText = "";
-
-    if (binary === 1 && (now - st.startTs) > BOMBA_ON_MS) {
-      showAlert = true;
-      alertText = `⚠ Ligada > ${BOMBA_ON_MS / 60000} min`;
-    }
-
-    if (showAlert) {
-      alertaEl.style.display = "block";
-      alertaEl.textContent = alertText;
-      card.classList.add("alerta-bomba-card");
-    } else {
-      alertaEl.style.display = "none";
-      card.classList.remove("alerta-bomba-card");
-    }
-
-    if (st.lastCycle != null && ciclos <= st.lastCycle && (now - st.lastOnTs) > BOMBA_ON_MS * 2) {
-      alertaEl.style.display = "block";
-      alertaEl.textContent = "⚠ Ciclos não aumentaram (verificar)";
-      card.classList.add("alerta-bomba-card");
-    }
-  }
-
-  processBomba("bomba01", b1, c1);
-  processBomba("bomba02", b2, c2);
-
-  // Globais
-  if (b1 === 1 && b2 === 1) {
-    ["1","2"].forEach(idx => {
-      const alertaEl = document.getElementById(`alerta-bomba-${idx}`);
-      const card = document.getElementById(`card-bomba-${idx}`);
-      alertaEl.style.display = "block";
-      alertaEl.textContent = "⚠ Ambas as bombas ligadas";
-      card.classList.add("alerta-bomba-card");
-    });
-  }
-
-  const anyRecentlyOn =
-    (window._bombaState.bomba01.lastOnTs && now - window._bombaState.bomba01.lastOnTs < NENHUMA_LIGADA_ALERT_MS) ||
-    (window._bombaState.bomba02.lastOnTs && now - window._bombaState.bomba02.lastOnTs < NENHUMA_LIGADA_ALERT_MS) ||
-    b1 === 1 || b2 === 1;
-
-  if (!anyRecentlyOn) {
-    const alerta1 = document.getElementById("alerta-bomba-01");
-    const alerta2 = document.getElementById("alerta-bomba-02");
-    alerta1.textContent = `⚠ Nenhuma bomba acionou nos últimos 18 min`;
-    alerta2.textContent = `⚠ Nenhuma bomba acionou nos últimos 18 min`;
-    alerta1.style.display = "block";
-    alerta2.style.display = "block";
-  }
+  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
-// verifica se a última atualização está vencida (> WARNING_TIMEOUT)
-function verificarAtraso(lastUpdate) {
-  if (!lastUpdate) return;
-  const diff = Date.now() - new Date(lastUpdate).getTime();
-  avisoEl.style.display = diff > WARNING_TIMEOUT ? "block" : "none";
-}
+// ============================================================================
+// === Endpoint universal /atualizar
+// ============================================================================
 
-// ciclo principal
-async function atualizar() {
+app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
+  console.log(`➡️ Recebido ${req.method} em ${req.path}`);
+
   try {
-    const resp = await fetch(API_URL, { cache: "no-store" });
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const data = await resp.json();
+    let body = req.body;
 
-    if (!window._estruturaCriada) {
-      criarEstruturaInicial(data.reservatorios || [], data.pressoes || []);
-      window._estruturaCriada = true;
+    if (Buffer.isBuffer(body)) body = body.toString("utf8");
+
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        console.log("Corpo não JSON:", String(body).slice(0, 200));
+      }
     }
 
-    atualizarValores(data);
+    let dataArray = [];
 
-    if (data.lastUpdate) {
-      lastUpdateEl.textContent = "Última atualização: " + new Date(data.lastUpdate).toLocaleString("pt-BR");
-      verificarAtraso(data.lastUpdate);
-    } else {
-      lastUpdateEl.textContent = "Última atualização: " + new Date().toLocaleTimeString("pt-BR");
+    if (Array.isArray(body)) {
+      dataArray = body;
+    } else if (body && Array.isArray(body.data)) {
+      dataArray = body.data;
+    } else if (typeof body === "object" && body !== null) {
+      dataArray = Object.keys(body)
+        .map(k => ({ ref: k, value: Number(body[k]) }));
     }
 
-    window._ultimaDashboard = data;
+    if (!dataArray.length) {
+      return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
+    }
 
+    const dadosConvertidos = {};
+
+    for (const item of dataArray) {
+      const ref = item.ref;
+      const valor = Number(item.value);
+
+      if (!ref || isNaN(valor)) continue;
+
+      const sensor = SENSORES[ref];
+
+      if (!sensor) {
+        // salva direto qualquer campo desconhecido (útil para debugging)
+        dadosConvertidos[ref] = valor;
+        continue;
+      }
+
+      let convertido = valor;
+
+      // === PRESSÃO ===
+      if (sensor.tipo === "pressao") {
+        convertido = ((valor - 0.004) / 0.016) * 20; // mapeia 4..20mA -> 0..20 bar (exemplo)
+        convertido = Math.max(0, Math.min(20, convertido));
+        convertido = Number(convertido.toFixed(2));
+      }
+
+      // === BOMBA ===
+      else if (sensor.tipo === "bomba") {
+        convertido = valor === 1 ? 1 : 0;
+      }
+
+      // === CICLO ===
+      else if (sensor.tipo === "ciclo") {
+        convertido = Math.max(0, Math.round(valor));
+      }
+
+      // === RESERVATÓRIO ===
+      else if (sensor.capacidade > 1) {
+        convertido =
+          ((valor - sensor.leituraVazio) /
+            (sensor.leituraCheio - sensor.leituraVazio)) *
+          sensor.capacidade;
+
+        convertido = Math.max(0, Math.min(sensor.capacidade, convertido));
+        convertido = Math.round(convertido);
+      }
+
+      dadosConvertidos[ref] = convertido;
+    }
+
+    dadosConvertidos.timestamp = new Date().toISOString();
+
+    salvarDados(dadosConvertidos);
+    registrarHistorico(dadosConvertidos);
+
+    res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
-    console.warn("Sem dados novos, usando última leitura", err);
-    if (window._ultimaDashboard) {
-      atualizarValores(window._ultimaDashboard);
-      if (window._ultimaDashboard.lastUpdate) {
-        lastUpdateEl.textContent = "Última atualização (cache): " + new Date(window._ultimaDashboard.lastUpdate).toLocaleString("pt-BR");
-        verificarAtraso(window._ultimaDashboard.lastUpdate);
+    console.error("Erro:", err);
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+// ============================================================================
+// === /dados
+// ============================================================================
+
+app.get("/dados", (req, res) => {
+  if (!fs.existsSync(DATA_FILE)) return res.json({});
+  res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
+});
+
+// ============================================================================
+// === /historico
+// ============================================================================
+
+const MAPA_RESERVATORIOS = {
+  elevador: "Reservatorio_Elevador_current",
+  osmose: "Reservatorio_Osmose_current",
+  cme: "Reservatorio_CME_current",
+  abrandada: "Reservatorio_Agua_Abrandada_current",
+  lavanderia: "Reservatorio_lavanderia_current"
+};
+
+app.get("/historico", (req, res) => {
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const saida = [];
+
+  for (const [data, sensores] of Object.entries(historico)) {
+    for (const [ref, dados] of Object.entries(sensores)) {
+      const nome = Object.keys(MAPA_RESERVATORIOS)
+        .find(key => MAPA_RESERVATORIOS[key] === ref);
+
+      if (!nome) continue;
+
+      if (typeof dados.min === "number") {
+        saida.push({
+          reservatorio: nome,
+          timestamp: new Date(data).getTime(),
+          valor: dados.min
+        });
+      }
+
+      for (const p of dados.pontos || []) {
+        const dt = new Date(`${data} ${p.hora}`);
+        saida.push({
+          reservatorio: nome,
+          timestamp: dt.getTime(),
+          valor: p.valor
+        });
       }
     }
   }
-}
 
-setInterval(atualizar, UPDATE_INTERVAL);
-atualizar();
+  saida.sort((a, b) => a.timestamp - b.timestamp);
+
+  res.json(saida);
+});
+
+// ============================================================================
+// === /historico/24h/:reservatorio
+// ============================================================================
+
+app.get("/historico/24h/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const agora = Date.now();
+  const saida = [];
+
+  for (const [data, sensores] of Object.entries(historico)) {
+    const pontos = sensores[ref]?.pontos || [];
+
+    for (const p of pontos) {
+      const dt = new Date(`${data} ${p.hora}`).getTime();
+
+      if (agora - dt <= 24 * 60 * 60 * 1000) {
+        saida.push({
+          reservatorio: nome,
+          timestamp: dt,
+          valor: p.valor
+        });
+      }
+    }
+  }
+
+  saida.sort((a, b) => a.timestamp - b.timestamp);
+
+  res.json(saida);
+});
+
+// ============================================================================
+// === /consumo/5dias/:reservatorio
+// ============================================================================
+
+app.get("/consumo/5dias/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const dias = [];
+
+  for (const [data, sensores] of Object.entries(historico)) {
+    const reg = sensores[ref];
+    if (!reg) continue;
+
+    const valores = [];
+
+    if (typeof reg.min === "number") valores.push(reg.min);
+    if (Array.isArray(reg.pontos)) {
+      reg.pontos.forEach(p => valores.push(p.valor));
+    }
+
+    if (valores.length >= 2) {
+      dias.push({
+        dia: data,
+        consumo: valores[0] - valores[valores.length - 1]
+      });
+    }
+  }
+
+  dias.sort((a, b) => a.dia.localeCompare(b.dia));
+
+  const ultimos5 = dias.slice(-5).map(d => ({
+    dia: d.dia,
+    consumo: Number(d.consumo.toFixed(2))
+  }));
+
+  res.json(ultimos5);
+});
+
+// ============================================================================
+// === /api/consumo — usado pelo dashboard
+// ============================================================================
+
+app.get("/api/consumo", (req, res) => {
+  const qtdDias = Number(req.query.dias || 5);
+
+  if (!fs.existsSync(HIST_FILE)) {
+    return res.json({
+      dias: [],
+      elevador: [],
+      osmose: []
+    });
+  }
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const dias = Object.keys(historico).sort().slice(-qtdDias);
+
+  const resultado = {
+    dias,
+    elevador: [],
+    osmose: []
+  };
+
+  function calcularConsumo(ref) {
+    return dias.map(data => {
+      const dia = historico[data][ref];
+      if (!dia) return 0;
+
+      const valores = [];
+
+      if (typeof dia.min === "number") valores.push(dia.min);
+      if (Array.isArray(dia.pontos)) dia.pontos.forEach(p => valores.push(p.valor));
+
+      if (valores.length < 2) return 0;
+
+      return Number((valores[0] - valores[valores.length - 1]).toFixed(2));
+    });
+  }
+
+  resultado.elevador = calcularConsumo("Reservatorio_Elevador_current");
+  resultado.osmose = calcularConsumo("Reservatorio_Osmose_current");
+
+  res.json(resultado);
+});
+
+// ============================================================================
+// === /api/dashboard — resumo usado no dashboard
+// ============================================================================
+
+app.get("/api/dashboard", (req, res) => {
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.json({
+      lastUpdate: "-",
+      reservatorios: [],
+      pressoes: [],
+      bombas: []
+    });
+  }
+
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  // RESERVATÓRIOS (capacidade atualizada)
+  const reservatorios = [
+    {
+      nome: "Reservatório Elevador",
+      setor: "elevador",
+      percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
+      current_liters: dados["Reservatorio_Elevador_current"],
+      capacidade: 20000,
+      manutencao: false
+    },
+    {
+      nome: "Reservatório Osmose",
+      setor: "osmose",
+      percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
+      current_liters: dados["Reservatorio_Osmose_current"],
+      capacidade: 200,
+      manutencao: false
+    },
+    {
+      nome: "Reservatório CME",
+      setor: "cme",
+      percent: Math.round((dados["Reservatorio_CME_current"] / 5000) * 100),
+      current_liters: dados["Reservatorio_CME_current"],
+      capacidade: 5000,
+      manutencao: false
+    },
+    {
+      nome: "Água Abrandada",
+      setor: "abrandada",
+      percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
+      current_liters: dados["Reservatorio_Agua_Abrandada_current"],
+      capacidade: 9000,
+      manutencao: false
+    },
+    {
+      nome: "Lavanderia",
+      setor: "lavanderia",
+      percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
+      current_liters: dados["Reservatorio_lavanderia_current"],
+      capacidade: 10000,
+      manutencao: false
+    }
+  ];
+
+  // PRESSÕES
+  const pressoes = [
+    {
+      nome: "Pressão Saída Osmose",
+      setor: "saida_osmose",
+      pressao: dados["Pressao_Saida_Osmose_current"]
+    },
+    {
+      nome: "Pressão Retorno Osmose",
+      setor: "retorno_osmose",
+      pressao: dados["Pressao_Retorno_Osmose_current"]
+    },
+    {
+      nome: "Pressão Saída CME",
+      setor: "saida_cme",
+      pressao: dados["Pressao_Saida_CME_current"]
+    }
+  ];
+
+  // BOMBAS
+  const bombas = [
+    {
+      nome: "Bomba 01",
+      estado: (dados["Bomba_01_binary"] === 1 || dados["Bomba_01"] === 1) ? "ligada" : "desligada",
+      estado_num: dados["Bomba_01_binary"] || dados["Bomba_01"] || 0,
+      ciclo: dados["Ciclos_Bomba_01_counter"] ?? dados["Ciclo_Bomba_01_counter"] ?? 0
+    },
+    {
+      nome: "Bomba 02",
+      estado: (dados["Bomba_02_binary"] === 1 || dados["Bomba_02"] === 1) ? "ligada" : "desligada",
+      estado_num: dados["Bomba_02_binary"] || dados["Bomba_02"] || 0,
+      ciclo: dados["Ciclos_Bomba_02_counter"] ?? dados["Ciclo_Bomba_02_counter"] ?? 0
+    }
+  ];
+
+  res.json({
+    lastUpdate: dados.timestamp,
+    reservatorios,
+    pressoes,
+    bombas
+  });
+});
+
+// ============================================================================
+// === Interface estática
+// ============================================================================
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+
+app.get("/dashboard", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"))
+);
+
+app.get("/historico-view", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "historico.html"))
+);
+
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
+);
+
+// ============================================================================
+// === Inicialização
+// ============================================================================
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor HAG ativo na porta ${PORT}`);
+});
