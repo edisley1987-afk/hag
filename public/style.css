@@ -140,20 +140,28 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — AGRUPADOS NA HORIZONTAL 
+   PRESSÕES + BOMBAS — 2 COLUNAS NA HORIZONTAL
 ========================================================= */
 
-.secao-horizontal {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
+#linha-pressao-bombas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
     margin-top: 30px;
-    flex-wrap: wrap;
+    align-items: start;
 }
 
-.coluna {
-    flex: 1;
-    min-width: 380px;
+/* Responsivo */
+@media (max-width: 1100px) {
+    #linha-pressao-bombas {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Garantir que colunas ocupem a largura total */
+#pressoesContainer,
+#bombasContainer {
+    width: 100%;
 }
 
 /* ============================ PRESSÕES ============================ */
