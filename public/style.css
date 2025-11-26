@@ -4,11 +4,9 @@ body {
     padding: 0;
     font-family: "Segoe UI", sans-serif;
 
-    /* FOTO DE FUNDO */
     background: url("image.png") no-repeat center center fixed;
     background-size: cover;
 
-    /* CAMADA ESCURECIDA */
     position: relative;
 }
 body::before {
@@ -52,7 +50,7 @@ header {
 
 /* ============================ CONTEÚDO ============================ */
 main {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: auto;
     padding: 20px;
     color: white;
@@ -62,26 +60,28 @@ h1, h2 {
 }
 
 /* ============================  
-   RESERVATÓRIOS — 5 CARDS NA MESMA LINHA  
+      RESERVATÓRIOS – GRID 100% RESPONSIVO  
 ============================= */
+
 #reservatoriosContainer {
-    display: flex !important;
-    flex-wrap: nowrap !important;        /* NÃO QUEBRA LINHA */
-    gap: 18px;
-    justify-content: flex-start;
-    overflow-x: auto;                    /* scroll horizontal */
-    padding-bottom: 10px;
-    scrollbar-width: thin;
-}
-#reservatoriosContainer::-webkit-scrollbar {
-    height: 8px;
-}
-#reservatoriosContainer::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius: 8px;
+    display: grid !important;
+    gap: 22px;
+    width: 100%;
+    margin-top: 20px;
+
+    /* AUTO-FIT = adapta sozinho  
+       minmax 240px / 1fr = quebra conforme tela */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-/* CARD DOS RESERVATÓRIOS */
+/* Forçar 5 por linha em telas MUITO grandes (TVs) */
+@media (min-width: 1650px) {
+    #reservatoriosContainer {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* ============================ CARD DO RESERVATÓRIO ============================ */
 .card-reservatorio {
     background: rgba(255, 255, 255, 0.18);
     padding: 15px;
@@ -92,10 +92,7 @@ h1, h2 {
     transition: 0.2s ease;
     text-align: center;
 
-    /* TAMANHO REDUZIDO E FIXO */
-    width: 240px !important;
-    min-width: 240px !important;
-    flex-shrink: 0 !important;
+    width: 100%;
 }
 .card-reservatorio:hover {
     transform: scale(1.03);
@@ -103,13 +100,15 @@ h1, h2 {
 
 .tanque-visu {
     width: 100%;
-    height: 150px;
+    height: 160px;
     border-radius: 12px;
     background: rgba(255,255,255,0.25);
     border: 3px solid var(--verde-medio);
     overflow: hidden;
     position: relative;
 }
+
+/* Nível de água */
 .nivel-agua {
     position: absolute;
     bottom: 0;
@@ -119,6 +118,7 @@ h1, h2 {
     background: var(--verde-claro);
 }
 
+/* Overlay */
 .overlay-info {
     position: absolute;
     top: 8px;
@@ -136,31 +136,18 @@ h1, h2 {
     margin-top: 4px;
 }
 
-/* CORES DE ALERTA DO NÍVEL */
-.nv-critico {
-    border-color: var(--erro) !important;
-}
-.nv-critico .nivel-agua {
-    background: var(--erro) !important;
-}
-.nv-alerta {
-    border-color: var(--alerta) !important;
-}
-.nv-alerta .nivel-agua {
-    background: var(--alerta) !important;
-}
-.nv-normal {
-    border-color: var(--ok) !important;
-}
-.nv-normal .nivel-agua {
-    background: var(--ok) !important;
-}
-.nv-cheio {
-    border-color: var(--verde-claro) !important;
-}
-.nv-cheio .nivel-agua {
-    background: var(--verde-claro) !important;
-}
+/* Cores do nível */
+.nv-critico { border-color: var(--erro) !important; }
+.nv-critico .nivel-agua { background: var(--erro) !important; }
+
+.nv-alerta { border-color: var(--alerta) !important; }
+.nv-alerta .nivel-agua { background: var(--alerta) !important; }
+
+.nv-normal { border-color: var(--ok) !important; }
+.nv-normal .nivel-agua { background: var(--ok) !important; }
+
+.nv-cheio { border-color: var(--verde-claro) !important; }
+.nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* ============================ PRESSÕES ============================ */
 .pressao-container {
@@ -177,7 +164,7 @@ h1, h2 {
     backdrop-filter: blur(8px);
     border-radius: 14px;
     padding: 18px 25px;
-    width: 240px;
+    width: 260px;
     text-align: center;
     color: white;
     box-shadow: 0 6px 15px rgba(0,0,0,0.2);
@@ -188,19 +175,35 @@ h1, h2 {
     transform: scale(1.03);
 }
 
+.card-pressao h3 {
+    margin: 0 0 10px;
+    font-size: 19px;
+    font-weight: 600;
+}
+.valor-pressao {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--verde-suave);
+}
+.unidade {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
 /* ============================ BOMBAS ============================ */
 .bombas-container {
     width: 90%;
     margin: 20px auto 40px;
     display: flex;
     flex-wrap: wrap;
-    gap: 22px;
+    gap: 25px;
     justify-content: center;
 }
 
 .card-bomba {
-    width: 320px;            /* ← REDUZIDO */
-    padding: 20px;
+    width: 420px;
+    padding: 25px;
     border-radius: 14px;
     background: rgba(255,255,255,0.12);
     backdrop-filter: blur(7px);
@@ -209,7 +212,7 @@ h1, h2 {
 }
 .card-bomba h3 {
     margin-top: 0;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .bomba-ligada {
@@ -223,7 +226,7 @@ h1, h2 {
 
 .card-bomba p {
     margin: 4px 0;
-    font-size: 14px;
+    font-size: 15px;
 }
 .alerta-bomba {
     width: 100%;
@@ -251,12 +254,6 @@ h1, h2 {
     }
     .card-pressao {
         width: 90%;
-    }
-
-    /* RESERVATÓRIOS continuam em linha com scroll */
-    .card-reservatorio {
-        width: 240px !important;
-        min-width: 240px !important;
     }
 }
 
