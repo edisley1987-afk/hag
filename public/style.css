@@ -1,307 +1,188 @@
-/* ============================
-   BACKGROUND COM FOTO DO HOSPITAL
-   ============================ */
+/* ============================================================
+   VARIÁVEIS DE COR (mantidas exatamente como no seu arquivo)
+   ============================================================ */
+:root {
+  --verde-principal: #4DA492;
+  --verde-escuro: #006D5B;
+  --verde-agua: #7ED6D1;
+  --verde-agua-claro: #AEE8E3;
+  --verde-suave: #87C8BA;
+
+  --cinza-fundo: #F5F7FA;
+  --texto-principal: #333;
+  --texto-secundario: #555;
+
+  --danger: #D9534F;
+  --warning: #F0AD4E;
+  --safe: #5CB85C;
+}
+
+/* ============================================================
+   ESTILO GERAL
+   ============================================================ */
 body {
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", sans-serif;
-
-  /* FOTO DE FUNDO */
-  background: url("image.png") no-repeat center center fixed;
-  background-size: cover;
-
-  /* CAMADA ESCURECIDA */
-  position: relative;
+  font-family: "Inter", Arial, sans-serif;
+  background: var(--cinza-fundo);
+  color: var(--texto-principal);
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 40, 25, 0.55);
-  backdrop-filter: blur(3px);
-  z-index: -1;
-}
-
-/* ============================
-   PALETA DE CORES
-   ============================ */
-:root {
-  --verde-principal: #0b5e45;
-  --verde-claro: #2e8b70;
-  --verde-medio: #3fa58b;
-  --verde-suave: #d9f4ec;
-  --branco: #ffffff;
-
-  --erro: #d9534f;
-  --alerta: #f0ad4e;
-  --ok: #5cb85c;
-}
-
-/* ============================
-   HEADER
-   ============================ */
 header {
-  background: rgba(0, 90, 60, 0.85);
-  color: var(--branco);
-  padding: 22px;
-  text-align: center;
-  border-bottom: 3px solid var(--verde-medio);
-  backdrop-filter: blur(4px);
-}
-
-#headerImage {
-  width: 180px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-/* ============================
-   CONTEÚDO
-   ============================ */
-main {
-  max-width: 1200px;
-  margin: auto;
+  background: var(--verde-principal);
+  color: white;
   padding: 20px;
-  color: white;
-}
-
-h1, h2 {
-  color: white;
-}
-
-#reservatoriosContainer,
-#pressoesContainer,
-#bombasContainer {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-/* ============================
-   CARD DO RESERVATÓRIO (NOVO MODELO)
-   ============================ */
-
-.card-reservatorio {
-  background: rgba(255, 255, 255, 0.18);
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-  backdrop-filter: blur(6px);
-  color: white;
-  transition: 0.2s ease;
   text-align: center;
+  border-bottom: 4px solid var(--verde-escuro);
 }
 
-.card-reservatorio:hover {
-  transform: scale(1.03);
-}
-
-.tanque-visu {
-  width: 100%;
-  height: 180px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.25);
-  border: 3px solid var(--verde-medio);
-  overflow: hidden;
-  position: relative;
-}
-
-/* Nível de água */
-.nivel-agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  transition: height 1s ease;
-  background: var(--verde-claro);
-}
-
-/* Overlay de informações */
-.overlay-info {
-  position: absolute;
-  top: 8px;
-  width: 100%;
-  text-align: center;
-  color: white;
-  text-shadow: 0 1px 3px black;
-}
-
-.percent-text {
-  font-size: 22px;
-  font-weight: bold;
-}
-
-.liters-text {
-  font-size: 16px;
+#lastUpdate {
+  font-size: 14px;
+  opacity: 0.9;
   margin-top: 4px;
 }
 
-/* Cores de acordo com o nível */
-.nv-critico {
-  border-color: var(--erro) !important;
-}
-.nv-critico .nivel-agua {
-  background: var(--erro) !important;
-}
-
-.nv-alerta {
-  border-color: var(--alerta) !important;
-}
-.nv-alerta .nivel-agua {
-  background: var(--alerta) !important;
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+main {
+  max-width: 1400px;
+  margin: auto;
+  padding: 20px;
+  display: grid;
+  gap: 20px;
 }
 
-.nv-normal {
-  border-color: var(--ok) !important;
-}
-.nv-normal .nivel-agua {
-  background: var(--ok) !important;
-}
-
-.nv-cheio {
-  border-color: var(--verde-claro) !important;
-}
-.nv-cheio .nivel-agua {
-  background: var(--verde-claro) !important;
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  transition: 0.2s;
 }
 
-/* ============================
-   PRESSÕES — NOVO MODELO
-   ============================ */
-
-.pressao-container {
-    width: 90%;
-    margin: 40px auto 0;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    flex-wrap: wrap;
+.card:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
-.card-pressao {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-    border-radius: 14px;
-    padding: 18px 25px;
-    width: 260px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    border-left: 5px solid var(--verde-principal);
-    transition: transform 0.2s ease-in-out;
-}
-
-.card-pressao:hover {
-    transform: scale(1.03);
-}
-
-.card-pressao h3 {
-    margin: 0 0 10px;
-    font-size: 19px;
-    font-weight: 600;
-}
-
-.valor-pressao {
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: var(--verde-suave);
-}
-
-.unidade {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-/* ============================
-   BOMBAS — NOVO MODELO
-   ============================ */
-
-.bombas-container {
-    width: 90%;
-    margin: 30px auto 60px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
-    justify-content: center;
-}
-
-.card-bomba {
-    width: 420px;
-    padding: 25px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(7px);
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
-}
-
-.card-bomba h3 {
-    margin-top: 0;
-    font-size: 20px;
-}
-
-.bomba-ligada {
-    background: rgba(0, 140, 40, 0.85) !important;
-    border-left: 6px solid #00ff73;
-}
-
-.bomba-desligada {
-    background: rgba(140, 0, 0, 0.75) !important;
-    border-left: 6px solid #ff4f4f;
-}
-
-.card-bomba p {
-    margin: 4px 0;
-    font-size: 15px;
-}
-
-.alerta-bomba {
-    width: 100%;
-    margin-top: 14px;
-    padding: 10px;
-    border-radius: 8px;
-    background: #d64545;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-/* ============================
-   RESPONSIVIDADE
-   ============================ */
-@media (max-width: 700px) {
-    .pressao-container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .bombas-container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .card-bomba {
-        width: 95%;
-    }
-
-    .card-pressao {
-        width: 90%;
-    }
-}
-
-/* ============================
-   FOOTER
-   ============================ */
-footer {
-  background: rgba(0, 90, 60, 0.85);
-  padding: 12px;
+/* ============================================================
+   RESERVATÓRIOS — CAIXA D’ÁGUA VISUAL
+   ============================================================ */
+.reservatorio-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+}
+
+.reservatorio-nome {
+  font-size: 20px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.reservatorio-container {
+  width: 120px;
+  height: 240px;
+  border: 3px solid var(--verde-escuro);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background: #e6f7f6;
+}
+
+.reservatorio-nivel {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: var(--verde-principal);
+  transition: height 0.8s ease;
+}
+
+.reservatorio-capacidade {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--texto-secundario);
+}
+
+/* ===================== alertas =========================== */
+.alerta {
+  margin-top: 10px;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: none;
+}
+
+.alerta-danger {
+  background: var(--danger);
   color: white;
-  border-top: 2px solid var(--verde-medio);
-  margin-top: 40px;
+}
+
+.alerta-warning {
+  background: var(--warning);
+  color: black;
+}
+
+/* ============================================================
+   PRESSÕES
+   ============================================================ */
+.pressao-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pressao-item {
+  background: var(--verde-agua-claro);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   ESTILOS DO HISTÓRICO (CASO USE)
+   ============================================================ */
+.historico-container {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+#select {
+  width: 220px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #aaa;
+}
+
+#grafico {
+  width: 100%;
+  height: 380px;
+}
+
+/* ============================================================
+   RESPONSIVIDADE
+   ============================================================ */
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  .reservatorio-container {
+    width: 90px;
+    height: 180px;
+  }
+
+  .pressao-item {
+    font-size: 16px;
+  }
 }
