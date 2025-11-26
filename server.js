@@ -66,11 +66,11 @@ const SENSORES = {
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" },
 
-  // ======== BOMBAS ========
-  "Bomba_01": { tipo: "bomba" },
-  "Ciclos_Bomba_01": { tipo: "ciclo" },
-  "Bomba_02": { tipo: "bomba" },
-  "Ciclos_Bomba_02": { tipo: "ciclo" }
+  // ======== BOMBAS CORRIGIDAS ========
+  "Bomba_01_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
+  "Bomba_02_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_02_counter": { tipo: "ciclo" }
 };
 
 // === Função para salvar última leitura ===
@@ -193,12 +193,12 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
         convertido = Number(convertido.toFixed(2));
       }
 
-      // BOMBA
+      // BOMBA (CORRIGIDO)
       else if (sensor.tipo === "bomba") {
         convertido = valor === 1 ? 1 : 0;
       }
 
-      // CICLO
+      // CICLO (CORRIGIDO)
       else if (sensor.tipo === "ciclo") {
         convertido = Math.max(0, Math.round(valor));
       }
@@ -489,15 +489,15 @@ app.get("/api/dashboard", (req, res) => {
   const bombas = [
     {
       nome: "Bomba 01",
-      estado_num: Number(dados["Bomba_01"]) || 0,
-      estado: Number(dados["Bomba_01"]) === 1 ? "ligada" : "desligada",
-      ciclo: Number(dados["Ciclos_Bomba_01"]) || 0
+      estado_num: Number(dados["Bomba_01_binary"]) || 0,
+      estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0
     },
     {
       nome: "Bomba 02",
-      estado_num: Number(dados["Bomba_02"]) || 0,
-      estado: Number(dados["Bomba_02"]) === 1 ? "ligada" : "desligada",
-      ciclo: Number(dados["Ciclos_Bomba_02"]) || 0
+      estado_num: Number(dados["Bomba_02_binary"]) || 0,
+      estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0
     }
   ];
 
