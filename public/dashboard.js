@@ -1,131 +1,99 @@
-// ==================== CONFIG ======================
-const API_URL = "/api/dashboard"; 
-const INTERVALO_ATUALIZACAO = 5000; // 5s
+const API = "/api/dashboard";   // <<< URL ACERTADA
+let cache = JSON.parse(localStorage.getItem("DATA_CACHE")) || {};
 
-// Carrega cache salvo sem apagar quando falhar conexão
-let cache = JSON.parse(localStorage.getItem("HAG_CACHE_DASH")) || null;
-
-
-// ==================== ATUALIZADOR ======================
 async function atualizar(){
     try{
-        const r = await fetch(API_URL,{cache:"no-store"});
+        const r = await fetch(API,{cache:"no-store"});
         if(!r.ok) throw 0;
-
         const dados = await r.json();
 
         cache = dados;
-        localStorage.setItem("HAG_CACHE_DASH",JSON.stringify(dados));
+        localStorage.setItem("DATA_CACHE",JSON.stringify(dados));
 
         render(dados);
-
+        document.getElementById("lastUpdate").textContent = "Atualizado "+new Date().toLocaleTimeString();
     }catch{
-        console.warn("Sem atualização, usando último valor salvo");
-        if(cache) render(cache);
+        console.warn("Sem atualização, usando valores armazenados.");
+        render(cache);
+        document.getElementById("lastUpdate").textContent = "SEM SINAL — exibindo última leitura";
     }
 }
-
-setInterval(atualizar,INTERVALO_ATUALIZACAO);
+setInterval(atualizar,5000);
 atualizar();
 
-
-// ======================== RENDER GERAL ========================
-function render(dados){
-    renderReservatorios(dados.reservatorios);
-    renderPressoes(dados.pressoes);
-    renderBombas(dados.bombas);
+/* =================== RENDER =================== */
+function render(d){
+    renderReservatorios(d.reservatorios);
+    renderPressao(d.pressoes);
+    renderBombas(d.bombas);
 }
 
-
-
-// ===============================================================
-//  RESERVATÓRIOS + botão HISTÓRICO + trava/manutenção 31%
-// ===============================================================
+/* RESERVATÓRIOS */
 function renderReservatorios(lista){
-    const box = document.getElementById("reservatoriosContainer");
-    box.innerHTML = "";
+    const box=document.getElementById("reservatoriosContainer");
+    box.innerHTML="";
 
     lista.forEach(r=>{
-
-        let manut = localStorage.getItem(`manut_${r.setor}`)=="1";
-
-        // Se estava em manutenção e agora passou 31% → libera automático
-        if(manut && r.percent >=31){
-            localStorage.setItem(`manut_${r.setor}`,"0");
-            manut=false;
-        }
-
-        let cor = manut ? "#888" : (r.percent<30 ? "#d63838" : "#0e9c57");
-
-        const card = document.createElement("div");
+        const card=document.createElement("div");
         card.className="card-reservatorio";
-        card.style.borderColor = cor;
 
-        card.innerHTML = `
-            <h3>${r.nome}</h3>
+        if(r.percent<=30) card.classList.add("nv-critico");
+        else if(r.percent<=60) card.classList.add("nv-alerta");
+        else if(r.percent<=90) card.classList.add("nv-normal");
+        else card.classList.add("nv-cheio");
 
-            <div class="grafico" style="background:${cor}22">
-                 <b>${r.percent}%</b><br>${r.current_liters} L
+        card.innerHTML=`
+        <h3>${r.nome}</h3>
+
+        <div class="tanque-visu">
+            <div class="nivel-agua" style="height:${r.percent}%"></div>
+            <div class="overlay-info">
+                <div class="percent-text">${r.percent}%</div>
+                <div class="liters-text">${r.current_liters} L</div>
             </div>
+        </div>
 
-            ${(!manut && r.percent<30) ? `<div class='alerta'>⚠ Nível abaixo de 30%</div>` : ""}
+        <div class="alerta-msg">⚠ Nível abaixo de 30%</div>
 
-            <label>
-                <input type="checkbox" ${manut?"checked":""}
-                onclick="toggleManut('${r.setor}')"> Em manutenção
-            </label><br>
+        <button onclick="abrirHistorico('${r.setor}')" 
+            style="width:100%;padding:9px;border:none;border-radius:8px;
+            background:#0f7a5b;color:white;font-weight:bold;margin-top:5px;">
+            📊 Histórico
+        </button>
 
-            Capacidade: ${r.capacidade} L<br><br>
-
-            <button class="btnHistorico"
-                onclick="location.href='historico.html?setor=${r.setor}'">
-                📊 Ver histórico
-            </button>
+        <p style="margin-top:8px;font-size:13px;color:#444">
+            Capacidade: ${r.capacidade} L
+        </p>
         `;
 
         box.appendChild(card);
     });
 }
 
-function toggleManut(id){
-    const atual = localStorage.getItem(`manut_${id}`)=="1";
-    localStorage.setItem(`manut_${id}`, atual?"0":"1");
-    if(cache) renderReservatorios(cache.reservatorios);
+function abrirHistorico(x){
+    location.href = `/historico.html?setor=${x}`;
 }
 
-
-
-// ===============================================================
-//  PRESSÕES
-// ===============================================================
-function renderPressoes(lista){
-    const box = document.getElementById("pressoesContainer");
-    box.innerHTML="";
-
-    lista.forEach(p=>{
-        box.innerHTML+= `
+/* PRESSÕES */
+function renderPressao(lista){
+    const box=document.getElementById("pressoesContainer");
+    box.innerHTML = lista.map(p=>`
         <div class="card-pressao">
             <h3>${p.nome}</h3>
-            <b>${p.pressao}</b><br>bar
-        </div>`;
-    });
+            <div class="pressao-valor">${p.pressao}</div>
+            <div class="pressao-unidade">bar</div>
+        </div>
+    `).join("");
 }
 
-
-
-// ===============================================================
-//  BOMBAS
-// ===============================================================
+/* BOMBAS */
 function renderBombas(lista){
-    const box = document.getElementById("bombasContainer");
-    box.innerHTML ="";
-
-    lista.forEach(b=>{
-        box.innerHTML+= `
+    const box=document.getElementById("bombasContainer");
+    box.innerHTML = lista.map(b=>`
         <div class="card-bomba">
-              <h3>${b.nome}</h3>
-              Status: <b>${b.estado}</b><br>
-              Ciclos: ${b.ciclo ?? "--"}<br>
-        </div>`;
-    });
+            <h3>${b.nome}</h3>
+            <div class="linha">Status: <b>${b.estado}</b></div>
+            <div class="linha">Ciclos: ${b.ciclo}</div>
+        </div>
+    `).join("");
 }
