@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Monitoramento - Reservatórios HAG</title>
+
 <link rel="stylesheet" href="style.css">
 <script defer src="dashboard.js"></script>
 </head>
@@ -11,30 +14,29 @@
 
 <header>
     <h1>Monitoramento dos Reservatórios — H.A.G</h1>
-    <div id="lastUpdate">--</div>
+    <div id="lastUpdate">Última atualização: --</div>
 </header>
 
 <main>
 
     <!-- ============================
-         LINHA 1 — RESERVATÓRIOS
+         🔷 RESERVATÓRIOS (GRID)
     ============================ -->
     <h2>Reservatórios</h2>
-    <div id="linha-reservatorios">
-        <div id="reservatoriosContainer"></div>
-    </div>
+    <div id="reservatoriosContainer"></div>
+
 
     <!-- ============================
-         LINHA 2 — PRESSÕES + BOMBAS
+         🔷 PRESSÕES + BOMBAS
     ============================ -->
     <h2 style="margin-top:40px">Pressões & Bombas</h2>
 
     <div id="linha-pressao-bombas">
 
-        <!-- Pressões -->
+        <!-- PRESSÕES -->
         <div id="pressoesContainer"></div>
 
-        <!-- Bombas -->
+        <!-- BOMBAS -->
         <div id="bombasContainer"></div>
 
     </div>
@@ -42,7 +44,7 @@
 </main>
 
 <footer>
-    Hospital Arnaldo Gavazza — Sistema de Monitoramento © 2025
+    © 2025 Hospital Arnaldo Gavazza — Sistema de Monitoramento
 </footer>
 
 </body>
