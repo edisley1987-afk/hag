@@ -1,76 +1,24 @@
-/* ============================ BACKGROUND ============================ */
-body{
-  margin:0;padding:0;
-  font-family:"Segoe UI",sans-serif;
-  background:url("image.png") center center fixed no-repeat;
-  background-size:cover;
-  position:relative;
-}
-
-body::before{
-  content:"";
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,40,25,0.55);
-  backdrop-filter:blur(3px);
-  z-index:-1;
-}
-
-/* ============================ PALETA ============================ */
-:root{
-  --verde-principal:#0b5e45;
-  --verde-claro:#2e8b70;
-  --verde-medio:#3fa58b;
-  --verde-suave:#d9f4ec;
-  --branco:#fff;
-  --erro:#d9534f;
-  --alerta:#f0ad4e;
-  --ok:#5cb85c;
-}
-
-/* ============================ HEADER ============================ */
-header{
-  background:rgba(0,90,60,.85);
-  color:#fff;
-  text-align:center;
-  padding:22px;
-  border-bottom:3px solid var(--verde-medio);
-  backdrop-filter:blur(5px);
-}
-
-main{
-  max-width:1500px;
-  margin:auto;
-  padding:20px;
-}
-
-h1,h2{
-  color:white;
-  text-shadow:0 1px 3px black;
-}
-
-/* ============================================================= RESERVATÓRIOS (MANTIDOS SEM ALTERAÇÃO) ============================================================= */
-#reservatoriosContainer{
+/* ============================================================= PRESSÕES + BOMBAS (AGORA COM MESMO ESTILO DOS RESERVATÓRIOS E HORIZONTAL) ============================================================= */
+#pressaoBombaGrid{
   display:grid!important;
+  margin-top:35px;
   width:100%;
-  margin-top:25px;
   gap:28px;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  grid-template-columns:repeat(2, 1fr); /* Dois cards na horizontal */
 }
 
-.card-reservatorio{
+.card-pressao, .card-bomba{
   background:rgba(255,255,255,0.18);
-  padding:15px;border-radius:14px;
-  text-align:center;color:white;
+  padding:15px;
+  border-radius:14px;
+  text-align:center;
+  color:white;
   box-shadow:0 2px 8px #0007;
   backdrop-filter:blur(6px);
   transition:.2s;
 }
 
-.card-reservatorio:hover{
+.card-pressao:hover, .card-bomba:hover{
   transform:scale(1.03);
 }
 
@@ -138,28 +86,6 @@ h1,h2{
 
 .nv-cheio .nivel-agua{
   background:var(--verde-claro)!important;
-}
-
-/* ============================================================= PRESSÕES + BOMBAS (NOVO — EM GRID IGUAL RESERVATÓRIOS) ============================================================= */
-#pressaoBombaGrid{
-  display:grid!important;
-  margin-top:35px;
-  width:100%;
-  gap:28px;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); /* Reduzido o minmax para 200px */
-}
-
-.card-pressao,.card-bomba{
-  background:rgba(255,255,255,0.18);
-  padding:18px;border-radius:14px;
-  color:white;text-align:center;
-  backdrop-filter:blur(6px);
-  box-shadow:0 2px 8px rgba(0,0,0,.4);
-  transition:.2s;
-}
-
-.card-pressao:hover,.card-bomba:hover{
-  transform:scale(1.04);
 }
 
 .valor-pressao{
