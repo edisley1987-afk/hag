@@ -68,15 +68,13 @@ function renderReservatorios(lista){
             </div>
         </div>
 
-        <div class="alerta-msg">⚠ Nível abaixo de 30%</div>
-
         <button onclick="abrirHistorico('${r.setor}')" 
             style="width:100%;padding:9px;border:none;border-radius:8px;
-            background:#0f7a5b;color:white;font-weight:bold;margin-top:5px;">
+            background:#0f7a5b;color:white;font-weight:bold;margin-top:10px;">
             📊 Histórico
         </button>
 
-        <p style="margin-top:8px;font-size:13px;color:#444">
+        <p style="margin-top:8px;font-size:13px;color:#ccc">
             Capacidade: ${r.capacidade} L
         </p>
         `;
@@ -89,16 +87,21 @@ function abrirHistorico(x){
     location.href = `/historico.html?setor=${x}`;
 }
 
-/* PRESSÕES */
+/* ====================== PRESSÕES — NOVOS CARDS ====================== */
 function renderPressao(lista){
-    const box=document.getElementById("pressoesContainer");
-    box.innerHTML = lista.map(p=>`
-        <div class="card-pressao">
-            <h3>${p.nome}</h3>
-            <div class="pressao-valor">${p.pressao}</div>
-            <div class="pressao-unidade">bar</div>
+    const box = document.getElementById("pressoesContainer");
+
+    box.innerHTML = `
+        <div class="secao-horizontal">
+            ${lista.map(p => `
+                <div class="card-pressao">
+                    <h3>${p.nome}</h3>
+                    <div class="valor-pressao">${p.pressao}</div>
+                    <div class="unidade">bar</div>
+                </div>
+            `).join("")}
         </div>
-    `).join("");
+    `;
 }
 
 /* ===================== BOMBAS ===================== */
@@ -122,7 +125,6 @@ function processarBombas(bombas){
         const passou = (agora - ultimaMudanca[nome]) / 1000;
 
         if(estadoAtual !== ultimoEstado[nome]){
-
             if(ultimoEstado[nome] === "LIGADA"){
                 ultimoCiclo[nome].ligado = passou;
             } else {
@@ -148,46 +150,48 @@ function processarBombas(bombas){
     localStorage.setItem("ULTIMO_CICLO", JSON.stringify(ultimoCiclo));
 }
 
+/* ====================== BOMBAS — NOVOS CARDS ====================== */
 function renderBombas(lista){
     const box=document.getElementById("bombasContainer");
 
     const ciclos = lista.map(b => b.ciclo);
     const alertaCiclos = !ciclos.every(v => v === ciclos[0]);
 
-    box.innerHTML = lista.map(b => {
+    box.innerHTML = `
+        <div class="secao-horizontal">
+        ${lista.map(b => {
 
-        const nome = b.nome;
-        const estado = normalizarEstado(b.estado);
+            const nome = b.nome;
+            const estado = normalizarEstado(b.estado);
 
-        let tLig = ultimoCiclo[nome]?.ligado || 0;
-        let tDes = ultimoCiclo[nome]?.desligado || 0;
+            let tLig = ultimoCiclo[nome]?.ligado || 0;
+            let tDes = ultimoCiclo[nome]?.desligado || 0;
 
-        const minL = Math.floor(tLig / 60);
-        const segL = Math.floor(tLig % 60);
+            const minL = Math.floor(tLig / 60);
+            const segL = Math.floor(tLig % 60);
 
-        const minD = Math.floor(tDes / 60);
-        const segD = Math.floor(tDes % 60);
+            const minD = Math.floor(tDes / 60);
+            const segD = Math.floor(tDes % 60);
 
-        return `
-        <div class="card-bomba"
-             style="${ estado === "LIGADA" 
-                ? 'background:#28a745;color:white;border:2px solid #1e7e34;' 
-                : '' }">
+            return `
+            <div class="card-bomba ${estado === "LIGADA" ? "bomba-ligada" : "bomba-desligada"}">
 
-            <h3>${b.nome}</h3>
-            <div class="linha">Status: <b>${b.estado}</b></div>
-            <div class="linha">Ciclos: ${b.ciclo}</div>
+                <h3>${b.nome}</h3>
 
-            <div class="linha">Último ciclo ligada: ${minL}m ${segL}s</div>
-            <div class="linha">Último ciclo desligada: ${minD}m ${segD}s</div>
+                <p>Status: <b>${b.estado}</b></p>
+                <p>Ciclos: ${b.ciclo}</p>
 
-            ${alertaCiclos ? 
-                `<div style="margin-top:8px;padding:6px;background:#ff4444;color:white;
-                border-radius:6px;font-weight:bold;text-align:center;">
-                    ⚠ Diferença de ciclos detectada
-                </div>` 
-            : ""}
+                <p>Último ciclo ligada: ${minL}m ${segL}s</p>
+                <p>Último ciclo desligada: ${minD}m ${segD}s</p>
+
+                ${alertaCiclos ? 
+                    `<div class="alerta-bomba">
+                        ⚠ Diferença de ciclos detectada
+                    </div>` 
+                : ""}
+            </div>
+            `;
+        }).join("")}
         </div>
-        `;
-    }).join("");
+    `;
 }
