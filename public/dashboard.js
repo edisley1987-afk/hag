@@ -82,7 +82,6 @@ function renderPressao(lista) {
     if (idElement) {
       const element = document.getElementById(idElement);
       if (element) {
-        // Supondo que o valor vem em p.valor_raw para pressão
         const valor = p.valor_raw;
         element.innerHTML = valor !== undefined ? parseFloat(valor).toFixed(2) : "--";
       } else {
@@ -142,7 +141,35 @@ function processarBombas(bombas) {
 
 /* ====================== BOMBAS — Renderizar cards ====================== */
 function renderBombas(lista) {
-  const box = document.getElementById("pressaoBombaGrid"); // Mesmo grid de pressão e bomba
+  const box = document.getElementById("pressaoBombaGrid");
 
   const ciclos = lista.map(b => b.ciclo);
   const alertaCiclos = !ciclos.every(v => v === ciclos[0]);
+
+  box.innerHTML = `
+    <div class="secao-horizontal">
+      ${lista.map(b => {
+        const nome = b.nome;
+        const estado = normalizarEstado(b.estado);
+        let tLig = ultimoCiclo[nome]?.ligado || 0;
+        let tDes = ultimoCiclo[nome]?.desligado || 0;
+
+        const minL = Math.floor(tLig / 60);
+        const segL = Math.floor(tLig % 60);
+        const minD = Math.floor(tDes / 60);
+        const segD = Math.floor(tDes % 60);
+
+        return `
+          <div class="card-bomba ${estado === "LIGADA" ? "bomba-ligada" : "bomba-desligada"}">
+            <h3>${b.nome}</h3>
+            <p>Status: <b>${b.estado}</b></p>
+            <p>Ciclos: ${b.ciclo}</p>
+            <p>Último ciclo ligada: ${minL}m ${segL}s</p>
+            <p>Último ciclo desligada: ${minD}m ${segD}s</p>
+            ${alertaCiclos ? `<div class="alerta-bomba"> ⚠ Diferença de ciclos detectada </div>` : ""}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
