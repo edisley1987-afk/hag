@@ -139,28 +139,27 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — CARDS MENORES, 100% RESPONSIVOS
+   LINHA PRINCIPAL – CENTRALIZADA
 ========================================================= */
-
 #linha-pressao-bombas {
     display: flex;
     justify-content: center;
-    gap: 22px;
-    flex-wrap: wrap;
+    gap: 60px;
     margin-top: 35px;
 }
 
-/* Cada bloco (pressões / bombas) */
-#pressoesContainer,
-#bombasContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-width: 260px;   /* <<< LARGURA MENOR QUE RESERVATÓRIOS */
+/* ============================ PRESSÕES – 3 CARDS EM LINHA ============================ */
+#pressoesContainer {
     width: 100%;
+    max-width: 650px;
 }
 
-/* ============================ PRESSÕES (CARDS MENORES) ============================ */
+#pressoesContainer .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
 .card-pressao {
     background: rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(6px);
@@ -172,28 +171,35 @@ h1, h2 {
     border-left: 4px solid var(--verde-principal);
     transition: 0.2s;
 }
-.card-pressao:hover {
-    transform: scale(1.03);
-}
+.card-pressao:hover { transform: scale(1.03); }
 
 .card-pressao h3 {
     margin: 0 0 6px;
     font-size: 15px;
 }
-
 .valor-pressao {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 2px;
     color: var(--verde-suave);
 }
-
 .unidade {
     font-size: 11px;
     opacity: 0.8;
 }
 
-/* ============================ BOMBAS (CARDS MENORES) ============================ */
+/* ============================ BOMBAS – 2 CARDS EM LINHA ============================ */
+#bombasContainer {
+    width: 100%;
+    max-width: 550px;
+}
+
+#bombasContainer .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
 .card-bomba {
     padding: 15px;
     border-radius: 12px;
@@ -203,21 +209,11 @@ h1, h2 {
     box-shadow: 0 4px 12px rgba(0,0,0,0.18);
     transition: 0.2s;
 }
-.card-bomba:hover {
-    transform: scale(1.03);
-}
+.card-bomba:hover { transform: scale(1.03); }
 
-.card-bomba h3 {
-    margin-top: 0;
-    font-size: 16px;
-}
+.card-bomba h3 { margin-top: 0; font-size: 16px; }
+.card-bomba p { margin: 3px 0; font-size: 13px; }
 
-.card-bomba p {
-    margin: 3px 0;
-    font-size: 13px;
-}
-
-/* Bombas — estados */
 .bomba-ligada {
     background: rgba(0, 140, 40, 0.80) !important;
     border-left: 5px solid #00ff73;
@@ -243,6 +239,14 @@ h1, h2 {
     #linha-pressao-bombas {
         flex-direction: column;
         align-items: center;
+    }
+
+    #pressoesContainer .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #bombasContainer .cards-grid {
+        grid-template-columns: 1fr;
     }
 }
 
