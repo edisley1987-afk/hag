@@ -42,26 +42,17 @@ header {
     border-bottom: 3px solid var(--verde-medio);
     backdrop-filter: blur(4px);
 }
-#headerImage {
-    width: 180px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-}
 
-/* ============================ CONTEÚDO ============================ */
 main {
     max-width: 1600px;
     margin: auto;
     padding: 20px;
     color: white;
 }
-h1, h2 {
-    color: white;
-}
 
-/* ============================  
-      RESERVATÓRIOS – GRID RESPONSIVO  
-============================= */
+h1, h2 { color: #fff; text-shadow: 0 1px 3px #000; }
+
+/* ============================ GRID DOS RESERVATÓRIOS ============================ */
 #reservatoriosContainer {
     display: grid !important;
     width: 100%;
@@ -71,12 +62,10 @@ h1, h2 {
 }
 
 @media (min-width: 1650px) {
-    #reservatoriosContainer {
-        grid-template-columns: repeat(5, 1fr);
-    }
+    #reservatoriosContainer { grid-template-columns: repeat(5, 1fr); }
 }
 
-/* ============================ CARD DO RESERVATÓRIO ============================ */
+/* ============================ CARD RESERVATÓRIO ============================ */
 .card-reservatorio {
     background: rgba(255, 255, 255, 0.18);
     padding: 15px;
@@ -85,11 +74,9 @@ h1, h2 {
     backdrop-filter: blur(6px);
     color: white;
     text-align: center;
-    transition: 0.2s ease;
+    transition: .2s;
 }
-.card-reservatorio:hover {
-    transform: scale(1.03);
-}
+.card-reservatorio:hover { transform: scale(1.03); }
 
 .tanque-visu {
     width: 100%;
@@ -117,15 +104,10 @@ h1, h2 {
     text-align: center;
     text-shadow: 0 1px 3px black;
 }
-.percent-text {
-    font-size: 22px;
-    font-weight: bold;
-}
-.liters-text {
-    font-size: 16px;
-    margin-top: 4px;
-}
+.percent-text { font-size: 22px; font-weight: bold; }
+.liters-text { font-size: 16px; }
 
+/* STATUS DOS RESERVATÓRIOS */
 .nv-critico { border-color: var(--erro) !important; }
 .nv-critico .nivel-agua { background: var(--erro) !important; }
 
@@ -139,32 +121,33 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — AGORA CADA GRUPO LADO A LADO
+   🔥 PRESSÕES + BOMBAS — AGORA 100% HORIZONTAL
 ========================================================= */
-
 #linha-pressao-bombas {
     display: flex;
-    flex-direction: column; /* Pressões acima, Bombas abaixo */
-    align-items: center;
-    gap: 28px;
-    margin-top: 35px;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 45px;
+    flex-wrap: wrap; /* se faltar espaço, quebra */
 }
 
-/* 🔥 Pressões lado a lado */
+/* COLUNA ESQUERDA – PRESSÕES */
 #pressoesContainer {
     display: flex;
+    flex-direction: column;
     gap: 14px;
-    flex-direction: row;
+    width: 310px;
 }
 
-/* 🔥 Bombas lado a lado */
+/* COLUNA DIREITA – BOMBAS */
 #bombasContainer {
     display: flex;
+    flex-direction: column;
     gap: 14px;
-    flex-direction: row;
+    width: 310px;
 }
 
-/* ============================ PRESSÕES (CARDS MENORES) ============================ */
+/* ============================ PRESSÕES ============================ */
 .card-pressao {
     background: rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(6px);
@@ -174,30 +157,14 @@ h1, h2 {
     color: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-left: 4px solid var(--verde-principal);
-    transition: 0.2s;
+    transition: .2s;
 }
-.card-pressao:hover {
-    transform: scale(1.03);
-}
+.card-pressao:hover { transform: scale(1.03); }
 
-.card-pressao h3 {
-    margin: 0 0 6px;
-    font-size: 15px;
-}
+.valor-pressao { font-size: 24px; font-weight: bold; color: var(--verde-suave); }
+.unidade { font-size: 11px; opacity: .8; }
 
-.valor-pressao {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 2px;
-    color: var(--verde-suave);
-}
-
-.unidade {
-    font-size: 11px;
-    opacity: 0.8;
-}
-
-/* ============================ BOMBAS (CARDS MENORES) ============================ */
+/* ============================ BOMBAS ============================ */
 .card-bomba {
     padding: 15px;
     border-radius: 12px;
@@ -205,48 +172,33 @@ h1, h2 {
     backdrop-filter: blur(6px);
     color: #fff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-    transition: 0.2s;
+    transition: .2s;
 }
-.card-bomba:hover {
-    transform: scale(1.03);
-}
+.card-bomba:hover { transform: scale(1.03); }
 
-.card-bomba h3 {
-    margin-top: 0;
-    font-size: 16px;
-}
-
-.card-bomba p {
-    margin: 3px 0;
-    font-size: 13px;
-}
-
-.bomba-ligada {
-    background: rgba(0, 140, 40, 0.80) !important;
-    border-left: 5px solid #00ff73;
-}
-.bomba-desligada {
-    background: rgba(140, 0, 0, 0.70) !important;
-    border-left: 5px solid #ff4f4f;
-}
+.bomba-ligada { background: rgba(0, 140, 40, 0.85) !important; border-left: 5px solid #00ff73; }
+.bomba-desligada { background: rgba(140, 0, 0, 0.80) !important; border-left: 5px solid #ff4f4f; }
 
 .alerta-bomba {
-    width: 100%;
-    margin-top: 10px;
-    padding: 7px;
+    margin-top: 8px;
+    padding: 6px;
     border-radius: 8px;
     background: #d64545;
     text-align: center;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: bold;
 }
 
 /* ============================ RESPONSIVIDADE ============================ */
 @media (max-width: 900px) {
-    #pressoesContainer,
-    #bombasContainer {
-        flex-direction: column; /* No celular volta para vertical */
+    #linha-pressao-bombas {
+        flex-direction: column;
         align-items: center;
+    }
+
+    #pressoesContainer, #bombasContainer {
+        width: 100%;
+        max-width: 330px;
     }
 }
 
@@ -257,5 +209,5 @@ footer {
     text-align: center;
     color: white;
     border-top: 2px solid var(--verde-medio);
-    margin-top: 40px;
+    margin-top: 50px;
 }
