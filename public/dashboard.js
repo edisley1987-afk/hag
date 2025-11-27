@@ -85,7 +85,6 @@ function abrirHistorico(setor) {
 
 
 // ============================= 🟡 PRESSÕES =================================
-// *Agora compatível com seu JSON real!*
 function renderPressao(lista) {
     const pressaoMap = {
         "Pressão Saída Osmose": "pSaidaOsmose",
@@ -108,7 +107,26 @@ function normalizarEstado(e) {
     return e?.toString().trim().toUpperCase();
 }
 
-function processarBombas(lista) {
+/*
+    🔧 Correção aplicada aqui:
+    Os nomes do gateway estavam invertidos:
+    - Bomba_01 no gateway = Bomba 02 no site
+    - Bomba_02 no gateway = Bomba 01 no site
+*/
+function corrigirOrdemBombas(lista) {
+    if (lista.length === 2) {
+        return [
+            lista[1], // Bomba 02 REAL → mostrar como Bomba 01
+            lista[0]  // Bomba 01 REAL → mostrar como Bomba 02
+        ];
+    }
+    return lista;
+}
+
+function processarBombas(listaOriginal) {
+
+    const lista = corrigirOrdemBombas(listaOriginal);
+
     lista.forEach(b => {
         const nome = b.nome;
         const estado = normalizarEstado(b.estado);
@@ -143,7 +161,9 @@ function processarBombas(lista) {
     localStorage.setItem("ULTIMO_CICLO", JSON.stringify(ultimoCiclo));
 }
 
-function renderBombas(lista) {
+function renderBombas(listaOriginal) {
+    const lista = corrigirOrdemBombas(listaOriginal);
+
     lista.forEach((b, i) => {
         const id = `bomba${i + 1}`;
         const el = document.getElementById(id);
