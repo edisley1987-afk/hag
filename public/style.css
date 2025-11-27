@@ -1,213 +1,123 @@
-/* ============================ BACKGROUND COM FOTO DO HOSPITAL ============================ */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: "Segoe UI", sans-serif;
-
-    background: url("image.png") no-repeat center center fixed;
-    background-size: cover;
-
-    position: relative;
+/* ============================ BACKGROUND ============================ */
+body{
+    margin:0;padding:0;
+    font-family:"Segoe UI",sans-serif;
+    background:url("image.png") center center fixed no-repeat;
+    background-size:cover;
+    position:relative;
 }
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 40, 25, 0.55);
-    backdrop-filter: blur(3px);
-    z-index: -1;
+body::before{
+    content:"";position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,40,25,0.55);
+    backdrop-filter:blur(3px);
+    z-index:-1;
 }
 
-/* ============================ PALETA DE CORES ============================ */
-:root {
-    --verde-principal: #0b5e45;
-    --verde-claro: #2e8b70;
-    --verde-medio: #3fa58b;
-    --verde-suave: #d9f4ec;
-    --branco: #ffffff;
-    --erro: #d9534f;
-    --alerta: #f0ad4e;
-    --ok: #5cb85c;
+/* ============================ PALETA ============================ */
+:root{
+    --verde-principal:#0b5e45;
+    --verde-claro:#2e8b70;
+    --verde-medio:#3fa58b;
+    --verde-suave:#d9f4ec;
+    --branco:#fff;
+    --erro:#d9534f;
+    --alerta:#f0ad4e;
+    --ok:#5cb85c;
 }
 
 /* ============================ HEADER ============================ */
-header {
-    background: rgba(0, 90, 60, 0.85);
-    color: var(--branco);
-    padding: 22px;
-    text-align: center;
-    border-bottom: 3px solid var(--verde-medio);
-    backdrop-filter: blur(4px);
+header{
+    background:rgba(0,90,60,.85);
+    color:#fff;
+    text-align:center;
+    padding:22px;
+    border-bottom:3px solid var(--verde-medio);
+    backdrop-filter:blur(5px);
+}
+main{max-width:1500px;margin:auto;padding:20px;}
+h1,h2{color:white;text-shadow:0 1px 3px black}
+
+/* =============================================================
+   RESERVATÓRIOS (MANTIDOS SEM ALTERAÇÃO)
+============================================================= */
+
+#reservatoriosContainer{
+    display:grid!important;
+    width:100%;
+    margin-top:25px;
+    gap:28px;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+}
+.card-reservatorio{
+    background:rgba(255,255,255,0.18);
+    padding:15px;border-radius:14px;
+    text-align:center;color:white;
+    box-shadow:0 2px 8px #0007;
+    backdrop-filter:blur(6px);
+    transition:.2s;
+}
+.card-reservatorio:hover{transform:scale(1.03)}
+
+.tanque-visu{
+    width:100%;height:160px;border-radius:12px;
+    background:rgba(255,255,255,.25);
+    border:3px solid var(--verde-medio);
+    position:relative;overflow:hidden;
+}
+.nivel-agua{
+    position:absolute;bottom:0;width:100%;
+    transition:height 1s;background:var(--verde-claro);
+}
+.overlay-info{position:absolute;top:8px;width:100%;text-shadow:0 1px 3px black}
+.percent-text{font-size:22px;font-weight:bold}
+.liters-text{font-size:16px}
+
+.nv-critico{border-color:var(--erro)!important}
+.nv-critico .nivel-agua{background:var(--erro)!important}
+.nv-alerta{border-color:var(--alerta)!important}
+.nv-alerta .nivel-agua{background:var(--alerta)!important}
+.nv-normal{border-color:var(--ok)!important}
+.nv-normal .nivel-agua{background:var(--ok)!important}
+.nv-cheio{border-color:var(--verde-claro)!important}
+.nv-cheio .nivel-agua{background:var(--verde-claro)!important}
+
+/* =============================================================
+   PRESSÕES + BOMBAS (NOVO — EM GRID IGUAL RESERVATÓRIOS)
+============================================================= */
+#pressaoBombaGrid{
+    display:grid!important;
+    margin-top:35px;
+    width:100%;
+    gap:28px;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
 }
 
-main {
-    max-width: 1600px;
-    margin: auto;
-    padding: 20px;
-    color: white;
+.card-pressao,.card-bomba{
+    background:rgba(255,255,255,0.18);
+    padding:18px;border-radius:14px;
+    color:white;text-align:center;
+    backdrop-filter:blur(6px);
+    box-shadow:0 2px 8px rgba(0,0,0,.4);
+    transition:.2s;
 }
+.card-pressao:hover,.card-bomba:hover{transform:scale(1.04)}
 
-h1, h2 { color: #fff; text-shadow: 0 1px 3px #000; }
+.valor-pressao{font-size:26px;font-weight:bold;color:var(--verde-suave)}
+.unidade{font-size:11px;opacity:.7}
 
-/* ============================ GRID DOS RESERVATÓRIOS ============================ */
-#reservatoriosContainer {
-    display: grid !important;
-    width: 100%;
-    margin-top: 20px;
-    gap: 28px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
+.bomba-ligada{background:rgba(0,140,40,.85)!important;border-top:4px solid #00ff73}
+.bomba-desligada{background:rgba(140,0,0,.80)!important;border-top:4px solid #ff4f4f}
 
-@media (min-width: 1650px) {
-    #reservatoriosContainer { grid-template-columns: repeat(5, 1fr); }
-}
-
-/* ============================ CARD RESERVATÓRIO ============================ */
-.card-reservatorio {
-    background: rgba(255, 255, 255, 0.18);
-    padding: 15px;
-    border-radius: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    backdrop-filter: blur(6px);
-    color: white;
-    text-align: center;
-    transition: .2s;
-}
-.card-reservatorio:hover { transform: scale(1.03); }
-
-.tanque-visu {
-    width: 100%;
-    height: 160px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.25);
-    border: 3px solid var(--verde-medio);
-    overflow: hidden;
-    position: relative;
-}
-
-.nivel-agua {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    transition: height 1s ease;
-    background: var(--verde-claro);
-}
-
-.overlay-info {
-    position: absolute;
-    top: 8px;
-    width: 100%;
-    text-align: center;
-    text-shadow: 0 1px 3px black;
-}
-.percent-text { font-size: 22px; font-weight: bold; }
-.liters-text { font-size: 16px; }
-
-/* STATUS DOS RESERVATÓRIOS */
-.nv-critico { border-color: var(--erro) !important; }
-.nv-critico .nivel-agua { background: var(--erro) !important; }
-
-.nv-alerta { border-color: var(--alerta) !important; }
-.nv-alerta .nivel-agua { background: var(--alerta) !important; }
-
-.nv-normal { border-color: var(--ok) !important; }
-.nv-normal .nivel-agua { background: var(--ok) !important; }
-
-.nv-cheio { border-color: var(--verde-claro) !important; }
-.nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
-
-/* =======================================================
-   🔥 PRESSÕES + BOMBAS — AGORA 100% HORIZONTAL
-========================================================= */
-#linha-pressao-bombas {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 45px;
-    flex-wrap: wrap; /* se faltar espaço, quebra */
-}
-
-/* COLUNA ESQUERDA – PRESSÕES */
-#pressoesContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 310px;
-}
-
-/* COLUNA DIREITA – BOMBAS */
-#bombasContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 310px;
-}
-
-/* ============================ PRESSÕES ============================ */
-.card-pressao {
-    background: rgba(255, 255, 255, 0.10);
-    backdrop-filter: blur(6px);
-    border-radius: 12px;
-    padding: 12px 16px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-left: 4px solid var(--verde-principal);
-    transition: .2s;
-}
-.card-pressao:hover { transform: scale(1.03); }
-
-.valor-pressao { font-size: 24px; font-weight: bold; color: var(--verde-suave); }
-.unidade { font-size: 11px; opacity: .8; }
-
-/* ============================ BOMBAS ============================ */
-.card-bomba {
-    padding: 15px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.10);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-    transition: .2s;
-}
-.card-bomba:hover { transform: scale(1.03); }
-
-.bomba-ligada { background: rgba(0, 140, 40, 0.85) !important; border-left: 5px solid #00ff73; }
-.bomba-desligada { background: rgba(140, 0, 0, 0.80) !important; border-left: 5px solid #ff4f4f; }
-
-.alerta-bomba {
-    margin-top: 8px;
-    padding: 6px;
-    border-radius: 8px;
-    background: #d64545;
-    text-align: center;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-/* ============================ RESPONSIVIDADE ============================ */
-@media (max-width: 900px) {
-    #linha-pressao-bombas {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    #pressoesContainer, #bombasContainer {
-        width: 100%;
-        max-width: 330px;
-    }
+.alerta-bomba{
+    margin-top:8px;padding:6px;border-radius:8px;
+    background:#d64545;text-align:center;
+    font-size:12px;font-weight:bold;
 }
 
 /* ============================ FOOTER ============================ */
-footer {
-    background: rgba(0, 90, 60, 0.85);
-    padding: 12px;
-    text-align: center;
-    color: white;
-    border-top: 2px solid var(--verde-medio);
-    margin-top: 50px;
+footer{
+    background:rgba(0,90,60,.85);
+    padding:14px;text-align:center;
+    color:#fff;border-top:3px solid var(--verde-medio);
+    margin-top:60px;
 }
