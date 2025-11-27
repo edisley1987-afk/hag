@@ -1,179 +1,135 @@
-// ================================ CONFIG ================================
-const API = "/api/dashboard";
+// === dashboard.js ===
+// Exibe leituras em tempo real com nível visual (caixa d'água)
 
-let cache = JSON.parse(localStorage.getItem("DATA_CACHE")) || {};
-let tempoLigada = JSON.parse(localStorage.getItem("TEMPO_BOMBAS")) || {};
-let tempoDesligada = JSON.parse(localStorage.getItem("TEMPO_DESLIGADAS")) || {};
-let ultimaMudanca = JSON.parse(localStorage.getItem("ULTIMA_MUDANCA")) || {};
-let ultimoEstado = JSON.parse(localStorage.getItem("ULTIMO_ESTADO")) || {};
-let ultimoCiclo = JSON.parse(localStorage.getItem("ULTIMO_CICLO")) || {};
+const API_URL = window.location.origin + "/dados";
+const UPDATE_INTERVAL = 5000;
+let ultimaLeitura = 0;
 
-async function atualizar() {
+// Configuração dos reservatórios (em litros)
+const RESERVATORIOS = {
+    Reservatorio_Elevador_current: {
+        nome: "Reservatório Elevador",
+        capacidade: 20000,
+        idNivel: "nivelElevador",
+        idValor: "valorElevador"
+    },
+    Reservatorio_Abrandada_current: {
+        nome: "Reservatório Abrandada",
+        capacidade: 5000,
+        idNivel: "nivelAbrandada",
+        idValor: "valorAbrandada"
+    },
+    Reservatorio_CME_current: {
+        nome: "Reservatório CME",
+        capacidade: 5000,
+        idNivel: "nivelCME",
+        idValor: "valorCME"
+    },
+    Reservatorio_Osmose_current: {
+        nome: "Reservatório Osmose",
+        capacidade: 200,
+        idNivel: "nivelOsmose",
+        idValor: "valorOsmose"
+    }
+};
+
+// Bombas (as duas estão no mesmo NIT e agora estão no plural)
+const BOMBAS = {
+    bombaAbrandada: {
+        ids: ["Bomba_Abrandada_1", "Bomba_Abrandada_2"],
+        idStatus: "statusBombaAbrandada"
+    },
+    bombaElevador: {
+        ids: ["Bomba_Elevador_1", "Bomba_Elevador_2"],
+        idStatus: "statusBombaElevador"
+    },
+    bombaCME: {
+        ids: ["Bomba_CME_1", "Bomba_CME_2"],
+        idStatus: "statusBombaCME"
+    },
+    bombaOsmose: {
+        ids: ["Bomba_Osmose_1", "Bomba_Osmose_2"],
+        idStatus: "statusBombaOsmose"
+    }
+};
+
+// Pressões
+const PRESSOES = {
+    Pressao_Saida_CME_current: "valorPressaoCME",
+    Pressao_Retorno_Osmose_current: "valorPressaoRetornoOsmose",
+    Pressao_Saida_Osmose_current: "valorPressaoSaidaOsmose"
+};
+
+// Função principal: atualiza tudo
+async function atualizarDados() {
     try {
-        const r = await fetch(API, { cache: "no-store" });
-        if (!r.ok) throw 0;
-        const dados = await r.json();
-        cache = dados;
+        const resposta = await fetch(API_URL);
+        const dados = await resposta.json();
 
-        localStorage.setItem("DATA_CACHE", JSON.stringify(dados));
+        if (!dados || typeof dados !== "object") return;
 
-        processarBombas(dados.bombas);
-        render(dados);
-
-        document.getElementById("lastUpdate").textContent =
-            "Atualizado " + new Date().toLocaleTimeString();
-
-    } catch {
-        console.warn("⚠ Sem atualização — usando cache local.");
-        processarBombas(cache.bombas || []);
-        render(cache);
-
-        document.getElementById("lastUpdate").textContent =
-            "SEM SINAL — exibindo última leitura";
-    }
-}
-
-setInterval(atualizar, 5000);
-atualizar();
-
-
-// ================================ RENDER =================================
-function render(d) {
-    if (!d) return;
-    renderReservatorios(d.reservatorios);
-    renderPressao(d.pressoes);
-    renderBombas(d.bombas);
-}
-
-
-// ========================== RESERVATÓRIOS ===============================
-function renderReservatorios(lista) {
-    const box = document.getElementById("reservatoriosContainer");
-    box.innerHTML = "";
-
-    lista.forEach(r => {
-        const card = document.createElement("div");
-        card.className = "card-reservatorio";
-
-        if (r.percent <= 30) card.classList.add("nv-critico");
-        else if (r.percent <= 60) card.classList.add("nv-alerta");
-        else if (r.percent <= 90) card.classList.add("nv-normal");
-        else card.classList.add("nv-cheio");
-
-        card.innerHTML = `
-            <h3>${r.nome}</h3>
-
-            <div class="tanque-visu">
-                <div class="nivel-agua" style="height:${r.percent}%"></div>
-                <div class="overlay-info">
-                    <div class="percent-text">${r.percent}%</div>
-                    <div class="liters-text">${r.current_liters} L</div>
-                </div>
-            </div>
-
-            <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
-            <p>Capacidade: ${r.capacidade} L</p>
-        `;
-
-        box.appendChild(card);
-    });
-}
-
-function abrirHistorico(setor) {
-    location.href = `/historico.html?setor=${setor}`;
-}
-
-
-// ============================= 🟡 PRESSÕES =================================
-function renderPressao(lista) {
-    const pressaoMap = {
-        "Pressão Saída Osmose": "pSaidaOsmose",
-        "Pressão Retorno Osmose": "pRetornoOsmose",
-        "Pressão Saída CME": "pSaidaCME"
-    };
-
-    lista.forEach(p => {
-        const id = pressaoMap[p.nome];
-        if (!id) return console.warn("Pressão não mapeada →", p.nome);
-
-        const el = document.getElementById(id);
-        if (el) el.textContent = p.pressao.toFixed(2);
-    });
-}
-
-
-// ============================== 🔥 BOMBAS ==================================
-function normalizarEstado(e) {
-    return e?.toString().trim().toUpperCase();
-}
-
-/*
-    🔧 Correção aplicada aqui:
-    Os nomes do gateway estavam invertidos:
-    - Bomba_01 no gateway = Bomba 02 no site
-    - Bomba_02 no gateway = Bomba 01 no site
-*/
-function corrigirOrdemBombas(lista) {
-    if (lista.length === 2) {
-        return [
-            lista[1], // Bomba 02 REAL → mostrar como Bomba 01
-            lista[0]  // Bomba 01 REAL → mostrar como Bomba 02
-        ];
-    }
-    return lista;
-}
-
-function processarBombas(listaOriginal) {
-
-    const lista = corrigirOrdemBombas(listaOriginal);
-
-    lista.forEach(b => {
-        const nome = b.nome;
-        const estado = normalizarEstado(b.estado);
-        const agora = Date.now();
-
-        if (!(nome in tempoLigada)) tempoLigada[nome] = 0;
-        if (!(nome in tempoDesligada)) tempoDesligada[nome] = 0;
-        if (!(nome in ultimaMudanca)) ultimaMudanca[nome] = agora;
-        if (!(nome in ultimoEstado)) ultimoEstado[nome] = estado;
-        if (!(nome in ultimoCiclo)) ultimoCiclo[nome] = { ligado: 0, desligado: 0 };
-
-        const passou = (agora - ultimaMudanca[nome]) / 1000;
-
-        if (estado !== ultimoEstado[nome]) {
-            if (ultimoEstado[nome] === "LIGADA") ultimoCiclo[nome].ligado = passou;
-            else ultimoCiclo[nome].desligado = passou;
-
-            ultimoEstado[nome] = estado;
-            ultimaMudanca[nome] = agora;
+        // Atualiza reservatórios
+        for (const key in RESERVATORIOS) {
+            if (dados[key] !== undefined) {
+                atualizarReservatorio(key, dados[key]);
+            }
         }
 
-        if (estado === "LIGADA") tempoLigada[nome] += passou;
-        else tempoDesligada[nome] += passou;
+        // Atualiza pressões
+        for (const key in PRESSOES) {
+            if (dados[key] !== undefined) {
+                document.getElementById(PRESSOES[key]).innerText = dados[key] + " bar";
+            }
+        }
 
-        ultimaMudanca[nome] = agora;
-    });
+        // Atualiza bombas (duas por setor)
+        for (const key in BOMBAS) {
+            atualizarBombas(BOMBAS[key], dados);
+        }
 
-    localStorage.setItem("TEMPO_BOMBAS", JSON.stringify(tempoLigada));
-    localStorage.setItem("TEMPO_DESLIGADAS", JSON.stringify(tempoDesligada));
-    localStorage.setItem("ULTIMA_MUDANCA", JSON.stringify(ultimaMudanca));
-    localStorage.setItem("ULTIMO_ESTADO", JSON.stringify(ultimoEstado));
-    localStorage.setItem("ULTIMO_CICLO", JSON.stringify(ultimoCiclo));
+        // Horário da última atualização
+        const agora = new Date();
+        document.getElementById("lastUpdate").innerText =
+            agora.toLocaleTimeString("pt-BR") + " — atualizado";
+
+    } catch (erro) {
+        console.error("Erro ao atualizar dados:", erro);
+        document.getElementById("lastUpdate").innerText = "Erro ao atualizar...";
+    }
 }
 
-function renderBombas(listaOriginal) {
-    const lista = corrigirOrdemBombas(listaOriginal);
+// Atualiza visual de um reservatório
+function atualizarReservatorio(key, valor) {
+    const res = RESERVATORIOS[key];
+    if (!res) return;
 
-    lista.forEach((b, i) => {
-        const id = `bomba${i + 1}`;
-        const el = document.getElementById(id);
-        if (!el) return;
+    const percentual = Math.min(100, Math.max(0, (valor / res.capacidade) * 100));
 
-        const estado = normalizarEstado(b.estado);
-        el.classList.toggle("bomba-ligada", estado === "LIGADA");
-        el.classList.toggle("bomba-desligada", estado !== "LIGADA");
-
-        document.getElementById(`b${i+1}Status`).textContent = estado;
-        document.getElementById(`b${i+1}Ciclos`).textContent = b.ciclo;
-    });
+    document.getElementById(res.idValor).innerText = `${valor} L (${percentual.toFixed(1)}%)`;
+    document.getElementById(res.idNivel).style.height = percentual + "%";
 }
+
+// Atualiza duas bombas (ligada/desligada)
+function atualizarBombas(config, dados) {
+    let ligada = false;
+
+    config.ids.forEach(id => {
+        if (dados[id] !== undefined && dados[id] == 1) ligada = true;
+    });
+
+    const elemento = document.getElementById(config.idStatus);
+
+    if (ligada) {
+        elemento.innerText = "Ligada";
+        elemento.classList.add("ligada");
+        elemento.classList.remove("desligada");
+    } else {
+        elemento.innerText = "Desligada";
+        elemento.classList.add("desligada");
+        elemento.classList.remove("ligada");
+    }
+}
+
+// Atualização periódica
+setInterval(atualizarDados, UPDATE_INTERVAL);
+atualizarDados();
