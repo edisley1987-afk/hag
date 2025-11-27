@@ -140,110 +140,109 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — 2 COLUNAS NA HORIZONTAL
+   PRESSÕES + BOMBAS — HORIZONTAL + CARDS MENORES
 ========================================================= */
 
 #linha-pressao-bombas {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: 30px;
     margin-top: 30px;
-    align-items: start;
 }
 
-/* Responsivo */
-@media (max-width: 1100px) {
-    #linha-pressao-bombas {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Garantir que colunas ocupem a largura total */
+/* Cada coluna */
 #pressoesContainer,
 #bombasContainer {
-    width: 100%;
+    flex: 1;
 }
 
-/* ============================ PRESSÕES ============================ */
+/* ============================ PRESSÕES (CARDS MENORES) ============================ */
 .card-pressao {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(8px);
-    border-radius: 14px;
-    padding: 18px 25px;
+    background: rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    padding: 14px 18px;        /* menor */
     width: 100%;
     text-align: center;
     color: white;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    border-left: 5px solid var(--verde-principal);
-    transition: 0.2s ease-in-out;
-    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid var(--verde-principal);
+    margin-bottom: 14px;       /* menor */
+    transition: 0.2s;
 }
 .card-pressao:hover {
-    transform: scale(1.03);
+    transform: scale(1.02);
 }
+
 .card-pressao h3 {
-    margin: 0 0 10px;
-    font-size: 19px;
+    margin: 0 0 6px;
+    font-size: 16px;          /* menor */
 }
+
 .valor-pressao {
-    font-size: 32px;
+    font-size: 26px;          /* menor */
     font-weight: bold;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
     color: var(--verde-suave);
 }
+
 .unidade {
-    font-size: 14px;
+    font-size: 12px;
     opacity: 0.8;
 }
 
-/* ============================ BOMBAS ============================ */
+/* ============================ BOMBAS (CARDS MENORES) ============================ */
 .card-bomba {
     width: 100%;
-    padding: 25px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(7px);
+    padding: 18px;               /* menor */
+    border-radius: 12px;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(6px);
     color: #fff;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
-    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    margin-bottom: 14px;         /* menor */
+    transition: 0.2s;
 }
-.card-bomba h3 {
-    margin-top: 0;
-    font-size: 20px;
+.card-bomba:hover {
+    transform: scale(1.02);
 }
 
-.bomba-ligada {
-    background: rgba(0, 140, 40, 0.85) !important;
-    border-left: 6px solid #00ff73;
-}
-.bomba-desligada {
-    background: rgba(140, 0, 0, 0.75) !important;
-    border-left: 6px solid #ff4f4f;
+.card-bomba h3 {
+    margin-top: 0;
+    font-size: 17px;             /* menor */
 }
 
 .card-bomba p {
-    margin: 4px 0;
-    font-size: 15px;
+    margin: 3px 0;
+    font-size: 14px;             /* menor */
 }
+
+/* Bombas — estados */
+.bomba-ligada {
+    background: rgba(0, 140, 40, 0.80) !important;
+    border-left: 5px solid #00ff73;
+}
+.bomba-desligada {
+    background: rgba(140, 0, 0, 0.70) !important;
+    border-left: 5px solid #ff4f4f;
+}
+
 .alerta-bomba {
     width: 100%;
-    margin-top: 14px;
-    padding: 10px;
+    margin-top: 10px;
+    padding: 8px;                /* menor */
     border-radius: 8px;
     background: #d64545;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;             /* menor */
     font-weight: 600;
 }
 
 /* ============================ RESPONSIVIDADE ============================ */
-@media (max-width: 700px) {
-    .secao-horizontal {
+@media (max-width: 900px) {
+    #linha-pressao-bombas {
         flex-direction: column;
-        align-items: center;
-    }
-    .coluna {
-        width: 95%;
     }
 }
 
