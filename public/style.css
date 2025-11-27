@@ -139,27 +139,27 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   LINHA PRINCIPAL – CENTRALIZADA
+   PRESSÕES + BOMBAS — AGORA EM UMA ÚNICA LINHA
 ========================================================= */
+
 #linha-pressao-bombas {
     display: flex;
     justify-content: center;
-    gap: 60px;
+    align-items: flex-start;
+    gap: 22px;
+    flex-wrap: nowrap;         /* 🔥 TODOS EM UMA LINHA */
     margin-top: 35px;
 }
 
-/* ============================ PRESSÕES – 3 CARDS EM LINHA ============================ */
-#pressoesContainer {
-    width: 100%;
-    max-width: 650px;
-}
-
-#pressoesContainer .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+#pressoesContainer,
+#bombasContainer {
+    display: flex;
     gap: 14px;
+    flex-direction: row;        /* 🔥 SEM COLUNA → LADO A LADO */
+    width: auto;
 }
 
+/* ============================ PRESSÕES (CARDS MENORES) ============================ */
 .card-pressao {
     background: rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(6px);
@@ -171,35 +171,28 @@ h1, h2 {
     border-left: 4px solid var(--verde-principal);
     transition: 0.2s;
 }
-.card-pressao:hover { transform: scale(1.03); }
+.card-pressao:hover {
+    transform: scale(1.03);
+}
 
 .card-pressao h3 {
     margin: 0 0 6px;
     font-size: 15px;
 }
+
 .valor-pressao {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 2px;
     color: var(--verde-suave);
 }
+
 .unidade {
     font-size: 11px;
     opacity: 0.8;
 }
 
-/* ============================ BOMBAS – 2 CARDS EM LINHA ============================ */
-#bombasContainer {
-    width: 100%;
-    max-width: 550px;
-}
-
-#bombasContainer .cards-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
-
+/* ============================ BOMBAS (CARDS MENORES) ============================ */
 .card-bomba {
     padding: 15px;
     border-radius: 12px;
@@ -209,10 +202,19 @@ h1, h2 {
     box-shadow: 0 4px 12px rgba(0,0,0,0.18);
     transition: 0.2s;
 }
-.card-bomba:hover { transform: scale(1.03); }
+.card-bomba:hover {
+    transform: scale(1.03);
+}
 
-.card-bomba h3 { margin-top: 0; font-size: 16px; }
-.card-bomba p { margin: 3px 0; font-size: 13px; }
+.card-bomba h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.card-bomba p {
+    margin: 3px 0;
+    font-size: 13px;
+}
 
 .bomba-ligada {
     background: rgba(0, 140, 40, 0.80) !important;
@@ -239,14 +241,7 @@ h1, h2 {
     #linha-pressao-bombas {
         flex-direction: column;
         align-items: center;
-    }
-
-    #pressoesContainer .cards-grid {
-        grid-template-columns: 1fr;
-    }
-
-    #bombasContainer .cards-grid {
-        grid-template-columns: 1fr;
+        flex-wrap: wrap;
     }
 }
 
