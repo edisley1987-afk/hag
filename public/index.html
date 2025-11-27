@@ -1,45 +1,69 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoramento - Sistema de Água</title>
-
+    <title>Monitoramento - HAG</title>
     <link rel="stylesheet" href="style.css">
+    <script defer src="dashboard.js"></script>
 </head>
+
 <body>
 
-    <!-- AVISO DE ATRASO (controlado pelo JS) -->
-    <div id="aviso-atraso" style="display:none;">⚠ Sem atualização há mais de 10 minutos</div>
+<header>
+    <h1>Hospital Arnaldo Gavazza – Monitoramento de Reservatórios</h1>
+    <div id="lastUpdate">Atualizado --:--:--</div>
+</header>
 
-    <header>
-        <h1>🏥 Hospital Arnaldo Gavazza – Monitoramento de Reservatórios e Pressões</h1>
-        <div id="lastUpdate">Última atualização: --</div>
-    </header>
+<main>
 
-    <main>
-        <!-- Título dos reservatórios -->
-        <h2 class="titulo-card">Reservatórios</h2>
+    <!-- ============================ RESERVATÓRIOS ============================ -->
+    <h2>Reservatórios</h2>
+    <div id="reservatoriosContainer"></div>
 
-        <!-- Onde o JavaScript renderiza os cards -->
-        <div id="reservatoriosContainer"></div>
+    <!-- ============================ PRESSÕES + BOMBAS ============================ -->
+    <h2 style="margin-top:50px">Pressões e Bombas</h2>
 
-        <!-- Pressões -->
-        <h2 class="titulo-card">Pressões</h2>
-        <div id="pressoesContainer"></div>
+    <div id="pressaoBombaGrid">
 
-        <!-- ===================== -->
-        <!-- NOVA ÁREA DAS BOMBAS -->
-        <!-- ===================== -->
-        <h2 class="titulo-card">Bombas de Circulação</h2>
-        <div id="bombasContainer"></div>
+        <!-- ===== PRESSÕES ===== -->
+        <div class="card-pressao">
+            <h3>Pressão Saída Osmose</h3>
+            <span class="valor-pressao" id="pSaidaOsmose">--</span><span class="unidade"> bar</span>
+        </div>
 
-    </main>
+        <div class="card-pressao">
+            <h3>Pressão Retorno Osmose</h3>
+            <span class="valor-pressao" id="pRetornoOsmose">--</span><span class="unidade"> bar</span>
+        </div>
 
-    <footer>
-        © 2025 Hospital Arnaldo Gavazza — Sistema de Monitoramento 
-    </footer>
+        <div class="card-pressao">
+            <h3>Pressão Saída CME</h3>
+            <span class="valor-pressao" id="pSaidaCME">--</span><span class="unidade"> bar</span>
+        </div>
 
-    <script src="dashboard.js"></script>
+        <!-- ===== BOMBAS ===== -->
+        <div class="card-bomba bomba-ligada" id="bomba1">
+            <h3>Bomba 01</h3>
+            <p>Status: <b id="b1Status">--</b></p>
+            <p>Ciclos: <b id="b1Ciclos">--</b></p>
+            <div class="alerta-bomba" id="alertaB1" style="display:none">⚠ Diferença detectada</div>
+        </div>
+
+        <div class="card-bomba bomba-desligada" id="bomba2">
+            <h3>Bomba 02</h3>
+            <p>Status: <b id="b2Status">--</b></p>
+            <p>Ciclos: <b id="b2Ciclos">--</b></p>
+            <div class="alerta-bomba" id="alertaB2" style="display:none">⚠ Diferença detectada</div>
+        </div>
+
+    </div>
+
+</main>
+
+<footer>
+    Hospital Arnaldo Gavazza — Sistema de Monitoramento © 2025
+</footer>
+
 </body>
 </html>
