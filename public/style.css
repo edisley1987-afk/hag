@@ -62,7 +62,6 @@ h1, h2 {
 /* ============================  
       RESERVATÓRIOS – GRID RESPONSIVO  
 ============================= */
-
 #reservatoriosContainer {
     display: grid !important;
     width: 100%;
@@ -140,21 +139,25 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — HORIZONTAL + CARDS MENORES
+   PRESSÕES + BOMBAS — CARDS MENORES, 100% RESPONSIVOS
 ========================================================= */
 
 #linha-pressao-bombas {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 30px;
-    margin-top: 30px;
+    justify-content: center;
+    gap: 22px;
+    flex-wrap: wrap;
+    margin-top: 35px;
 }
 
-/* Cada coluna */
+/* Cada bloco (pressões / bombas) */
 #pressoesContainer,
 #bombasContainer {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 260px;   /* <<< LARGURA MENOR QUE RESERVATÓRIOS */
+    width: 100%;
 }
 
 /* ============================ PRESSÕES (CARDS MENORES) ============================ */
@@ -162,60 +165,56 @@ h1, h2 {
     background: rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(6px);
     border-radius: 12px;
-    padding: 14px 18px;        /* menor */
-    width: 100%;
+    padding: 12px 16px;
     text-align: center;
     color: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-left: 4px solid var(--verde-principal);
-    margin-bottom: 14px;       /* menor */
     transition: 0.2s;
 }
 .card-pressao:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
 }
 
 .card-pressao h3 {
     margin: 0 0 6px;
-    font-size: 16px;          /* menor */
+    font-size: 15px;
 }
 
 .valor-pressao {
-    font-size: 26px;          /* menor */
+    font-size: 24px;
     font-weight: bold;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     color: var(--verde-suave);
 }
 
 .unidade {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.8;
 }
 
 /* ============================ BOMBAS (CARDS MENORES) ============================ */
 .card-bomba {
-    width: 100%;
-    padding: 18px;               /* menor */
+    padding: 15px;
     border-radius: 12px;
     background: rgba(255,255,255,0.10);
     backdrop-filter: blur(6px);
     color: #fff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-    margin-bottom: 14px;         /* menor */
     transition: 0.2s;
 }
 .card-bomba:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
 }
 
 .card-bomba h3 {
     margin-top: 0;
-    font-size: 17px;             /* menor */
+    font-size: 16px;
 }
 
 .card-bomba p {
     margin: 3px 0;
-    font-size: 14px;             /* menor */
+    font-size: 13px;
 }
 
 /* Bombas — estados */
@@ -231,11 +230,11 @@ h1, h2 {
 .alerta-bomba {
     width: 100%;
     margin-top: 10px;
-    padding: 8px;                /* menor */
+    padding: 7px;
     border-radius: 8px;
     background: #d64545;
     text-align: center;
-    font-size: 13px;             /* menor */
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -243,6 +242,7 @@ h1, h2 {
 @media (max-width: 900px) {
     #linha-pressao-bombas {
         flex-direction: column;
+        align-items: center;
     }
 }
 
