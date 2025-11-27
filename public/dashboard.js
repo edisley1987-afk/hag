@@ -6,10 +6,9 @@ async function atualizar() {
         const r = await fetch(API, { cache: "no-store" });
         if (!r.ok) throw 0;
 
-        const dados = await r.json();        
-        const convertido = converterDados(dados);
+        const dados = await r.json();
 
-        render(convertido);
+        render(dados);
 
         document.getElementById("lastUpdate").textContent =
             "Atualizado " + new Date().toLocaleTimeString();
@@ -23,74 +22,6 @@ async function atualizar() {
 
 setInterval(atualizar, 5000);
 atualizar();
-
-
-// ========================= CONVERSOR =========================
-// Converte o objeto bruto do servidor → formato usado no HTML
-function converterDados(d) {
-
-    // ----- RESERVATÓRIOS -----
-    const reservatorios = [
-        {
-            nome: "Reservatório Elevador",
-            current_liters: d.Reservatorio_Elevador_current,
-            capacidade: 20000,
-            percent: Math.round((d.Reservatorio_Elevador_current / 20000) * 100),
-            setor: "elevador"
-        },
-        {
-            nome: "Reservatório Osmose",
-            current_liters: d.Reservatorio_Osmose_current,
-            capacidade: 200,
-            percent: Math.round((d.Reservatorio_Osmose_current / 200) * 100),
-            setor: "osmose"
-        },
-        {
-            nome: "Reservatório CME",
-            current_liters: d.Reservatorio_CME_current,
-            capacidade: 1000,
-            percent: Math.round((d.Reservatorio_CME_current / 1000) * 100),
-            setor: "cme"
-        },
-        {
-            nome: "Água Abrandada",
-            current_liters: d.Reservatorio_Agua_Abrandada_current,
-            capacidade: 9000,
-            percent: Math.round((d.Reservatorio_Agua_Abrandada_current / 9000) * 100),
-            setor: "abrandada"
-        },
-        {
-            nome: "Lavanderia",
-            current_liters: d.Reservatorio_lavanderia_current,
-            capacidade: 10000,
-            percent: Math.round((d.Reservatorio_lavanderia_current / 10000) * 100),
-            setor: "lavanderia"
-        }
-    ];
-
-    // ----- PRESSÕES -----
-    const pressoes = [
-        { nome: "Pressão Saída Osmose", pressao: d.Pressao_Saida_Osmose_current },
-        { nome: "Pressão Retorno Osmose", pressao: d.Pressao_Retorno_Osmose_current },
-        { nome: "Pressão Saída CME", pressao: d.Pressao_Saida_CME_current }
-    ];
-
-    // ----- BOMBAS -----
-    const bombas = [
-        {
-            nome: "Bomba 01",
-            estado: d.Bomba_02_binary === 1 ? "LIGADA" : "DESLIGADA",  // invertidas
-            ciclo: d.Ciclos_Bomba_02_counter
-        },
-        {
-            nome: "Bomba 02",
-            estado: d.Bomba_01_binary === 1 ? "LIGADA" : "DESLIGADA",
-            ciclo: d.Ciclos_Bomba_01_counter
-        }
-    ];
-
-    return { reservatorios, pressoes, bombas };
-}
 
 
 // ========================= RENDER =========================
@@ -142,13 +73,13 @@ function abrirHistorico(setor) {
 // ========================= PRESSÕES =========================
 function renderPressao(lista) {
     const mapa = {
-        "Pressão Saída Osmose": "pSaidaOsmose",
-        "Pressão Retorno Osmose": "pRetornoOsmose",
-        "Pressão Saída CME": "pSaidaCME"
+        "saida_osmose": "pSaidaOsmose",
+        "retorno_osmose": "pRetornoOsmose",
+        "saida_cme": "pSaidaCME"
     };
 
     lista.forEach(p => {
-        const id = mapa[p.nome];
+        const id = mapa[p.setor];
         const span = document.getElementById(id);
         if (span) span.textContent = p.pressao.toFixed(2);
     });
@@ -163,7 +94,7 @@ function renderBombas(lista) {
 
         if (!el) return;
 
-        const ligada = b.estado === "LIGADA";
+        const ligada = b.estado_num === 1;
 
         el.classList.toggle("bomba-ligada", ligada);
         el.classList.toggle("bomba-desligada", !ligada);
