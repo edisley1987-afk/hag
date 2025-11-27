@@ -139,24 +139,29 @@ h1, h2 {
 .nv-cheio .nivel-agua { background: var(--verde-claro) !important; }
 
 /* =======================================================
-   PRESSÕES + BOMBAS — AGORA EM UMA ÚNICA LINHA
+   PRESSÕES + BOMBAS — AGORA CADA GRUPO LADO A LADO
 ========================================================= */
 
 #linha-pressao-bombas {
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 22px;
-    flex-wrap: nowrap;         /* 🔥 TODOS EM UMA LINHA */
+    flex-direction: column; /* Pressões acima, Bombas abaixo */
+    align-items: center;
+    gap: 28px;
     margin-top: 35px;
 }
 
-#pressoesContainer,
+/* 🔥 Pressões lado a lado */
+#pressoesContainer {
+    display: flex;
+    gap: 14px;
+    flex-direction: row;
+}
+
+/* 🔥 Bombas lado a lado */
 #bombasContainer {
     display: flex;
     gap: 14px;
-    flex-direction: row;        /* 🔥 SEM COLUNA → LADO A LADO */
-    width: auto;
+    flex-direction: row;
 }
 
 /* ============================ PRESSÕES (CARDS MENORES) ============================ */
@@ -238,10 +243,10 @@ h1, h2 {
 
 /* ============================ RESPONSIVIDADE ============================ */
 @media (max-width: 900px) {
-    #linha-pressao-bombas {
-        flex-direction: column;
+    #pressoesContainer,
+    #bombasContainer {
+        flex-direction: column; /* No celular volta para vertical */
         align-items: center;
-        flex-wrap: wrap;
     }
 }
 
