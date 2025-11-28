@@ -28,6 +28,31 @@ const HIST_FILE = path.join(DATA_DIR, "historico.json");
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // ============================================================================
+// 🔧 MODO MANUTENÇÃO GLOBAL
+// ============================================================================
+
+const MAN_FILE = path.join(DATA_DIR, "manutencao.json");
+
+// Carregar manutenção salvo (objeto: { setor: true/false, ... })
+let manutencao = {};
+if (fs.existsSync(MAN_FILE)) {
+  try {
+    manutencao = JSON.parse(fs.readFileSync(MAN_FILE, "utf-8"));
+  } catch {
+    manutencao = {};
+  }
+}
+
+// Função para salvar manutenção
+function salvarManutencao() {
+  try {
+    fs.writeFileSync(MAN_FILE, JSON.stringify(manutencao, null, 2));
+  } catch (e) {
+    console.error("Erro salvando manutencao:", e);
+  }
+}
+
+// ============================================================================
 // 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS
 // ============================================================================
 
@@ -76,8 +101,12 @@ const SENSORES = {
 
 // === Função para salvar última leitura ===
 function salvarDados(dados) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-  console.log("Leituras:", JSON.stringify(dados));
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+    console.log("Leituras salvas:", new Date().toISOString());
+  } catch (e) {
+    console.error("Erro salvando dados:", e);
+  }
 }
 
 // ============================================================================
@@ -130,7 +159,11 @@ function registrarHistorico(dados) {
     }
   });
 
-  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+  try {
+    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
+  } catch (e) {
+    console.error("Erro salvando historico:", e);
+  }
 }
 
 // ============================================================================
@@ -149,7 +182,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("Corpo não JSON:", body.slice(0, 200));
+        console.log("Corpo não JSON (texto):", body.slice(0, 200));
       }
     }
 
@@ -258,6 +291,37 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
+});
+
+// ============================================================================
+// Rotas de manutenção (API pública para frontend)
+// ============================================================================
+
+/**
+ * GET /manutencao
+ * Retorna o objeto completo de manutenção (todos os setores)
+ */
+app.get("/manutencao", (req, res) => {
+  res.json(manutencao);
+});
+
+/**
+ * POST /manutencao/:setor
+ * Body: { ativo: true/false }
+ * Ativa/desativa manutencao para o setor indicado.
+ */
+app.post("/manutencao/:setor", express.json(), (req, res) => {
+  const setor = (req.params.setor || "").toLowerCase();
+  const ativo = req.body && req.body.ativo === true;
+
+  if (!setor) return res.status(400).json({ erro: "Setor inválido" });
+
+  manutencao[setor] = ativo;
+  salvarManutencao();
+
+  console.log(`MANUTENÇÃO alterada -> setor: ${setor}, ativo: ${ativo}`);
+
+  res.json({ setor, ativo });
 });
 
 // ============================================================================
@@ -453,7 +517,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
       current_liters: dados["Reservatorio_Elevador_current"],
       capacidade: 20000,
-      manutencao: false
+      manutencao: manutencao["elevador"] === true
     },
     {
       nome: "Reservatório Osmose",
@@ -461,7 +525,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
       current_liters: dados["Reservatorio_Osmose_current"],
       capacidade: 200,
-      manutencao: false
+      manutencao: manutencao["osmose"] === true
     },
     {
       nome: "Reservatório CME",
@@ -469,7 +533,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
       current_liters: dados["Reservatorio_CME_current"],
       capacidade: 1000,
-      manutencao: false
+      manutencao: manutencao["cme"] === true
     },
     {
       nome: "Água Abrandada",
@@ -477,7 +541,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
       current_liters: dados["Reservatorio_Agua_Abrandada_current"],
       capacidade: 9000,
-      manutencao: false
+      manutencao: manutencao["abrandada"] === true
     },
     {
       nome: "Lavanderia",
@@ -485,7 +549,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
       current_liters: dados["Reservatorio_lavanderia_current"],
       capacidade: 10000,
-      manutencao: false
+      manutencao: manutencao["lavanderia"] === true
     }
   ];
 
@@ -493,17 +557,20 @@ app.get("/api/dashboard", (req, res) => {
     {
       nome: "Pressão Saída Osmose",
       setor: "saida_osmose",
-      pressao: dados["Pressao_Saida_Osmose_current"]
+      pressao: dados["Pressao_Saida_Osmose_current"],
+      manutencao: manutencao["saida_osmose"] === true
     },
     {
       nome: "Pressão Retorno Osmose",
       setor: "retorno_osmose",
-      pressao: dados["Pressao_Retorno_Osmose_current"]
+      pressao: dados["Pressao_Retorno_Osmose_current"],
+      manutencao: manutencao["retorno_osmose"] === true
     },
     {
       nome: "Pressão Saída CME",
       setor: "saida_cme",
-      pressao: dados["Pressao_Saida_CME_current"]
+      pressao: dados["Pressao_Saida_CME_current"],
+      manutencao: manutencao["saida_cme"] === true
     }
   ];
 
@@ -513,13 +580,15 @@ app.get("/api/dashboard", (req, res) => {
       nome: "Bomba 01",
       estado_num: Number(dados["Bomba_01_binary"]) || 0,
       estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
-      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0
+      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0,
+      manutencao: manutencao["bomba1"] === true
     },
     {
       nome: "Bomba 02",
       estado_num: Number(dados["Bomba_02_binary"]) || 0,
       estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
-      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0
+      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0,
+      manutencao: manutencao["bomba2"] === true
     }
   ];
 
