@@ -5,6 +5,8 @@ const API = "/api/dashboard";
 let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
 let alertaAtivo = {};
 
+
+// ========================= LOOP PRINCIPAL =========================
 async function atualizar() {
     try {
         const r = await fetch(API, { cache: "no-store" });
@@ -28,15 +30,15 @@ setInterval(atualizar, 5000);
 atualizar();
 
 
-// ========================= SOM (BIP) =========================
+// ========================= SOM =========================
 function bipCurto() {
     const audio = new Audio("bip.mp3");
     audio.volume = 0.5;
-    audio.play();
+    audio.play().catch(() => {});
 }
 
 
-// ========================= RENDER =========================
+// ========================= CONTROLLER (RENDER) =========================
 function render(d) {
     renderReservatorios(d.reservatorios);
     renderPressao(d.pressoes);
@@ -47,11 +49,13 @@ function render(d) {
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
-    box.innerHTML = "";
+
+    // Evita piscar tela atualizando apenas mudanças
+    const frag = document.createDocumentFragment();
 
     lista.forEach(r => {
 
-        // Se passou de 41%, tira manutenção automática
+        // REMOVE manutenção automática apenas se abaixar de 41% → subir depois
         if (manutencao[r.setor] && r.percent >= 41) {
             manutencao[r.setor] = false;
             salvarManutencao();
@@ -60,7 +64,7 @@ function renderReservatorios(lista) {
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
-        // ---- Estado de cor dos níveis ----
+        // ---- Estado de nível ----
         if (r.percent <= 30) card.classList.add("nv-critico");
         else if (r.percent <= 60) card.classList.add("nv-alerta");
         else if (r.percent <= 90) card.classList.add("nv-normal");
@@ -77,11 +81,13 @@ function renderReservatorios(lista) {
         }
 
         // ---- Manutenção ----
-        let msgMan = "";
-        if (manutencao[r.setor]) {
-            msgMan = `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`;
-            card.classList.add("manutencao");
-        }
+        const emManut = manutencao[r.setor] === true;
+
+        const msgMan = emManut
+            ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`
+            : "";
+
+        if (emManut) card.classList.add("manutencao");
 
         // ---- HTML ----
         card.innerHTML = `
@@ -104,12 +110,15 @@ function renderReservatorios(lista) {
             <p>Capacidade: ${r.capacidade} L</p>
         `;
 
-        box.appendChild(card);
+        frag.appendChild(card);
     });
+
+    box.innerHTML = "";
+    box.appendChild(frag);
 }
 
 
-// Alternar manutenção + salvar no disco
+// ========================= MANUTENÇÃO =========================
 function toggleManutencao(setor) {
     manutencao[setor] = !manutencao[setor];
     salvarManutencao();
