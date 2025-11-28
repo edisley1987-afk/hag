@@ -65,7 +65,6 @@ main {
     width: 100%;
     margin-top: 25px;
     gap: 28px;
-
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
@@ -78,6 +77,7 @@ main {
     box-shadow: 0 2px 8px #0007;
     backdrop-filter: blur(6px);
     transition: 0.25s;
+    border: 3px solid transparent;
 }
 
 .card-reservatorio:hover {
@@ -215,23 +215,25 @@ footer {
     margin-top: 60px;
 }
 
-/* ================== ALERTA DE NÍVEL (vermelho piscando) ================== */
+/* ================== ALERTA DE NÍVEL (VERMELHO PISCANDO) ================== */
 .alerta-nivel {
-    animation: alertaBlink 1s infinite;
-    border-color: red !important;
+    border: 3px solid red !important;
+    animation: alertaBlink 0.9s infinite;
 }
+
 @keyframes alertaBlink {
     0% { box-shadow: 0 0 10px red; }
     50% { box-shadow: 0 0 25px red; }
     100% { box-shadow: 0 0 10px red; }
 }
 
-/* ================== MODO MANUTENÇÃO (card amarelo) ================== */
+/* ================== MODO MANUTENÇÃO ================== */
 .manutencao {
     background: rgba(240, 180, 20, 0.45) !important;
     border: 3px solid #ffdd55 !important;
     animation: manutBlink 1.3s infinite;
 }
+
 @keyframes manutBlink {
     0% { box-shadow: 0 0 10px #ffdd55; }
     50% { box-shadow: 0 0 25px #ffcc00; }
@@ -247,6 +249,7 @@ footer {
     border-radius: 6px;
     animation: textBlink 1s infinite;
 }
+
 @keyframes textBlink {
     0% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -262,6 +265,7 @@ footer {
     color: white;
     transition: 0.25s;
 }
+
 .gear-btn:hover {
     transform: rotate(25deg);
 }
