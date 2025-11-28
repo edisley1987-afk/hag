@@ -202,3 +202,57 @@ footer{
   border-top:3px solid var(--verde-medio);
   margin-top:60px;
 }
+/* ================== ALERTA DE NÍVEL (piscar vermelho) ================== */
+.alerta-nivel {
+    animation: alertaBlink 1s infinite;
+    border-color: red !important;
+}
+
+@keyframes alertaBlink {
+    0% { box-shadow: 0 0 10px red; }
+    50% { box-shadow: 0 0 25px red; }
+    100% { box-shadow: 0 0 10px red; }
+}
+
+/* ================== MODO MANUTENÇÃO (card amarelo piscando) ================== */
+.manutencao {
+    background: rgba(240, 180, 20, 0.45) !important;
+    border: 3px solid #ffdd55 !important;
+    animation: manutBlink 1.2s infinite;
+}
+
+@keyframes manutBlink {
+    0% { box-shadow: 0 0 10px #ffdd55; }
+    50% { box-shadow: 0 0 25px #ffcc00; }
+    100% { box-shadow: 0 0 10px #ffdd55; }
+}
+
+.msg-manutencao {
+    margin-top: 10px;
+    padding: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    background: rgba(255, 215, 0, 0.7);
+    border-radius: 6px;
+    animation: textBlink 1s infinite;
+}
+
+@keyframes textBlink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* botão engrenagem */
+.gear-btn {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    transition: .2s;
+}
+
+.gear-btn:hover {
+    transform: rotate(25deg);
+}
