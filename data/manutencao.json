@@ -1,7 +1,7 @@
 {
-  "elevador": false,
-  "osmose": true,
-  "cme": false,
-  "abrandada": false,
-  "lavanderia": false
+  "Elevador": false,
+  "Osmose": false,
+  "CME": false,
+  "Abrandada": false,
+  "Lavanderia": false
 }
