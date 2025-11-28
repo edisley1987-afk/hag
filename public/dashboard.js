@@ -1,11 +1,9 @@
 // ========================= CONFIG =========================
 const API = "/api/dashboard";
 
-// Estados de manutenção (por setor)
-const manutencao = {};  
-// Estados de alerta (para evitar repetir bip)
-const alertaAtivo = {};  
-
+// Carregar manutenção salva
+let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
+let alertaAtivo = {};
 
 async function atualizar() {
     try {
@@ -53,41 +51,39 @@ function renderReservatorios(lista) {
 
     lista.forEach(r => {
 
-        // Se passou de 41%, remove manutenção automática
+        // Se passou de 41%, tira manutenção automática
         if (manutencao[r.setor] && r.percent >= 41) {
             manutencao[r.setor] = false;
+            salvarManutencao();
         }
 
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
-        // ---- Estado normal do nível ----
+        // ---- Estado de cor dos níveis ----
         if (r.percent <= 30) card.classList.add("nv-critico");
         else if (r.percent <= 60) card.classList.add("nv-alerta");
         else if (r.percent <= 90) card.classList.add("nv-normal");
         else card.classList.add("nv-cheio");
 
-        // ---- Alerta de 40% ----
+        // ---- ALERTA 40% ----
         if (r.percent <= 40 && !manutencao[r.setor]) {
-            card.classList.add("alerta-nivel");
-
             if (!alertaAtivo[r.setor]) {
                 bipCurto();
                 alertaAtivo[r.setor] = true;
             }
         } else {
-            card.classList.remove("alerta-nivel");
             alertaAtivo[r.setor] = false;
         }
 
         // ---- Manutenção ----
         let msgMan = "";
         if (manutencao[r.setor]) {
-            card.classList.add("manutencao");
             msgMan = `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`;
+            card.classList.add("manutencao");
         }
 
-        // ---- CARD HTML ----
+        // ---- HTML ----
         card.innerHTML = `
             <div class="top-bar">
                 <h3>${r.nome}</h3>
@@ -113,9 +109,14 @@ function renderReservatorios(lista) {
 }
 
 
-// alternar manualmente manutenção
+// Alternar manutenção + salvar no disco
 function toggleManutencao(setor) {
     manutencao[setor] = !manutencao[setor];
+    salvarManutencao();
+}
+
+function salvarManutencao() {
+    localStorage.setItem("manutencao", JSON.stringify(manutencao));
 }
 
 function abrirHistorico(setor) {
