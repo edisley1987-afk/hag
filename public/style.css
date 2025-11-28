@@ -1,226 +1,237 @@
 /* ============================ BACKGROUND ============================ */
-body{
-  margin:0;padding:0;
-  font-family:"Segoe UI",sans-serif;
-  background:url("image.png") center center fixed no-repeat;
-  background-size:cover;
-  position:relative;
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", sans-serif;
+
+    background: url("image.png") center center fixed no-repeat;
+    background-size: cover;
+    position: relative;
 }
 
-body::before{
-  content:"";
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,40,25,0.55);
-  backdrop-filter:blur(3px);
-  z-index:-1;
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 40, 25, 0.55);
+    backdrop-filter: blur(3px);
+    z-index: -1;
 }
 
 /* ============================ PALETA ============================ */
-:root{
-  --verde-principal:#0b5e45;
-  --verde-claro:#2e8b70;
-  --verde-medio:#3fa58b;
-  --verde-suave:#d9f4ec;
-  --branco:#fff;
-  --erro:#d9534f;
-  --alerta:#f0ad4e;
-  --ok:#5cb85c;
+:root {
+    --verde-principal: #0b5e45;
+    --verde-claro: #2e8b70;
+    --verde-medio: #3fa58b;
+    --verde-suave: #d9f4ec;
+
+    --branco: #ffffff;
+
+    --erro: #d9534f;
+    --alerta: #f0ad4e;
+    --ok: #5cb85c;
+
+    --glass-bg: rgba(255, 255, 255, 0.18);
 }
 
 /* ============================ HEADER ============================ */
-header{
-  background:rgba(0,90,60,.85);
-  color:#fff;
-  text-align:center;
-  padding:22px;
-  border-bottom:3px solid var(--verde-medio);
-  backdrop-filter:blur(5px);
+header {
+    background: rgba(0, 90, 60, 0.85);
+    color: white;
+    text-align: center;
+    padding: 22px;
+    border-bottom: 3px solid var(--verde-medio);
+    backdrop-filter: blur(5px);
 }
 
-main{
-  max-width:1500px;
-  margin:auto;
-  padding:20px;
+h1, h2 {
+    color: white;
+    text-shadow: 0 1px 3px black;
 }
 
-h1,h2{
-  color:white;
-  text-shadow:0 1px 3px black;
+/* ============================ MAIN ============================ */
+main {
+    max-width: 1500px;
+    margin: auto;
+    padding: 20px;
 }
 
-/* ============================================================= RESERVATÓRIOS (MANTIDOS SEM ALTERAÇÃO) ============================================================= */
-#reservatoriosContainer{
-  display:grid!important;
-  width:100%;
-  margin-top:25px;
-  gap:28px;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+/* ============================================================= RESERVATÓRIOS ============================================================= */
+#reservatoriosContainer {
+    display: grid !important;
+    width: 100%;
+    margin-top: 25px;
+    gap: 28px;
+
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.card-reservatorio{
-  background:rgba(255,255,255,0.18);
-  padding:15px;border-radius:14px;
-  text-align:center;color:white;
-  box-shadow:0 2px 8px #0007;
-  backdrop-filter:blur(6px);
-  transition:.2s;
+.card-reservatorio {
+    background: var(--glass-bg);
+    padding: 15px;
+    border-radius: 14px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 2px 8px #0007;
+    backdrop-filter: blur(6px);
+    transition: 0.25s;
 }
 
-.card-reservatorio:hover{
-  transform:scale(1.03);
+.card-reservatorio:hover {
+    transform: scale(1.03);
 }
 
-.tanque-visu{
-  width:100%;
-  height:160px;
-  border-radius:12px;
-  background:rgba(255,255,255,.25);
-  border:3px solid var(--verde-medio);
-  position:relative;
-  overflow:hidden;
+.tanque-visu {
+    width: 100%;
+    height: 160px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.25);
+    border: 3px solid var(--verde-medio);
+    position: relative;
+    overflow: hidden;
 }
 
-.nivel-agua{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  transition:height 1s;
-  background:var(--verde-claro);
+.nivel-agua {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 0%;
+    transition: height 1s ease;
+    background: var(--verde-claro);
 }
 
-.overlay-info{
-  position:absolute;
-  top:8px;
-  width:100%;
-  text-shadow:0 1px 3px black;
+.overlay-info {
+    position: absolute;
+    top: 8px;
+    width: 100%;
+    text-shadow: 0 1px 3px black;
 }
 
-.percent-text{
-  font-size:22px;
-  font-weight:bold;
+.percent-text {
+    font-size: 22px;
+    font-weight: bold;
 }
 
-.liters-text{
-  font-size:16px;
+.liters-text {
+    font-size: 16px;
 }
 
-.nv-critico{
-  border-color:var(--erro)!important;
+/* ================= CORES POR NÍVEL ================= */
+.nv-critico {
+    border-color: var(--erro) !important;
+}
+.nv-critico .nivel-agua {
+    background: var(--erro) !important;
 }
 
-.nv-critico .nivel-agua{
-  background:var(--erro)!important;
+.nv-alerta {
+    border-color: var(--alerta) !important;
+}
+.nv-alerta .nivel-agua {
+    background: var(--alerta) !important;
 }
 
-.nv-alerta{
-  border-color:var(--alerta)!important;
+.nv-normal {
+    border-color: var(--ok) !important;
+}
+.nv-normal .nivel-agua {
+    background: var(--ok) !important;
 }
 
-.nv-alerta .nivel-agua{
-  background:var(--alerta)!important;
+.nv-cheio {
+    border-color: var(--verde-claro) !important;
+}
+.nv-cheio .nivel-agua {
+    background: var(--verde-claro) !important;
 }
 
-.nv-normal{
-  border-color:var(--ok)!important;
+/* ============================================================= PRESSÕES + BOMBAS ============================================================= */
+#pressaoBombaGrid {
+    display: grid !important;
+    margin-top: 35px;
+    width: 100%;
+    gap: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.nv-normal .nivel-agua{
-  background:var(--ok)!important;
+.card-pressao, .card-bomba {
+    background: var(--glass-bg);
+    padding: 18px;
+    border-radius: 14px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+    transition: 0.25s;
 }
 
-.nv-cheio{
-  border-color:var(--verde-claro)!important;
+.card-pressao:hover,
+.card-bomba:hover {
+    transform: scale(1.04);
 }
 
-.nv-cheio .nivel-agua{
-  background:var(--verde-claro)!important;
+.valor-pressao {
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--verde-suave);
 }
 
-/* ============================================================= PRESSÕES + BOMBAS (NOVO — EM GRID IGUAL RESERVATÓRIOS) ============================================================= */
-#pressaoBombaGrid{
-  display:grid!important;
-  margin-top:35px;
-  width:100%;
-  gap:28px;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); /* Reduzido o minmax para 200px */
+.unidade {
+    font-size: 11px;
+    opacity: 0.7;
 }
 
-.card-pressao,.card-bomba{
-  background:rgba(255,255,255,0.18);
-  padding:18px;border-radius:14px;
-  color:white;text-align:center;
-  backdrop-filter:blur(6px);
-  box-shadow:0 2px 8px rgba(0,0,0,.4);
-  transition:.2s;
+/* ================= BOMBA ================= */
+.bomba-ligada {
+    background: rgba(0, 140, 40, 0.85) !important;
+    border-top: 4px solid #00ff73;
 }
 
-.card-pressao:hover,.card-bomba:hover{
-  transform:scale(1.04);
+.bomba-desligada {
+    background: rgba(140, 0, 0, 0.80) !important;
+    border-top: 4px solid #ff4f4f;
 }
 
-.valor-pressao{
-  font-size:26px;
-  font-weight:bold;
-  color:var(--verde-suave);
-}
-
-.unidade{
-  font-size:11px;
-  opacity:.7;
-}
-
-.bomba-ligada{
-  background:rgba(0,140,40,.85)!important;
-  border-top:4px solid #00ff73;
-}
-
-.bomba-desligada{
-  background:rgba(140,0,0,.80)!important;
-  border-top:4px solid #ff4f4f;
-}
-
-.alerta-bomba{
-  margin-top:8px;
-  padding:6px;
-  border-radius:8px;
-  background:#d64545;
-  text-align:center;
-  font-size:12px;
-  font-weight:bold;
+.alerta-bomba {
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 8px;
+    background: #d64545;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 /* ============================ FOOTER ============================ */
-footer{
-  background:rgba(0,90,60,.85);
-  padding:14px;
-  text-align:center;
-  color:#fff;
-  border-top:3px solid var(--verde-medio);
-  margin-top:60px;
+footer {
+    background: rgba(0, 90, 60, 0.85);
+    padding: 14px;
+    text-align: center;
+    color: white;
+    border-top: 3px solid var(--verde-medio);
+    margin-top: 60px;
 }
-/* ================== ALERTA DE NÍVEL (piscar vermelho) ================== */
+
+/* ================== ALERTA DE NÍVEL (vermelho piscando) ================== */
 .alerta-nivel {
     animation: alertaBlink 1s infinite;
     border-color: red !important;
 }
-
 @keyframes alertaBlink {
     0% { box-shadow: 0 0 10px red; }
     50% { box-shadow: 0 0 25px red; }
     100% { box-shadow: 0 0 10px red; }
 }
 
-/* ================== MODO MANUTENÇÃO (card amarelo piscando) ================== */
+/* ================== MODO MANUTENÇÃO (card amarelo) ================== */
 .manutencao {
     background: rgba(240, 180, 20, 0.45) !important;
     border: 3px solid #ffdd55 !important;
-    animation: manutBlink 1.2s infinite;
+    animation: manutBlink 1.3s infinite;
 }
-
 @keyframes manutBlink {
     0% { box-shadow: 0 0 10px #ffdd55; }
     50% { box-shadow: 0 0 25px #ffcc00; }
@@ -232,27 +243,25 @@ footer{
     padding: 6px;
     font-weight: bold;
     font-size: 14px;
-    background: rgba(255, 215, 0, 0.7);
+    background: rgba(255, 215, 0, 0.85);
     border-radius: 6px;
     animation: textBlink 1s infinite;
 }
-
 @keyframes textBlink {
     0% { opacity: 1; }
     50% { opacity: 0.3; }
     100% { opacity: 1; }
 }
 
-/* botão engrenagem */
+/* ================== BOTÃO ENGENAGEM ================== */
 .gear-btn {
     background: transparent;
     border: none;
     font-size: 20px;
     cursor: pointer;
     color: white;
-    transition: .2s;
+    transition: 0.25s;
 }
-
 .gear-btn:hover {
     transform: rotate(25deg);
 }
