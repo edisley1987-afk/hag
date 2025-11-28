@@ -5,7 +5,6 @@ const API = "/api/dashboard";
 let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
 let alertaAtivo = {};
 
-
 // ========================= LOOP PRINCIPAL =========================
 async function atualizar() {
     try {
@@ -29,7 +28,6 @@ async function atualizar() {
 setInterval(atualizar, 5000);
 atualizar();
 
-
 // ========================= SOM =========================
 function bipCurto() {
     const audio = new Audio("bip.mp3");
@@ -37,15 +35,12 @@ function bipCurto() {
     audio.play().catch(() => {});
 }
 
-
 // ========================= CONTROLLER (RENDER) =========================
 function render(d) {
-    renderReservatorios(d.reservatorios);
-    renderPressao(d.pressoes);
-    renderBombas(d.bombas);
+    renderReservatorios(d.reservatorios || []);
+    renderPressao(d.pressoes || []);
+    renderBombas(d.bombas || []);
 }
-
-
 
 // ========================= ALERTA DE NÍVEL BAIXO =========================
 function exibirAlertaNivel(nome, porcentagem) {
@@ -64,8 +59,6 @@ function limparAlertaNivel() {
     }
 }
 
-
-
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
@@ -77,34 +70,32 @@ function renderReservatorios(lista) {
     lista.forEach(r => {
 
         // ---- ALERTA DE NÍVEL BAIXO (<= 10%) ----
-        if (r.percent <= 10 && !manutencao[r.setor]) {
-            exibirAlertaNivel(r.nome, r.percent);
+        if ((r.percent || 0) <= 10 && !manutencao[r.setor]) {
+            exibirAlertaNivel(r.nome, r.percent || 0);
         }
 
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
         // ---- Estado de nível (cores) ----
-        if (r.percent <= 30) {
+        const percent = r.percent || 0;
+        if (percent <= 30) {
             card.classList.add("nv-critico");
 
-            // efeito piscando igual manutenção quando está crítico real
-            if (r.percent <= 10 && !manutencao[r.setor]) {
+            if (percent <= 10 && !manutencao[r.setor]) {
                 card.classList.add("piscar-perigo");
             }
 
-        } else if (r.percent <= 60) {
+        } else if (percent <= 60) {
             card.classList.add("nv-alerta");
-
-        } else if (r.percent <= 90) {
+        } else if (percent <= 90) {
             card.classList.add("nv-normal");
-
         } else {
             card.classList.add("nv-cheio");
         }
 
         // ---- ALERTA COM SOM <= 40% (exceto manutenção) ----
-        if (r.percent <= 40 && !manutencao[r.setor]) {
+        if (percent <= 40 && !manutencao[r.setor]) {
             if (!alertaAtivo[r.setor]) {
                 bipCurto();
                 alertaAtivo[r.setor] = true;
@@ -117,15 +108,14 @@ function renderReservatorios(lista) {
         const emManut = manutencao[r.setor] === true;
         if (emManut) {
             card.classList.add("manutencao");
-            card.classList.remove("piscar-perigo"); // não piscar junto de alerta crítico
+            card.classList.remove("piscar-perigo");
         }
 
         const msgMan = emManut
             ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`
             : "";
 
-
-        // ---- HTML DO CARD (igual o seu, sem alterar nada!) ----
+        // ---- HTML DO CARD ----
         card.innerHTML = `
             <div class="top-bar">
                 <h3>${r.nome}</h3>
@@ -133,17 +123,17 @@ function renderReservatorios(lista) {
             </div>
 
             <div class="tanque-visu">
-                <div class="nivel-agua" style="height:${r.percent}%"></div>
+                <div class="nivel-agua" style="height:${percent}%"></div>
                 <div class="overlay-info">
-                    <div class="percent-text">${r.percent}%</div>
-                    <div class="liters-text">${r.current_liters} L</div>
+                    <div class="percent-text">${percent}%</div>
+                    <div class="liters-text">${r.current_liters || 0} L</div>
                 </div>
             </div>
 
             ${msgMan}
 
             <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
-            <p>Capacidade: ${r.capacidade} L</p>
+            <p>Capacidade: ${r.capacidade || 0} L</p>
         `;
 
         frag.appendChild(card);
@@ -152,8 +142,6 @@ function renderReservatorios(lista) {
     box.innerHTML = "";
     box.appendChild(frag);
 }
-
-
 
 // ========================= MANUTENÇÃO =========================
 function toggleManutencao(setor) {
@@ -169,8 +157,6 @@ function abrirHistorico(setor) {
     location.href = `/historico.html?setor=${setor}`;
 }
 
-
-
 // ========================= PRESSÕES =========================
 function renderPressao(lista) {
     const mapa = {
@@ -182,18 +168,19 @@ function renderPressao(lista) {
     lista.forEach(p => {
         const id = mapa[p.setor];
         const span = document.getElementById(id);
-        if (span) span.textContent = p.pressao.toFixed(2);
+        if (!span) return;
+
+        // ✅ Valor seguro para evitar TypeError
+        const valor = (typeof p.pressao === "number") ? p.pressao : 0;
+        span.textContent = valor.toFixed(2);
     });
 }
-
-
 
 // ========================= BOMBAS =========================
 function renderBombas(lista) {
     lista.forEach((b, i) => {
         const id = `bomba${i + 1}`;
         const el = document.getElementById(id);
-
         if (!el) return;
 
         const ligada = b.estado_num === 1;
@@ -201,7 +188,9 @@ function renderBombas(lista) {
         el.classList.toggle("bomba-ligada", ligada);
         el.classList.toggle("bomba-desligada", !ligada);
 
-        document.getElementById(`b${i + 1}Status`).textContent = b.estado;
-        document.getElementById(`b${i + 1}Ciclos`).textContent = b.ciclo;
+        const status = document.getElementById(`b${i + 1}Status`);
+        const ciclos = document.getElementById(`b${i + 1}Ciclos`);
+        if (status) status.textContent = b.estado || "desligada";
+        if (ciclos) ciclos.textContent = b.ciclo || 0;
     });
 }
