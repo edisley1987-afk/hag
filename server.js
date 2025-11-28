@@ -24,33 +24,49 @@ app.use(express.raw({ type: "*/*", limit: "10mb" }));
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
+const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
 
 // ============================================================================
-// 🔧 MODO MANUTENÇÃO GLOBAL
+// 🔧 FUNÇÕES DE MANUTENÇÃO
 // ============================================================================
 
-const MAN_FILE = path.join(DATA_DIR, "manutencao.json");
-
-// Carregar manutenção salvo (objeto: { setor: true/false, ... })
-let manutencao = {};
-if (fs.existsSync(MAN_FILE)) {
+function getManutencao() {
   try {
-    manutencao = JSON.parse(fs.readFileSync(MAN_FILE, "utf-8"));
+    return JSON.parse(fs.readFileSync(MANUT_FILE, "utf8"));
   } catch {
-    manutencao = {};
+    return { ativo: false };
   }
 }
 
-// Função para salvar manutenção
-function salvarManutencao() {
-  try {
-    fs.writeFileSync(MAN_FILE, JSON.stringify(manutencao, null, 2));
-  } catch (e) {
-    console.error("Erro salvando manutencao:", e);
-  }
+function setManutencao(ativo) {
+  fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2));
 }
+
+// ============================================================================
+// 🔧 ROTAS DE MANUTENÇÃO
+// ============================================================================
+
+// Qualquer usuário vê o estado
+app.get("/manutencao", (req, res) => {
+  res.json(getManutencao());
+});
+
+// Qualquer usuário ativa / desativa
+app.post("/manutencao", (req, res) => {
+  const { ativo } = req.body;
+
+  if (typeof ativo !== "boolean") {
+    return res.status(400).json({ erro: "Campo 'ativo' precisa ser true/false" });
+  }
+
+  setManutencao(ativo);
+  console.log("⚠️ Manutenção atualizada →", ativo);
+
+  res.json({ status: "ok", ativo });
+});
 
 // ============================================================================
 // 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS
@@ -74,7 +90,6 @@ const SENSORES = {
     capacidade: 1000
   },
   "Reservatorio_Agua_Abrandada_current": {
-    // <-- corrigido: leituraCheio ajustada para 0.004229 conforme tabela fornecida
     leituraVazio: 0.004048,
     leituraCheio: 0.004229,
     capacidade: 9000
@@ -101,12 +116,8 @@ const SENSORES = {
 
 // === Função para salvar última leitura ===
 function salvarDados(dados) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
-    console.log("Leituras salvas:", new Date().toISOString());
-  } catch (e) {
-    console.error("Erro salvando dados:", e);
-  }
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dados, null, 2));
+  console.log("Leituras:", JSON.stringify(dados));
 }
 
 // ============================================================================
@@ -159,11 +170,7 @@ function registrarHistorico(dados) {
     }
   });
 
-  try {
-    fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
-  } catch (e) {
-    console.error("Erro salvando historico:", e);
-  }
+  fs.writeFileSync(HIST_FILE, JSON.stringify(historico, null, 2));
 }
 
 // ============================================================================
@@ -182,7 +189,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       try {
         body = JSON.parse(body);
       } catch {
-        console.log("Corpo não JSON (texto):", body.slice(0, 200));
+        console.log("Corpo não JSON:", body.slice(0, 200));
       }
     }
 
@@ -263,14 +270,13 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     }
 
     // ---------------------------------------------
-    // 🔥 PATCH ANTI-NULL — MANTÉM VALORES ANTIGOS SE NÃO VIERAM NA REQUISIÇÃO
+    // 🔥 PATCH ANTI-NULL — MANTÉM VALORES ANTIGOS SE NÃO VIERAM
     // ---------------------------------------------
     for (const ref in SENSORES) {
       if (dadosConvertidos[ref] === undefined && ultimo[ref] !== undefined) {
         dadosConvertidos[ref] = ultimo[ref];
       }
     }
-    // ---------------------------------------------
 
     dadosConvertidos.timestamp = new Date().toISOString();
 
@@ -291,37 +297,6 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
-});
-
-// ============================================================================
-// Rotas de manutenção (API pública para frontend)
-// ============================================================================
-
-/**
- * GET /manutencao
- * Retorna o objeto completo de manutenção (todos os setores)
- */
-app.get("/manutencao", (req, res) => {
-  res.json(manutencao);
-});
-
-/**
- * POST /manutencao/:setor
- * Body: { ativo: true/false }
- * Ativa/desativa manutencao para o setor indicado.
- */
-app.post("/manutencao/:setor", express.json(), (req, res) => {
-  const setor = (req.params.setor || "").toLowerCase();
-  const ativo = req.body && req.body.ativo === true;
-
-  if (!setor) return res.status(400).json({ erro: "Setor inválido" });
-
-  manutencao[setor] = ativo;
-  salvarManutencao();
-
-  console.log(`MANUTENÇÃO alterada -> setor: ${setor}, ativo: ${ativo}`);
-
-  res.json({ setor, ativo });
 });
 
 // ============================================================================
@@ -495,7 +470,7 @@ app.get("/api/consumo", (req, res) => {
 });
 
 // ============================================================================
-// /api/dashboard — resumo usado no dashboard
+// /api/dashboard — RESUMO PRINCIPAL
 // ============================================================================
 
 app.get("/api/dashboard", (req, res) => {
@@ -504,7 +479,8 @@ app.get("/api/dashboard", (req, res) => {
       lastUpdate: "-",
       reservatorios: [],
       pressoes: [],
-      bombas: []
+      bombas: [],
+      manutencao: getManutencao().ativo
     });
   }
 
@@ -517,7 +493,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
       current_liters: dados["Reservatorio_Elevador_current"],
       capacidade: 20000,
-      manutencao: manutencao["elevador"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Reservatório Osmose",
@@ -525,7 +501,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
       current_liters: dados["Reservatorio_Osmose_current"],
       capacidade: 200,
-      manutencao: manutencao["osmose"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Reservatório CME",
@@ -533,7 +509,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
       current_liters: dados["Reservatorio_CME_current"],
       capacidade: 1000,
-      manutencao: manutencao["cme"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Água Abrandada",
@@ -541,7 +517,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
       current_liters: dados["Reservatorio_Agua_Abrandada_current"],
       capacidade: 9000,
-      manutencao: manutencao["abrandada"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Lavanderia",
@@ -549,7 +525,7 @@ app.get("/api/dashboard", (req, res) => {
       percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
       current_liters: dados["Reservatorio_lavanderia_current"],
       capacidade: 10000,
-      manutencao: manutencao["lavanderia"] === true
+      manutencao: getManutencao().ativo
     }
   ];
 
@@ -558,37 +534,36 @@ app.get("/api/dashboard", (req, res) => {
       nome: "Pressão Saída Osmose",
       setor: "saida_osmose",
       pressao: dados["Pressao_Saida_Osmose_current"],
-      manutencao: manutencao["saida_osmose"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Pressão Retorno Osmose",
       setor: "retorno_osmose",
       pressao: dados["Pressao_Retorno_Osmose_current"],
-      manutencao: manutencao["retorno_osmose"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Pressão Saída CME",
       setor: "saida_cme",
       pressao: dados["Pressao_Saida_CME_current"],
-      manutencao: manutencao["saida_cme"] === true
+      manutencao: getManutencao().ativo
     }
   ];
 
-  // 🔥🔥🔥 CORREÇÃO OFICIAL DAS BOMBAS — 100% precisa
   const bombas = [
     {
       nome: "Bomba 01",
       estado_num: Number(dados["Bomba_01_binary"]) || 0,
       estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
       ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0,
-      manutencao: manutencao["bomba1"] === true
+      manutencao: getManutencao().ativo
     },
     {
       nome: "Bomba 02",
       estado_num: Number(dados["Bomba_02_binary"]) || 0,
       estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
       ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0,
-      manutencao: manutencao["bomba2"] === true
+      manutencao: getManutencao().ativo
     }
   ];
 
@@ -596,7 +571,8 @@ app.get("/api/dashboard", (req, res) => {
     lastUpdate: dados.timestamp,
     reservatorios,
     pressoes,
-    bombas
+    bombas,
+    manutencao: getManutencao().ativo
   });
 });
 
