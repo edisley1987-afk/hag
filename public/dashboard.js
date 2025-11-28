@@ -43,14 +43,6 @@ function render(d) {
 }
 
 // ========================= ALERTA DE NÍVEL BAIXO =========================
-function exibirAlertaNivel(nome, porcentagem) {
-    const box = document.getElementById("alerta-nivelbaixo");
-    if (!box) return;
-
-    box.style.display = "block";
-    box.innerHTML = `⚠️ O reservatório <b>${nome}</b> está com nível crítico (${porcentagem}%)`;
-}
-
 function limparAlertaNivel() {
     const box = document.getElementById("alerta-nivelbaixo");
     if (box) {
@@ -62,60 +54,45 @@ function limparAlertaNivel() {
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
+    const alertaBox = document.getElementById("alerta-nivelbaixo");
 
     limparAlertaNivel();
 
     const frag = document.createDocumentFragment();
+    let alertas40 = []; // lista de reservatórios abaixo de 40%
 
     lista.forEach(r => {
+        const percent = r.percent || 0;
 
-        // ---- ALERTA DE NÍVEL BAIXO (<= 10%) ----
-        if ((r.percent || 0) <= 10 && !manutencao[r.setor]) {
-            exibirAlertaNivel(r.nome, r.percent || 0);
+        // ---- ALERTA SONORO E COLETA ALERTA VISUAL <= 40% ----
+        if (percent <= 40 && manutencao[r.setor] !== true) {
+            if (!alertaAtivo[r.setor]) {
+                bipCurto();
+                alertaAtivo[r.setor] = true;
+            }
+            alertas40.push(`${r.nome} (${percent}%)`);
+        } else {
+            alertaAtivo[r.setor] = false;
         }
 
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
         // ---- Estado de nível (cores) ----
-        const percent = r.percent || 0;
-        if (percent <= 30) {
-            card.classList.add("nv-critico");
+        if (percent <= 30) card.classList.add("nv-critico");
+        else if (percent <= 60) card.classList.add("nv-alerta");
+        else if (percent <= 90) card.classList.add("nv-normal");
+        else card.classList.add("nv-cheio");
 
-            if (percent <= 10 && !manutencao[r.setor]) {
-                card.classList.add("piscar-perigo");
-            }
-
-        } else if (percent <= 60) {
-            card.classList.add("nv-alerta");
-        } else if (percent <= 90) {
-            card.classList.add("nv-normal");
-        } else {
-            card.classList.add("nv-cheio");
+        if (percent <= 10 && manutencao[r.setor] !== true) {
+            card.classList.add("piscar-perigo");
         }
 
-        // ---- ALERTA COM SOM <= 40% (exceto manutenção) ----
-        if (percent <= 40 && !manutencao[r.setor]) {
-            if (!alertaAtivo[r.setor]) {
-                bipCurto();
-                alertaAtivo[r.setor] = true;
-            }
-        } else {
-            alertaAtivo[r.setor] = false;
-        }
-
-        // ---- Manutenção Manual ----
         const emManut = manutencao[r.setor] === true;
-        if (emManut) {
-            card.classList.add("manutencao");
-            card.classList.remove("piscar-perigo");
-        }
+        if (emManut) card.classList.add("manutencao");
 
-        const msgMan = emManut
-            ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`
-            : "";
+        const msgMan = emManut ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>` : "";
 
-        // ---- HTML DO CARD ----
         card.innerHTML = `
             <div class="top-bar">
                 <h3>${r.nome}</h3>
@@ -141,6 +118,12 @@ function renderReservatorios(lista) {
 
     box.innerHTML = "";
     box.appendChild(frag);
+
+    // ---- EXIBE ALERTA VISUAL COM TODOS ABAIXO DE 40% ----
+    if (alertas40.length && alertaBox) {
+        alertaBox.style.display = "block";
+        alertaBox.innerHTML = `⚠️ Reservatórios abaixo de 40%: <b>${alertas40.join(", ")}</b>`;
+    }
 }
 
 // ========================= MANUTENÇÃO =========================
