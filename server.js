@@ -611,9 +611,24 @@ app.get("/login", (req, res) =>
 );
 
 // ============================================================================
+// Keep Alive - rota ping
+// ============================================================================
+app.get("/api/ping", (req, res) => {
+  res.json({ ok: true, timestamp: Date.now() });
+});
+
+// ============================================================================
+// Keep Alive (evita que o Render durma)
+// ============================================================================
+setInterval(() => {
+  fetch("https://hag-9ki9.onrender.com/api/ping")
+    .then(() => console.log("Keep-alive enviado"))
+    .catch(() => console.log("Falha ao enviar keep-alive"));
+}, 60 * 1000); // a cada 1 minuto
+
+// ============================================================================
 // Inicialização
 // ============================================================================
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor HAG ativo na porta ${PORT}`);
