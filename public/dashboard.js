@@ -1,204 +1,140 @@
-// ========================= CONFIG =========================
-const API = "/api/dashboard";
+/* ============================ CONFIG ============================ */
+const API_URL = "/dados";   // endpoint vindo do Gateway ITG convertido no servidor
+const TEMPO_ATUALIZACAO = 2000;
 
-// Carregar manutenção salva
-let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
-let alertaAtivo = {};
+/* Lista com os reservatórios que existem no dashboard */
+const RESERVATORIOS = {
+    elevador: { nome: "Elevador", capacidade: 20000 },
+    cme: { nome: "CME", capacidade: 5000 },
+    abr: { nome: "Abrandada", capacidade: 3200 },
+    osmose: { nome: "Osmose", capacidade: 650 },
+};
 
+/* ============================ INICIALIZAÇÃO ============================ */
+document.addEventListener("DOMContentLoaded", () => {
+    carregarReservatorios();
+    atualizarDados();
+    setInterval(atualizarDados, TEMPO_ATUALIZACAO);
+});
 
-// ========================= LOOP PRINCIPAL =========================
-async function atualizar() {
-    try {
-        const r = await fetch(API, { cache: "no-store" });
-        if (!r.ok) throw 0;
+/* ============================ CRIAR CARDS ============================ */
+function carregarReservatorios() {
+    const container = document.getElementById("reservatoriosContainer");
+    container.innerHTML = "";
 
-        const dados = await r.json();
-
-        render(dados);
-
-        document.getElementById("lastUpdate").textContent =
-            "Atualizado " + new Date().toLocaleTimeString();
-
-    } catch (e) {
-        console.error("Erro ao atualizar dados:", e);
-        document.getElementById("lastUpdate").textContent =
-            "Erro ao atualizar…";
-    }
-}
-
-setInterval(atualizar, 5000);
-atualizar();
-
-
-// ========================= SOM =========================
-function bipCurto() {
-    const audio = new Audio("bip.mp3");
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
-}
-
-
-// ========================= CONTROLLER (RENDER) =========================
-function render(d) {
-    renderReservatorios(d.reservatorios);
-    renderPressao(d.pressoes);
-    renderBombas(d.bombas);
-}
-
-
-
-// ========================= ALERTA DE NÍVEL BAIXO =========================
-function exibirAlertaNivel(nome, porcentagem) {
-    const box = document.getElementById("alerta-nivelbaixo");
-    if (!box) return;
-
-    box.style.display = "block";
-    box.innerHTML = `⚠️ O reservatório <b>${nome}</b> está com nível crítico (${porcentagem}%)`;
-}
-
-function limparAlertaNivel() {
-    const box = document.getElementById("alerta-nivelbaixo");
-    if (box) {
-        box.style.display = "none";
-        box.innerHTML = "";
-    }
-}
-
-
-
-// ========================= RESERVATÓRIOS =========================
-function renderReservatorios(lista) {
-    const box = document.getElementById("reservatoriosContainer");
-
-    limparAlertaNivel();
-
-    const frag = document.createDocumentFragment();
-
-    lista.forEach(r => {
-
-        // ---- ALERTA DE NÍVEL BAIXO (<= 10%) ----
-        if (r.percent <= 10 && !manutencao[r.setor]) {
-            exibirAlertaNivel(r.nome, r.percent);
-        }
-
-        const card = document.createElement("div");
-        card.className = "card-reservatorio";
-
-        // ---- Estado de nível (cores) ----
-        if (r.percent <= 30) {
-            card.classList.add("nv-critico");
-
-            // efeito piscando igual manutenção em nível crítico real
-            if (r.percent <= 10 && !manutencao[r.setor]) {
-                card.classList.add("piscar-perigo");
-            }
-
-        } else if (r.percent <= 60) {
-            card.classList.add("nv-alerta");
-
-        } else if (r.percent <= 90) {
-            card.classList.add("nv-normal");
-
-        } else {
-            card.classList.add("nv-cheio");
-        }
-
-        // ---- ALERTA COM SOM <= 40% (exceto manutenção) ----
-        if (r.percent <= 40 && !manutencao[r.setor]) {
-            if (!alertaAtivo[r.setor]) {
-                bipCurto();
-                alertaAtivo[r.setor] = true;
-            }
-        } else {
-            alertaAtivo[r.setor] = false;
-        }
-
-        // ---- Manutenção Manual ----
-        const emManut = manutencao[r.setor] === true;
-        if (emManut) {
-            card.classList.add("manutencao");
-        }
-
-        const msgMan = emManut ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>` : "";
-
-
-        // ---- HTML ----
-        card.innerHTML = `
-            <div class="top-bar">
-                <h3>${r.nome}</h3>
-                <button class="gear-btn" onclick="toggleManutencao('${r.setor}')">⚙</button>
-            </div>
-
-            <div class="tanque-visu">
-                <div class="nivel-agua" style="height:${r.percent}%"></div>
-                <div class="overlay-info">
-                    <div class="percent-text">${r.percent}%</div>
-                    <div class="liters-text">${r.current_liters} L</div>
+    Object.entries(RESERVATORIOS).forEach(([id, cfg]) => {
+        container.innerHTML += `
+            <div class="card-reservatorio" id="card-${id}">
+                <h3>${cfg.nome}</h3>
+                <div class="tanque-visu">
+                    <div class="nivel-agua" id="nivel-${id}"></div>
+                    <div class="overlay-info">
+                        <div class="percent-text" id="pct-${id}">--%</div>
+                        <div class="liters-text" id="lit-${id}">-- L</div>
+                    </div>
                 </div>
             </div>
-
-            ${msgMan}
-
-            <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
-            <p>Capacidade: ${r.capacidade} L</p>
         `;
-
-        frag.appendChild(card);
     });
-
-    box.innerHTML = "";
-    box.appendChild(frag);
 }
 
+/* ============================ ATUALIZAR DADOS ============================ */
+async function atualizarDados() {
+    try {
+        const res = await fetch(API_URL);
+        const dados = await res.json();
 
+        atualizarReservatorios(dados);
+        atualizarPressao(dados);
+        atualizarBombas(dados);
+        atualizarStatus(dados);
 
-// ========================= MANUTENÇÃO =========================
-function toggleManutencao(setor) {
-    manutencao[setor] = !manutencao[setor];
-    salvarManutencao();
+    } catch (err) {
+        console.warn("Erro ao atualizar:", err);
+    }
 }
 
-function salvarManutencao() {
-    localStorage.setItem("manutencao", JSON.stringify(manutencao));
-}
-
-function abrirHistorico(setor) {
-    location.href = `/historico.html?setor=${setor}`;
-}
-
-
-
-// ========================= PRESSÕES =========================
-function renderPressao(lista) {
+/* ============================ RESERVATÓRIOS ============================ */
+function atualizarReservatorios(dados) {
     const mapa = {
-        "saida_osmose": "pSaidaOsmose",
-        "retorno_osmose": "pRetornoOsmose",
-        "saida_cme": "pSaidaCME"
+        elevador: dados.Reservatorio_Elevador_current,
+        cme: dados.Reservatorio_CME_current,
+        abr: dados.Reservatorio_Agua_Abrandada_current,
+        osmose: dados.Reservatorio_Osmose_current
     };
 
-    lista.forEach(p => {
-        const id = mapa[p.setor];
-        const span = document.getElementById(id);
-        if (span) span.textContent = p.pressao.toFixed(2);
+    Object.entries(RESERVATORIOS).forEach(([id, cfg]) => {
+        const litros = mapa[id];
+        if (litros == null) return;
+
+        const pct = Math.min(100, Math.max(0, (litros / cfg.capacidade) * 100));
+
+        document.getElementById(`lit-${id}`).textContent = `${litros} L`;
+        document.getElementById(`pct-${id}`).textContent = `${pct.toFixed(0)}%`;
+
+        const nivel = document.getElementById(`nivel-${id}`);
+        nivel.style.height = pct + "%";
+
+        const card = document.getElementById(`card-${id}`);
+        card.classList.remove("nv-critico", "nv-alerta", "nv-normal", "nv-cheio");
+
+        if (pct <= 10) card.classList.add("nv-critico");
+        else if (pct <= 30) card.classList.add("nv-alerta");
+        else if (pct < 95) card.classList.add("nv-normal");
+        else card.classList.add("nv-cheio");
     });
 }
 
+/* ============================ PRESSÕES ============================ */
+function atualizarPressao(data) {
+    const pressCME = document.getElementById("pressao-cme");
+    const pressRetorno = document.getElementById("pressao-retorno");
+    const pressSaidaOsm = document.getElementById("pressao-osmose");
 
+    if (pressCME) pressCME.textContent = data.Pressao_Saida_CME_current?.toFixed(2) ?? "--";
+    if (pressRetorno) pressRetorno.textContent = data.Pressao_Retorno_Osmose_current?.toFixed(2) ?? "--";
+    if (pressSaidaOsm) pressSaidaOsm.textContent = data.Pressao_Saida_Osmose_current?.toFixed(2) ?? "--";
+}
 
-// ========================= BOMBAS =========================
-function renderBombas(lista) {
-    lista.forEach((b, i) => {
-        const id = `bomba${i + 1}`;
-        const el = document.getElementById(id);
+/* ============================ BOMBAS ============================ */
+function atualizarBombas(data) {
+    const bombas = [
+        { nome: "Bomba 01", id: "b1", status: data.Bomba_01_status, ciclos: data.Bombas_01_counter },
+        { nome: "Bomba 02", id: "b2", status: data.Bomba_02_status, ciclos: data.Bombas_02_counter },
+    ];
 
-        if (!el) return;
+    bombas.forEach(bomba => {
+        const card = document.getElementById(`card-${bomba.id}`);
+        const ciclosEl = document.getElementById(`ciclos-${bomba.id}`);
 
-        const ligada = b.estado_num === 1;
+        if (!card) return;
 
-        el.classList.toggle("bomba-ligada", ligada);
-        el.classList.toggle("bomba-desligada", !ligada);
+        card.classList.remove("bomba-ligada", "bomba-desligada");
 
-        document.getElementById(`b${i + 1}Status`).textContent = b.estado;
-        document.getElementById(`b${i + 1}Ciclos`).textContent = b.ciclo;
+        if (bomba.status === 1) {
+            card.classList.add("bomba-ligada");
+        } else {
+            card.classList.add("bomba-desligada");
+        }
+
+        if (ciclosEl) ciclosEl.textContent = bomba.ciclos ?? "--";
     });
+}
+
+/* ============================ MODO MANUTENÇÃO ============================ */
+function atualizarStatus(data) {
+    const status = data.status_manutencao;
+
+    const section = document.getElementById("status-sistema");
+    const texto = document.getElementById("msg-status");
+
+    if (!section) return;
+
+    if (status === 1) {
+        section.classList.add("manutencao");
+        texto.textContent = "⚠ Sistema em Modo de Manutenção";
+    } else {
+        section.classList.remove("manutencao");
+        texto.textContent = "";
+    }
 }
