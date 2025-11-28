@@ -13,6 +13,18 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// === LOG DE TEMPO POR REQUISIÇÃO ===
+app.use((req, res, next) => {
+    const start = Date.now();
+
+    res.on("finish", () => {
+        const ms = Date.now() - start;
+        console.log(`[${req.method}] ${req.originalUrl} → ${ms}ms`);
+    });
+
+    next();
+});
+
 // === Middleware universal (aceita qualquer formato do Gateway) ===
 app.use(cors());
 app.use(express.json({ limit: "10mb", strict: false }));
