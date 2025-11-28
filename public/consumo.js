@@ -1,8 +1,5 @@
-// ======= consumo.js (Corrigido e 100% funcional) =======
-
 const CAPACIDADE_ELEVADOR = 20000;
-const CAPACIDADE_OSMOSE   = 200;
-
+const CAPACIDADE_OSMOSE = 200;
 let alertaEnviado = false;
 
 // ============================
@@ -13,7 +10,7 @@ async function carregarConsumo() {
     const resp = await fetch("/historico");
     const historico = await resp.json();
 
-    if (!historico || Object.keys(historico).length === 0) {
+    if (!historico || historico.length === 0) {
       mostrarAvisoSemDados();
       return;
     }
@@ -32,47 +29,44 @@ async function carregarConsumo() {
   }
 }
 
-// ============================
 function mostrarAvisoSemDados() {
   document.getElementById("graficoConsumo").outerHTML =
     "<p style='text-align:center; color:gray; font-size:18px;'>Sem dados suficientes para gerar o gráfico.</p>";
 }
 
-// ==========================================
-// Cálculo REAL usando min/max diário
-// Agora com proteção caso dados não existam
-// ==========================================
+// ============================
+// Agrupar por dia e calcular consumo
+// ============================
 function calcularConsumoDiario(historico) {
-  const dias = Object.keys(historico).sort();
+  const diasMap = {};
 
-  const resultado = [];
+  historico.forEach(p => {
+    const date = new Date(p.timestamp);
+    const diaStr = date.toISOString().split("T")[0]; // yyyy-mm-dd
 
-  dias.forEach(data => {
-    const dia = historico[data] ?? {};
+    if (!diasMap[diaStr]) diasMap[diaStr] = { elevador: [], osmose: [] };
 
-    const elev = dia.elevador ?? {};
-    const osm  = dia.osmose   ?? {};
-
-    const minElev = elev.min ?? elev.minimo ?? elev.low ?? 0;
-    const maxElev = elev.max ?? elev.maximo ?? elev.high ?? 0;
-
-    const minOsm  = osm.min ?? osm.minimo ?? osm.low ?? 0;
-    const maxOsm  = osm.max ?? osm.maximo ?? osm.high ?? 0;
-
-    const consumoElev = Math.max(0, maxElev - minElev);
-    const consumoOsm  = Math.max(0, maxOsm  - minOsm);
-
-    resultado.push({
-      dia: data,
-      elevador: consumoElev,
-      osmose: consumoOsm
-    });
+    if (p.reservatorio === "elevador") diasMap[diaStr].elevador.push(p.valor);
+    if (p.reservatorio === "osmose") diasMap[diaStr].osmose.push(p.valor);
   });
 
-  return resultado.slice(-5); // últimos 5 dias
+  const resultado = Object.keys(diasMap)
+    .sort()
+    .slice(-5) // últimos 5 dias
+    .map(dia => {
+      const elev = diasMap[dia].elevador;
+      const osm = diasMap[dia].osmose;
+
+      const consumoElev = elev.length ? Math.max(...elev) - Math.min(...elev) : 0;
+      const consumoOsm = osm.length ? Math.max(...osm) - Math.min(...osm) : 0;
+
+      return { dia, elevador: consumoElev, osmose: consumoOsm };
+    });
+
+  return resultado;
 }
 
-// ==========================================
+// ============================
 function calcularRegressao(valores) {
   const n = valores.length;
   const x = valores.map((_, i) => i + 1);
@@ -89,7 +83,7 @@ function calcularRegressao(valores) {
   return x.map(v => slope * v + intercept);
 }
 
-// ==========================================
+// ============================
 function exibirGrafico(consumo) {
   const ctx = document.getElementById("graficoConsumo").getContext("2d");
 
@@ -106,7 +100,7 @@ function exibirGrafico(consumo) {
   // ALERTA 30%
   consumo.forEach(dia => {
     const pctElev = (dia.elevador / CAPACIDADE_ELEVADOR) * 100;
-    const pctOsm  = (dia.osmose  / CAPACIDADE_OSMOSE  ) * 100;
+    const pctOsm = (dia.osmose / CAPACIDADE_OSMOSE) * 100;
 
     if (!alertaEnviado && (pctElev >= 30 || pctOsm >= 30)) {
       alertaEnviado = true;
@@ -151,28 +145,22 @@ function exibirGrafico(consumo) {
           tension: 0.3,
           fill: false
         },
-      ],
+      ]
     },
-
     options: {
       responsive: true,
       plugins: {
-        title: {
-          display: true,
-          text: "Consumo Diário — Últimos 5 Dias",
-          font: { size: 18 },
-        },
-        legend: { position: "top" },
+        title: { display: true, text: "Consumo Diário — Últimos 5 Dias", font: { size: 18 } },
+        legend: { position: "top" }
       },
       scales: {
         y: { beginAtZero: true, title: { display: true, text: "Litros" } },
-        x: { title: { display: true, text: "Dia" } },
-      },
-    },
+        x: { title: { display: true, text: "Dia" } }
+      }
+    }
   });
 }
 
-// ==========================================
 function atualizarMeiaNoite() {
   const agora = new Date();
   const prox = new Date();
