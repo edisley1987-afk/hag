@@ -46,16 +46,43 @@ function render(d) {
 }
 
 
+
+// ========================= ALERTA DE NÍVEL BAIXO =========================
+function exibirAlertaNivel(nome, porcentagem) {
+    const box = document.getElementById("alerta-nivelbaixo");
+    if (!box) return;
+
+    box.style.display = "block";
+    box.innerHTML = `⚠️ O reservatório <b>${nome}</b> está com nível crítico (${porcentagem}%)`;
+}
+
+function limparAlertaNivel() {
+    const box = document.getElementById("alerta-nivelbaixo");
+    if (box) {
+        box.style.display = "none";
+        box.innerHTML = "";
+    }
+}
+
+
+
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
 
-    // Evita piscar tela atualizando apenas mudanças
+    // limpar alerta sempre antes de recalcular
+    limparAlertaNivel();
+
     const frag = document.createDocumentFragment();
 
     lista.forEach(r => {
 
-        // REMOVE manutenção automática apenas se abaixar de 41% → subir depois
+        // ---- ALERTA DE NÍVEL BAIXO (<= 10%) ----
+        if (r.percent <= 10 && !manutencao[r.setor]) {
+            exibirAlertaNivel(r.nome, r.percent);
+        }
+
+        // REMOVE manutenção automática se subir acima de 41%
         if (manutencao[r.setor] && r.percent >= 41) {
             manutencao[r.setor] = false;
             salvarManutencao();
@@ -64,13 +91,13 @@ function renderReservatorios(lista) {
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
-        // ---- Estado de nível ----
+        // ---- Estado de nível (cores) ----
         if (r.percent <= 30) card.classList.add("nv-critico");
         else if (r.percent <= 60) card.classList.add("nv-alerta");
         else if (r.percent <= 90) card.classList.add("nv-normal");
         else card.classList.add("nv-cheio");
 
-        // ---- ALERTA 40% ----
+        // ---- ALERTA 40% (bip) ----
         if (r.percent <= 40 && !manutencao[r.setor]) {
             if (!alertaAtivo[r.setor]) {
                 bipCurto();
@@ -82,11 +109,7 @@ function renderReservatorios(lista) {
 
         // ---- Manutenção ----
         const emManut = manutencao[r.setor] === true;
-
-        const msgMan = emManut
-            ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>`
-            : "";
-
+        const msgMan = emManut ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>` : "";
         if (emManut) card.classList.add("manutencao");
 
         // ---- HTML ----
@@ -118,6 +141,7 @@ function renderReservatorios(lista) {
 }
 
 
+
 // ========================= MANUTENÇÃO =========================
 function toggleManutencao(setor) {
     manutencao[setor] = !manutencao[setor];
@@ -131,6 +155,7 @@ function salvarManutencao() {
 function abrirHistorico(setor) {
     location.href = `/historico.html?setor=${setor}`;
 }
+
 
 
 // ========================= PRESSÕES =========================
@@ -147,6 +172,7 @@ function renderPressao(lista) {
         if (span) span.textContent = p.pressao.toFixed(2);
     });
 }
+
 
 
 // ========================= BOMBAS =========================
