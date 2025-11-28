@@ -19,16 +19,22 @@
     <!-- ============================ RESERVATÓRIOS ============================ -->
     <h2>Reservatórios</h2>
 
+    <!-- ALERTA DE NÍVEL BAIXO (RESTaurado) -->
+    <div id="alerta-nivelbaixo" style="
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0 20px 0;
+        border-radius: 8px;
+        background: #ff4e4e;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        display: none;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    "></div>
+
+    <!-- Cards gerados automaticamente pelo JS -->
     <div id="reservatoriosContainer"></div>
-    <!-- 
-        Os cards serão gerados PELO JS.
-        O JS vai montar automaticamente a estrutura:
-        - título
-        - botão engrenagem
-        - tanque
-        - mensagem manutenção
-        - botão histórico
-    -->
 
     <!-- ============================ PRESSÕES + BOMBAS ============================ -->
     <h2 style="margin-top:50px">Pressões e Bombas</h2>
