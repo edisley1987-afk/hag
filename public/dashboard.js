@@ -70,7 +70,6 @@ function limparAlertaNivel() {
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
 
-    // limpar alerta sempre antes de recalcular
     limparAlertaNivel();
 
     const frag = document.createDocumentFragment();
@@ -82,22 +81,29 @@ function renderReservatorios(lista) {
             exibirAlertaNivel(r.nome, r.percent);
         }
 
-        // REMOVE manutenção automática se subir acima de 41%
-        if (manutencao[r.setor] && r.percent >= 41) {
-            manutencao[r.setor] = false;
-            salvarManutencao();
-        }
-
         const card = document.createElement("div");
         card.className = "card-reservatorio";
 
         // ---- Estado de nível (cores) ----
-        if (r.percent <= 30) card.classList.add("nv-critico");
-        else if (r.percent <= 60) card.classList.add("nv-alerta");
-        else if (r.percent <= 90) card.classList.add("nv-normal");
-        else card.classList.add("nv-cheio");
+        if (r.percent <= 30) {
+            card.classList.add("nv-critico");
 
-        // ---- ALERTA 40% (bip) ----
+            // efeito piscando igual manutenção em nível crítico real
+            if (r.percent <= 10 && !manutencao[r.setor]) {
+                card.classList.add("piscar-perigo");
+            }
+
+        } else if (r.percent <= 60) {
+            card.classList.add("nv-alerta");
+
+        } else if (r.percent <= 90) {
+            card.classList.add("nv-normal");
+
+        } else {
+            card.classList.add("nv-cheio");
+        }
+
+        // ---- ALERTA COM SOM <= 40% (exceto manutenção) ----
         if (r.percent <= 40 && !manutencao[r.setor]) {
             if (!alertaAtivo[r.setor]) {
                 bipCurto();
@@ -107,10 +113,14 @@ function renderReservatorios(lista) {
             alertaAtivo[r.setor] = false;
         }
 
-        // ---- Manutenção ----
+        // ---- Manutenção Manual ----
         const emManut = manutencao[r.setor] === true;
+        if (emManut) {
+            card.classList.add("manutencao");
+        }
+
         const msgMan = emManut ? `<div class="msg-manutencao">🔧 EM MANUTENÇÃO</div>` : "";
-        if (emManut) card.classList.add("manutencao");
+
 
         // ---- HTML ----
         card.innerHTML = `
