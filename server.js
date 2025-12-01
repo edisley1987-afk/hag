@@ -280,6 +280,49 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
+// 🚀 ROTA /consumo/5dias/:reservatorio  (NOVO — ADICIONADO DO JEITO QUE PEDIU)
+// ============================================================================
+app.get("/consumo/5dias/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+
+  const mapa = {
+    elevador: "Reservatorio_Elevador_current",
+    osmose: "Reservatorio_Osmose_current",
+    lavanderia: "Reservatorio_lavanderia_current"
+  };
+
+  const ref = mapa[nome];
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+
+  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+
+  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
+  const datas = Object.keys(historico).sort().slice(-5);
+
+  const resposta = datas.map(dia => {
+    const reg = historico[dia][ref];
+    if (!reg) return { dia, consumo: 0 };
+
+    const valores = [];
+    if (typeof reg.min === "number") valores.push(reg.min);
+    if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
+
+    if (valores.length < 2) return { dia, consumo: 0 };
+
+    let consumo = 0;
+    for (let i = 1; i < valores.length; i++) {
+      if (valores[i] < valores[i - 1]) {
+        consumo += valores[i - 1] - valores[i];
+      }
+    }
+
+    return { dia, consumo: Number(consumo.toFixed(2)) };
+  });
+
+  res.json(resposta);
+});
+
+// ============================================================================
 // 🚀 NOVA ROTA OFICIAL — /api/consumo_diario
 // ============================================================================
 app.get("/api/consumo_diario", (req, res) => {
