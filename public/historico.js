@@ -1,155 +1,121 @@
-// ======= histórico.js =======
+const API_HIST = "/historico";
+const API_CONSUMO = "/consumo/5dias";
 
-// Capacidade de cada reservatório (em litros)
-const CAPACIDADE = {
-  elevador: 20000,
-  osmose: 200,
-  lavanderia: 5000,
-};
+const select = document.getElementById("reservatorioSelect");
+let grafico = null;
 
-// Referências para os gráficos
-let graficoHistorico = null;
-let graficoConsumo = null;
-
-// ============================
-// Função para carregar histórico
-// ============================
-async function carregarHistorico() {
+// ===============================
+// 📊 CARREGAR GRÁFICO MELHORADO
+// ===============================
+async function carregarGrafico() {
   try {
-    const resp = await fetch("/historico");
-    const historico = await resp.json();
+    const reservatorio = select.value;
 
-    if (!historico || historico.length === 0) return;
+    const resp = await fetch(API_HIST);
+    const dados = await resp.json();
 
-    montarTabela(historico);
-    montarGraficoHistorico(historico);
-    montarGraficoConsumo(historico);
+    const filtrado = dados
+      .filter(d => d.reservatorio === reservatorio)
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    const labels = filtrado.map(p =>
+      new Date(p.timestamp).toLocaleString("pt-BR")
+    );
+
+    const valores = filtrado.map(p => p.valor);
+
+    const ctx = document.getElementById("graficoHistorico").getContext("2d");
+
+    if (grafico) grafico.destroy();
+
+    grafico = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: `Nível – ${reservatorio}`,
+          data: valores,
+          borderWidth: 4,
+          borderColor: "#007b83",
+          backgroundColor: "rgba(0,123,131,0.12)",
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { font: { size: 16 } }
+          },
+          tooltip: {
+            backgroundColor: "#004d50",
+            titleColor: "#fff",
+            bodyColor: "#fff",
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 12 }},
+            grid: { color: "rgba(0,0,0,0.05)" }
+          },
+          y: {
+            ticks: { font: { size: 14 }},
+            grid: { color: "rgba(0,0,0,0.05)" }
+          }
+        }
+      }
+    });
 
   } catch (err) {
-    console.error("Erro ao carregar histórico:", err);
+    console.error("Erro no gráfico:", err);
   }
 }
 
-// ============================
-// Monta tabela com todos os reservatórios
-// ============================
-function montarTabela(historico) {
-  const tabela = document.getElementById("tabelaHistorico");
-  tabela.innerHTML = "";
+// ===============================
+// 📅 CONSUMO DIÁRIO (Corrigido)
+// ===============================
+async function carregarConsumo() {
+  const reservatorio = select.value;
 
-  // Cabeçalho
-  const cabecalho = document.createElement("tr");
-  cabecalho.innerHTML = `
-    <th>Data/Hora</th>
-    <th>Elevador (L)</th>
-    <th>Osmose (L)</th>
-    <th>Lavanderia (L)</th>
-  `;
-  tabela.appendChild(cabecalho);
-
-  historico.forEach(item => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${new Date(item.time).toLocaleString()}</td>
-      <td>${item.elevador}</td>
-      <td>${item.osmose}</td>
-      <td>${item.lavanderia}</td>
-    `;
-    tabela.appendChild(tr);
-  });
-}
-
-// ============================
-// Monta gráfico de histórico (linhas)
-// ============================
-function montarGraficoHistorico(historico) {
-  const labels = historico.map(h => new Date(h.time).toLocaleString());
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: "Elevador",
-        data: historico.map(h => h.elevador),
-        borderColor: "blue",
-        fill: false,
-      },
-      {
-        label: "Osmose",
-        data: historico.map(h => h.osmose),
-        borderColor: "green",
-        fill: false,
-      },
-      {
-        label: "Lavanderia",
-        data: historico.map(h => h.lavanderia),
-        borderColor: "orange",
-        fill: false,
-      },
-    ],
-  };
-
-  const config = {
-    type: "line",
-    data,
-    options: {
-      responsive: true,
-      plugins: { legend: { position: "top" } },
-      scales: { y: { beginAtZero: true } },
-    },
-  };
-
-  if (graficoHistorico) graficoHistorico.destroy();
-  graficoHistorico = new Chart(
-    document.getElementById("graficoHistorico"),
-    config
-  );
-}
-
-// ============================
-// Monta gráfico de consumo diário (barras)
-// ============================
-function montarGraficoConsumo(historico) {
-  // Pegando os últimos 5 dias
-  const ultimos5 = historico.slice(-6); // precisa de 6 pontos para calcular diferença de 5 dias
-
-  const labels = ultimos5.slice(1).map(h => new Date(h.time).toLocaleDateString());
-  const consumoElevador = [];
-  const consumoOsmose = [];
-  const consumoLavanderia = [];
-
-  for (let i = 1; i < ultimos5.length; i++) {
-    consumoElevador.push(ultimos5[i-1].elevador - ultimos5[i].elevador);
-    consumoOsmose.push(ultimos5[i-1].osmose - ultimos5[i].osmose);
-    consumoLavanderia.push(ultimos5[i-1].lavanderia - ultimos5[i].lavanderia);
+  if (!["elevador", "osmose"].includes(reservatorio)) {
+    document.getElementById("tabelaConsumo").innerHTML =
+      "<tr><td colspan='3'>Consumo disponível apenas para Elevador e Osmose</td></tr>";
+    return;
   }
 
-  const data = {
-    labels,
-    datasets: [
-      { label: "Elevador", data: consumoElevador, backgroundColor: "blue" },
-      { label: "Osmose", data: consumoOsmose, backgroundColor: "green" },
-      { label: "Lavanderia", data: consumoLavanderia, backgroundColor: "orange" },
-    ],
-  };
+  try {
+    const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
+    const dados = await resp.json();
 
-  const config = {
-    type: "bar",
-    data,
-    options: {
-      responsive: true,
-      plugins: { legend: { position: "top" } },
-      scales: { y: { beginAtZero: true } },
-    },
-  };
+    const tabela = document.getElementById("tabelaConsumo");
+    tabela.innerHTML = "";
 
-  if (graficoConsumo) graficoConsumo.destroy();
-  graficoConsumo = new Chart(
-    document.getElementById("graficoConsumo"),
-    config
-  );
+    dados.forEach(item => {
+      // corrige consumo negativo
+      let consumoCorrigido = item.consumo;
+      if (consumoCorrigido < 0) consumoCorrigido = Math.abs(consumoCorrigido);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.dia}</td>
+        <td>${reservatorio}</td>
+        <td>${consumoCorrigido}</td>
+      `;
+      tabela.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("Erro no consumo:", err);
+  }
 }
 
-// ============================
-// Inicialização
-// ============================
-document.addEventListener("DOMContentLoaded", carregarHistorico);
+select.addEventListener("change", () => {
+  carregarGrafico();
+  carregarConsumo();
+});
+
+carregarGrafico();
+carregarConsumo();
