@@ -280,74 +280,44 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// /consumo/5dias/:reservatorio — corrigido
+// 🚀 NOVA ROTA OFICIAL — /api/consumo_diario
 // ============================================================================
-app.get("/consumo/5dias/:reservatorio", (req, res) => {
-  const nome = req.params.reservatorio.toLowerCase();
-  const ref = MAPA_RESERVATORIOS[nome];
-  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
-  if (!fs.existsSync(HIST_FILE)) return res.json([]);
+app.get("/api/consumo_diario", (req, res) => {
+  const diasReq = Number(req.query.dias || 5);
 
-  const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  const dias = [];
-  const chaves = Object.keys(historico).sort().slice(-5);
-
-  for (const data of chaves) {
-    const reg = historico[data][ref];
-    if (!reg) continue;
-
-    const valores = [];
-    if (typeof reg.min === "number") valores.push(reg.min);
-    if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
-
-    if (valores.length < 2) {
-      dias.push({ dia: data, consumo: 0 });
-      continue;
-    }
-
-    // calcular consumo do dia somando apenas quedas
-    let consumoDia = 0;
-    for (let i = 1; i < valores.length; i++) {
-      if (valores[i] < valores[i - 1]) consumoDia += valores[i - 1] - valores[i];
-    }
-
-    dias.push({ dia: data, consumo: Number(consumoDia.toFixed(2)) });
-  }
-
-  res.json(dias);
-});
-
-// ============================================================================
-// /api/consumo — usado pelo dashboard
-// ============================================================================
-app.get("/api/consumo", (req, res) => {
-  const qtdDias = Number(req.query.dias || 5);
   if (!fs.existsSync(HIST_FILE)) {
     return res.json({ dias: [], elevador: [], osmose: [], lavanderia: [] });
   }
 
   const historico = JSON.parse(fs.readFileSync(HIST_FILE, "utf-8"));
-  const dias = Object.keys(historico).sort().slice(-qtdDias);
+  const dias = Object.keys(historico).sort().slice(-diasReq);
 
-  function calcularConsumo(ref) {
+  function consumo(ref) {
     return dias.map(data => {
-      const dia = historico[data][ref];
-      if (!dia) return 0;
+      const reg = historico[data][ref];
+      if (!reg) return 0;
+
       const valores = [];
-      if (typeof dia.min === "number") valores.push(dia.min);
-      if (Array.isArray(dia.pontos)) dia.pontos.forEach(p => valores.push(p.valor));
+      if (typeof reg.min === "number") valores.push(reg.min);
+      if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
+
       if (valores.length < 2) return 0;
-      let consumo = 0;
-      for (let i = 1; i < valores.length; i++) if (valores[i] < valores[i - 1]) consumo += valores[i - 1] - valores[i];
-      return Number(consumo.toFixed(2));
+
+      let total = 0;
+      for (let i = 1; i < valores.length; i++) {
+        if (valores[i] < valores[i - 1]) {
+          total += valores[i - 1] - valores[i];
+        }
+      }
+      return Number(total.toFixed(2));
     });
   }
 
   res.json({
     dias,
-    elevador: calcularConsumo("Reservatorio_Elevador_current"),
-    osmose: calcularConsumo("Reservatorio_Osmose_current"),
-    lavanderia: calcularConsumo("Reservatorio_lavanderia_current")
+    elevador: consumo("Reservatorio_Elevador_current"),
+    osmose: consumo("Reservatorio_Osmose_current"),
+    lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
 
