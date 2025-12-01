@@ -5,7 +5,8 @@ const ctx = document.getElementById('graficoConsumo').getContext('2d');
 // Função para buscar dados da API
 async function buscarConsumo() {
   try {
-    const resp = await fetch('/api/consumo?dias=5');
+    // 🔥 CORRIGIDO: rota correta é /api/consumo_diario
+    const resp = await fetch('/api/consumo_diario?dias=5');
     const dados = await resp.json();
 
     return {
