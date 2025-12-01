@@ -5,13 +5,12 @@ const select = document.getElementById("reservatorioSelect");
 let grafico = null;
 
 // ===============================
-// 📊 CARREGAR GRÁFICO MELHORADO (Lavanderia incluída)
+// 📊 CARREGAR GRÁFICO MELHORADO
 // ===============================
 async function carregarGrafico() {
   try {
     const reservatorio = select.value;
 
-    // Agora aceita: elevador, osmose, lavanderia, abrandada, cme…
     const resp = await fetch(API_HIST);
     const dados = await resp.json();
 
@@ -76,15 +75,14 @@ async function carregarGrafico() {
 }
 
 // ===============================
-// 📅 CONSUMO DIÁRIO (mantido igual)
+// 📅 CONSUMO DIÁRIO (Incluindo Lavanderia)
 // ===============================
 async function carregarConsumo() {
   const reservatorio = select.value;
 
-  // Mantido: consumo apenas para Elevador e Osmose
-  if (!["elevador", "osmose"].includes(reservatorio)) {
+  if (!["elevador", "osmose", "lavanderia"].includes(reservatorio)) {
     document.getElementById("tabelaConsumo").innerHTML =
-      "<tr><td colspan='3'>Consumo disponível apenas para Elevador e Osmose</td></tr>";
+      "<tr><td colspan='3'>Consumo disponível apenas para Elevador, Osmose e Lavanderia</td></tr>";
     return;
   }
 
