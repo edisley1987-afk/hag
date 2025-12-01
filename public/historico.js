@@ -1,210 +1,155 @@
-// ========================================================
-// CONFIGURAÇÕES
-// ========================================================
-const API_HIST = "/historico";
+// ======= histórico.js =======
 
+// Capacidade de cada reservatório (em litros)
 const CAPACIDADE = {
   elevador: 20000,
   osmose: 200,
   lavanderia: 5000,
-  cme: 1000,
-  abrandada: 9000
 };
 
-let grafico = null;
+// Referências para os gráficos
+let graficoHistorico = null;
+let graficoConsumo = null;
 
-// ========================================================
-// CARREGAR HISTÓRICO DO SERVIDOR
-// ========================================================
+// ============================
+// Função para carregar histórico
+// ============================
 async function carregarHistorico() {
   try {
-    const resp = await fetch(API_HIST);
+    const resp = await fetch("/historico");
     const historico = await resp.json();
 
-    if (!historico || historico.length === 0) {
-      console.warn("Sem dados no histórico");
-      return;
-    }
+    if (!historico || historico.length === 0) return;
 
-    const consumo = calcularConsumoDiario(historico);
-
-    exibirGrafico(consumo);
-    preencherTabela(consumo);
+    montarTabela(historico);
+    montarGraficoHistorico(historico);
+    montarGraficoConsumo(historico);
 
   } catch (err) {
     console.error("Erro ao carregar histórico:", err);
   }
 }
 
-// ========================================================
-// AGRUPAR POR DIA + CALCULAR CONSUMO (SOMENTE QUEDAS)
-// ========================================================
-function calcularConsumoDiario(historico) {
-  const dias = {};
-
-  historico.forEach(p => {
-    const dia = new Date(p.timestamp).toISOString().split("T")[0];
-
-    if (!dias[dia]) {
-      dias[dia] = { elevador: [], osmose: [], lavanderia: [], cme: [], abrandada: [] };
-    }
-
-    if (p.reservatorio === "elevador") dias[dia].elevador.push(p.valor);
-    if (p.reservatorio === "osmose") dias[dia].osmose.push(p.valor);
-    if (p.reservatorio === "lavanderia") dias[dia].lavanderia.push(p.valor);
-    if (p.reservatorio === "cme") dias[dia].cme.push(p.valor);
-    if (p.reservatorio === "abrandada") dias[dia].abrandada.push(p.valor);
-  });
-
-  return Object.keys(dias)
-    .sort()
-    .slice(-5)
-    .map(dia => ({
-      dia,
-      elevador: calcularQuedas(dias[dia].elevador),
-      osmose: calcularQuedas(dias[dia].osmose),
-      lavanderia: calcularQuedas(dias[dia].lavanderia),
-      cme: calcularQuedas(dias[dia].cme),
-      abrandada: calcularQuedas(dias[dia].abrandada)
-    }));
-}
-
-// ========================================================
-// SOMAR APENAS QUEDAS
-// ========================================================
-function calcularQuedas(valores) {
-  if (!valores || valores.length < 2) return 0;
-
-  let consumo = 0;
-
-  for (let i = 1; i < valores.length; i++) {
-    const queda = valores[i - 1] - valores[i];
-    if (queda > 0) consumo += queda;
-  }
-
-  return consumo;
-}
-
-// ========================================================
-// EXIBIR GRÁFICO
-// ========================================================
-function exibirGrafico(consumo) {
-  const canvas = document.getElementById("graficoHistorico");
-  if (!canvas) {
-    console.error("Canvas não encontrado!");
-    return;
-  }
-
-  const ctx = canvas.getContext("2d");
-
-  if (grafico instanceof Chart) grafico.destroy();
-
-  grafico = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: consumo.map(c => c.dia),
-      datasets: [
-        { label: "Elevador (L)", data: consumo.map(c => c.elevador), backgroundColor: "#2c8b7d" },
-        { label: "Osmose (L)", data: consumo.map(c => c.osmose), backgroundColor: "#57b3a0" },
-        { label: "Lavanderia (L)", data: consumo.map(c => c.lavanderia), backgroundColor: "#8c6cff" },
-        { label: "CME (L)", data: consumo.map(c => c.cme), backgroundColor: "#ff9f40" },
-        { label: "Abrandada (L)", data: consumo.map(c => c.abrandada), backgroundColor: "#ff6384" }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: "top" },
-        title: {
-          display: true,
-          text: "Consumo Diário – Últimos 5 Dias",
-          font: { size: 18 }
-        }
-      },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: "Litros (L)" } },
-        x: { title: { display: true, text: "Dias" } }
-      }
-    }
-  });
-}
-
-// ========================================================
-// PREENCHER TABELA
-// ========================================================
-function preencherTabela(consumo) {
-  const tabela = document.getElementById("tabelaConsumo");
+// ============================
+// Monta tabela com todos os reservatórios
+// ============================
+function montarTabela(historico) {
+  const tabela = document.getElementById("tabelaHistorico");
   tabela.innerHTML = "";
 
-  consumo.forEach(c => {
-    tabela.innerHTML += `
-      <tr>
-        <td>${c.dia}</td>
-        <td>${c.elevador}</td>
-        <td>${c.osmose}</td>
-        <td>${c.lavanderia}</td>
-        <td>${c.cme}</td>
-        <td>${c.abrandada}</td>
-      </tr>
+  // Cabeçalho
+  const cabecalho = document.createElement("tr");
+  cabecalho.innerHTML = `
+    <th>Data/Hora</th>
+    <th>Elevador (L)</th>
+    <th>Osmose (L)</th>
+    <th>Lavanderia (L)</th>
+  `;
+  tabela.appendChild(cabecalho);
+
+  historico.forEach(item => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(item.time).toLocaleString()}</td>
+      <td>${item.elevador}</td>
+      <td>${item.osmose}</td>
+      <td>${item.lavanderia}</td>
     `;
+    tabela.appendChild(tr);
   });
 }
 
-// ========================================================
-// EXPORTAR PARA EXCEL
-// ========================================================
-function exportarExcel() {
-  const tabela = document.getElementById("tabelaConsumo");
-  const linhas = [];
-  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia", "CME", "Abrandada"];
+// ============================
+// Monta gráfico de histórico (linhas)
+// ============================
+function montarGraficoHistorico(historico) {
+  const labels = historico.map(h => new Date(h.time).toLocaleString());
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Elevador",
+        data: historico.map(h => h.elevador),
+        borderColor: "blue",
+        fill: false,
+      },
+      {
+        label: "Osmose",
+        data: historico.map(h => h.osmose),
+        borderColor: "green",
+        fill: false,
+      },
+      {
+        label: "Lavanderia",
+        data: historico.map(h => h.lavanderia),
+        borderColor: "orange",
+        fill: false,
+      },
+    ],
+  };
 
-  linhas.push(cabecalho);
+  const config = {
+    type: "line",
+    data,
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "top" } },
+      scales: { y: { beginAtZero: true } },
+    },
+  };
 
-  [...tabela.rows].forEach(row => {
-    const cols = [...row.cells].map(c => c.innerText);
-    linhas.push(cols);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(linhas);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Consumo");
-
-  XLSX.writeFile(wb, "consumo_diario.xlsx");
+  if (graficoHistorico) graficoHistorico.destroy();
+  graficoHistorico = new Chart(
+    document.getElementById("graficoHistorico"),
+    config
+  );
 }
 
-// ========================================================
-// EXPORTAR PARA PDF
-// ========================================================
-function exportarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape" });
+// ============================
+// Monta gráfico de consumo diário (barras)
+// ============================
+function montarGraficoConsumo(historico) {
+  // Pegando os últimos 5 dias
+  const ultimos5 = historico.slice(-6); // precisa de 6 pontos para calcular diferença de 5 dias
 
-  doc.setFontSize(18);
-  doc.text("Relatório de Consumo Diário", 14, 20);
+  const labels = ultimos5.slice(1).map(h => new Date(h.time).toLocaleDateString());
+  const consumoElevador = [];
+  const consumoOsmose = [];
+  const consumoLavanderia = [];
 
-  const tabela = document.getElementById("tabelaConsumo");
-  const linhas = [];
-  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia", "CME", "Abrandada"];
+  for (let i = 1; i < ultimos5.length; i++) {
+    consumoElevador.push(ultimos5[i-1].elevador - ultimos5[i].elevador);
+    consumoOsmose.push(ultimos5[i-1].osmose - ultimos5[i].osmose);
+    consumoLavanderia.push(ultimos5[i-1].lavanderia - ultimos5[i].lavanderia);
+  }
 
-  [...tabela.rows].forEach(row => {
-    const cols = [...row.cells].map(c => c.innerText);
-    linhas.push(cols);
-  });
+  const data = {
+    labels,
+    datasets: [
+      { label: "Elevador", data: consumoElevador, backgroundColor: "blue" },
+      { label: "Osmose", data: consumoOsmose, backgroundColor: "green" },
+      { label: "Lavanderia", data: consumoLavanderia, backgroundColor: "orange" },
+    ],
+  };
 
-  doc.autoTable({
-    head: [cabecalho],
-    body: linhas,
-    startY: 30,
-    theme: "grid",
-    headStyles: { fillColor: [0, 123, 131] }
-  });
+  const config = {
+    type: "bar",
+    data,
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "top" } },
+      scales: { y: { beginAtZero: true } },
+    },
+  };
 
-  doc.save("consumo_diario.pdf");
+  if (graficoConsumo) graficoConsumo.destroy();
+  graficoConsumo = new Chart(
+    document.getElementById("graficoConsumo"),
+    config
+  );
 }
 
-// ========================================================
-// INICIAR AO CARREGAR A PÁGINA
-// ========================================================
-window.addEventListener("load", () => {
-  carregarHistorico();
-});
+// ============================
+// Inicialização
+// ============================
+document.addEventListener("DOMContentLoaded", carregarHistorico);
