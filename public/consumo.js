@@ -1,232 +1,181 @@
-const CAPACIDADE_ELEVADOR = 20000;
-const CAPACIDADE_OSMOSE = 200;
-const CAPACIDADE_LAVANDERIA = 10000;
-let alertaEnviado = false;
+// ============================
+// CONFIGURAÇÕES
+// ============================
+const API_HIST = "/historico";
+
+let graficoHistorico;
 
 // ============================
-// Carregar histórico do servidor
+// FUNÇÃO PRINCIPAL
 // ============================
-async function carregarConsumo() {
+window.addEventListener("load", () => {
+  carregarHistorico();
+});
+
+// ============================
+// BUSCAR HISTÓRICO NO SERVIDOR
+// ============================
+async function carregarHistorico() {
   try {
-    const resp = await fetch("/historico");
+    const resp = await fetch(API_HIST);
     const historico = await resp.json();
 
-    if (!historico || historico.length === 0) {
-      mostrarAvisoSemDados();
+    if (!historico || !historico.length) {
+      mostrarAviso("Sem dados para exibir.");
       return;
     }
 
-    const consumoPorDia = calcularConsumoDiario(historico);
-
-    if (!consumoPorDia.length) {
-      mostrarAvisoSemDados();
-      return;
-    }
-
-    exibirGrafico(consumoPorDia);
+    const consumo = calcularConsumoDiario(historico);
+    exibirGrafico(consumo);
+    preencherTabela(consumo);
 
   } catch (err) {
-    console.error("Erro ao carregar consumo diário:", err);
+    console.error("Erro ao carregar histórico:", err);
+    mostrarAviso("Erro ao carregar dados.");
   }
 }
 
-function mostrarAvisoSemDados() {
-  const canvas = document.getElementById("graficoConsumo");
-  if (canvas) {
-    canvas.outerHTML =
-      "<p style='text-align:center; color:gray; font-size:18px;'>Sem dados suficientes para gerar o gráfico.</p>";
-  } else {
-    // fallback
-    const cont = document.getElementById("grafico-wrapper");
-    if (cont) cont.innerHTML = "<p style='text-align:center; color:gray; font-size:18px;'>Sem dados suficientes para gerar o gráfico.</p>";
-  }
+function mostrarAviso(msg) {
+  document.getElementById("graficoHistorico").outerHTML =
+    `<p style='text-align:center; font-size:18px; color:gray;'>${msg}</p>`;
 }
 
 // ============================
-// Agrupar por dia e calcular consumo
+// CÁLCULO DE CONSUMO — SOMENTE QUEDAS
+// ============================
+function calcularQuedas(valores) {
+  if (!valores || valores.length < 2) return 0;
+
+  let consumo = 0;
+
+  for (let i = 1; i < valores.length; i++) {
+    const queda = valores[i - 1] - valores[i];
+    if (queda > 0) consumo += queda; // soma somente quedas reais
+  }
+
+  return consumo;
+}
+
+// ============================
+// AGRUPAR HISTÓRICO POR DIA
 // ============================
 function calcularConsumoDiario(historico) {
-  const diasMap = {};
+  const dias = {};
 
   historico.forEach(p => {
-    const date = new Date(p.timestamp);
-    // se timestamp já for number em ms, new Date ok; se for string, também ok
-    const diaStr = date.toISOString().split("T")[0]; // yyyy-mm-dd
+    const dia = new Date(p.timestamp).toISOString().split("T")[0];
 
-    if (!diasMap[diaStr]) diasMap[diaStr] = { elevador: [], osmose: [], lavanderia: [] };
+    if (!dias[dia]) {
+      dias[dia] = {
+        elevador: [],
+        osmose: [],
+        lavanderia: [],
+        cme: [],
+        abrandada: []
+      };
+    }
 
-    if (p.reservatorio === "elevador") diasMap[diaStr].elevador.push(p.valor);
-    if (p.reservatorio === "osmose") diasMap[diaStr].osmose.push(p.valor);
-    if (p.reservatorio === "lavanderia") diasMap[diaStr].lavanderia.push(p.valor);
+    // Agrupamento por reservatório
+    if (p.reservatorio === "elevador") dias[dia].elevador.push(p.valor);
+    if (p.reservatorio === "osmose") dias[dia].osmose.push(p.valor);
+    if (p.reservatorio === "lavanderia") dias[dia].lavanderia.push(p.valor);
+    if (p.reservatorio === "cme") dias[dia].cme.push(p.valor);
+    if (p.reservatorio === "abrandada") dias[dia].abrandada.push(p.valor);
   });
 
-  const resultado = Object.keys(diasMap)
+  // Montar consumo somando somente quedas
+  return Object.keys(dias)
     .sort()
-    .slice(-5) // últimos 5 dias
-    .map(dia => {
-      const elev = diasMap[dia].elevador;
-      const osm = diasMap[dia].osmose;
-      const lav = diasMap[dia].lavanderia;
-
-      // consumo = somatório de quedas (ou máxima - mínima? aqui mantive max-min pra ser consistente com histórico anterior)
-      const consumoElev = elev.length ? Math.max(...elev) - Math.min(...elev) : 0;
-      const consumoOsm = osm.length ? Math.max(...osm) - Math.min(...osm) : 0;
-      const consumoLav = lav.length ? Math.max(...lav) - Math.min(...lav) : 0;
-
-      return { dia, elevador: Number(consumoElev.toFixed(2)), osmose: Number(consumoOsm.toFixed(2)), lavanderia: Number(consumoLav.toFixed(2)) };
-    });
-
-  return resultado;
+    .map(dia => ({
+      dia,
+      elevador: calcularQuedas(dias[dia].elevador),
+      osmose: calcularQuedas(dias[dia].osmose),
+      lavanderia: calcularQuedas(dias[dia].lavanderia),
+      cme: calcularQuedas(dias[dia].cme),
+      abrandada: calcularQuedas(dias[dia].abrandada)
+    }));
 }
 
 // ============================
-function calcularRegressao(valores) {
-  const n = valores.length;
-  if (n === 0) return [];
-
-  const x = valores.map((_, i) => i + 1);
-  const y = valores;
-
-  const somaX = x.reduce((a, b) => a + b, 0);
-  const somaY = y.reduce((a, b) => a + b, 0);
-  const somaXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
-  const somaX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
-
-  const denom = (n * somaX2 - somaX * somaX);
-  const slope = denom === 0 ? 0 : (n * somaXY - somaX * somaY) / denom;
-  const intercept = (somaY - slope * somaX) / n;
-
-  return x.map(v => slope * v + intercept);
-}
-
+// EXIBIR GRÁFICO
 // ============================
 function exibirGrafico(consumo) {
-  const ctxCanvas = document.getElementById("graficoConsumo");
-  if (!ctxCanvas) {
-    console.error("Elemento #graficoConsumo não encontrado.");
-    return;
-  }
-  const ctx = ctxCanvas.getContext("2d");
+  const ctx = document.getElementById("graficoHistorico").getContext("2d");
 
-  if (window.graficoConsumo instanceof Chart) {
-    window.graficoConsumo.destroy();
-  }
+  if (graficoHistorico instanceof Chart) graficoHistorico.destroy();
 
-  const valoresElevador = consumo.map(d => d.elevador);
-  const valoresOsmose = consumo.map(d => d.osmose);
-  const valoresLavanderia = consumo.map(d => d.lavanderia);
-
-  const regressaoElevador = calcularRegressao(valoresElevador);
-  const regressaoOsmose = calcularRegressao(valoresOsmose);
-  const regressaoLav = calcularRegressao(valoresLavanderia);
-
-  // ALERTA 30%
-  consumo.forEach(dia => {
-    const pctElev = (dia.elevador / CAPACIDADE_ELEVADOR) * 100;
-    const pctOsm = (dia.osmose / CAPACIDADE_OSMOSE) * 100;
-    const pctLav = (dia.lavanderia / CAPACIDADE_LAVANDERIA) * 100;
-
-    if (!alertaEnviado && (pctElev >= 30 || pctOsm >= 30 || pctLav >= 30)) {
-      alertaEnviado = true;
-      alert("⚠️ ALERTA: Consumo atingiu 30% da capacidade em algum reservatório!");
-    }
-  });
-
-  window.graficoConsumo = new Chart(ctx, {
+  graficoHistorico = new Chart(ctx, {
     type: "bar",
     data: {
       labels: consumo.map(d => d.dia),
       datasets: [
         {
-          label: "Reservatório Elevador (L)",
-          data: valoresElevador,
-          backgroundColor: valoresElevador.map(v =>
-            (v / CAPACIDADE_ELEVADOR) * 100 >= 30 ? "red" : "#2c8b7d"
-          )
+          label: "Elevador",
+          data: consumo.map(d => d.elevador),
+          backgroundColor: "#3498db"
         },
         {
-          label: "Reservatório Osmose (L)",
-          data: valoresOsmose,
-          backgroundColor: valoresOsmose.map(v =>
-            (v / CAPACIDADE_OSMOSE) * 100 >= 30 ? "red" : "#57b3a0"
-          )
+          label: "Osmose",
+          data: consumo.map(d => d.osmose),
+          backgroundColor: "#2ecc71"
         },
         {
-          label: "Reservatório Lavanderia (L)",
-          data: valoresLavanderia,
-          backgroundColor: valoresLavanderia.map(v =>
-            (v / CAPACIDADE_LAVANDERIA) * 100 >= 30 ? "red" : "#6a9bd6"
-          )
+          label: "Lavanderia",
+          data: consumo.map(d => d.lavanderia),
+          backgroundColor: "#9b59b6"
         },
         {
-          type: "line",
-          label: "Tendência Elevador",
-          data: regressaoElevador,
-          borderColor: "#145c4d",
-          borderWidth: 2,
-          tension: 0.3,
-          fill: false,
-          yAxisID: "y"
+          label: "CME",
+          data: consumo.map(d => d.cme),
+          backgroundColor: "#f1c40f"
         },
         {
-          type: "line",
-          label: "Tendência Osmose",
-          data: regressaoOsmose,
-          borderColor: "#2fa88c",
-          borderWidth: 2,
-          tension: 0.3,
-          fill: false,
-          yAxisID: "y"
-        },
-        {
-          type: "line",
-          label: "Tendência Lavanderia",
-          data: regressaoLav,
-          borderColor: "#2a56a5",
-          borderWidth: 2,
-          tension: 0.3,
-          fill: false,
-          yAxisID: "y"
+          label: "Abrandada",
+          data: consumo.map(d => d.abrandada),
+          backgroundColor: "#e67e22"
         }
       ]
     },
     options: {
       responsive: true,
       plugins: {
-        title: { display: true, text: "Consumo Diário — Últimos 5 Dias", font: { size: 18 } },
-        legend: { position: "top" },
-        tooltip: {
-          mode: 'index',
-          intersect: false
-        }
-      },
-      interaction: {
-        mode: 'nearest',
-        axis: 'x',
-        intersect: false
+        title: {
+          display: true,
+          text: "Consumo Diário — Somente Quedas Reais",
+          font: { size: 20 }
+        },
+        legend: { position: "top" }
       },
       scales: {
-        y: { beginAtZero: true, title: { display: true, text: "Litros" } },
-        x: { title: { display: true, text: "Dia" } }
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Litros Consumidos" }
+        },
+        x: {
+          title: { display: true, text: "Dia" }
+        }
       }
     }
   });
 }
 
-function atualizarMeiaNoite() {
-  const agora = new Date();
-  const prox = new Date();
-  prox.setHours(24, 0, 0, 0);
-  const ms = prox - agora;
+// ============================
+// TABELA DE CONSUMO
+// ============================
+function preencherTabela(consumo) {
+  const tabela = document.getElementById("tabelaConsumo");
+  tabela.innerHTML = "";
 
-  setTimeout(() => {
-    alertaEnviado = false;
-    carregarConsumo();
-    atualizarMeiaNoite();
-  }, ms);
+  consumo.forEach(d => {
+    tabela.innerHTML += `
+      <tr>
+        <td>${d.dia}</td>
+        <td>${d.elevador} L</td>
+        <td>${d.osmose} L</td>
+        <td>${d.lavanderia} L</td>
+        <td>${d.cme} L</td>
+        <td>${d.abrandada} L</td>
+      </tr>
+    `;
+  });
 }
-
-window.addEventListener("load", () => {
-  carregarConsumo();
-  atualizarMeiaNoite();
-});
