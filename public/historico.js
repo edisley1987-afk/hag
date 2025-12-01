@@ -1,120 +1,213 @@
+// ========================================================
+// CONFIGURAÇÕES
+// ========================================================
 const API_HIST = "/historico";
-const API_CONSUMO = "/consumo/5dias";
 
-const select = document.getElementById("reservatorioSelect");
+const CAPACIDADE = {
+  elevador: 20000,
+  osmose: 200,
+  lavanderia: 5000,
+};
+
 let grafico = null;
 
-// ===============================
-// 📊 CARREGAR GRÁFICO MELHORADO
-// ===============================
-async function carregarGrafico() {
-  try {
-    const reservatorio = select.value;
 
+// ========================================================
+// CARREGAR HISTÓRICO DO SERVIDOR
+// ========================================================
+async function carregarHistorico() {
+  try {
     const resp = await fetch(API_HIST);
-    const dados = await resp.json();
+    const historico = await resp.json();
 
-    const filtrado = dados
-      .filter(d => d.reservatorio === reservatorio)
-      .sort((a, b) => a.timestamp - b.timestamp);
+    if (!historico || historico.length === 0) {
+      console.warn("Sem dados no histórico");
+      return;
+    }
 
-    const labels = filtrado.map(p =>
-      new Date(p.timestamp).toLocaleString("pt-BR")
-    );
+    const consumo = calcularConsumoDiario(historico);
 
-    const valores = filtrado.map(p => p.valor);
+    exibirGrafico(consumo);
+    preencherTabela(consumo);
 
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
+  } catch (err) {
+    console.error("Erro ao carregar histórico:", err);
+  }
+}
 
-    if (grafico) grafico.destroy();
 
-    grafico = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{
-          label: `Nível – ${reservatorio}`,
-          data: valores,
-          borderWidth: 4,
-          borderColor: "#007b83",
-          backgroundColor: "rgba(0,123,131,0.12)",
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          tension: 0.3,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            labels: { font: { size: 16 } }
-          },
-          tooltip: {
-            backgroundColor: "#004d50",
-            titleColor: "#fff",
-            bodyColor: "#fff",
-          }
+// ========================================================
+// AGRUPAR POR DIA + CALCULAR CONSUMO (SOMENTE QUEDAS)
+// ========================================================
+function calcularConsumoDiario(historico) {
+  const dias = {};
+
+  historico.forEach(p => {
+    const dia = new Date(p.timestamp).toISOString().split("T")[0];
+
+    if (!dias[dia]) {
+      dias[dia] = { elevador: [], osmose: [], lavanderia: [] };
+    }
+
+    if (p.reservatorio === "elevador") dias[dia].elevador.push(p.valor);
+    if (p.reservatorio === "osmose") dias[dia].osmose.push(p.valor);
+    if (p.reservatorio === "lavanderia") dias[dia].lavanderia.push(p.valor);
+  });
+
+  return Object.keys(dias)
+    .sort()
+    .slice(-5)
+    .map(dia => ({
+      dia,
+      elevador: calcularQuedas(dias[dia].elevador),
+      osmose: calcularQuedas(dias[dia].osmose),
+      lavanderia: calcularQuedas(dias[dia].lavanderia)
+    }));
+}
+
+
+// ========================================================
+// SOMAR APENAS QUEDAS
+// ========================================================
+function calcularQuedas(valores) {
+  if (!valores || valores.length < 2) return 0;
+
+  let consumo = 0;
+
+  for (let i = 1; i < valores.length; i++) {
+    const queda = valores[i - 1] - valores[i];
+    if (queda > 0) consumo += queda;
+  }
+
+  return consumo;
+}
+
+
+// ========================================================
+// EXIBIR GRÁFICO
+// ========================================================
+function exibirGrafico(consumo) {
+  const ctx = document.getElementById("graficoConsumo").getContext("2d");
+
+  if (grafico instanceof Chart) grafico.destroy();
+
+  grafico = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: consumo.map(c => c.dia),
+      datasets: [
+        {
+          label: "Elevador (L)",
+          data: consumo.map(c => c.elevador),
+          backgroundColor: "#2c8b7d"
         },
-        scales: {
-          x: {
-            ticks: { font: { size: 12 }},
-            grid: { color: "rgba(0,0,0,0.05)" }
-          },
-          y: {
-            ticks: { font: { size: 14 }},
-            grid: { color: "rgba(0,0,0,0.05)" }
-          }
+        {
+          label: "Osmose (L)",
+          data: consumo.map(c => c.osmose),
+          backgroundColor: "#57b3a0"
+        },
+        {
+          label: "Lavanderia (L)",
+          data: consumo.map(c => c.lavanderia),
+          backgroundColor: "#8c6cff"
         }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        title: {
+          display: true,
+          text: "Consumo Diário – Últimos 5 Dias",
+          font: { size: 18 }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true },
       }
-    });
-
-  } catch (err) {
-    console.error("Erro no gráfico:", err);
-  }
+    }
+  });
 }
 
-// ===============================
-// 📅 CONSUMO DIÁRIO (Incluindo Lavanderia)
-// ===============================
-async function carregarConsumo() {
-  const reservatorio = select.value;
 
-  if (!["elevador", "osmose", "lavanderia"].includes(reservatorio)) {
-    document.getElementById("tabelaConsumo").innerHTML =
-      "<tr><td colspan='3'>Consumo disponível apenas para Elevador, Osmose e Lavanderia</td></tr>";
-    return;
-  }
+// ========================================================
+// PREENCHER TABELA
+// ========================================================
+function preencherTabela(consumo) {
+  const tabela = document.getElementById("tabelaConsumo");
+  tabela.innerHTML = "";
 
-  try {
-    const resp = await fetch(`${API_CONSUMO}/${reservatorio}`);
-    const dados = await resp.json();
-
-    const tabela = document.getElementById("tabelaConsumo");
-    tabela.innerHTML = "";
-
-    dados.forEach(item => {
-      let consumoCorrigido = item.consumo;
-      if (consumoCorrigido < 0) consumoCorrigido = Math.abs(consumoCorrigido);
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${item.dia}</td>
-        <td>${reservatorio}</td>
-        <td>${consumoCorrigido}</td>
-      `;
-      tabela.appendChild(tr);
-    });
-
-  } catch (err) {
-    console.error("Erro no consumo:", err);
-  }
+  consumo.forEach(c => {
+    tabela.innerHTML += `
+      <tr>
+        <td>${c.dia}</td>
+        <td>${c.elevador}</td>
+        <td>${c.osmose}</td>
+        <td>${c.lavanderia}</td>
+      </tr>
+    `;
+  });
 }
 
-select.addEventListener("change", () => {
-  carregarGrafico();
-  carregarConsumo();
+
+// ========================================================
+// EXPORTAR PARA EXCEL
+// ========================================================
+function exportarExcel() {
+  const tabela = document.getElementById("tabelaConsumo");
+  const linhas = [];
+  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia"];
+
+  linhas.push(cabecalho);
+
+  [...tabela.rows].forEach(row => {
+    const cols = [...row.cells].map(c => c.innerText);
+    linhas.push(cols);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(linhas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Consumo");
+
+  XLSX.writeFile(wb, "consumo_diario.xlsx");
+}
+
+
+// ========================================================
+// EXPORTAR PARA PDF
+// ========================================================
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+
+  doc.setFontSize(18);
+  doc.text("Relatório de Consumo Diário", 14, 20);
+
+  const tabela = document.getElementById("tabelaConsumo");
+  const linhas = [];
+  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia"];
+
+  [...tabela.rows].forEach(row => {
+    const cols = [...row.cells].map(c => c.innerText);
+    linhas.push(cols);
+  });
+
+  doc.autoTable({
+    head: [cabecalho],
+    body: linhas,
+    startY: 30,
+    theme: "grid",
+    headStyles: { fillColor: [0, 123, 131] }
+  });
+
+  doc.save("consumo_diario.pdf");
+}
+
+
+// ========================================================
+// INICIAR AO CARREGAR A PÁGINA
+// ========================================================
+window.addEventListener("load", () => {
+  carregarHistorico();
 });
-
-carregarGrafico();
-carregarConsumo();
