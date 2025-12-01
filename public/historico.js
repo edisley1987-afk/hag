@@ -7,10 +7,11 @@ const CAPACIDADE = {
   elevador: 20000,
   osmose: 200,
   lavanderia: 5000,
+  cme: 1000,
+  abrandada: 9000
 };
 
 let grafico = null;
-
 
 // ========================================================
 // CARREGAR HISTÓRICO DO SERVIDOR
@@ -35,7 +36,6 @@ async function carregarHistorico() {
   }
 }
 
-
 // ========================================================
 // AGRUPAR POR DIA + CALCULAR CONSUMO (SOMENTE QUEDAS)
 // ========================================================
@@ -46,12 +46,14 @@ function calcularConsumoDiario(historico) {
     const dia = new Date(p.timestamp).toISOString().split("T")[0];
 
     if (!dias[dia]) {
-      dias[dia] = { elevador: [], osmose: [], lavanderia: [] };
+      dias[dia] = { elevador: [], osmose: [], lavanderia: [], cme: [], abrandada: [] };
     }
 
     if (p.reservatorio === "elevador") dias[dia].elevador.push(p.valor);
     if (p.reservatorio === "osmose") dias[dia].osmose.push(p.valor);
     if (p.reservatorio === "lavanderia") dias[dia].lavanderia.push(p.valor);
+    if (p.reservatorio === "cme") dias[dia].cme.push(p.valor);
+    if (p.reservatorio === "abrandada") dias[dia].abrandada.push(p.valor);
   });
 
   return Object.keys(dias)
@@ -61,10 +63,11 @@ function calcularConsumoDiario(historico) {
       dia,
       elevador: calcularQuedas(dias[dia].elevador),
       osmose: calcularQuedas(dias[dia].osmose),
-      lavanderia: calcularQuedas(dias[dia].lavanderia)
+      lavanderia: calcularQuedas(dias[dia].lavanderia),
+      cme: calcularQuedas(dias[dia].cme),
+      abrandada: calcularQuedas(dias[dia].abrandada)
     }));
 }
-
 
 // ========================================================
 // SOMAR APENAS QUEDAS
@@ -82,12 +85,17 @@ function calcularQuedas(valores) {
   return consumo;
 }
 
-
 // ========================================================
 // EXIBIR GRÁFICO
 // ========================================================
 function exibirGrafico(consumo) {
-  const ctx = document.getElementById("graficoConsumo").getContext("2d");
+  const canvas = document.getElementById("graficoHistorico");
+  if (!canvas) {
+    console.error("Canvas não encontrado!");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   if (grafico instanceof Chart) grafico.destroy();
 
@@ -96,21 +104,11 @@ function exibirGrafico(consumo) {
     data: {
       labels: consumo.map(c => c.dia),
       datasets: [
-        {
-          label: "Elevador (L)",
-          data: consumo.map(c => c.elevador),
-          backgroundColor: "#2c8b7d"
-        },
-        {
-          label: "Osmose (L)",
-          data: consumo.map(c => c.osmose),
-          backgroundColor: "#57b3a0"
-        },
-        {
-          label: "Lavanderia (L)",
-          data: consumo.map(c => c.lavanderia),
-          backgroundColor: "#8c6cff"
-        }
+        { label: "Elevador (L)", data: consumo.map(c => c.elevador), backgroundColor: "#2c8b7d" },
+        { label: "Osmose (L)", data: consumo.map(c => c.osmose), backgroundColor: "#57b3a0" },
+        { label: "Lavanderia (L)", data: consumo.map(c => c.lavanderia), backgroundColor: "#8c6cff" },
+        { label: "CME (L)", data: consumo.map(c => c.cme), backgroundColor: "#ff9f40" },
+        { label: "Abrandada (L)", data: consumo.map(c => c.abrandada), backgroundColor: "#ff6384" }
       ]
     },
     options: {
@@ -124,12 +122,12 @@ function exibirGrafico(consumo) {
         }
       },
       scales: {
-        y: { beginAtZero: true },
+        y: { beginAtZero: true, title: { display: true, text: "Litros (L)" } },
+        x: { title: { display: true, text: "Dias" } }
       }
     }
   });
 }
-
 
 // ========================================================
 // PREENCHER TABELA
@@ -145,11 +143,12 @@ function preencherTabela(consumo) {
         <td>${c.elevador}</td>
         <td>${c.osmose}</td>
         <td>${c.lavanderia}</td>
+        <td>${c.cme}</td>
+        <td>${c.abrandada}</td>
       </tr>
     `;
   });
 }
-
 
 // ========================================================
 // EXPORTAR PARA EXCEL
@@ -157,7 +156,7 @@ function preencherTabela(consumo) {
 function exportarExcel() {
   const tabela = document.getElementById("tabelaConsumo");
   const linhas = [];
-  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia"];
+  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia", "CME", "Abrandada"];
 
   linhas.push(cabecalho);
 
@@ -173,7 +172,6 @@ function exportarExcel() {
   XLSX.writeFile(wb, "consumo_diario.xlsx");
 }
 
-
 // ========================================================
 // EXPORTAR PARA PDF
 // ========================================================
@@ -186,7 +184,7 @@ function exportarPDF() {
 
   const tabela = document.getElementById("tabelaConsumo");
   const linhas = [];
-  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia"];
+  const cabecalho = ["Dia", "Elevador", "Osmose", "Lavanderia", "CME", "Abrandada"];
 
   [...tabela.rows].forEach(row => {
     const cols = [...row.cells].map(c => c.innerText);
@@ -203,7 +201,6 @@ function exportarPDF() {
 
   doc.save("consumo_diario.pdf");
 }
-
 
 // ========================================================
 // INICIAR AO CARREGAR A PÁGINA
