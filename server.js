@@ -1,17 +1,22 @@
-// ======= Servidor Universal HAG - compatível com Gateway ITG e Render =======
+// ======= Servidor Universal HAG - compatível com Gateway ITG, Render e WebSocket =======
 // Versão estável ESModules + logs compatíveis com Render
 
 import express from "express";
 import fs from "fs";
 import path from "path";
 import cors from "cors";
+import http from "http";
 import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
 
 // === Corrigir __dirname no ESModules (ESSENCIAL NO RENDER) ===
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// === Criar server HTTP (para anexar WebSocket) ===
+const server = http.createServer(app);
 
 // === LOG DE TEMPO POR REQUISIÇÃO ===
 app.use((req, res, next) => {
@@ -56,34 +61,24 @@ function setManutencao(ativo) {
 }
 
 // ============================================================================
-// 🔧 ROTAS DE MANUTENÇÃO
-// ============================================================================
-app.get("/manutencao", (req, res) => {
-  res.json(getManutencao());
-});
-
-app.post("/manutencao", (req, res) => {
-  const { ativo } = req.body;
-  if (typeof ativo !== "boolean")
-    return res.status(400).json({ erro: "Campo 'ativo' precisa ser true/false" });
-
-  setManutencao(ativo);
-  console.log("⚠️ Manutenção atualizada →", ativo);
-  res.json({ status: "ok", ativo });
-});
-
-// ============================================================================
-// 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS
+// 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS (calibrações)
+// ----------------------------------------------------------------------------
+// Observação: Lavanderia leituraCheio corrigida para representar 100% (era 75%).
 // ============================================================================
 const SENSORES = {
+  // Reservatórios (leituraVazio, leituraCheio, capacidade em litros)
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008742, capacidade: 20000 },
-  "Reservatorio_Osmose_current": { leituraVazio: 0.005050, leituraCheio: 0.006492, capacidade: 200 },
-  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
+  "Reservatorio_Osmose_current": { leituraVazio: 0.00505,   leituraCheio: 0.006492, capacidade: 200 },
+  "Reservatorio_CME_current":    { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004048, leituraCheio: 0.004229, capacidade: 9000 },
-  "Reservatorio_lavanderia_current": { leituraVazio: 0.006012, leituraCheio: 0.010541, capacidade: 10000 },
+  // Lavanderia: leituraCheio corrigida para 100% = 0.012611 (já que 0.009458 = 75%)
+  "Reservatorio_lavanderia_current": { leituraVazio: 0.006012, leituraCheio: 0.012611, capacidade: 1000 },
+
+  // Pressões e bombas (tipos especiais)
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
   "Pressao_Saida_CME_current": { tipo: "pressao" },
+
   "Bomba_01_binary": { tipo: "bomba" },
   "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
   "Bomba_02_binary": { tipo: "bomba" },
@@ -98,6 +93,7 @@ function salvarDados(dados) {
 
 // ============================================================================
 // registrarHistorico()
+// - mantém pontos quando há variação relevante (2% da capacidade)
 // ============================================================================
 function registrarHistorico(dados) {
   const hoje = new Date().toISOString().split("T")[0];
@@ -123,7 +119,7 @@ function registrarHistorico(dados) {
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
-    const variacao = sensor.capacidade * 0.02;
+    const variacao = sensor.capacidade * 0.02; // 2% da capacidade em litros
     const ultimo = reg.pontos.at(-1);
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
       reg.pontos.push({ hora: new Date().toLocaleTimeString("pt-BR"), valor });
@@ -134,7 +130,52 @@ function registrarHistorico(dados) {
 }
 
 // ============================================================================
+// Conversões e utilitários
+// ============================================================================
+function calcularPercentualReservatorio(ref, leituraRaw) {
+  const sensor = SENSORES[ref];
+  if (!sensor || sensor.leituraVazio === undefined || sensor.leituraCheio === undefined) {
+    return null;
+  }
+  const min = sensor.leituraVazio;
+  const max = sensor.leituraCheio;
+  // Proteção
+  if (typeof leituraRaw !== "number" || Number.isNaN(leituraRaw)) return null;
+  let pct = ((leituraRaw - min) / (max - min)) * 100;
+  pct = Math.max(0, Math.min(100, pct));
+  return Number(pct.toFixed(2));
+}
+
+function leituraParaLitros(ref, percentual) {
+  const sensor = SENSORES[ref];
+  if (!sensor || !sensor.capacidade) return null;
+  const litros = (percentual / 100) * sensor.capacidade;
+  return Math.round(litros);
+}
+
+function converterSensor(ref, valor) {
+  const sensor = SENSORES[ref];
+  if (!sensor) return valor;
+  if (sensor.tipo === "pressao") {
+    // mesma fórmula já usada: ((valor - 0.004) / 0.016) * 20 -> 0..20 bar
+    let convertido = ((valor - 0.004) / 0.016) * 20;
+    convertido = Math.max(0, Math.min(20, convertido));
+    return Number(convertido.toFixed(2));
+  } else if (sensor.tipo === "bomba") {
+    return valor === 1 ? 1 : 0;
+  } else if (sensor.tipo === "ciclo") {
+    return Math.max(0, Math.round(valor));
+  } else if (sensor.capacidade > 1) {
+    // é reservatório: converte leitura analógica -> litros e % em outro local
+    return Number(valor); // mantemos o raw aqui; cálculo posterior
+  } else {
+    return Number(valor);
+  }
+}
+
+// ============================================================================
 // Endpoint universal /atualizar
+// - aceita POST/PUT/ALL com formato flexível
 // ============================================================================
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path}`);
@@ -150,6 +191,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     if (Array.isArray(body)) dataArray = body;
     else if (body && Array.isArray(body.data)) dataArray = body.data;
     else if (body && typeof body === "object") {
+      // transforma objeto {ref: valor, ...} em [{ref, value}, ...]
       dataArray = Object.keys(body).map(k => ({ ref: k, value: Number(body[k]) }));
     }
     if (!dataArray.length) return res.status(400).json({ erro: "Nenhum dado válido encontrado" });
@@ -165,27 +207,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       const valor = Number(item.value);
       if (!ref || isNaN(valor)) continue;
 
-      const sensor = SENSORES[ref];
-      if (!sensor) { dadosConvertidos[ref] = valor; continue; }
-
-      let convertido = valor;
-
-      if (sensor.tipo === "pressao") {
-        convertido = ((valor - 0.004) / 0.016) * 20;
-        convertido = Math.max(0, Math.min(20, convertido));
-        convertido = Number(convertido.toFixed(2));
-      } else if (sensor.tipo === "bomba") {
-        convertido = valor === 1 ? 1 : 0;
-      } else if (sensor.tipo === "ciclo") {
-        convertido = Math.max(0, Math.round(valor));
-      } else if (sensor.capacidade > 1) {
-        convertido =
-          ((valor - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio)) *
-          sensor.capacidade;
-        convertido = Math.max(0, Math.min(sensor.capacidade, convertido));
-        convertido = Math.round(convertido);
-      }
-
+      const convertido = converterSensor(ref, valor);
       dadosConvertidos[ref] = convertido;
     }
 
@@ -196,10 +218,30 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
       }
     }
 
+    // timestamp
     dadosConvertidos.timestamp = new Date().toISOString();
+
+    // Para reservatórios: converter raw -> percentual e litros
+    for (const ref of Object.keys(SENSORES)) {
+      const s = SENSORES[ref];
+      if (s && s.capacidade > 1 && dadosConvertidos[ref] !== undefined) {
+        const leituraRaw = Number(dadosConvertidos[ref]);
+        const pct = calcularPercentualReservatorio(ref, leituraRaw);
+        const litros = pct !== null ? leituraParaLitros(ref, pct) : null;
+        // Armazenar com chaves legíveis (mantendo chaves originais para compatibilidade)
+        dadosConvertidos[ref] = Number((litros !== null ? litros : leituraRaw)); // manter litro como valor principal (compat com anterior)
+        // também adicionamos a versão percentual em campos auxiliares (não sobrescreve)
+        dadosConvertidos[`${ref}_percent`] = pct;
+        dadosConvertidos[`${ref}_liters`] = litros;
+        dadosConvertidos[`${ref}_raw`] = leituraRaw;
+      }
+    }
 
     salvarDados(dadosConvertidos);
     registrarHistorico(dadosConvertidos);
+
+    // Broadcast via WebSocket
+    broadcastDashboard();
 
     res.json({ status: "ok", dados: dadosConvertidos });
   } catch (err) {
@@ -209,10 +251,12 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 });
 
 // ============================================================================
-// /dados
+// /dados (simples) - mantém compatibilidade
 // ============================================================================
 app.get("/dados", (req, res) => {
   if (!fs.existsSync(DATA_FILE)) return res.json({});
+  // Desabilitar cache
+  res.setHeader("Cache-Control", "no-store");
   res.json(JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")));
 });
 
@@ -280,7 +324,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// 🚀 ROTA /consumo/5dias/:reservatorio  (NOVO — ADICIONADO DO JEITO QUE PEDIU)
+// /consumo/5dias/:reservatorio
 // ============================================================================
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
@@ -323,7 +367,7 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
 });
 
 // ============================================================================
-// 🚀 NOVA ROTA OFICIAL — /api/consumo_diario
+// /api/consumo_diario
 // ============================================================================
 app.get("/api/consumo_diario", (req, res) => {
   const diasReq = Number(req.query.dias || 5);
@@ -365,9 +409,12 @@ app.get("/api/consumo_diario", (req, res) => {
 });
 
 // ============================================================================
-// /api/dashboard — RESUMO PRINCIPAL
+// /api/dashboard — RESUMO PRINCIPAL (formata com percent/litros)
 // ============================================================================
 app.get("/api/dashboard", (req, res) => {
+  // desabilita cache
+  res.setHeader("Cache-Control", "no-store");
+
   if (!fs.existsSync(DATA_FILE)) {
     return res.json({
       lastUpdate: "-",
@@ -380,12 +427,48 @@ app.get("/api/dashboard", (req, res) => {
 
   const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
 
+  // monta reservatórios com percent/liters (usa campos auxiliares se existirem)
   const reservatorios = [
-    { nome: "Reservatório Elevador", setor: "elevador", percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100), current_liters: dados["Reservatorio_Elevador_current"], capacidade: 20000, manutencao: getManutencao().ativo },
-    { nome: "Reservatório Osmose", setor: "osmose", percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100), current_liters: dados["Reservatorio_Osmose_current"], capacidade: 200, manutencao: getManutencao().ativo },
-    { nome: "Reservatório CME", setor: "cme", percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100), current_liters: dados["Reservatorio_CME_current"], capacidade: 1000, manutencao: getManutencao().ativo },
-    { nome: "Água Abrandada", setor: "abrandada", percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100), current_liters: dados["Reservatorio_Agua_Abrandada_current"], capacidade: 9000, manutencao: getManutencao().ativo },
-    { nome: "Lavanderia", setor: "lavanderia", percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100), current_liters: dados["Reservatorio_lavanderia_current"], capacidade: 10000, manutencao: getManutencao().ativo }
+    {
+      nome: "Reservatório Elevador",
+      setor: "elevador",
+      percent: Math.round((dados["Reservatorio_Elevador_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Elevador_current", dados["Reservatorio_Elevador_current"])) || 0),
+      current_liters: Number(dados["Reservatorio_Elevador_current_liters"] ?? leituraParaLitros("Reservatorio_Elevador_current", calcularPercentualReservatorio("Reservatorio_Elevador_current", dados["Reservatorio_Elevador_current"])) || 0),
+      capacidade: SENSORES["Reservatorio_Elevador_current"].capacidade,
+      manutencao: getManutencao().ativo
+    },
+    {
+      nome: "Reservatório Osmose",
+      setor: "osmose",
+      percent: Math.round((dados["Reservatorio_Osmose_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Osmose_current", dados["Reservatorio_Osmose_current"])) || 0),
+      current_liters: Number(dados["Reservatorio_Osmose_current_liters"] ?? leituraParaLitros("Reservatorio_Osmose_current", calcularPercentualReservatorio("Reservatorio_Osmose_current", dados["Reservatorio_Osmose_current"])) || 0),
+      capacidade: SENSORES["Reservatorio_Osmose_current"].capacidade,
+      manutencao: getManutencao().ativo
+    },
+    {
+      nome: "Reservatório CME",
+      setor: "cme",
+      percent: Math.round((dados["Reservatorio_CME_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_CME_current", dados["Reservatorio_CME_current"])) || 0),
+      current_liters: Number(dados["Reservatorio_CME_current_liters"] ?? leituraParaLitros("Reservatorio_CME_current", calcularPercentualReservatorio("Reservatorio_CME_current", dados["Reservatorio_CME_current"])) || 0),
+      capacidade: SENSORES["Reservatorio_CME_current"].capacidade,
+      manutencao: getManutencao().ativo
+    },
+    {
+      nome: "Água Abrandada",
+      setor: "abrandada",
+      percent: Math.round((dados["Reservatorio_Agua_Abrandada_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Agua_Abrandada_current", dados["Reservatorio_Agua_Abrandada_current"])) || 0),
+      current_liters: Number(dados["Reservatorio_Agua_Abrandada_current_liters"] ?? leituraParaLitros("Reservatorio_Agua_Abrandada_current", calcularPercentualReservatorio("Reservatorio_Agua_Abrandada_current", dados["Reservatorio_Agua_Abrandada_current"])) || 0),
+      capacidade: SENSORES["Reservatorio_Agua_Abrandada_current"].capacidade,
+      manutencao: getManutencao().ativo
+    },
+    {
+      nome: "Lavanderia",
+      setor: "lavanderia",
+      percent: Math.round((dados["Reservatorio_lavanderia_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_lavanderia_current", dados["Reservatorio_lavanderia_current"])) || 0),
+      current_liters: Number(dados["Reservatorio_lavanderia_current_liters"] ?? leituraParaLitros("Reservatorio_lavanderia_current", calcularPercentualReservatorio("Reservatorio_lavanderia_current", dados["Reservatorio_lavanderia_current"])) || 0),
+      capacidade: SENSORES["Reservatorio_lavanderia_current"].capacidade,
+      manutencao: getManutencao().ativo
+    }
   ];
 
   const pressoes = [
@@ -403,7 +486,7 @@ app.get("/api/dashboard", (req, res) => {
 });
 
 // ============================================================================
-// Interface estática
+// Interface estática (mantém sua estrutura)
 // ============================================================================
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
@@ -419,18 +502,130 @@ app.get("/api/ping", (req, res) => {
 });
 
 // ============================================================================
-// Keep Alive (evita que o Render durma)
+// WebSocket: transmissões em tempo real
+// - envia /api/dashboard para todos os clientes quando houver atualização
+// - também envia heartbeat periódico caso queira manter UI sincronizada
 // ============================================================================
+const wss = new WebSocketServer({ server });
+
+function buildDashboardSnapshot() {
+  // reutiliza /api/dashboard logic (lê do arquivo)
+  if (!fs.existsSync(DATA_FILE)) return { lastUpdate: "-", reservatorios: [], pressoes: [], bombas: [] };
+  const dados = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  // montar mesma resposta do /api/dashboard (mais simples)
+  const snapshot = {
+    lastUpdate: dados.timestamp,
+    reservatorios: [
+      {
+        nome: "Reservatório Elevador",
+        setor: "elevador",
+        percent: Math.round((dados["Reservatorio_Elevador_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Elevador_current", dados["Reservatorio_Elevador_current"])) || 0),
+        current_liters: Number(dados["Reservatorio_Elevador_current_liters"] ?? leituraParaLitros("Reservatorio_Elevador_current", calcularPercentualReservatorio("Reservatorio_Elevador_current", dados["Reservatorio_Elevador_current"])) || 0),
+        capacidade: SENSORES["Reservatorio_Elevador_current"].capacidade
+      },
+      {
+        nome: "Reservatório Osmose",
+        setor: "osmose",
+        percent: Math.round((dados["Reservatorio_Osmose_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Osmose_current", dados["Reservatorio_Osmose_current"])) || 0),
+        current_liters: Number(dados["Reservatorio_Osmose_current_liters"] ?? leituraParaLitros("Reservatorio_Osmose_current", calcularPercentualReservatorio("Reservatorio_Osmose_current", dados["Reservatorio_Osmose_current"])) || 0),
+        capacidade: SENSORES["Reservatorio_Osmose_current"].capacidade
+      },
+      {
+        nome: "Reservatório CME",
+        setor: "cme",
+        percent: Math.round((dados["Reservatorio_CME_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_CME_current", dados["Reservatorio_CME_current"])) || 0),
+        current_liters: Number(dados["Reservatorio_CME_current_liters"] ?? leituraParaLitros("Reservatorio_CME_current", calcularPercentualReservatorio("Reservatorio_CME_current", dados["Reservatorio_CME_current"])) || 0),
+        capacidade: SENSORES["Reservatorio_CME_current"].capacidade
+      },
+      {
+        nome: "Água Abrandada",
+        setor: "abrandada",
+        percent: Math.round((dados["Reservatorio_Agua_Abrandada_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_Agua_Abrandada_current", dados["Reservatorio_Agua_Abrandada_current"])) || 0),
+        current_liters: Number(dados["Reservatorio_Agua_Abrandada_current_liters"] ?? leituraParaLitros("Reservatorio_Agua_Abrandada_current", calcularPercentualReservatorio("Reservatorio_Agua_Abrandada_current", dados["Reservatorio_Agua_Abrandada_current"])) || 0),
+        capacidade: SENSORES["Reservatorio_Agua_Abrandada_current"].capacidade
+      },
+      {
+        nome: "Lavanderia",
+        setor: "lavanderia",
+        percent: Math.round((dados["Reservatorio_lavanderia_current_percent"] ?? calcularPercentualReservatorio("Reservatorio_lavanderia_current", dados["Reservatorio_lavanderia_current"])) || 0),
+        current_liters: Number(dados["Reservatorio_lavanderia_current_liters"] ?? leituraParaLitros("Reservatorio_lavanderia_current", calcularPercentualReservatorio("Reservatorio_lavanderia_current", dados["Reservatorio_lavanderia_current"])) || 0),
+        capacidade: SENSORES["Reservatorio_lavanderia_current"].capacidade
+      }
+    ],
+    pressoes: [
+      { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] },
+      { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] },
+      { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] }
+    ],
+    bombas: [
+      { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
+      { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 }
+    ]
+  };
+
+  return snapshot;
+}
+
+function broadcastDashboard() {
+  const snapshot = buildDashboardSnapshot();
+  const payload = JSON.stringify({ type: "dashboard", data: snapshot });
+  wss.clients.forEach(ws => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(payload);
+    }
+  });
+}
+
+wss.on("connection", (ws, req) => {
+  console.log("WS cliente conectado");
+  // Ao conectar, enviar snapshot atual
+  ws.send(JSON.stringify({ type: "dashboard", data: buildDashboardSnapshot() }));
+
+  ws.on("message", message => {
+    // opcional: receber comandos do cliente no futuro
+    try {
+      const msg = JSON.parse(message.toString());
+      // por enquanto, apenas log
+      console.log("WS mensagem:", msg);
+    } catch (e) {
+      // ignorar
+    }
+  });
+
+  ws.on("close", () => {
+    console.log("WS cliente desconectou");
+  });
+});
+
+// ============================================================================
+// Keep Alive (evita que o Render durma) - faz self-ping
+// - também mantém broadcast periódico para clientes WS
+// ============================================================================
+const SELF_URL = process.env.SELF_URL || "https://hag-9ki9.onrender.com"; // ajuste se precisar
+const PING_INTERVAL_MS = 30 * 1000; // 30s
+const BROADCAST_INTERVAL_MS = 1000; // 1s -> mantém UI atualizada em tempo real
+
 setInterval(() => {
-  fetch("https://hag-9ki9.onrender.com/api/ping")
-    .then(() => console.log("Keep-alive enviado"))
-    .catch(() => console.log("Falha ao enviar keep-alive"));
-}, 60 * 1000);
+  // ping para manter instância ativa
+  try {
+    fetch(`${SELF_URL}/api/ping`)
+      .then(() => console.log("Keep-alive enviado"))
+      .catch(() => console.log("Falha ao enviar keep-alive"));
+  } catch (e) {
+    console.log("Erro ao enviar keep-alive:", e?.message || e);
+  }
+}, PING_INTERVAL_MS);
+
+// Broadcast periódico (1s) para todos os clientes WS
+setInterval(() => {
+  broadcastDashboard();
+}, BROADCAST_INTERVAL_MS);
 
 // ============================================================================
 // Inicialização
 // ============================================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor HAG ativo na porta ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Servidor HAG (HTTP + WS) ativo na porta ${PORT}`);
 });
