@@ -48,7 +48,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
 
 // ============================================================================
-// 🔧 FUNÇÕES DE MANUTENÇÃO
+// FUNÇÕES DE MANUTENÇÃO
 // ============================================================================
 function getManutencao() {
   try {
@@ -62,8 +62,7 @@ function setManutencao(ativo) {
 }
 
 // ============================================================================
-// 🔥 TABELA DE SENSORES — RESERVATÓRIOS + PRESSÕES + BOMBAS (calibrações)
-//  -> ajuste aqui se mudar alguma leitura/limite no futuro
+// TABELA DE SENSORES
 // ============================================================================
 const SENSORES = {
   "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008742, capacidade: 20000, altura: 1.45 },
@@ -105,11 +104,12 @@ function safeWriteJson(filePath, data) {
 }
 
 // ============================================================================
-// registrarHistorico(): registra alteração por dia (mantém min/max e pontos)
+// registrarHistorico(): registra alteração por dia
 // ============================================================================
 function registrarHistorico(dadosConvertidos) {
   const hoje = new Date().toISOString().split("T")[0];
   const historico = safeReadJson(HIST_FILE, {});
+
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dadosConvertidos).forEach(([ref, valor]) => {
@@ -124,7 +124,6 @@ function registrarHistorico(dadosConvertidos) {
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
-    // registra ponto se houve mudança significativa (2% da capacidade)
     const variacao = Math.max(1, sensor.capacidade * 0.02);
     const ultimo = reg.pontos.at(-1);
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
@@ -136,82 +135,60 @@ function registrarHistorico(dadosConvertidos) {
 }
 
 // ============================================================================
-// Função: converte e mescla dados recebidos com último estado (patch anti-nulo)
-// - behavior: quando o gateway envia só alguns sensores, mantemos os demais
+// processarPacote(): converte e mescla dados com patch anti-nulo
 // ============================================================================
 function processarPacote(rawBody) {
-  // rawBody pode ser:
-  // - array de { ref, value }
-  // - objeto: { key: value, ... }
-  // - objeto com data: { data: [...] }
   let dataArray = [];
 
   if (Array.isArray(rawBody)) {
     dataArray = rawBody.map(i => ({ ref: i.ref ?? i.name ?? i.key, value: i.value ?? i.v ?? i.val ?? i }));
-  } else if (rawBody && Array.isArray(rawBody.data)) {
+  } else if (rawBody?.data && Array.isArray(rawBody.data)) {
     dataArray = rawBody.data.map(i => ({ ref: i.ref ?? i.name ?? i.key, value: i.value ?? i.v ?? i.val ?? i }));
   } else if (rawBody && typeof rawBody === "object") {
-    // if it's a simple mapping object (gateway typical)
     dataArray = Object.keys(rawBody).map(k => ({ ref: k, value: rawBody[k] }));
   } else {
     return null;
   }
 
-  // carregar último estado (patch anti-nulo)
   const ultimo = safeReadJson(DATA_FILE, {});
-
-  // construir novo objeto mesclado
-  const novo = { ...ultimo }; // start with previous values
+  const novo = { ...ultimo };
 
   for (const item of dataArray) {
     const ref = item.ref;
     const rawVal = item.value;
+    if (!ref) continue;
 
-    if (ref == null) continue;
-
-    // se valor for objeto (por conta do parsing), tente extrair number
-    const valorNum = (typeof rawVal === "string" && !isNaN(Number(rawVal))) ? Number(rawVal)
-      : (typeof rawVal === "number" ? rawVal : rawVal);
-
+    const valorNum = Number(rawVal);
     const sensor = SENSORES[ref];
 
     if (!sensor) {
-      // se o sensor não estiver na tabela, apenas salva cru (mantendo patch)
       novo[ref] = valorNum;
       continue;
     }
 
-    // processar por tipo
     if (sensor.tipo === "pressao") {
-      // convertir para pressão (mesma fórmula antiga)
-      let convertido = ((Number(valorNum) - 0.004) / 0.016) * 20;
+      let convertido = ((valorNum - 0.004) / 0.016) * 20;
       convertido = Math.max(0, Math.min(20, convertido));
       novo[ref] = Number(convertido.toFixed(2));
     } else if (sensor.tipo === "bomba") {
-      novo[ref] = Number(valorNum) === 1 ? 1 : 0;
+      novo[ref] = valorNum === 1 ? 1 : 0;
     } else if (sensor.tipo === "ciclo") {
-      novo[ref] = Math.max(0, Math.round(Number(valorNum) || 0));
-    } else if (sensor.capacidade && sensor.leituraVazio !== undefined && sensor.leituraCheio !== undefined) {
-      // reservatório: converter leitura em litros
-      const leitura = Number(valorNum);
-      const percentual = (leitura - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
+      novo[ref] = Math.max(0, Math.round(valorNum));
+    } else if (sensor.capacidade) {
+      const percentual = (valorNum - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
       let litros = percentual * sensor.capacidade;
-      litros = Math.max(0, Math.min(sensor.capacidade, litros));
-      novo[ref] = Math.round(litros);
+      novo[ref] = Math.max(0, Math.min(sensor.capacidade, Math.round(litros)));
     } else {
-      // fallback: grava valor bruto
       novo[ref] = valorNum;
     }
   }
 
-  // timestamp
   novo.timestamp = new Date().toISOString();
-
   return { novo, convertidoDoArray: dataArray };
 }
 
 // ============================================================================
-// Endpoint universal /atualizar (aceita POST/PUT/ALL) - processa e salva
+// /atualizar — processa e salva
 // ============================================================================
 app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
   console.log(`➡️ Recebido ${req.method} em ${req.path}`);
@@ -220,7 +197,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
     let body = req.body;
     if (Buffer.isBuffer(body)) body = body.toString("utf8");
     if (typeof body === "string") {
-      try { body = JSON.parse(body); } catch { /* keep string */ }
+      try { body = JSON.parse(body); } catch {}
     }
 
     const processed = processarPacote(body);
@@ -228,9 +205,7 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 
     const { novo, convertidoDoArray } = processed;
 
-    // salvar dados mesclados
     safeWriteJson(DATA_FILE, novo);
-    // registrar histórico com base nas chaves convertidas (apenas reservatórios)
     registrarHistorico(novo);
 
     console.log("Leituras salvas:", JSON.stringify(novo));
@@ -242,15 +217,14 @@ app.all(/^\/atualizar(\/.*)?$/, (req, res) => {
 });
 
 // ============================================================================
-// /dados — retorna leitura bruta atual armazenada
+// /dados — retorna leituras atuais
 // ============================================================================
 app.get("/dados", (req, res) => {
-  const dados = safeReadJson(DATA_FILE, {});
-  return res.json(dados);
+  return res.json(safeReadJson(DATA_FILE, {}));
 });
 
 // ============================================================================
-// MAPA RESERVATÓRIOS (para rotas historico/consumo)
+// MAPA RESERVATÓRIOS
 // ============================================================================
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
@@ -261,7 +235,7 @@ const MAPA_RESERVATORIOS = {
 };
 
 // ============================================================================
-// /historico — return simplified historic points array
+// /historico
 // ============================================================================
 app.get("/historico", (req, res) => {
   const historico = safeReadJson(HIST_FILE, {});
@@ -294,6 +268,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
   if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+
   const historico = safeReadJson(HIST_FILE, {});
   const agora = Date.now();
   const saida = [];
@@ -324,6 +299,7 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
   };
   const ref = mapa[nome];
   if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+
   const historico = safeReadJson(HIST_FILE, {});
   const datas = Object.keys(historico).sort().slice(-5);
 
@@ -340,6 +316,7 @@ app.get("/consumo/5dias/:reservatorio", (req, res) => {
     for (let i = 1; i < valores.length; i++) {
       if (valores[i] < valores[i - 1]) consumo += valores[i - 1] - valores[i];
     }
+
     return { dia, consumo: Number(consumo.toFixed(2)) };
   });
 
@@ -358,15 +335,17 @@ app.get("/api/consumo_diario", (req, res) => {
     return dias.map(data => {
       const reg = historico[data][ref];
       if (!reg) return 0;
+
       const valores = [];
       if (typeof reg.min === "number") valores.push(reg.min);
       if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
       if (valores.length < 2) return 0;
-      let total = 0;
+
+      let t = 0;
       for (let i = 1; i < valores.length; i++) {
-        if (valores[i] < valores[i - 1]) total += valores[i - 1] - valores[i];
+        if (valores[i] < valores[i - 1]) t += valores[i - 1] - valores[i];
       }
-      return Number(total.toFixed(2));
+      return Number(t.toFixed(2));
     });
   }
 
@@ -379,10 +358,11 @@ app.get("/api/consumo_diario", (req, res) => {
 });
 
 // ============================================================================
-// /api/dashboard — RESUMO PRINCIPAL
+// /api/dashboard
 // ============================================================================
 app.get("/api/dashboard", (req, res) => {
   const dados = safeReadJson(DATA_FILE, {});
+
   if (!dados || Object.keys(dados).length === 0) {
     return res.json({
       lastUpdate: "-",
@@ -393,66 +373,70 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
-  // monta lista de reservatórios com percent e litros já convertidos
   const reservatorios = [
     {
       nome: "Reservatório Elevador",
       setor: "elevador",
-      percent: Math.round((Number(dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100),
-      current_liters: Number(dados["Reservatorio_Elevador_current"] || 0),
+      percent: Math.round((dados["Reservatorio_Elevador_current"] / 20000) * 100),
+      current_liters: dados["Reservatorio_Elevador_current"],
       capacidade: 20000,
       manutencao: getManutencao().ativo
     },
     {
       nome: "Reservatório Osmose",
       setor: "osmose",
-      percent: Math.round((Number(dados["Reservatorio_Osmose_current"] || 0) / 200) * 100),
-      current_liters: Number(dados["Reservatorio_Osmose_current"] || 0),
+      percent: Math.round((dados["Reservatorio_Osmose_current"] / 200) * 100),
+      current_liters: dados["Reservatorio_Osmose_current"],
       capacidade: 200,
       manutencao: getManutencao().ativo
     },
     {
       nome: "Reservatório CME",
       setor: "cme",
-      percent: Math.round((Number(dados["Reservatorio_CME_current"] || 0) / 1000) * 100),
-      current_liters: Number(dados["Reservatorio_CME_current"] || 0),
+      percent: Math.round((dados["Reservatorio_CME_current"] / 1000) * 100),
+      current_liters: dados["Reservatorio_CME_current"],
       capacidade: 1000,
       manutencao: getManutencao().ativo
     },
     {
       nome: "Água Abrandada",
       setor: "abrandada",
-      percent: Math.round((Number(dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100),
-      current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0),
+      percent: Math.round((dados["Reservatorio_Agua_Abrandada_current"] / 9000) * 100),
+      current_liters: dados["Reservatorio_Agua_Abrandada_current"],
       capacidade: 9000,
       manutencao: getManutencao().ativo
     },
     {
       nome: "Lavanderia",
       setor: "lavanderia",
-      percent: Math.round((Number(dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100),
-      current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0),
+      percent: Math.round((dados["Reservatorio_lavanderia_current"] / 10000) * 100),
+      current_liters: dados["Reservatorio_lavanderia_current"],
       capacidade: 10000,
       manutencao: getManutencao().ativo
     }
   ];
 
-  // pressoes
   const pressoes = [
-    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null, manutencao: getManutencao().ativo }
+    { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"], manutencao: getManutencao().ativo },
+    { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"], manutencao: getManutencao().ativo },
+    { nome: "Pressão Saída CME", pressao: dados["Pressao_Saida_CME_current"], manutencao: getManutencao().ativo }
   ];
 
-  // bombas (garante que mesmo que um pacote chegue só com uma bomba, mantemos a outra via dados salvos)
-  const b1 = Number(dados["Bomba_01_binary"]) || 0;
-  const b2 = Number(dados["Bomba_02_binary"]) || 0;
-  const c1 = Number(dados["Ciclos_Bomba_01_counter"]) || 0;
-  const c2 = Number(dados["Ciclos_Bomba_02_counter"]) || 0;
-
   const bombas = [
-    { nome: "Bomba 01", estado_num: b1, estado: b1 === 1 ? "ligada" : "desligada", ciclo: c1, manutencao: getManutencao().ativo },
-    { nome: "Bomba 02", estado_num: b2, estado: b2 === 1 ? "ligada" : "desligada", ciclo: c2, manutencao: getManutencao().ativo }
+    {
+      nome: "Bomba 01",
+      estado_num: Number(dados["Bomba_01_binary"]) || 0,
+      estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0,
+      manutencao: getManutencao().ativo
+    },
+    {
+      nome: "Bomba 02",
+      estado_num: Number(dados["Bomba_02_binary"]) || 0,
+      estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
+      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0,
+      manutencao: getManutencao().ativo
+    }
   ];
 
   return res.json({
@@ -465,47 +449,37 @@ app.get("/api/dashboard", (req, res) => {
 });
 
 // ============================================================================
-// ROTAS DE MANUTENÇÃO (API para front)
+// ROTAS DE MANUTENÇÃO
 // ============================================================================
 app.get("/manutencao", (req, res) => res.json(getManutencao()));
 
 app.post("/manutencao", (req, res) => {
   const { ativo } = req.body;
-  if (typeof ativo !== "boolean") return res.status(400).json({ erro: "Campo 'ativo' precisa ser true/false" });
+  if (typeof ativo !== "boolean") return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
   setManutencao(ativo);
-  return res.json({ status: "ok", ativo });
+  res.json({ status: "ok", ativo });
 });
 
 // ============================================================================
-// Interface estática (preserva suas páginas)
+// Arquivos estáticos (public)
 // ============================================================================
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/dashboard", (req, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/historico-view", (req, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
 // ============================================================================
-// Keep Alive - rota ping
+// Keep Alive
 // ============================================================================
 app.get("/api/ping", (req, res) => res.json({ ok: true, timestamp: Date.now() }));
 
-// ============================================================================
-// Keep Alive (evita que o Render durma)
-// Nota: Render/Node têm fetch global em Node 18+. Se precisar retrocompat, instale node-fetch.
-// ============================================================================
 setInterval(() => {
-  try {
-    fetch("https://hag-9ki9.onrender.com/api/ping")
-      .then(() => console.log("Keep-alive enviado"))
-      .catch(() => console.log("Falha ao enviar keep-alive"));
-  } catch (e) {
-    console.log("Keep-alive fetch error (ignorando):", e.message || e);
-  }
-}, 60 * 1000);
+  fetch("https://hag-9ki9.onrender.com/api/ping").catch(() => {});
+}, 60000);
 
 // ============================================================================
-// Inicialização
+// Start Server
 // ============================================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor HAG ativo na porta ${PORT}`));
