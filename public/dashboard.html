@@ -19,7 +19,7 @@
     <!-- ============================ RESERVATÓRIOS ============================ -->
     <h2>Reservatórios</h2>
 
-    <!-- ALERTA DE NÍVEL BAIXO (RESTaurado) -->
+    <!-- ALERTA DE NÍVEL BAIXO -->
     <div id="alerta-nivelbaixo" style="
         width: 100%;
         padding: 12px;
@@ -58,18 +58,29 @@
         </div>
 
         <!-- ===== BOMBAS ===== -->
+
+        <!-- Bomba de Circulação 01 -->
         <div class="card-bomba bomba-ligada" id="bomba1">
-            <h3>Bomba 01</h3>
+            <h3>Bomba de Circulação 01</h3>
             <p>Status: <b id="b1Status">--</b></p>
             <p>Ciclos: <b id="b1Ciclos">--</b></p>
             <div class="alerta-bomba" id="alertaB1" style="display:none">⚠ Diferença detectada</div>
         </div>
 
+        <!-- Bomba de Circulação 02 -->
         <div class="card-bomba bomba-desligada" id="bomba2">
-            <h3>Bomba 02</h3>
+            <h3>Bomba de Circulação 02</h3>
             <p>Status: <b id="b2Status">--</b></p>
             <p>Ciclos: <b id="b2Ciclos">--</b></p>
             <div class="alerta-bomba" id="alertaB2" style="display:none">⚠ Diferença detectada</div>
+        </div>
+
+        <!-- NOVA: Bomba da Osmose -->
+        <div class="card-bomba bomba-desligada" id="bombaOsmose">
+            <h3>Bomba da Osmose</h3>
+            <p>Status: <b id="bOsmoseStatus">--</b></p>
+            <p>Ciclos: <b id="bOsmoseCiclos">--</b></p>
+            <div class="alerta-bomba" id="alertaBOsmose" style="display:none">⚠ Diferença detectada</div>
         </div>
 
     </div>
