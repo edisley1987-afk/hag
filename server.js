@@ -30,9 +30,9 @@ app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: ["text/*", "application/*"], limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Prevent caching of API responses (dashboard needs fresh)
+// Prevent caching of API responses (dashboard needs fresh) - global
 app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
@@ -167,7 +167,9 @@ function convertAndMerge(dataArray) {
     novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
   }
 
-  novo.timestamp = timestampNow;
+  // *** CORREÇÃO: gerar timestamp sempre único (evita dashboard congelado) ***
+  // Usamos ISO + millis + pequeno sufixo aleatório para garantir unicidade.
+  novo.timestamp = `${new Date().toISOString()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   return novo;
 }
 
@@ -218,7 +220,7 @@ wss.on("connection", ws => {
   console.log(chalk.cyan("WS client connected"));
   // enviar estado atual assim que conectar
   const dados = safeReadJson(DATA_FILE, {});
-  ws.send(JSON.stringify({ type: "init", dados }));
+  try { ws.send(JSON.stringify({ type: "init", dados })); } catch (e) {}
 });
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
@@ -364,7 +366,16 @@ app.get("/api/consumo_diario", (req, res) => {
 });
 
 // ------------------------- DASHBOARD SIMPLIFICADO -------------------------
+// Reforçamos headers anti-cache específicos desta rota também.
 app.get("/api/dashboard", (req, res) => {
+  res.setHeader("Cache-Control", "no-store, must-revalidate, max-age=0, private");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  // cabeçalhos extras que ajudam CDNs/Proxies (Akamai/Render)
+  res.setHeader("Surrogate-Control", "no-store");
+  res.setHeader("CDN-Cache-Control", "no-store");
+  res.setHeader("Vary", "Accept-Encoding");
+
   const dados = safeReadJson(DATA_FILE, {});
   if (!dados || Object.keys(dados).length === 0) {
     return res.json({
