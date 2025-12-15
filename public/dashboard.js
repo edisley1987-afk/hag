@@ -53,7 +53,7 @@ function bipCurto() {
   o.stop(audioCtx.currentTime + 0.12);
 }
 
-// ========================= LOOP HTTP (SEM BOMBAS) =========================
+// ========================= LOOP HTTP (FALLBACK) =========================
 async function atualizar() {
   try {
     const r = await fetch(API, { cache: "no-store" });
@@ -76,7 +76,7 @@ async function atualizar() {
 setInterval(atualizar, 5000);
 atualizar();
 
-// ========================= CACHE HTTP =========================
+// ========================= CACHE HTTP (COM BOMBAS) =========================
 function atualizarCacheHTTP(d) {
   d?.reservatorios?.forEach(r =>
     ultimasLeituras.reservatorios[r.setor] = r
@@ -86,7 +86,10 @@ function atualizarCacheHTTP(d) {
     ultimasLeituras.pressoes[p.setor] = p
   );
 
-  // 🚫 bombas NÃO vêm do HTTP
+  // ✅ FALLBACK DAS BOMBAS (ESSENCIAL)
+  d?.bombas?.forEach(b =>
+    ultimasLeituras.bombas[b.nome] = b
+  );
 }
 
 // ========================= RENDER GERAL =========================
@@ -170,7 +173,7 @@ function renderPressao(lista) {
   });
 }
 
-// ========================= BOMBAS (TEMPO REAL) =========================
+// ========================= BOMBAS =========================
 function renderBombas(bombas) {
   atualizar("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
   atualizar("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
@@ -204,7 +207,7 @@ function abrirHistorico(setor) {
   location.href = `/historico.html?setor=${setor}`;
 }
 
-// ========================= WEBSOCKET (AUTORIDADE DAS BOMBAS) =========================
+// ========================= WEBSOCKET =========================
 let ws;
 
 function connectWS() {
@@ -215,20 +218,13 @@ function connectWS() {
     try {
       const msg = JSON.parse(e.data);
 
-      // 🔄 atualização geral
       if (msg.type === "update") {
         atualizarCacheHTTP(msg.dados);
         renderTudo();
-      }
 
-      // 🚀 atualização IMEDIATA da bomba
-      if (msg.type === "bomba") {
-        ultimasLeituras.bombas[msg.nome] = msg;
-        renderBombas(ultimasLeituras.bombas);
+        document.getElementById("lastUpdate").textContent =
+          "Tempo real " + formatarHora();
       }
-
-      document.getElementById("lastUpdate").textContent =
-        "Tempo real " + formatarHora();
 
     } catch {}
   };
