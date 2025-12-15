@@ -14,6 +14,45 @@ let alertaAtivo = {};
 let alertaNivel31 = {};
 let bipNivelIntervalo = {};
 
+// ========================= DATA SEGURA =========================
+function formatarHora(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return isNaN(d.getTime())
+    ? new Date().toLocaleTimeString()
+    : d.toLocaleTimeString();
+}
+
+// ========================= AUDIO (ANTI-BLOQUEIO) =========================
+let audioCtx = null;
+let audioLiberado = false;
+
+function liberarAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  audioLiberado = true;
+
+  document.removeEventListener("click", liberarAudio);
+  document.removeEventListener("touchstart", liberarAudio);
+}
+
+// exige interação do usuário
+document.addEventListener("click", liberarAudio);
+document.addEventListener("touchstart", liberarAudio);
+
+function bipCurto() {
+  if (!audioLiberado || !audioCtx) return;
+
+  const o = audioCtx.createOscillator();
+  o.type = "square";
+  o.frequency.value = 600;
+  o.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + 0.12);
+}
 
 // ========================= LOOP HTTP =========================
 async function atualizar() {
@@ -26,34 +65,30 @@ async function atualizar() {
     renderTudo();
 
     document.getElementById("lastUpdate").textContent =
-      "Atualizado " + new Date(dados.lastUpdate).toLocaleTimeString();
+      "Atualizado " + formatarHora(dados.lastUpdate);
 
-  } catch (e) {
-    console.warn("Falha API, usando cache");
+  } catch {
     renderTudo();
+    document.getElementById("lastUpdate").textContent =
+      "Sem comunicação " + formatarHora();
   }
 }
 
 setInterval(atualizar, 5000);
 atualizar();
 
-
 // ========================= CACHE =========================
 function atualizarCache(d) {
-
-  d.reservatorios?.forEach(r =>
+  d?.reservatorios?.forEach(r =>
     ultimasLeituras.reservatorios[r.setor] = r
   );
-
-  d.pressoes?.forEach(p =>
+  d?.pressoes?.forEach(p =>
     ultimasLeituras.pressoes[p.setor] = p
   );
-
-  d.bombas?.forEach(b =>
+  d?.bombas?.forEach(b =>
     ultimasLeituras.bombas[b.nome] = b
   );
 }
-
 
 // ========================= RENDER GERAL =========================
 function renderTudo() {
@@ -62,28 +97,12 @@ function renderTudo() {
   renderBombas(ultimasLeituras.bombas);
 }
 
-
-// ========================= SOM =========================
-function bipCurto() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    o.type = "square";
-    o.frequency.value = 600;
-    o.connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.12);
-  } catch {}
-}
-
-
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
   const box = document.getElementById("reservatoriosContainer");
   if (!box) return;
 
   const frag = document.createDocumentFragment();
-  let alertas40 = [];
 
   lista.forEach(r => {
     const percent = Math.round(r.percent || 0);
@@ -110,14 +129,12 @@ function renderReservatorios(lista) {
     if (percent <= 40 && !manutencao[r.setor]) {
       if (!alertaAtivo[r.setor]) bipCurto();
       alertaAtivo[r.setor] = true;
-      alertas40.push(`${r.nome} (${percent}%)`);
     } else alertaAtivo[r.setor] = false;
 
     card.innerHTML = `
       <div class="top-bar">
         <h3>${r.nome}</h3>
-        <button class="gear-btn"
-          onclick="toggleManutencao('${r.setor}')">⚙</button>
+        <button class="gear-btn" onclick="toggleManutencao('${r.setor}')">⚙</button>
       </div>
 
       <div class="tanque-visu">
@@ -128,9 +145,7 @@ function renderReservatorios(lista) {
         </div>
       </div>
 
-      <button onclick="abrirHistorico('${r.setor}')">
-        📊 Histórico
-      </button>
+      <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
     `;
 
     frag.appendChild(card);
@@ -139,7 +154,6 @@ function renderReservatorios(lista) {
   box.innerHTML = "";
   box.appendChild(frag);
 }
-
 
 // ========================= PRESSÕES =========================
 function renderPressao(lista) {
@@ -157,10 +171,8 @@ function renderPressao(lista) {
   });
 }
 
-
-// ========================= BOMBAS (FIX DEFINITIVO) =========================
+// ========================= BOMBAS =========================
 function renderBombas(bombas) {
-
   atualizarBomba("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
   atualizarBomba("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
   atualizarBomba("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
@@ -170,7 +182,6 @@ function renderBombas(bombas) {
     if (!b) return;
 
     const ligada = b.estado_num === 1 || b.estado === "ligada";
-
     const card = document.getElementById(cardId);
     if (!card) return;
 
@@ -180,11 +191,9 @@ function renderBombas(bombas) {
     document.getElementById(statusId).textContent =
       ligada ? "Ligada" : "Desligada";
 
-    document.getElementById(cicloId).textContent =
-      b.ciclo ?? 0;
+    document.getElementById(cicloId).textContent = b.ciclo ?? 0;
   }
 }
-
 
 // ========================= MANUTENÇÃO =========================
 function toggleManutencao(setor) {
@@ -195,7 +204,6 @@ function toggleManutencao(setor) {
 function abrirHistorico(setor) {
   location.href = `/historico.html?setor=${setor}`;
 }
-
 
 // ========================= WEBSOCKET =========================
 let ws;
@@ -212,7 +220,7 @@ function connectWS() {
         renderTudo();
 
         document.getElementById("lastUpdate").textContent =
-          "Tempo real " + new Date().toLocaleTimeString();
+          "Tempo real " + formatarHora();
       }
     } catch {}
   };
