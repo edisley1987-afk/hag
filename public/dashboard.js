@@ -1,290 +1,224 @@
 // ========================= CONFIG =========================
 const API = "/api/dashboard";
 
-// Manutenção salva
+// ========================= ESTADOS =========================
 let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
+let ultimasLeituras = {
+  reservatorios: {},
+  pressoes: {},
+  bombas: {}
+};
 
-// Cache global (estado único)
-let ultimasLeituras = {};
-
-// === Alertas ===
+// ========================= ALERTAS =========================
 let alertaAtivo = {};
 let alertaNivel31 = {};
 let bipNivelIntervalo = {};
-let alertaReservatoriosCriticos = [];
 
 
-// ========================= LOOP HTTP (BASE) =========================
+// ========================= LOOP HTTP =========================
 async function atualizar() {
-    try {
-        const r = await fetch(API, { cache: "no-store" });
-        if (!r.ok) throw new Error("API retornou " + r.status);
+  try {
+    const r = await fetch(API, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
 
-        const dados = await r.json();
-        const globalTs = dados.lastUpdate || new Date().toISOString();
+    const dados = await r.json();
+    atualizarCache(dados);
+    renderTudo();
 
-        // ---- RESERVATÓRIOS ----
-        if (Array.isArray(dados.reservatorios)) {
-            dados.reservatorios.forEach(rsv => {
-                ultimasLeituras[rsv.setor] = {
-                    ...ultimasLeituras[rsv.setor],
-                    ...rsv,
-                    timestamp: rsv.timestamp || globalTs
-                };
-            });
-        }
+    document.getElementById("lastUpdate").textContent =
+      "Atualizado " + new Date(dados.lastUpdate).toLocaleTimeString();
 
-        // ---- PRESSÕES ----
-        if (Array.isArray(dados.pressoes)) {
-            dados.pressoes.forEach(p => {
-                ultimasLeituras[p.setor] = {
-                    ...ultimasLeituras[p.setor],
-                    pressao: p.pressao,
-                    timestamp: p.timestamp || globalTs
-                };
-            });
-        }
-
-        // ---- BOMBAS (3) ----
-        if (Array.isArray(dados.bombas)) {
-            dados.bombas.forEach((b, i) => {
-                ultimasLeituras[`bomba${i + 1}`] = {
-                    ...ultimasLeituras[`bomba${i + 1}`],
-                    ...b,
-                    timestamp: b.timestamp || globalTs
-                };
-            });
-        }
-
-        render(dados);
-
-        document.getElementById("lastUpdate").textContent =
-            "Atualizado " + new Date(globalTs).toLocaleTimeString();
-
-    } catch (e) {
-        console.error("Erro HTTP:", e);
-
-        document.getElementById("lastUpdate").textContent =
-            "Falha na comunicação – exibindo último estado";
-
-        render({});
-    }
+  } catch (e) {
+    console.warn("Falha API, usando cache");
+    renderTudo();
+  }
 }
 
 setInterval(atualizar, 5000);
 atualizar();
 
 
+// ========================= CACHE =========================
+function atualizarCache(d) {
+
+  d.reservatorios?.forEach(r =>
+    ultimasLeituras.reservatorios[r.setor] = r
+  );
+
+  d.pressoes?.forEach(p =>
+    ultimasLeituras.pressoes[p.setor] = p
+  );
+
+  d.bombas?.forEach(b =>
+    ultimasLeituras.bombas[b.nome] = b
+  );
+}
+
+
+// ========================= RENDER GERAL =========================
+function renderTudo() {
+  renderReservatorios(Object.values(ultimasLeituras.reservatorios));
+  renderPressao(Object.values(ultimasLeituras.pressoes));
+  renderBombas(ultimasLeituras.bombas);
+}
+
+
 // ========================= SOM =========================
 function bipCurto() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        o.type = "square";
-        o.frequency.value = 600;
-        o.connect(ctx.destination);
-        o.start();
-        o.stop(ctx.currentTime + 0.12);
-    } catch {}
-}
-
-
-// ========================= CONTROLLER (ANTI-SUMIÇO) =========================
-function render(d) {
-    // RESERVATÓRIOS
-    if (Array.isArray(d.reservatorios) && d.reservatorios.length) {
-        renderReservatorios(d.reservatorios);
-    } else {
-        const cache = Object.values(ultimasLeituras).filter(r => r.capacidade);
-        if (cache.length) renderReservatorios(cache);
-    }
-
-    // PRESSÕES
-    if (Array.isArray(d.pressoes) && d.pressoes.length) {
-        renderPressao(d.pressoes);
-    }
-
-    // BOMBAS
-    if (Array.isArray(d.bombas) && d.bombas.length) {
-        renderBombas(d.bombas);
-    }
-}
-
-
-// ========================= ALERTA NÍVEL 40% =========================
-function exibirAlertaNivel(lista) {
-    const box = document.getElementById("alerta-nivelbaixo");
-    if (!box) return;
-
-    if (!lista.length) {
-        box.style.display = "none";
-        return;
-    }
-
-    box.style.display = "block";
-    box.innerHTML =
-        `⚠️ Reservatórios abaixo de 40%: <b>${lista.join(", ")}</b>`;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    o.type = "square";
+    o.frequency.value = 600;
+    o.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.12);
+  } catch {}
 }
 
 
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
-    const box = document.getElementById("reservatoriosContainer");
-    if (!box || !lista || !lista.length) return;
+  const box = document.getElementById("reservatoriosContainer");
+  if (!box) return;
 
-    const frag = document.createDocumentFragment();
-    let alertas40 = [];
+  const frag = document.createDocumentFragment();
+  let alertas40 = [];
 
-    lista.forEach(r => {
-        const percent = Math.round(r.percent || 0);
-        const litros = r.current_liters ?? "--";
-        const ts = r.timestamp || new Date().toISOString();
+  lista.forEach(r => {
+    const percent = Math.round(r.percent || 0);
+    const litros = r.current_liters ?? "--";
 
-        const card = document.createElement("div");
-        card.className = "card-reservatorio";
+    const card = document.createElement("div");
+    card.className = "card-reservatorio";
 
-        if (percent <= 30) card.classList.add("nv-critico");
-        else if (percent <= 60) card.classList.add("nv-alerta");
-        else if (percent <= 90) card.classList.add("nv-normal");
-        else card.classList.add("nv-cheio");
+    if (percent <= 30) card.classList.add("nv-critico");
+    else if (percent <= 60) card.classList.add("nv-alerta");
+    else card.classList.add("nv-normal");
 
-        // ALERTA <31%
-        if (percent < 31 && !manutencao[r.setor]) {
-            card.classList.add("piscar-31");
-            if (!alertaNivel31[r.setor]) {
-                alertaNivel31[r.setor] = true;
-                bipNivelIntervalo[r.setor] = setInterval(bipCurto, 3000);
-            }
-        } else {
-            clearInterval(bipNivelIntervalo[r.setor]);
-            delete alertaNivel31[r.setor];
-        }
+    if (percent < 31 && !manutencao[r.setor]) {
+      card.classList.add("piscar-31");
+      if (!alertaNivel31[r.setor]) {
+        alertaNivel31[r.setor] = true;
+        bipNivelIntervalo[r.setor] = setInterval(bipCurto, 3000);
+      }
+    } else {
+      clearInterval(bipNivelIntervalo[r.setor]);
+      delete alertaNivel31[r.setor];
+    }
 
-        // ALERTA <=40%
-        if (percent <= 40 && !manutencao[r.setor]) {
-            if (!alertaAtivo[r.setor]) bipCurto();
-            alertaAtivo[r.setor] = true;
-            alertas40.push(`${r.nome} (${percent}%)`);
-        } else {
-            alertaAtivo[r.setor] = false;
-        }
+    if (percent <= 40 && !manutencao[r.setor]) {
+      if (!alertaAtivo[r.setor]) bipCurto();
+      alertaAtivo[r.setor] = true;
+      alertas40.push(`${r.nome} (${percent}%)`);
+    } else alertaAtivo[r.setor] = false;
 
-        card.innerHTML = `
-            <div class="top-bar">
-                <h3>${r.nome}</h3>
-                <button class="gear-btn"
-                    onclick="toggleManutencao('${r.setor}')">⚙</button>
-            </div>
+    card.innerHTML = `
+      <div class="top-bar">
+        <h3>${r.nome}</h3>
+        <button class="gear-btn"
+          onclick="toggleManutencao('${r.setor}')">⚙</button>
+      </div>
 
-            <div class="tanque-visu">
-                <div class="nivel-agua" style="height:${percent}%"></div>
-                <div class="overlay-info">
-                    <div class="percent-text">${percent}%</div>
-                    <div class="liters-text">${litros} L</div>
-                </div>
-            </div>
+      <div class="tanque-visu">
+        <div class="nivel-agua" style="height:${percent}%"></div>
+        <div class="overlay-info">
+          <div class="percent-text">${percent}%</div>
+          <div class="liters-text">${litros} L</div>
+        </div>
+      </div>
 
-            <button onclick="abrirHistorico('${r.setor}')">
-                📊 Histórico
-            </button>
-        `;
+      <button onclick="abrirHistorico('${r.setor}')">
+        📊 Histórico
+      </button>
+    `;
 
-        frag.appendChild(card);
-    });
+    frag.appendChild(card);
+  });
 
-    box.innerHTML = "";
-    box.appendChild(frag);
-    exibirAlertaNivel(alertas40);
+  box.innerHTML = "";
+  box.appendChild(frag);
 }
 
 
 // ========================= PRESSÕES =========================
 function renderPressao(lista) {
-    const mapa = {
-        saida_osmose: "pSaidaOsmose",
-        retorno_osmose: "pRetornoOsmose",
-        saida_cme: "pSaidaCME"
-    };
+  const mapa = {
+    saida_osmose: "pSaidaOsmose",
+    retorno_osmose: "pRetornoOsmose",
+    saida_cme: "pSaidaCME"
+  };
 
-    lista.forEach(p => {
-        const el = document.getElementById(mapa[p.setor]);
-        if (el && p.pressao != null) {
-            el.textContent = Number(p.pressao).toFixed(2);
-        }
-    });
+  lista.forEach(p => {
+    const el = document.getElementById(mapa[p.setor]);
+    if (el && p.pressao != null) {
+      el.textContent = Number(p.pressao).toFixed(2);
+    }
+  });
 }
 
 
-// ========================= BOMBAS =========================
-function renderBombas(lista) {
-    lista.forEach((b, i) => {
-        const el = document.getElementById(`bomba${i + 1}`);
-        if (!el) return;
+// ========================= BOMBAS (FIX DEFINITIVO) =========================
+function renderBombas(bombas) {
 
-        const ligada =
-            b.estado_num === 1 ||
-            b.estado === 1 ||
-            b.estado === "ligada";
+  atualizarBomba("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
+  atualizarBomba("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
+  atualizarBomba("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
 
-        el.classList.toggle("bomba-ligada", ligada);
-        el.classList.toggle("bomba-desligada", !ligada);
+  function atualizarBomba(nome, cardId, statusId, cicloId) {
+    const b = bombas[nome];
+    if (!b) return;
 
-        document.getElementById(`b${i + 1}Status`).textContent =
-            ligada ? "Ligada" : "Desligada";
+    const ligada = b.estado_num === 1 || b.estado === "ligada";
 
-        document.getElementById(`b${i + 1}Ciclos`).textContent =
-            b.ciclo ?? 0;
-    });
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    card.classList.toggle("bomba-ligada", ligada);
+    card.classList.toggle("bomba-desligada", !ligada);
+
+    document.getElementById(statusId).textContent =
+      ligada ? "Ligada" : "Desligada";
+
+    document.getElementById(cicloId).textContent =
+      b.ciclo ?? 0;
+  }
 }
 
 
 // ========================= MANUTENÇÃO =========================
 function toggleManutencao(setor) {
-    manutencao[setor] = !manutencao[setor];
-    localStorage.setItem("manutencao", JSON.stringify(manutencao));
+  manutencao[setor] = !manutencao[setor];
+  localStorage.setItem("manutencao", JSON.stringify(manutencao));
 }
 
 function abrirHistorico(setor) {
-    location.href = `/historico.html?setor=${setor}`;
+  location.href = `/historico.html?setor=${setor}`;
 }
 
 
-// ========================= WEBSOCKET (SEGURO) =========================
+// ========================= WEBSOCKET =========================
 let ws;
 
 function connectWS() {
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    ws = new WebSocket(`${proto}://${location.host}`);
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}`);
 
-    ws.onopen = () => console.log("✅ WS conectado");
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "update") {
+        atualizarCache(msg.dados);
+        renderTudo();
 
-    ws.onmessage = e => {
-        try {
-            const msg = JSON.parse(e.data);
-            if (msg.type === "update" && msg.dados) {
-                // Atualiza cache SEM apagar nada
-                msg.dados.reservatorios?.forEach(r =>
-                    ultimasLeituras[r.setor] = r
-                );
-                msg.dados.pressoes?.forEach(p =>
-                    ultimasLeituras[p.setor] = p
-                );
-                msg.dados.bombas?.forEach((b, i) =>
-                    ultimasLeituras[`bomba${i + 1}`] = b
-                );
+        document.getElementById("lastUpdate").textContent =
+          "Tempo real " + new Date().toLocaleTimeString();
+      }
+    } catch {}
+  };
 
-                render(msg.dados);
-
-                document.getElementById("lastUpdate").textContent =
-                    "Tempo real " + new Date().toLocaleTimeString();
-            }
-        } catch (err) {
-            console.warn("WS inválido", err);
-        }
-    };
-
-    ws.onclose = () => setTimeout(connectWS, 3000);
-    ws.onerror = () => ws.close();
+  ws.onclose = () => setTimeout(connectWS, 3000);
+  ws.onerror = () => ws.close();
 }
 
 connectWS();
