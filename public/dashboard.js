@@ -333,3 +333,47 @@ function toggleManutencao(setor) {
 function abrirHistorico(setor) {
     location.href = `/historico.html?setor=${setor}`;
 }
+// ========================= WEBSOCKET (TEMPO REAL) =========================
+let ws;
+
+function connectWS() {
+    const protocolo = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${protocolo}://${location.host}`);
+
+    ws.onopen = () => {
+        console.log("✅ WS conectado");
+    };
+
+    ws.onmessage = (e) => {
+        try {
+            const msg = JSON.parse(e.data);
+
+            if (msg.type === "update" && msg.dados) {
+                // usa o mesmo render do HTTP
+                render({
+                    reservatorios: msg.dados.reservatorios || [],
+                    pressoes: msg.dados.pressoes || [],
+                    bombas: msg.dados.bombas || []
+                });
+
+                document.getElementById("lastUpdate").textContent =
+                    "Atualizado " + new Date().toLocaleTimeString();
+            }
+
+        } catch (err) {
+            console.warn("WS mensagem inválida", err);
+        }
+    };
+
+    ws.onclose = () => {
+        console.warn("⚠️ WS caiu, tentando reconectar em 3s...");
+        setTimeout(connectWS, 3000);
+    };
+
+    ws.onerror = () => {
+        ws.close();
+    };
+}
+
+// inicia WS
+connectWS();
