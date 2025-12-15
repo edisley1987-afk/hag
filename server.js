@@ -62,9 +62,15 @@ const SENSORES = {
 
   "Bomba_01_binary": { tipo: "bomba" },
   "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
+
   "Bomba_02_binary": { tipo: "bomba" },
-  "Ciclos_Bomba_02_counter": { tipo: "ciclo" }
+  "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
+
+  // ✅ NOVO — BOMBA DE OSMOSE
+  "Bomba_Osmose_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
+
 
 // ------------------------- HELPERS IO -------------------------
 function safeReadJson(filePath, fallback) {
@@ -258,8 +264,11 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
 });
 
 // ------------------------- ENDPOINTS DE LEITURA -------------------------
-app.get("/dados", (req, res) => res.json(safeReadJson(DATA_FILE, {})));
+app.get("/dados", (req, res) => {
+  return res.json(safeReadJson(DATA_FILE, {}));
+});
 
+// Mapa fixo dos reservatórios
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -268,74 +277,119 @@ const MAPA_RESERVATORIOS = {
   lavanderia: "Reservatorio_lavanderia_current"
 };
 
-// histórico simplificado
+// ------------------------- HISTÓRICO SIMPLIFICADO -------------------------
 app.get("/historico", (req, res) => {
   const historico = safeReadJson(HIST_FILE, {});
   const saida = [];
+
   for (const [data, sensores] of Object.entries(historico)) {
-    for (const [ref, dados] of Object.entries(sensores)) {
-      const nome = Object.keys(MAPA_RESERVATORIOS).find(key => MAPA_RESERVATORIOS[key] === ref);
-      if (!nome) continue;
-      if (typeof dados.min === "number") saida.push({ reservatorio: nome, timestamp: new Date(data).getTime(), valor: dados.min });
+    for (const [ref, dados] of Object.entries(sensores || {})) {
+      const nome = Object.keys(MAPA_RESERVATORIOS)
+        .find(key => MAPA_RESERVATORIOS[key] === ref);
+
+      if (!nome || !dados) continue;
+
+      // ponto mínimo do dia
+      if (typeof dados.min === "number") {
+        saida.push({
+          reservatorio: nome,
+          timestamp: new Date(data).getTime(),
+          valor: dados.min
+        });
+      }
+
+      // pontos relevantes
       for (const p of dados.pontos || []) {
-        const dt = new Date(`${data} ${p.hora}`);
-        saida.push({ reservatorio: nome, timestamp: dt.getTime(), valor: p.valor });
+        const ts = new Date(`${data} ${p.hora}`).getTime();
+        if (!isNaN(ts)) {
+          saida.push({
+            reservatorio: nome,
+            timestamp: ts,
+            valor: p.valor
+          });
+        }
       }
     }
   }
+
   saida.sort((a, b) => a.timestamp - b.timestamp);
   return res.json(saida);
 });
 
+// ------------------------- HISTÓRICO 24H -------------------------
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
-  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+
+  if (!ref) {
+    return res.status(400).json({ erro: "Reservatório inválido" });
+  }
+
   const historico = safeReadJson(HIST_FILE, {});
   const agora = Date.now();
   const saida = [];
+
   for (const [data, sensores] of Object.entries(historico)) {
-    const pontos = sensores[ref]?.pontos || [];
+    const pontos = sensores?.[ref]?.pontos || [];
+
     for (const p of pontos) {
-      const dt = new Date(`${data} ${p.hora}`).getTime();
-      if (agora - dt <= 24 * 60 * 60 * 1000) saida.push({ reservatorio: nome, timestamp: dt, valor: p.valor });
+      const ts = new Date(`${data} ${p.hora}`).getTime();
+      if (!isNaN(ts) && (agora - ts <= 24 * 60 * 60 * 1000)) {
+        saida.push({
+          reservatorio: nome,
+          timestamp: ts,
+          valor: p.valor
+        });
+      }
     }
   }
+
   saida.sort((a, b) => a.timestamp - b.timestamp);
   return res.json(saida);
 });
 
-// consumo 5 dias por reservatório (Elevador, Osmose, Lavanderia)
+// ------------------------- CONSUMO 5 DIAS -------------------------
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
+
   const mapa = {
     elevador: "Reservatorio_Elevador_current",
     osmose: "Reservatorio_Osmose_current",
     lavanderia: "Reservatorio_lavanderia_current"
   };
+
   const ref = mapa[nome];
-  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+  if (!ref) {
+    return res.status(400).json({ erro: "Reservatório inválido" });
+  }
 
   const historico = safeReadJson(HIST_FILE, {});
   const datas = Object.keys(historico).sort().slice(-5);
 
   const resposta = datas.map(dia => {
-    const reg = historico[dia][ref];
+    const reg = historico[dia]?.[ref];
     if (!reg) return { dia, consumo: 0 };
+
     const valores = [];
     if (typeof reg.min === "number") valores.push(reg.min);
     if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
+
     if (valores.length < 2) return { dia, consumo: 0 };
+
     let consumo = 0;
     for (let i = 1; i < valores.length; i++) {
-      if (valores[i] < valores[i - 1]) consumo += valores[i - 1] - valores[i];
+      if (valores[i] < valores[i - 1]) {
+        consumo += valores[i - 1] - valores[i];
+      }
     }
+
     return { dia, consumo: Number(consumo.toFixed(2)) };
   });
 
   return res.json(resposta);
 });
 
+// ------------------------- CONSUMO DIÁRIO (API) -------------------------
 app.get("/api/consumo_diario", (req, res) => {
   const diasReq = Number(req.query.dias || 5);
   const historico = safeReadJson(HIST_FILE, {});
@@ -343,17 +397,23 @@ app.get("/api/consumo_diario", (req, res) => {
 
   function consumo(ref) {
     return dias.map(data => {
-      const reg = historico[data][ref];
+      const reg = historico[data]?.[ref];
       if (!reg) return 0;
+
       const valores = [];
       if (typeof reg.min === "number") valores.push(reg.min);
       if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
+
       if (valores.length < 2) return 0;
-      let t = 0;
+
+      let total = 0;
       for (let i = 1; i < valores.length; i++) {
-        if (valores[i] < valores[i - 1]) t += valores[i - 1] - valores[i];
+        if (valores[i] < valores[i - 1]) {
+          total += valores[i - 1] - valores[i];
+        }
       }
-      return Number(t.toFixed(2));
+
+      return Number(total.toFixed(2));
     });
   }
 
@@ -364,7 +424,6 @@ app.get("/api/consumo_diario", (req, res) => {
     lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
-
 // ------------------------- DASHBOARD SIMPLIFICADO -------------------------
 // Reforçamos headers anti-cache específicos desta rota também.
 app.get("/api/dashboard", (req, res) => {
@@ -403,17 +462,25 @@ app.get("/api/dashboard", (req, res) => {
 
   const bombas = [
     { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0, manutencao: getManutencao().ativo },
-    { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo }
+    { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo },
+
+    // ✅ BOMBA DE OSMOSE (ACRESCENTADA)
+    { nome: "Bomba Osmose", estado_num: Number(dados["Bomba_Osmose_binary"]) || 0, estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0, manutencao: getManutencao().ativo }
   ];
+
+   // Adicionar campo de bombas ligadas
+  const bombasLigadas = bombas.filter(bomba => bomba.estado === "ligada").map(bomba => bomba.nome);
 
   return res.json({
     lastUpdate: dados.timestamp,
     reservatorios,
     pressoes,
     bombas,
-    manutencao: getManutencao().ativo
+    manutencao: getManutencao().ativo,
+    bombasLigadas // Incluindo no retorno
   });
 });
+
 
 // ------------------------- MANUTENÇÃO -------------------------
 app.get("/manutencao", (req, res) => res.json(getManutencao()));
