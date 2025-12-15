@@ -4,13 +4,11 @@ const API = "/api/dashboard";
 // Manutenção salva
 let manutencao = JSON.parse(localStorage.getItem("manutencao")) || {};
 
-// Últimas leituras (fallback)
+// Cache global (estado único)
 let ultimasLeituras = {};
 
 // === Alertas ===
 let alertaAtivo = {};
-let alertaSemAtualizacao = {};
-let bipIntervalos = {};
 let alertaNivel31 = {};
 let bipNivelIntervalo = {};
 let alertaReservatoriosCriticos = [];
@@ -25,15 +23,19 @@ async function atualizar() {
         const dados = await r.json();
         const globalTs = dados.lastUpdate || new Date().toISOString();
 
-        // RESERVATÓRIOS
-        if (dados.reservatorios) {
+        // ---- RESERVATÓRIOS ----
+        if (Array.isArray(dados.reservatorios)) {
             dados.reservatorios.forEach(rsv => {
-                ultimasLeituras[rsv.setor] = { ...rsv, timestamp: rsv.timestamp || globalTs };
+                ultimasLeituras[rsv.setor] = {
+                    ...ultimasLeituras[rsv.setor],
+                    ...rsv,
+                    timestamp: rsv.timestamp || globalTs
+                };
             });
         }
 
-        // PRESSÕES
-        if (dados.pressoes) {
+        // ---- PRESSÕES ----
+        if (Array.isArray(dados.pressoes)) {
             dados.pressoes.forEach(p => {
                 ultimasLeituras[p.setor] = {
                     ...ultimasLeituras[p.setor],
@@ -43,10 +45,14 @@ async function atualizar() {
             });
         }
 
-        // BOMBAS (3)
-        if (dados.bombas) {
+        // ---- BOMBAS (3) ----
+        if (Array.isArray(dados.bombas)) {
             dados.bombas.forEach((b, i) => {
-                ultimasLeituras[`bomba${i + 1}`] = { ...b, timestamp: b.timestamp || globalTs };
+                ultimasLeituras[`bomba${i + 1}`] = {
+                    ...ultimasLeituras[`bomba${i + 1}`],
+                    ...b,
+                    timestamp: b.timestamp || globalTs
+                };
             });
         }
 
@@ -58,17 +64,10 @@ async function atualizar() {
     } catch (e) {
         console.error("Erro HTTP:", e);
 
-        document.getElementById("lastUpdate").textContent = "Erro ao atualizar…";
+        document.getElementById("lastUpdate").textContent =
+            "Falha na comunicação – exibindo último estado";
 
-        render({
-            reservatorios: Object.values(ultimasLeituras).filter(r => r.capacidade),
-            pressoes: Object.values(ultimasLeituras).filter(p => p.pressao !== undefined),
-            bombas: [
-                ultimasLeituras.bomba1 || {},
-                ultimasLeituras.bomba2 || {},
-                ultimasLeituras.bomba3 || {}
-            ]
-        });
+        render({});
     }
 }
 
@@ -90,15 +89,29 @@ function bipCurto() {
 }
 
 
-// ========================= CONTROLLER =========================
+// ========================= CONTROLLER (ANTI-SUMIÇO) =========================
 function render(d) {
-    renderReservatorios(d.reservatorios || []);
-    renderPressao(d.pressoes || []);
-    renderBombas(d.bombas || []);
+    // RESERVATÓRIOS
+    if (Array.isArray(d.reservatorios) && d.reservatorios.length) {
+        renderReservatorios(d.reservatorios);
+    } else {
+        const cache = Object.values(ultimasLeituras).filter(r => r.capacidade);
+        if (cache.length) renderReservatorios(cache);
+    }
+
+    // PRESSÕES
+    if (Array.isArray(d.pressoes) && d.pressoes.length) {
+        renderPressao(d.pressoes);
+    }
+
+    // BOMBAS
+    if (Array.isArray(d.bombas) && d.bombas.length) {
+        renderBombas(d.bombas);
+    }
 }
 
 
-// ========================= ALERTA DE NÍVEL =========================
+// ========================= ALERTA NÍVEL 40% =========================
 function exibirAlertaNivel(lista) {
     const box = document.getElementById("alerta-nivelbaixo");
     if (!box) return;
@@ -109,16 +122,18 @@ function exibirAlertaNivel(lista) {
     }
 
     box.style.display = "block";
-    box.innerHTML = `⚠️ Reservatórios abaixo de 40%: <b>${lista.join(", ")}</b>`;
+    box.innerHTML =
+        `⚠️ Reservatórios abaixo de 40%: <b>${lista.join(", ")}</b>`;
 }
 
 
 // ========================= RESERVATÓRIOS =========================
 function renderReservatorios(lista) {
     const box = document.getElementById("reservatoriosContainer");
+    if (!box || !lista || !lista.length) return;
+
     const frag = document.createDocumentFragment();
     let alertas40 = [];
-    const agora = Date.now();
 
     lista.forEach(r => {
         const percent = Math.round(r.percent || 0);
@@ -133,7 +148,7 @@ function renderReservatorios(lista) {
         else if (percent <= 90) card.classList.add("nv-normal");
         else card.classList.add("nv-cheio");
 
-        // ALERTAS
+        // ALERTA <31%
         if (percent < 31 && !manutencao[r.setor]) {
             card.classList.add("piscar-31");
             if (!alertaNivel31[r.setor]) {
@@ -145,23 +160,22 @@ function renderReservatorios(lista) {
             delete alertaNivel31[r.setor];
         }
 
+        // ALERTA <=40%
         if (percent <= 40 && !manutencao[r.setor]) {
             if (!alertaAtivo[r.setor]) bipCurto();
             alertaAtivo[r.setor] = true;
             alertas40.push(`${r.nome} (${percent}%)`);
-        } else alertaAtivo[r.setor] = false;
-
-        // TIMEOUT
-        let msgTimeout = "";
-        if ((agora - new Date(ts)) / 60000 > 10) {
-            msgTimeout = `<div class="msg-sem-atualizacao">⚠ Sem atualização &gt; 10 min</div>`;
+        } else {
+            alertaAtivo[r.setor] = false;
         }
 
         card.innerHTML = `
             <div class="top-bar">
                 <h3>${r.nome}</h3>
-                <button class="gear-btn" onclick="toggleManutencao('${r.setor}')">⚙</button>
+                <button class="gear-btn"
+                    onclick="toggleManutencao('${r.setor}')">⚙</button>
             </div>
+
             <div class="tanque-visu">
                 <div class="nivel-agua" style="height:${percent}%"></div>
                 <div class="overlay-info">
@@ -169,12 +183,13 @@ function renderReservatorios(lista) {
                     <div class="liters-text">${litros} L</div>
                 </div>
             </div>
-            ${msgTimeout}
-            <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
+
+            <button onclick="abrirHistorico('${r.setor}')">
+                📊 Histórico
+            </button>
         `;
 
         frag.appendChild(card);
-        ultimasLeituras[r.setor] = r;
     });
 
     box.innerHTML = "";
@@ -193,7 +208,9 @@ function renderPressao(lista) {
 
     lista.forEach(p => {
         const el = document.getElementById(mapa[p.setor]);
-        if (el) el.textContent = Number(p.pressao).toFixed(2);
+        if (el && p.pressao != null) {
+            el.textContent = Number(p.pressao).toFixed(2);
+        }
     });
 }
 
@@ -204,15 +221,19 @@ function renderBombas(lista) {
         const el = document.getElementById(`bomba${i + 1}`);
         if (!el) return;
 
-        const ligada = b.estado_num === 1 || b.estado === 1 || b.estado === "ligada";
+        const ligada =
+            b.estado_num === 1 ||
+            b.estado === 1 ||
+            b.estado === "ligada";
 
         el.classList.toggle("bomba-ligada", ligada);
         el.classList.toggle("bomba-desligada", !ligada);
 
-        document.getElementById(`b${i + 1}Status`).textContent = ligada ? "Ligada" : "Desligada";
-        document.getElementById(`b${i + 1}Ciclos`).textContent = b.ciclo || 0;
+        document.getElementById(`b${i + 1}Status`).textContent =
+            ligada ? "Ligada" : "Desligada";
 
-        ultimasLeituras[`bomba${i + 1}`] = b;
+        document.getElementById(`b${i + 1}Ciclos`).textContent =
+            b.ciclo ?? 0;
     });
 }
 
@@ -228,7 +249,7 @@ function abrirHistorico(setor) {
 }
 
 
-// ========================= WEBSOCKET =========================
+// ========================= WEBSOCKET (SEGURO) =========================
 let ws;
 
 function connectWS() {
@@ -241,17 +262,25 @@ function connectWS() {
         try {
             const msg = JSON.parse(e.data);
             if (msg.type === "update" && msg.dados) {
-                render(msg.dados);
+                // Atualiza cache SEM apagar nada
+                msg.dados.reservatorios?.forEach(r =>
+                    ultimasLeituras[r.setor] = r
+                );
+                msg.dados.pressoes?.forEach(p =>
+                    ultimasLeituras[p.setor] = p
+                );
+                msg.dados.bombas?.forEach((b, i) =>
+                    ultimasLeituras[`bomba${i + 1}`] = b
+                );
 
-                // Atualiza fallback
-                msg.dados.reservatorios?.forEach(r => ultimasLeituras[r.setor] = r);
-                msg.dados.pressoes?.forEach(p => ultimasLeituras[p.setor] = p);
-                msg.dados.bombas?.forEach((b, i) => ultimasLeituras[`bomba${i + 1}`] = b);
+                render(msg.dados);
 
                 document.getElementById("lastUpdate").textContent =
                     "Tempo real " + new Date().toLocaleTimeString();
             }
-        } catch {}
+        } catch (err) {
+            console.warn("WS inválido", err);
+        }
     };
 
     ws.onclose = () => setTimeout(connectWS, 3000);
