@@ -39,7 +39,6 @@ function liberarAudio() {
   document.removeEventListener("touchstart", liberarAudio);
 }
 
-// exige interação do usuário
 document.addEventListener("click", liberarAudio);
 document.addEventListener("touchstart", liberarAudio);
 
@@ -173,15 +172,20 @@ function renderPressao(lista) {
 
 // ========================= BOMBAS =========================
 function renderBombas(bombas) {
-  atualizarBomba("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
-  atualizarBomba("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
-  atualizarBomba("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
+  atualizarBomba("Bomba_01", "bomba1", "b1Status", "b1Ciclos");
+  atualizarBomba("Bomba_02", "bomba2", "b2Status", "b2Ciclos");
+  atualizarBomba("Bomba_Osmose", "bomba3", "b3Status", "b3Ciclos");
 
   function atualizarBomba(nome, cardId, statusId, cicloId) {
     const b = bombas[nome];
     if (!b) return;
 
-    const ligada = b.estado_num === 1 || b.estado === "ligada";
+    const ligada =
+      b.estado === 1 ||
+      b.estado === true ||
+      b.estado === "ligada" ||
+      b.estado_num === 1;
+
     const card = document.getElementById(cardId);
     if (!card) return;
 
