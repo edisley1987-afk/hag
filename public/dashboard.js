@@ -44,7 +44,6 @@ document.addEventListener("touchstart", liberarAudio);
 
 function bipCurto() {
   if (!audioLiberado || !audioCtx) return;
-
   const o = audioCtx.createOscillator();
   o.type = "square";
   o.frequency.value = 600;
@@ -53,14 +52,14 @@ function bipCurto() {
   o.stop(audioCtx.currentTime + 0.12);
 }
 
-// ========================= LOOP HTTP =========================
+// ========================= LOOP HTTP (SEM BOMBAS) =========================
 async function atualizar() {
   try {
     const r = await fetch(API, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
 
     const dados = await r.json();
-    atualizarCache(dados);
+    atualizarCacheHTTP(dados);
     renderTudo();
 
     document.getElementById("lastUpdate").textContent =
@@ -76,17 +75,17 @@ async function atualizar() {
 setInterval(atualizar, 5000);
 atualizar();
 
-// ========================= CACHE =========================
-function atualizarCache(d) {
+// ========================= CACHE HTTP =========================
+function atualizarCacheHTTP(d) {
   d?.reservatorios?.forEach(r =>
     ultimasLeituras.reservatorios[r.setor] = r
   );
+
   d?.pressoes?.forEach(p =>
     ultimasLeituras.pressoes[p.setor] = p
   );
-  d?.bombas?.forEach(b =>
-    ultimasLeituras.bombas[b.nome] = b
-  );
+
+  // 🚫 bombas NÃO entram aqui (evita atraso)
 }
 
 // ========================= RENDER GERAL =========================
@@ -172,20 +171,15 @@ function renderPressao(lista) {
 
 // ========================= BOMBAS =========================
 function renderBombas(bombas) {
-  atualizarBomba("Bomba_01", "bomba1", "b1Status", "b1Ciclos");
-  atualizarBomba("Bomba_02", "bomba2", "b2Status", "b2Ciclos");
-  atualizarBomba("Bomba_Osmose", "bomba3", "b3Status", "b3Ciclos");
+  atualizarBomba("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
+  atualizarBomba("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
+  atualizarBomba("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
 
   function atualizarBomba(nome, cardId, statusId, cicloId) {
     const b = bombas[nome];
     if (!b) return;
 
-    const ligada =
-      b.estado === 1 ||
-      b.estado === true ||
-      b.estado === "ligada" ||
-      b.estado_num === 1;
-
+    const ligada = b.estado_num === 1 || b.estado === "ligada";
     const card = document.getElementById(cardId);
     if (!card) return;
 
@@ -209,7 +203,7 @@ function abrirHistorico(setor) {
   location.href = `/historico.html?setor=${setor}`;
 }
 
-// ========================= WEBSOCKET =========================
+// ========================= WEBSOCKET (BOMBAS TEMPO REAL) =========================
 let ws;
 
 function connectWS() {
@@ -219,13 +213,15 @@ function connectWS() {
   ws.onmessage = e => {
     try {
       const msg = JSON.parse(e.data);
-      if (msg.type === "update") {
-        atualizarCache(msg.dados);
-        renderTudo();
 
-        document.getElementById("lastUpdate").textContent =
-          "Tempo real " + formatarHora();
+      if (msg.type === "bomba") {
+        ultimasLeituras.bombas[msg.nome] = msg;
+        renderBombas(ultimasLeituras.bombas);
       }
+
+      document.getElementById("lastUpdate").textContent =
+        "Tempo real " + formatarHora();
+
     } catch {}
   };
 
