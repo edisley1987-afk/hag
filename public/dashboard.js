@@ -22,7 +22,7 @@ function formatarHora(ts) {
     : d.toLocaleTimeString();
 }
 
-// ========================= AUDIO (ANTI-BLOQUEIO) =========================
+// ========================= AUDIO =========================
 let audioCtx = null;
 let audioLiberado = false;
 
@@ -30,22 +30,18 @@ function liberarAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
   audioLiberado = true;
 
   document.removeEventListener("click", liberarAudio);
   document.removeEventListener("touchstart", liberarAudio);
 }
 
-// exige interação do usuário
 document.addEventListener("click", liberarAudio);
 document.addEventListener("touchstart", liberarAudio);
 
 function bipCurto() {
   if (!audioLiberado || !audioCtx) return;
-
   const o = audioCtx.createOscillator();
   o.type = "square";
   o.frequency.value = 600;
@@ -54,14 +50,14 @@ function bipCurto() {
   o.stop(audioCtx.currentTime + 0.12);
 }
 
-// ========================= LOOP HTTP =========================
+// ========================= LOOP HTTP (SEM BOMBAS) =========================
 async function atualizar() {
   try {
     const r = await fetch(API, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
 
     const dados = await r.json();
-    atualizarCache(dados);
+    atualizarCacheHTTP(dados);
     renderTudo();
 
     document.getElementById("lastUpdate").textContent =
@@ -77,17 +73,17 @@ async function atualizar() {
 setInterval(atualizar, 5000);
 atualizar();
 
-// ========================= CACHE =========================
-function atualizarCache(d) {
+// ========================= CACHE HTTP =========================
+function atualizarCacheHTTP(d) {
   d?.reservatorios?.forEach(r =>
     ultimasLeituras.reservatorios[r.setor] = r
   );
+
   d?.pressoes?.forEach(p =>
     ultimasLeituras.pressoes[p.setor] = p
   );
-  d?.bombas?.forEach(b =>
-    ultimasLeituras.bombas[b.nome] = b
-  );
+
+  // ❌ bombas NÃO vêm do HTTP
 }
 
 // ========================= RENDER GERAL =========================
@@ -136,7 +132,6 @@ function renderReservatorios(lista) {
         <h3>${r.nome}</h3>
         <button class="gear-btn" onclick="toggleManutencao('${r.setor}')">⚙</button>
       </div>
-
       <div class="tanque-visu">
         <div class="nivel-agua" style="height:${percent}%"></div>
         <div class="overlay-info">
@@ -144,7 +139,6 @@ function renderReservatorios(lista) {
           <div class="liters-text">${litros} L</div>
         </div>
       </div>
-
       <button onclick="abrirHistorico('${r.setor}')">📊 Histórico</button>
     `;
 
@@ -171,13 +165,13 @@ function renderPressao(lista) {
   });
 }
 
-// ========================= BOMBAS =========================
+// ========================= BOMBAS (TEMPO REAL) =========================
 function renderBombas(bombas) {
-  atualizarBomba("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
-  atualizarBomba("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
-  atualizarBomba("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
+  atualizar("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
+  atualizar("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
+  atualizar("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
 
-  function atualizarBomba(nome, cardId, statusId, cicloId) {
+  function atualizar(nome, cardId, statusId, cicloId) {
     const b = bombas[nome];
     if (!b) return;
 
@@ -205,7 +199,7 @@ function abrirHistorico(setor) {
   location.href = `/historico.html?setor=${setor}`;
 }
 
-// ========================= WEBSOCKET =========================
+// ========================= WEBSOCKET (AUTORIDADE DAS BOMBAS) =========================
 let ws;
 
 function connectWS() {
@@ -215,13 +209,22 @@ function connectWS() {
   ws.onmessage = e => {
     try {
       const msg = JSON.parse(e.data);
-      if (msg.type === "update") {
-        atualizarCache(msg.dados);
-        renderTudo();
 
-        document.getElementById("lastUpdate").textContent =
-          "Tempo real " + formatarHora();
+      // atualização geral
+      if (msg.type === "update") {
+        atualizarCacheHTTP(msg.dados);
+        renderTudo();
       }
+
+      // 🚀 atualização imediata de bomba
+      if (msg.type === "bomba") {
+        ultimasLeituras.bombas[msg.nome] = msg;
+        renderBombas(ultimasLeituras.bombas);
+      }
+
+      document.getElementById("lastUpdate").textContent =
+        "Tempo real " + formatarHora();
+
     } catch {}
   };
 
