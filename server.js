@@ -204,6 +204,27 @@ function registrarHistorico(dadosConvertidos) {
 
   safeWriteJson(HIST_FILE, historico);
 }
+function aplicarFailSafeBombas(dados) {
+  const agora = Date.now();
+
+  const bombas = [
+    "Bomba_01_binary",
+    "Bomba_02_binary",
+    "Bomba_Osmose_binary"
+  ];
+
+  bombas.forEach(ref => {
+    const tsKey = `${ref}_timestamp`;
+    const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : 0;
+
+    if (!ts || agora - ts > DATA_TIMEOUT_MS) {
+      dados[ref] = 0;
+      dados[tsKey] = new Date().toISOString();
+    }
+  });
+
+  return dados;
+}
 
 // ------------------------- WEBSOCKET (tempo real) -------------------------
 const server = app.listen(process.env.PORT || 3000, () => {
