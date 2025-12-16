@@ -1,6 +1,5 @@
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
-
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -67,11 +66,13 @@ const SENSORES = {
   "Bomba_02_binary": { tipo: "bomba" },
   "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
 
+  // ✅ NOVO — BOMBA DE OSMOSE
   "Bomba_Osmose_binary": { tipo: "bomba" },
   "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
 
-// ------------------------- HELPERS -------------------------
+
+// ------------------------- HELPERS IO -------------------------
 function safeReadJson(filePath, fallback) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
@@ -95,7 +96,7 @@ function getManutencao() {
 }
 function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2)); }
 
-// ------------------------- NORMALIZAÇÃO -------------------------
+// tenta extrair JSON do body (strings ou pares k=v)
 function parseBodyGuess(body) {
   if (!body) return null;
   if (typeof body === "object") return body;
@@ -116,6 +117,7 @@ function parseBodyGuess(body) {
   return null;
 }
 
+// normaliza vários formatos em [{ref,value,dev_id,time},...]
 function normalizePacket(raw) {
   let arr = [];
   if (!raw) return arr;
@@ -129,7 +131,7 @@ function normalizePacket(raw) {
   return arr.filter(x => x.ref !== undefined);
 }
 
-// ------------------------- CONVERSÃO -------------------------
+// converte valores segundo SENSORES e mescla com ultimo estado (patch)
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
   const novo = { ...ultimo };
@@ -171,11 +173,13 @@ function convertAndMerge(dataArray) {
     novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
   }
 
+  // *** CORREÇÃO: gerar timestamp sempre único (evita dashboard congelado) ***
+  // Usamos ISO + millis + pequeno sufixo aleatório para garantir unicidade.
   novo.timestamp = `${new Date().toISOString()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   return novo;
 }
 
-// ------------------------- HISTÓRICO -------------------------
+// registra histórico diário (min/max + pontos relevantes)
 function registrarHistorico(dadosConvertidos) {
   const hoje = new Date().toISOString().split("T")[0];
   const historico = safeReadJson(HIST_FILE, {});
@@ -200,12 +204,34 @@ function registrarHistorico(dadosConvertidos) {
 
   safeWriteJson(HIST_FILE, historico);
 }
+function aplicarFailSafeBombas(dados) {
+  const agora = Date.now();
+
+  const bombas = [
+    "Bomba_01_binary",
+    "Bomba_02_binary",
+    "Bomba_Osmose_binary"
+  ];
+
+  bombas.forEach(ref => {
+    const tsKey = `${ref}_timestamp`;
+    const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : 0;
+
+    if (!ts || agora - ts > DATA_TIMEOUT_MS) {
+      dados[ref] = 0;
+      dados[tsKey] = new Date().toISOString();
+    }
+  });
+
+  return dados;
+}
 
 // ------------------------- WEBSOCKET (tempo real) -------------------------
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(chalk.green(`Servidor HAG otimizado ativo na porta ${process.env.PORT || 3000}`));
 });
 
+// WebSocket server ligado ao mesmo HTTP server
 const wss = new WebSocketServer({ server });
 function wsBroadcast(obj) {
   const msg = JSON.stringify(obj);
@@ -224,8 +250,9 @@ wss.on("connection", ws => {
   try { ws.send(JSON.stringify({ type: "init", dados })); } catch (e) {}
 });
 
-// ------------------------- ROTAS PRINCIPAIS -------------------------
-app.all(["/atualizar", "/iot"], async (req, res) => {
+// ------------------------- ROTEAMENTO PRINCIPAL -------------------------
+// Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
+app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
   try {
     let rawBody = req.body;
     if (!rawBody || (typeof rawBody === "string" && rawBody.trim() === "")) rawBody = req._rawBody || req.body;
@@ -239,6 +266,7 @@ app.all(["/atualizar", "/iot"], async (req, res) => {
     const arr = normalizePacket(parsed);
     if (!arr.length) return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
 
+    // converter e mesclar
     const novo = convertAndMerge(arr);
     safeWriteJson(DATA_FILE, novo);
 
@@ -256,11 +284,12 @@ app.all(["/atualizar", "/iot"], async (req, res) => {
   }
 });
 
-// ------------------------- ROTAS DE LEITURA -------------------------
+// ------------------------- ENDPOINTS DE LEITURA -------------------------
 app.get("/dados", (req, res) => {
   return res.json(safeReadJson(DATA_FILE, {}));
 });
 
+// Mapa fixo dos reservatórios
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -281,6 +310,7 @@ app.get("/historico", (req, res) => {
 
       if (!nome || !dados) continue;
 
+      // ponto mínimo do dia
       if (typeof dados.min === "number") {
         saida.push({
           reservatorio: nome,
@@ -289,6 +319,7 @@ app.get("/historico", (req, res) => {
         });
       }
 
+      // pontos relevantes
       for (const p of dados.pontos || []) {
         const ts = new Date(`${data} ${p.hora}`).getTime();
         if (!isNaN(ts)) {
@@ -341,6 +372,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
 // ------------------------- CONSUMO 5 DIAS -------------------------
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
+
   const mapa = {
     elevador: "Reservatorio_Elevador_current",
     osmose: "Reservatorio_Osmose_current",
@@ -413,12 +445,91 @@ app.get("/api/consumo_diario", (req, res) => {
     lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
-
 // ------------------------- DASHBOARD SIMPLIFICADO -------------------------
+// Reforçamos headers anti-cache específicos desta rota também.
 app.get("/api/dashboard", (req, res) => {
   res.setHeader("Cache-Control", "no-store, must-revalidate, max-age=0, private");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
+  // cabeçalhos extras que ajudam CDNs/Proxies (Akamai/Render)
+  res.setHeader("Surrogate-Control", "no-store");
+  res.setHeader("CDN-Cache-Control", "no-store");
+  res.setHeader("Vary", "Accept-Encoding");
 
   const dados = safeReadJson(DATA_FILE, {});
-  if (!dados || Object.keys(dados).length === 0)
+  if (!dados || Object.keys(dados).length === 0) {
+    return res.json({
+      lastUpdate: "-",
+      reservatorios: [],
+      pressoes: [],
+      bombas: [],
+      manutencao: getManutencao().ativo
+    });
+  }
+
+  const reservatorios = [
+    { nome: "Reservatório Elevador", setor: "elevador", percent: Math.round((Number(dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100), current_liters: Number(dados["Reservatorio_Elevador_current"] || 0), capacidade: 20000, manutencao: getManutencao().ativo },
+    { nome: "Reservatório Osmose", setor: "osmose", percent: Math.round((Number(dados["Reservatorio_Osmose_current"] || 0) / 200) * 100), current_liters: Number(dados["Reservatorio_Osmose_current"] || 0), capacidade: 200, manutencao: getManutencao().ativo },
+    { nome: "Reservatório CME", setor: "cme", percent: Math.round((Number(dados["Reservatorio_CME_current"] || 0) / 1000) * 100), current_liters: Number(dados["Reservatorio_CME_current"] || 0), capacidade: 1000, manutencao: getManutencao().ativo },
+    { nome: "Água Abrandada", setor: "abrandada", percent: Math.round((Number(dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100), current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0), capacidade: 9000, manutencao: getManutencao().ativo },
+    { nome: "Lavanderia", setor: "lavanderia", percent: Math.round((Number(dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100), current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0), capacidade: 10000, manutencao: getManutencao().ativo }
+  ];
+
+  const pressoes = [
+    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
+    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
+    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null, manutencao: getManutencao().ativo }
+  ];
+
+  const bombas = [
+    { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0, manutencao: getManutencao().ativo },
+    { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo },
+
+    // ✅ BOMBA DE OSMOSE (ACRESCENTADA)
+    { nome: "Bomba Osmose", estado_num: Number(dados["Bomba_Osmose_binary"]) || 0, estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0, manutencao: getManutencao().ativo }
+  ];
+
+   // Adicionar campo de bombas ligadas
+  const bombasLigadas = bombas.filter(bomba => bomba.estado === "ligada").map(bomba => bomba.nome);
+
+  return res.json({
+    lastUpdate: dados.timestamp,
+    reservatorios,
+    pressoes,
+    bombas,
+    manutencao: getManutencao().ativo,
+    bombasLigadas // Incluindo no retorno
+  });
+});
+
+
+// ------------------------- MANUTENÇÃO -------------------------
+app.get("/manutencao", (req, res) => res.json(getManutencao()));
+app.post("/manutencao", (req, res) => {
+  const { ativo } = req.body;
+  if (typeof ativo !== "boolean") return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
+  setManutencao(ativo);
+  res.json({ status: "ok", ativo });
+});
+
+// ------------------------- ARQUIVOS ESTÁTICOS -------------------------
+app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
+app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
+app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
+
+// ------------------------- PING / KEEP ALIVE -------------------------
+app.get("/api/ping", (req, res) => res.json({ ok: true, timestamp: Date.now() }));
+
+// Keep-alive opcional para evitar spin-down em providers free (tente evitar loops infinitos)
+setInterval(() => {
+  try {
+    if (typeof fetch === "function") {
+      const host = process.env.RENDER_INTERNAL_HOSTNAME || process.env.HOSTNAME || "localhost";
+      const port = process.env.PORT || 3000;
+      // não await para não bloquear
+      fetch(`http://${host}:${port}/api/ping`).catch(() => {});
+    }
+  } catch (e) {}
+}, 60 * 1000);
