@@ -1,3 +1,4 @@
+
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
 import express from "express";
@@ -19,6 +20,16 @@ const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
+
+// ------------------------- CONSUMO / ALERTAS -------------------------
+const CONSUMO_FILE = path.join(DATA_DIR, "consumo_osmose.json");
+const ALERTA_FILE = path.join(DATA_DIR, "alerta_consumo.json");
+
+// tempo máximo sem atualização de bomba (ms)
+const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos
+
+// fator para considerar consumo anormal
+const ALERTA_FATOR = 2.5;
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
@@ -225,6 +236,65 @@ function aplicarFailSafeBombas(dados) {
 
   return dados;
 }
+// ------------------------- CONSUMO / ALERTAS -------------------------
+if (!fs.existsSync(CONSUMO_FILE)) {
+  safeWriteJson(CONSUMO_FILE, {
+    ultimoNivel: 0,
+    totalConsumido: 0,
+    media_por_minuto: 0,
+    timestamp: null
+  });
+}
+
+if (!fs.existsSync(ALERTA_FILE)) {
+  safeWriteJson(ALERTA_FILE, {
+    ativo: false,
+    tipo: null,
+    mensagem: null,
+    desde: null
+  });
+}
+
+function calcularConsumoOsmose(nivelAtual) {
+  const consumo = safeReadJson(CONSUMO_FILE, {});
+  let consumido = 0;
+
+  if (consumo.ultimoNivel > 0 && nivelAtual < consumo.ultimoNivel) {
+    consumido = consumo.ultimoNivel - nivelAtual;
+    consumo.totalConsumido += consumido;
+  }
+
+  const agora = Date.now();
+  if (consumo.timestamp) {
+    const minutos = (agora - new Date(consumo.timestamp).getTime()) / 60000;
+    if (minutos > 0) {
+      consumo.media_por_minuto =
+        Number(((consumido / minutos) || consumo.media_por_minuto).toFixed(3));
+    }
+  }
+
+  consumo.ultimoNivel = nivelAtual;
+  consumo.timestamp = new Date().toISOString();
+  safeWriteJson(CONSUMO_FILE, consumo);
+
+  return consumo;
+}
+
+function detectarConsumoAnormal(consumoAtual, media) {
+  if (!media || media <= 0) return false;
+  return consumoAtual > media * ALERTA_FATOR;
+}
+
+function preverEsvaziamento(litros, consumoPorMinuto) {
+  if (!consumoPorMinuto || consumoPorMinuto <= 0) return null;
+
+  const minutos = litros / consumoPorMinuto;
+  return {
+    minutos: Math.round(minutos),
+    horas: Number((minutos / 60).toFixed(2)),
+    previsao: new Date(Date.now() + minutos * 60000).toISOString()
+  };
+}
 
 // ------------------------- WEBSOCKET (tempo real) -------------------------
 const server = app.listen(process.env.PORT || 3000, () => {
@@ -268,7 +338,34 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
 
     // converter e mesclar
     const novo = convertAndMerge(arr);
+    aplicarFailSafeBombas(novo);
     safeWriteJson(DATA_FILE, novo);
+const nivelOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
+const consumo = calcularConsumoOsmose(nivelOsmose);
+
+const alertas = safeReadJson(ALERTA_FILE, {});
+
+// consumo atual por minuto
+const consumoAtualMin = consumo.media_por_minuto || 0;
+
+// 🚨 detecção de consumo anormal
+if (detectarConsumoAnormal(consumoAtualMin, consumo.media_por_minuto)) {
+  if (!alertas.ativo) {
+    alertas.ativo = true;
+    alertas.tipo = "CONSUMO_ANORMAL";
+    alertas.mensagem = "Consumo acima do padrão (possível vazamento)";
+    alertas.desde = new Date().toISOString();
+  }
+} else {
+  alertas.ativo = false;
+  alertas.tipo = null;
+  alertas.mensagem = null;
+  alertas.desde = null;
+}
+
+// ✅ salva UMA ÚNICA VEZ, fora do if
+safeWriteJson(ALERTA_FILE, alertas);
+
 
     // registrar histórico (não bloqueante)
     try { registrarHistorico(novo); } catch (e) { console.error("Erro historico:", e); }
@@ -463,7 +560,9 @@ app.get("/api/dashboard", (req, res) => {
       reservatorios: [],
       pressoes: [],
       bombas: [],
-      manutencao: getManutencao().ativo
+      manutencao: getManutencao().ativo,
+      previsao_esvaziamento: null,
+      alerta_consumo: safeReadJson(ALERTA_FILE, {})
     });
   }
 
@@ -484,13 +583,19 @@ app.get("/api/dashboard", (req, res) => {
   const bombas = [
     { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0, manutencao: getManutencao().ativo },
     { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo },
-
-    // ✅ BOMBA DE OSMOSE (ACRESCENTADA)
     { nome: "Bomba Osmose", estado_num: Number(dados["Bomba_Osmose_binary"]) || 0, estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0, manutencao: getManutencao().ativo }
   ];
 
-   // Adicionar campo de bombas ligadas
-  const bombasLigadas = bombas.filter(bomba => bomba.estado === "ligada").map(bomba => bomba.nome);
+  const bombasLigadas = bombas
+    .filter(b => b.estado === "ligada")
+    .map(b => b.nome);
+
+  // 🧠 consumo + previsão
+  const consumo = safeReadJson(CONSUMO_FILE, {});
+  const previsao = preverEsvaziamento(
+    Number(dados["Reservatorio_Osmose_current"] || 0),
+    consumo.media_por_minuto
+  );
 
   return res.json({
     lastUpdate: dados.timestamp,
@@ -498,10 +603,15 @@ app.get("/api/dashboard", (req, res) => {
     pressoes,
     bombas,
     manutencao: getManutencao().ativo,
-    bombasLigadas // Incluindo no retorno
+    bombasLigadas,
+
+    // 🧠 previsão de esvaziamento
+    previsao_esvaziamento: previsao,
+
+    // 🚨 alerta de consumo anormal
+    alerta_consumo: safeReadJson(ALERTA_FILE, {})
   });
 });
-
 
 // ------------------------- MANUTENÇÃO -------------------------
 app.get("/manutencao", (req, res) => res.json(getManutencao()));
