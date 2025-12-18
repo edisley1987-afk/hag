@@ -1,3 +1,32 @@
+/**
+ * =========================================================
+ *  Sistema de Monitoramento de Reservatórios – HAG
+ * =========================================================
+ *
+ *  Autor: Edisley Afonso Costa
+ *  Projeto: Hospital Arnaldo Gavazza
+ *
+ *  Descrição:
+ *    Servidor Node.js responsável pelo processamento
+ *    de dados IoT, histórico, consumo, alertas e dashboard
+ *    em tempo real (WebSocket).
+ *
+ *  Tecnologias:
+ *    - Node.js (ESModules)
+ *    - Express
+ *    - WebSocket (ws)
+ *    - Render Cloud
+ *
+ *  Criado em: 2025
+ *  Direitos autorais © 2025 Edisley Afonso Costa
+ *
+ *  Uso autorizado exclusivamente para o projeto HAG.
+ * =========================================================
+ */
+// @author: Edisley Afonso Costa
+// @version: 1.0.0
+// @last_update: 2025-12-18
+// @environment: Production (Render)
 
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
