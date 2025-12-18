@@ -433,3 +433,9 @@ setInterval(() => {
     }
   } catch (e) {}
 }, 60 * 1000);
+// ------------------------- START SERVER -------------------------
+const PORT = process.env.PORT || 3000;
+
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Servidor HAG rodando na porta ${PORT}`);
+});
