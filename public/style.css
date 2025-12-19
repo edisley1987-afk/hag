@@ -12,7 +12,10 @@ body {
 body::before {
     content: "";
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 40, 25, 0.55);
     backdrop-filter: blur(3px);
     z-index: -1;
@@ -31,34 +34,22 @@ body::before {
     --alerta: #f0ad4e;
     --ok: #5cb85c;
 
-    --glass-bg: rgba(255, 255, 255, 0.12);
+    --glass-bg: rgba(255, 255, 255, 0.18);
 }
 
-/* ============================ HEADER PROFISSIONAL ============================ */
-.header-sistema {
-    height: 90px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: linear-gradient(
-        to right,
-        rgba(0, 60, 45, 0.95),
-        rgba(0, 90, 65, 0.95),
-        rgba(0, 60, 45, 0.95)
-    );
-
+/* ============================ HEADER ============================ */
+header {
+    background: rgba(0, 90, 60, 0.85);
+    color: white;
+    text-align: center;
+    padding: 22px;
     border-bottom: 3px solid var(--verde-medio);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(5px);
 }
 
-/* LOGO DO HEADER */
-.logo-header {
-    height: 52px;
-    max-width: 90%;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+h1, h2 {
+    color: white;
+    text-shadow: 0 1px 3px black;
 }
 
 /* ============================ MAIN ============================ */
@@ -68,9 +59,9 @@ main {
     padding: 20px;
 }
 
-/* ============================ RESERVATÓRIOS ============================ */
+/* ============================================================= RESERVATÓRIOS ============================================================= */
 #reservatoriosContainer {
-    display: grid;
+    display: grid !important;
     width: 100%;
     margin-top: 25px;
     gap: 28px;
@@ -90,29 +81,17 @@ main {
 }
 
 .card-reservatorio:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    transform: scale(1.03);
 }
 
 .tanque-visu {
     width: 100%;
     height: 160px;
     border-radius: 12px;
-    background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.35),
-        rgba(255,255,255,0.15)
-    );
+    background: rgba(255, 255, 255, 0.25);
     border: 3px solid var(--verde-medio);
     position: relative;
     overflow: hidden;
-}
-
-.tanque-visu::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
 }
 
 .nivel-agua {
@@ -169,17 +148,16 @@ main {
     background: var(--verde-claro) !important;
 }
 
-/* ============================ PRESSÕES + BOMBAS ============================ */
+/* ============================================================= PRESSÕES + BOMBAS ============================================================= */
 #pressaoBombaGrid {
-    display: grid;
+    display: grid !important;
     margin-top: 35px;
     width: 100%;
     gap: 28px;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-.card-pressao,
-.card-bomba {
+.card-pressao, .card-bomba {
     background: var(--glass-bg);
     padding: 18px;
     border-radius: 14px;
@@ -192,8 +170,7 @@ main {
 
 .card-pressao:hover,
 .card-bomba:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    transform: scale(1.04);
 }
 
 .valor-pressao {
@@ -214,8 +191,8 @@ main {
 }
 
 .bomba-desligada {
-    background: rgba(90, 90, 90, 0.75) !important;
-    border-top: 4px solid #aaa;
+    background: rgba(140, 0, 0, 0.80) !important;
+    border-top: 4px solid #ff4f4f;
 }
 
 .alerta-bomba {
@@ -230,7 +207,7 @@ main {
 
 /* ============================ FOOTER ============================ */
 footer {
-    background: rgba(0, 60, 45, 0.95);
+    background: rgba(0, 90, 60, 0.85);
     padding: 14px;
     text-align: center;
     color: white;
@@ -238,10 +215,10 @@ footer {
     margin-top: 60px;
 }
 
-/* ================== ALERTA DE NÍVEL ================== */
+/* ================== ALERTA DE NÍVEL (VERMELHO PISCANDO) ================== */
 .alerta-nivel {
     border: 3px solid red !important;
-    animation: alertaBlink 1.6s infinite;
+    animation: alertaBlink 0.9s infinite;
 }
 
 @keyframes alertaBlink {
@@ -254,13 +231,29 @@ footer {
 .manutencao {
     background: rgba(240, 180, 20, 0.45) !important;
     border: 3px solid #ffdd55 !important;
-    animation: manutBlink 1.6s infinite;
+    animation: manutBlink 1.3s infinite;
 }
 
 @keyframes manutBlink {
     0% { box-shadow: 0 0 10px #ffdd55; }
     50% { box-shadow: 0 0 25px #ffcc00; }
     100% { box-shadow: 0 0 10px #ffdd55; }
+}
+
+.msg-manutencao {
+    margin-top: 10px;
+    padding: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    background: rgba(255, 215, 0, 0.85);
+    border-radius: 6px;
+    animation: textBlink 1s infinite;
+}
+
+@keyframes textBlink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
 }
 
 /* ================== BOTÃO ENGENAGEM ================== */
