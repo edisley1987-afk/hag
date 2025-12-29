@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <title>Histórico - Gráfico e Consumo</title>
 
+  <!-- Chart.js + plugins necessários -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
 
   <style>
     body {
@@ -77,15 +79,12 @@
       font-size: 16px;
     }
   </style>
-
 </head>
 
 <body>
 
-  <!-- BOTÕES SUPERIORES -->
   <div style="text-align:center; margin-top: 20px;">
     <a href="index.html" class="btn-voltar">⬅ Voltar para Reservatórios</a>
-
     <a href="consumo.html" class="btn-consumo">📉 Ir para Consumo Diário</a>
   </div>
 
@@ -96,7 +95,7 @@
     <select id="reservatorioSelect">
       <option value="elevador">Elevador</option>
       <option value="osmose">Osmose</option>
-      <option value="lavanderia">Lavanderia</option> <!-- ✔ ADICIONADO -->
+      <option value="lavanderia">Lavanderia</option>
       <option value="cme">CME</option>
       <option value="abrandada">Abrandada</option>
     </select>
@@ -120,6 +119,5 @@
   </table>
 
   <script src="historico.js"></script>
-
 </body>
 </html>
