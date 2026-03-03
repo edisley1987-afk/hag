@@ -90,15 +90,33 @@ app.use((req, res, next) => {
 
 // ------------------------- SENSORES / CALIBRAÇÃO -------------------------
 const SENSORES = {
-  "Reservatorio_Elevador_current": { leituraVazio: 0.004168, leituraCheio: 0.008742, capacidade: 20000 },
-  "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006492, capacidade: 200 },
-  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
-  "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004048, leituraCheio: 0.004849, capacidade: 9000 },
+  "Reservatorio_Elevador_current": { 
+    leituraVazio: 0.004168, 
+    leituraCheio: 0.008742, 
+    capacidade: 20000 
+  },
 
-  // ✅ LAVANDERIA CALIBRADA
+  "Reservatorio_Osmose_current": { 
+    leituraVazio: 0.00505, 
+    leituraCheio: 0.006492, 
+    capacidade: 200 
+  },
+
+  "Reservatorio_CME_current": { 
+    leituraVazio: 0.004088, 
+    leituraCheio: 0.004408, 
+    capacidade: 1000 
+  },
+
+  "Reservatorio_Agua_Abrandada_current": { 
+    leituraVazio: 0.004048, 
+    leituraCheio: 0.004849, 
+    capacidade: 9000 
+  },
+
   "Reservatorio_lavanderia_current": { 
     leituraVazio: 0.006012, 
-    leituraCheio: 0.011462, 
+    leituraCheio: 0.011623,   // 🔥 atualizado
     capacidade: 10000 
   },
 
