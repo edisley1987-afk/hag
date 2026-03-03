@@ -94,7 +94,13 @@ const SENSORES = {
   "Reservatorio_Osmose_current": { leituraVazio: 0.00505, leituraCheio: 0.006492, capacidade: 200 },
   "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.004408, capacidade: 1000 },
   "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004048, leituraCheio: 0.004849, capacidade: 9000 },
-  "Reservatorio_lavanderia_current": { leituraVazio: 0.006012, leituraCheio: 0.010607, capacidade: 10000 },
+
+  // ✅ LAVANDERIA CALIBRADA
+  "Reservatorio_lavanderia_current": { 
+    leituraVazio: 0.006012, 
+    leituraCheio: 0.011462, 
+    capacidade: 10000 
+  },
 
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
   "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
@@ -106,7 +112,6 @@ const SENSORES = {
   "Bomba_02_binary": { tipo: "bomba" },
   "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
 
-  // ✅ NOVO — BOMBA DE OSMOSE
   "Bomba_Osmose_binary": { tipo: "bomba" },
   "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
