@@ -92,7 +92,7 @@ app.use((req, res, next) => {
 const SENSORES = {
   "Reservatorio_Elevador_current": { 
     leituraVazio: 0.004168, 
-    leituraCheio: 0.008742, 
+    leituraCheio: 0.008860, 
     capacidade: 20000 
   },
 
@@ -116,7 +116,7 @@ const SENSORES = {
 
   "Reservatorio_lavanderia_current": { 
     leituraVazio: 0.006012, 
-    leituraCheio: 0.011623,   // 🔥 atualizado
+    leituraCheio: 0.011630,   // 🔥 atualizado
     capacidade: 10000 
   },
 
