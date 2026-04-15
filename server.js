@@ -98,13 +98,13 @@ const SENSORES = {
 
   "Reservatorio_Osmose_current": { 
     leituraVazio: 0.00505, 
-    leituraCheio: 0.006492, 
+    leituraCheio: 0.006734, 
     capacidade: 200 
   },
 
   "Reservatorio_CME_current": { 
     leituraVazio: 0.004088, 
-    leituraCheio: 0.004408, 
+    leituraCheio: 0.005330, 
     capacidade: 1000 
   },
 
