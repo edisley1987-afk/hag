@@ -214,11 +214,16 @@ function connectWS() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   ws = new WebSocket(`${proto}://${location.host}`);
 
+  // ✅ AQUI DENTRO (correto)
+  ws.onopen = () => {
+    console.log("✅ WebSocket conectado");
+  };
+
   ws.onmessage = e => {
     try {
       const msg = JSON.parse(e.data);
 
-      if (msg.type === "update") {
+      if (msg.type === "update" || msg.type === "init") {
         atualizarCacheHTTP(msg.dados);
         renderTudo();
 
@@ -229,8 +234,13 @@ function connectWS() {
     } catch {}
   };
 
-  ws.onclose = () => setTimeout(connectWS, 3000);
+  ws.onclose = () => {
+    console.log("🔴 WebSocket caiu, reconectando...");
+    setTimeout(connectWS, 3000);
+  };
+
   ws.onerror = () => ws.close();
 }
-
 connectWS();
+
+
