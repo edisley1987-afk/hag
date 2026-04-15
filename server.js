@@ -30,6 +30,7 @@
 
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
+import { calcularPercentualSeguro } from "./sensorEngine.js";
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -224,10 +225,15 @@ function convertAndMerge(dataArray) {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
     } else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-      const percentual = (leitura - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
-      let litros = percentual * sensor.capacidade;
-      litros = Math.max(0, Math.min(sensor.capacidade, litros));
-      novo[ref] = Math.round(litros);
+
+const percent = calcularPercentualSeguro(ref, leitura, sensor);
+
+let litros = (percent / 100) * sensor.capacidade;
+
+// proteção final
+litros = Math.max(0, Math.min(sensor.capacidade, litros));
+
+novo[ref] = Math.round(litros);
     } else {
       novo[ref] = rawVal;
     }
