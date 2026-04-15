@@ -88,11 +88,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// ------------------------- SENSORES / CALIBRAÇÃO -------------------------
+// ================= SENSORES / CALIBRAÇÃO =================
 const SENSORES = {
   "Reservatorio_Elevador_current": { 
-    leituraVazio: 0.004168, 
-    leituraCheio: 0.008860, 
+    leituraVazio: 0.005250, 
+    leituraCheio: 0.008742, 
     capacidade: 20000 
   },
 
@@ -116,7 +116,7 @@ const SENSORES = {
 
   "Reservatorio_lavanderia_current": { 
     leituraVazio: 0.006012, 
-    leituraCheio: 0.011630,   // 🔥 atualizado
+    leituraCheio: 0.011623, 
     capacidade: 10000 
   },
 
@@ -133,7 +133,6 @@ const SENSORES = {
   "Bomba_Osmose_binary": { tipo: "bomba" },
   "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
-
 
 // ------------------------- HELPERS IO -------------------------
 function safeReadJson(filePath, fallback) {
