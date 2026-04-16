@@ -38,9 +38,26 @@ if (leituraFiltrada > mem.cheioAuto + MARGEM_MIN) {
   mem.cheioAuto = leituraFiltrada;
 }
   // evita range inválido
-  const range = mem.cheioAuto - mem.vazioAuto;
-  if (range <= 0.0001) return { percent: 0, litros: 0 };
+ const range = mem.cheioAuto - mem.vazioAuto;
 
+if (range <= 0.0001) {
+  const rangeOriginal = sensor.leituraCheio - sensor.leituraVazio;
+
+  if (rangeOriginal > 0) {
+    let percentFallback =
+      ((leituraFiltrada - sensor.leituraVazio) / rangeOriginal) * 100;
+
+    percentFallback = Math.max(0, Math.min(100, percentFallback));
+
+    return {
+      percent: Number(percentFallback.toFixed(1)),
+      litros: Math.round((percentFallback / 100) * sensor.capacidade),
+      erro: "Fallback calibração padrão"
+    };
+  }
+
+  return { percent: 0, litros: 0, erro: "Range inválido" };
+}
   // ================================
   // 3. CÁLCULO BASE
   // ================================
