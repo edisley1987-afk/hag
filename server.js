@@ -30,7 +30,7 @@
 
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
-import { calcularPercentualSeguro } from "./sensorEngine.js";
+import { calcularNivelInteligente } from "./sensorEngine.js";
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -224,16 +224,21 @@ function convertAndMerge(dataArray) {
     } else if (sensor.tipo === "ciclo") {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
     } else if (sensor.capacidade) {
-      const leitura = Number(rawVal) || 0;
+  const leitura = Number(rawVal) || 0;
 
-const percent = calcularPercentualSeguro(ref, leitura, sensor);
+  const resultado = calcularNivelInteligente(ref, leitura, sensor);
 
-let litros = (percent / 100) * sensor.capacidade;
+  // salva nível e percentual
+  novo[ref] = resultado.litros;
+  novo[ref.replace("_current", "_percent")] = resultado.percent;
 
-// proteção final
-litros = Math.max(0, Math.min(sensor.capacidade, litros));
-
-novo[ref] = Math.round(litros);
+  // salva erro se existir
+  if (resultado.erro) {
+    novo[`${ref}_erro`] = resultado.erro;
+    console.warn(`⚠️ Sensor com erro: ${ref} → ${resultado.erro}`);
+  } else {
+    delete novo[`${ref}_erro`];
+  }
     } else {
       novo[ref] = rawVal;
     }
@@ -675,18 +680,49 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
-  const reservatorios = [
-    { nome: "Reservatório Elevador", setor: "elevador", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Elevador_current"] || 0), capacidade: 20000, manutencao: getManutencao().ativo },
-    { nome: "Reservatório Osmose", setor: "osmose", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Osmose_current"] || 0) / 200) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Osmose_current"] || 0), capacidade: 200, manutencao: getManutencao().ativo },
-    { nome: "Reservatório CME", setor: "cme", percent: Math.min(100, Math.round((Number(dados["Reservatorio_CME_current"] || 0) / 1000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_CME_current"] || 0), capacidade: 1000, manutencao: getManutencao().ativo },
-    { nome: "Água Abrandada", setor: "abrandada", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0), capacidade: 9000, manutencao: getManutencao().ativo },
-    { nome: "Lavanderia", setor: "lavanderia", percent: Math.min(100, Math.round((Number(dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0), capacidade: 10000, manutencao: getManutencao().ativo }
-  ];
+ const reservatorios = [
+  {
+    nome: "Reservatório Elevador",
+    setor: "elevador",
+    percent: Number(dados["Reservatorio_Elevador_current_percent"] || 0),
+    current_liters: Number(dados["Reservatorio_Elevador_current"] || 0),
+    capacidade: 20000,
+    manutencao: getManutencao().ativo
+  },
+  {
+    nome: "Reservatório Osmose",
+    setor: "osmose",
+    percent: Number(dados["Reservatorio_Osmose_current_percent"] || 0),
+    current_liters: Number(dados["Reservatorio_Osmose_current"] || 0),
+    capacidade: 200,
+    manutencao: getManutencao().ativo
+  },
+  {
+    nome: "Reservatório CME",
+    setor: "cme",
+    percent: Number(dados["Reservatorio_CME_current_percent"] || 0),
+    current_liters: Number(dados["Reservatorio_CME_current"] || 0),
+    capacidade: 1000,
+    manutencao: getManutencao().ativo
+  },
+  {
+    nome: "Água Abrandada",
+    setor: "abrandada",
+    percent: Number(dados["Reservatorio_Agua_Abrandada_current_percent"] || 0),
+    current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0),
+    capacidade: 9000,
+    manutencao: getManutencao().ativo
+  },
+  {
+    nome: "Lavanderia",
+    setor: "lavanderia",
+    percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
+    current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0),
+    capacidade: 10000,
+    manutencao: getManutencao().ativo
+  }
+];
+
 
   const pressoes = [
     { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
