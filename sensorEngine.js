@@ -24,9 +24,19 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
   // ================================
   // 2. AUTO CALIBRAÇÃO
   // ================================
-  if (leituraFiltrada < mem.vazioAuto) mem.vazioAuto = leituraFiltrada;
-  if (leituraFiltrada > mem.cheioAuto) mem.cheioAuto = leituraFiltrada;
+  // ================================
+// 2. AUTO CALIBRAÇÃO (PROTEGIDA)
+// ================================
+const MARGEM_MIN = 0.0003;
 
+// só ajusta se sair MUITO do padrão
+if (leituraFiltrada < mem.vazioAuto - MARGEM_MIN) {
+  mem.vazioAuto = leituraFiltrada;
+}
+
+if (leituraFiltrada > mem.cheioAuto + MARGEM_MIN) {
+  mem.cheioAuto = leituraFiltrada;
+}
   // evita range inválido
   const range = mem.cheioAuto - mem.vazioAuto;
   if (range <= 0.0001) return { percent: 0, litros: 0 };
