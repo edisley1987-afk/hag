@@ -10,7 +10,6 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
       cheioAuto: sensor.leituraCheio
     };
   }
-
   const mem = memoria[ref];
 
   // ================================
