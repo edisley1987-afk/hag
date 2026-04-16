@@ -19,20 +19,18 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
   const leituraFiltrada =
     mem.historico.reduce((a, b) => a + b, 0) / mem.historico.length;
 
-  // 2. AUTO CALIBRAÇÃO
-  const AJUSTE_LENTO = 0.001;
-
-  if (leituraFiltrada < mem.vazioAuto) {
-    mem.vazioAuto += (leituraFiltrada - mem.vazioAuto) * AJUSTE_LENTO;
+  // 2. AUTO CALIBRAÇÃO (CORRIGIDA)
+  if (leituraFiltrada < sensor.leituraVazio) {
+    mem.vazioAuto = leituraFiltrada;
   }
 
-  if (leituraFiltrada > mem.cheioAuto) {
-    mem.cheioAuto += (leituraFiltrada - mem.cheioAuto) * AJUSTE_LENTO;
+  if (leituraFiltrada > sensor.leituraCheio) {
+    mem.cheioAuto = leituraFiltrada;
   }
 
   let range = mem.cheioAuto - mem.vazioAuto;
 
-  // 🔴 PROTEÇÃO CRÍTICA
+  // 🔴 PROTEÇÃO
   if (range <= 0) {
     console.warn("⚠️ Range inválido, resetando calibração", ref);
 
@@ -42,7 +40,7 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
     range = mem.cheioAuto - mem.vazioAuto;
   }
 
-  // 3. RESET CONTROLADO
+  // RESET CONTROLADO
   if (range < 0.0005) {
     if (!mem._resetado) {
       mem.vazioAuto = sensor.leituraVazio;
@@ -54,26 +52,34 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
     mem._resetado = false;
   }
 
-  // 4. CÁLCULO
+  // 3. CÁLCULO
   let percent =
     ((leituraFiltrada - mem.vazioAuto) / range) * 100;
 
-  // 5. CORREÇÃO
+  // 🧠 ANTI-ZERO (AGORA NO LUGAR CERTO)
+  if (percent === 0 && leituraFiltrada > sensor.leituraVazio) {
+    percent =
+      ((leituraFiltrada - sensor.leituraVazio) /
+        (sensor.leituraCheio - sensor.leituraVazio)) *
+      100;
+  }
+
+  // CORREÇÃO
   if (percent > 10) {
     percent = percent * 1.02;
   }
 
-  // 6. LIMITES
+  // LIMITES
   percent = Math.max(0, Math.min(100, percent));
 
   if (leituraFiltrada < mem.vazioAuto) {
     percent = 0;
   }
 
-  // 7. LITROS
+  // LITROS
   const litros = (percent / 100) * sensor.capacidade;
 
-  // 8. ERROS
+  // ERROS
   let erro = null;
 
   if (
