@@ -1,8 +1,11 @@
-// sensorEngine.js – NÍVEL HARD
+// sensorEngine.js – NÍVEL HARD (VERSÃO ESTÁVEL PRODUÇÃO)
 
-const memoria = {}; // guarda histórico por sensor
+const memoria = {}; // estado por sensor
 
 export function calcularNivelInteligente(ref, leitura, sensor) {
+  // ================================
+  // 0. INIT MEMÓRIA
+  // ================================
   if (!memoria[ref]) {
     memoria[ref] = {
       historico: [],
@@ -10,6 +13,7 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
       cheioAuto: sensor.leituraCheio
     };
   }
+
   const mem = memoria[ref];
 
   // ================================
@@ -22,69 +26,82 @@ export function calcularNivelInteligente(ref, leitura, sensor) {
     mem.historico.reduce((a, b) => a + b, 0) / mem.historico.length;
 
   // ================================
-  // 2. AUTO CALIBRAÇÃO
+  // 2. AUTO CALIBRAÇÃO SEGURA
   // ================================
+  // ajusta apenas dentro de limites seguros
+  if (
+    leituraFiltrada < mem.vazioAuto &&
+    leituraFiltrada > sensor.leituraVazio - 0.001
+  ) {
+    mem.vazioAuto = leituraFiltrada;
+  }
+
+  if (
+    leituraFiltrada > mem.cheioAuto &&
+    leituraFiltrada < sensor.leituraCheio + 0.001
+  ) {
+    mem.cheioAuto = leituraFiltrada;
+  }
+
   // ================================
-// 2. AUTO CALIBRAÇÃO (PROTEGIDA)
-// ================================
-const MARGEM_MIN = 0.0003;
+  // 3. RANGE PROTEGIDO
+  // ================================
+  let range = mem.cheioAuto - mem.vazioAuto;
 
-// só ajusta se sair MUITO do padrão
-if (leituraFiltrada < mem.vazioAuto - MARGEM_MIN) {
-  mem.vazioAuto = leituraFiltrada;
-}
+  if (range < 0.0005) {
+    range = sensor.leituraCheio - sensor.leituraVazio;
+  }
 
-if (leituraFiltrada > mem.cheioAuto + MARGEM_MIN) {
-  mem.cheioAuto = leituraFiltrada;
-}
-  // evita range inválido
- const range = mem.cheioAuto - mem.vazioAuto;
-
-if (range <= 0.0001) {
-  const rangeOriginal = sensor.leituraCheio - sensor.leituraVazio;
-
-  if (rangeOriginal > 0) {
-    let percentFallback =
-      ((leituraFiltrada - sensor.leituraVazio) / rangeOriginal) * 100;
-
-    percentFallback = Math.max(0, Math.min(100, percentFallback));
-
+  if (range <= 0) {
     return {
-      percent: Number(percentFallback.toFixed(1)),
-      litros: Math.round((percentFallback / 100) * sensor.capacidade),
-      erro: "Fallback calibração padrão"
+      percent: 0,
+      litros: 0,
+      erro: "Range inválido"
     };
   }
 
-  return { percent: 0, litros: 0, erro: "Range inválido" };
-}
   // ================================
-  // 3. CÁLCULO BASE
+  // 4. CÁLCULO BASE
   // ================================
   let percent =
     ((leituraFiltrada - mem.vazioAuto) / range) * 100;
 
   // ================================
-  // 4. CURVA NÃO LINEAR (correção real)
+  // 5. CORREÇÃO NÃO LINEAR (leve)
   // ================================
-  percent = percent * 1.04 - 1.5;
+  if (percent > 10) {
+    percent = percent * 1.02;
+  }
 
+  // ================================
+  // 6. LIMITES
+  // ================================
   percent = Math.max(0, Math.min(100, percent));
 
-  // ================================
-  // 5. LITROS
-  // ================================
-  let litros = (percent / 100) * sensor.capacidade;
+  // proteção extra (não deixa negativo)
+  if (leituraFiltrada < mem.vazioAuto) {
+    percent = 0;
+  }
 
   // ================================
-  // 6. DETECÇÃO DE ERRO
+  // 7. LITROS
+  // ================================
+  const litros = (percent / 100) * sensor.capacidade;
+
+  // ================================
+  // 8. DETECÇÃO DE ERROS
   // ================================
   let erro = null;
 
-  if (leitura < 0.003 || leitura > 0.02) {
-    erro = "Leitura fora do padrão (4-20mA)";
+  // validação baseada no sensor (não fixa!)
+  if (
+    leitura < sensor.leituraVazio - 0.002 ||
+    leitura > sensor.leituraCheio + 0.002
+  ) {
+    erro = "Leitura fora da faixa esperada";
   }
 
+  // sensor travado
   if (mem.historico.length >= 5) {
     const variacao =
       Math.max(...mem.historico) - Math.min(...mem.historico);
@@ -94,6 +111,22 @@ if (range <= 0.0001) {
     }
   }
 
+  // ================================
+  // 9. DEBUG (IMPORTANTE)
+  // ================================
+  console.log("DEBUG SENSOR", {
+    ref,
+    leitura,
+    leituraFiltrada,
+    vazio: mem.vazioAuto,
+    cheio: mem.cheioAuto,
+    range,
+    percent
+  });
+
+  // ================================
+  // 10. RESULTADO FINAL
+  // ================================
   return {
     percent: Number(percent.toFixed(1)),
     litros: Math.round(litros),
