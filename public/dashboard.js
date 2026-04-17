@@ -1,7 +1,7 @@
 const API = "/api/dashboard";
 let ws;
 
-// ================= INIT =================
+// INIT
 init();
 
 function init() {
@@ -9,7 +9,7 @@ function init() {
   setInterval(fallbackHTTP, 8000);
 }
 
-// ================= WEBSOCKET =================
+// WEBSOCKET
 function conectarWS() {
   ws = new WebSocket(`ws://${location.host}`);
 
@@ -28,7 +28,7 @@ function conectarWS() {
   ws.onerror = () => setStatus("🟡 Fallback HTTP");
 }
 
-// ================= FALLBACK =================
+// FALLBACK
 async function fallbackHTTP() {
   if (ws.readyState === 1) return;
 
@@ -41,17 +41,17 @@ async function fallbackHTTP() {
   }
 }
 
-// ================= ATUALIZAÇÃO =================
+// ATUALIZA
 function atualizarTela(data) {
   document.getElementById("lastUpdate").innerText =
     "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
 
-  renderReservatorios(data.reservatorios);
-  renderBombas(data.bombas);
-  renderPressoes(data.pressoes);
+  renderReservatorios(data.reservatorios || []);
+  renderBombas(data.bombas || []);
+  renderPressoes(data.pressoes || []);
 }
 
-// ================= RESERVATÓRIOS =================
+// RESERVATÓRIOS
 function renderReservatorios(lista) {
   const area = document.getElementById("areaReservatorios");
   area.innerHTML = "";
@@ -72,7 +72,7 @@ function renderReservatorios(lista) {
   });
 }
 
-// ================= BOMBAS =================
+// BOMBAS
 function renderBombas(lista) {
   const area = document.getElementById("areaBombas");
   area.innerHTML = "";
@@ -92,7 +92,7 @@ function renderBombas(lista) {
   });
 }
 
-// ================= PRESSÕES =================
+// PRESSÕES
 function renderPressoes(lista) {
   const area = document.getElementById("areaPressoes");
   area.innerHTML = "";
@@ -111,7 +111,7 @@ function renderPressoes(lista) {
   });
 }
 
-// ================= HELPERS =================
+// HELPERS
 function getStatus(p) {
   if (p < 30) return "critico";
   if (p < 70) return "alerta";
