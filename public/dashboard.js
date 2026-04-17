@@ -1,110 +1,74 @@
-const API_URL = "/api/dashboard";
-
-async function carregarDados() {
+async function carregarDashboard() {
   try {
-    const res = await fetch(API_URL + "?t=" + Date.now());
-
-    if (!res.ok) throw new Error("Erro HTTP " + res.status);
-
+    const res = await fetch("/api/dashboard");
     const data = await res.json();
 
-    if (!data || !data.reservatorios) {
-      console.warn("Dados inválidos");
-      return;
-    }
+    console.log("DADOS:", data);
 
-    atualizarReservatorios(data.reservatorios);
-    atualizarPressoes(data.pressoes);
-    atualizarHeader(data.lastUpdate);
+    document.getElementById("lastUpdate").innerText =
+      "Última atualização: " + data.lastUpdate;
+
+    // =========================
+    // RESERVATÓRIOS
+    // =========================
+    data.reservatorios.forEach(r => {
+
+      function atualizarCard(nome, id) {
+        document.getElementById("nivel" + id).innerText = r.percent + "%";
+        document.getElementById("litros" + id).innerText = r.current_liters + " L";
+        document.getElementById("nivel" + id + "Bar").style.height = r.percent + "%";
+      }
+
+      if (r.setor === "elevador") atualizarCard(r, "Elevador");
+      if (r.setor === "osmose") atualizarCard(r, "Osmose");
+      if (r.setor === "cme") atualizarCard(r, "CME");
+      if (r.setor === "abrandada") atualizarCard(r, "Abrandada");
+      if (r.setor === "lavanderia") atualizarCard(r, "Lavanderia");
+    });
+
+    // =========================
+    // PRESSÕES
+    // =========================
+    data.pressoes.forEach(p => {
+      if (p.setor === "saida_osmose")
+        document.getElementById("pressaoSaida").innerText = p.pressao + " bar";
+
+      if (p.setor === "retorno_osmose")
+        document.getElementById("pressaoRetorno").innerText = p.pressao + " bar";
+
+      if (p.setor === "saida_cme")
+        document.getElementById("pressaoCME").innerText = p.pressao + " bar";
+    });
+
+    // =========================
+    // BOMBAS
+    // =========================
+    data.bombas.forEach(b => {
+
+      function setBomba(id, statusId, ciclosId) {
+        document.getElementById(statusId).innerText = b.estado;
+        document.getElementById(ciclosId).innerText = b.ciclo + " ciclos";
+
+        const card = document.getElementById(id);
+
+        if (b.estado === "ligada") {
+          card.style.background = "#14532d";
+        } else {
+          card.style.background = "#3f3f46";
+        }
+      }
+
+      if (b.nome === "Bomba 01") setBomba("bomba1", "statusBomba1", "ciclosBomba1");
+      if (b.nome === "Bomba 02") setBomba("bomba2", "statusBomba2", "ciclosBomba2");
+      if (b.nome === "Bomba Osmose") setBomba("bombaOsmose", "statusBombaOsmose", "ciclosBombaOsmose");
+
+    });
 
   } catch (err) {
-    console.error("Erro ao carregar dados:", err);
-    mostrarErro();
+    console.error("Erro:", err);
   }
 }
 
-// ---------------- RESERVATÓRIOS ----------------
-function atualizarReservatorios(lista) {
-  const map = {
-    elevador: "Elevador",
-    osmose: "Osmose",
-    cme: "CME",
-    abrandada: "Abrandada"
-  };
-
-  lista.forEach(r => {
-    const nome = map[r.setor];
-    if (!nome) return;
-
-    const elNivel = document.getElementById(`nivel${nome}`);
-    const elLitros = document.getElementById(`litros${nome}`);
-    const bar = document.getElementById(`nivel${nome}Bar`);
-
-    if (!elNivel || !elLitros || !bar) return;
-
-    elNivel.innerText = `${r.percent}%`;
-    elLitros.innerText = `${r.current_liters} L`;
-
-    bar.style.height = r.percent + "%";
-
-    // cores inteligentes
-    if (r.percent < 25) {
-      bar.style.background = "#ff3b3b";
-      bar.style.boxShadow = "0 0 10px #ff3b3b";
-    } else if (r.percent < 60) {
-      bar.style.background = "#ffaa00";
-    } else {
-      bar.style.background = "#00ff88";
-    }
-  });
-}
-
-// ---------------- PRESSÕES ----------------
-function atualizarPressoes(lista) {
-  if (!lista) return;
-
-  lista.forEach(p => {
-    if (p.setor === "saida_osmose") {
-      setTexto("pressaoSaida", p.pressao);
-    }
-    if (p.setor === "retorno_osmose") {
-      setTexto("pressaoRetorno", p.pressao);
-    }
-    if (p.setor === "saida_cme") {
-      setTexto("pressaoCME", p.pressao);
-    }
-  });
-}
-
-function setTexto(id, valor) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  el.innerText = valor != null ? `${valor} bar` : "-- bar";
-}
-
-// ---------------- HEADER ----------------
-function atualizarHeader(timestamp) {
-  const el = document.getElementById("lastUpdate");
-  if (!el) return;
-
-  if (!timestamp) {
-    el.innerText = "Sem atualização";
-    return;
-  }
-
-  const data = new Date(timestamp);
-  el.innerText = "Última atualização: " + data.toLocaleTimeString("pt-BR");
-}
-
-// ---------------- ERRO VISUAL ----------------
-function mostrarErro() {
-  const el = document.getElementById("lastUpdate");
-  if (el) {
-    el.innerText = "⚠️ Erro ao conectar com servidor";
-  }
-}
-
-// ---------------- AUTO UPDATE ----------------
-setInterval(carregarDados, 5000);
-carregarDados();
+// Atualiza a cada 5s
+setInterval(carregarDashboard, 5000);
+carregarDashboard();
