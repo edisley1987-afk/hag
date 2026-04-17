@@ -1,146 +1,115 @@
-body {
-margin:0;
-font-family:Segoe UI;
-background:linear-gradient(135deg,#022c22,#014737);
-color:white;
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #022c22, #014737);
+    color: white;
 }
 
 /* HEADER */
 header {
-background:#014737;
-padding:20px;
-text-align:center;
-border-bottom:3px solid #00ffae;
+    height: 70px;
+    text-align: center;
+    background: rgba(0,90,60,0.9);
 }
 
+/* STATUS */
 #statusSistema {
-text-align:center;
-padding:10px;
-color:#00ffae;
-text-shadow:0 0 8px #00ffae;
+    text-align: center;
+    padding: 5px;
+    font-weight: bold;
+    color: #00ffae;
 }
 
-/* ALERTA */
-.alerta-global {
-display:none;
-background:red;
-padding:10px;
-border-radius:8px;
-text-align:center;
+/* MAIN */
+main {
+    height: calc(100% - 120px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+/* TOPO */
+.area-topo {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
 }
 
 /* RESERVATÓRIOS */
-#reservatoriosContainer {
-display:grid;
-gap:20px;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-}
-
 .card-reservatorio {
-background:rgba(255,255,255,0.08);
-padding:12px;
-border-radius:12px;
-text-align:center;
-transition:0.3s;
-}
-
-.card-reservatorio:hover {
-transform:scale(1.03);
-box-shadow:0 0 15px #00ffae55;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 8px;
+    text-align: center;
 }
 
 .tanque-visu {
-height:140px;
-background:rgba(255,255,255,0.2);
-border-radius:10px;
-overflow:hidden;
-position:relative;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
 }
 
 .nivel-agua {
-position:absolute;
-bottom:0;
-width:100%;
-height:0%;
-background:linear-gradient(#00ffae,#00c98a);
-transition:height 1s;
-}
-
-.nivel-agua::after {
-content:"";
-position:absolute;
-width:200%;
-height:100%;
-background:rgba(255,255,255,0.2);
-animation:onda 2s infinite linear;
-}
-
-@keyframes onda {
-0%{transform:translateX(0)}
-100%{transform:translateX(50%)}
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 1s;
 }
 
 /* CORES */
-.nv-critico {
-border:2px solid red;
-animation:pisca 1s infinite;
-}
-
+.nv-critico { border:2px solid red; }
 .nv-alerta { border:2px solid orange; }
 .nv-normal { border:2px solid #00ffae; }
 
-@keyframes pisca {
-50%{box-shadow:0 0 20px red}
-}
-
-/* IA */
-.box-previsao {
-margin:15px auto;
-padding:10px;
-background:rgba(0,0,0,0.5);
-border-radius:10px;
-text-align:center;
+/* BAIXO */
+.area-bottom {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
 }
 
 /* GRÁFICO */
 #graficoUTI {
-margin-top:20px;
-background:rgba(0,0,0,0.4);
-border-radius:10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    padding: 10px;
 }
 
-/* PRESSÃO */
+#previsaoIA {
+    text-align: center;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* GRID */
 #pressaoBombaGrid {
-display:grid;
-gap:20px;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 10px;
 }
 
-.card-pressao {
-background:rgba(255,255,255,0.08);
-padding:10px;
-border-radius:10px;
-text-align:center;
-}
-
-.valor-pressao {
-font-size:22px;
-color:#00ffae;
+.card-pressao,
+.card-bomba {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
 }
 
 /* BOMBAS */
-.card-bomba {
-padding:10px;
-border-radius:10px;
-text-align:center;
-}
+.bomba-ligada { background: rgba(0,150,0,0.6); }
+.bomba-desligada { background: rgba(150,0,0,0.6); }
 
-.bomba-ligada { background:rgba(0,150,0,0.6); }
-.bomba-desligada { background:rgba(150,0,0,0.6); }
-
+/* FOOTER */
 footer {
-text-align:center;
-margin-top:40px;
-padding:10px;
-background:rgba(0,0,0,0.5);
+    height: 30px;
+    text-align: center;
+    background: rgba(0,0,0,0.5);
 }
