@@ -1,241 +1,150 @@
-body{
-
-margin:0;
-font-family:Arial;
-background:#0b0f18;
-color:white;
-
+/* ================= BASE ================= */
+body {
+margin: 0;
+font-family: "Segoe UI", sans-serif;
+background: linear-gradient(135deg, #022c22, #014737);
+color: white;
 }
 
-.topo-sistema{
-
-position:fixed;
-
-top:0;
-left:0;
-right:0;
-
-height:50px;
-
-background:#020617;
-
-border-bottom:2px solid #1e293b;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-z-index:999;
-
+/* ================= HEADER ================= */
+header {
+background: rgba(0, 90, 60, 0.9);
+padding: 20px;
+text-align: center;
+border-bottom: 3px solid #00ffae;
 }
 
-.mensagem-topo{
-
-display:flex;
-
-gap:20px;
-
-font-size:18px;
-
-font-weight:bold;
-
+#statusSistema {
+text-align: center;
+padding: 10px;
+font-weight: bold;
 }
 
-.titulo-sistema{
-
-color:#38bdf8;
-
+/* ================= IA ================= */
+.box-previsao {
+margin: 15px auto;
+padding: 12px;
+border-radius: 10px;
+text-align: center;
+width: fit-content;
+background: rgba(0,0,0,0.4);
+box-shadow: 0 0 10px #000;
 }
 
-.status-sistema{
-
-color:#22c55e;
-
+.previsao-critica {
+color: #ff4e4e;
+animation: blink 1s infinite;
+}
+.previsao-alerta {
+color: #ffcc00;
 }
 
-.status-offline{
-
-color:#ef4444;
-
+@keyframes blink {
+50% { opacity: 0.3; }
 }
 
-.dashboard{
-
-margin-top:55px;
-
-height:calc(100vh - 55px);
-
-display:grid;
-
-grid-template-columns:2fr 1fr;
-
-gap:10px;
-
-padding:10px;
-
+/* ================= ALERTA GLOBAL ================= */
+.alerta-global {
+display: none;
+background: #ff4e4e;
+padding: 12px;
+border-radius: 8px;
+text-align: center;
+margin-bottom: 15px;
+font-weight: bold;
 }
 
-.reservatorios{
-
-display:grid;
-
-grid-template-columns:repeat(5,1fr);
-
-gap:10px;
-
+/* ================= RESERVATÓRIOS ================= */
+#reservatoriosContainer {
+display: grid;
+gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-.card-reservatorio{
-
-background:#111827;
-
-border-radius:10px;
-
-padding:10px;
-
-text-align:center;
-
+.card-reservatorio {
+background: rgba(255,255,255,0.08);
+padding: 12px;
+border-radius: 12px;
+text-align: center;
+border: 2px solid transparent;
 }
 
-.tanque-visu{
-
-height:200px;
-
-border:2px solid #444;
-
-position:relative;
-
-overflow:hidden;
-
-border-radius:8px;
-
-margin-top:10px;
-
+.tanque-visu {
+height: 140px;
+background: rgba(255,255,255,0.2);
+border-radius: 10px;
+overflow: hidden;
+position: relative;
 }
 
-.nivel-agua{
-
-position:absolute;
-
-bottom:0;
-
-width:100%;
-
-background:#00ffd0;
-
-transition:height 0.5s;
-
+.nivel-agua {
+position: absolute;
+bottom: 0;
+width: 100%;
+background: #00ffae;
+transition: height 1s;
 }
 
-.overlay-info{
-
-position:absolute;
-
-top:0;
-left:0;
-right:0;
-bottom:0;
-
-display:flex;
-
-flex-direction:column;
-
-justify-content:center;
-
-align-items:center;
-
+.percent-text {
+font-size: 20px;
+font-weight: bold;
 }
 
-.percent-text{
-
-font-size:22px;
-
-font-weight:bold;
-
+.liters-text {
+font-size: 14px;
 }
 
-.painel-direito{
+/* CORES */
+.nv-critico { border-color: red; }
+.nv-alerta { border-color: orange; }
+.nv-normal { border-color: #00ffae; }
 
-display:grid;
-
-grid-template-rows:2fr 1fr 1fr;
-
-gap:10px;
-
+/* ================= GRÁFICO ================= */
+#graficoUTI {
+background: rgba(0,0,0,0.4);
+border-radius: 10px;
+padding: 10px;
+margin-top: 20px;
 }
 
-.grafico{
-
-background:#111827;
-
-padding:10px;
-
-border-radius:10px;
-
+/* ================= PRESSÃO ================= */
+#pressaoBombaGrid {
+display: grid;
+gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.indicadores{
-
-display:grid;
-
-grid-template-columns:1fr 1fr 1fr;
-
-gap:10px;
-
+.card-pressao {
+background: rgba(255,255,255,0.08);
+padding: 15px;
+border-radius: 10px;
+text-align: center;
 }
 
-.card{
-
-background:#111827;
-
-border-radius:10px;
-
-padding:10px;
-
-text-align:center;
-
+.valor-pressao {
+font-size: 24px;
+color: #00ffae;
 }
 
-.alerta{
-
-background:#8b0000;
-
-font-weight:bold;
-
+/* ================= BOMBAS ================= */
+.card-bomba {
+padding: 15px;
+border-radius: 10px;
+text-align: center;
 }
 
-.bombas{
-
-display:grid;
-
-grid-template-columns:repeat(3,1fr);
-
-gap:10px;
-
+.bomba-ligada {
+background: rgba(0,150,0,0.6);
 }
 
-.bomba{
-
-background:#111827;
-
-border-radius:10px;
-
-padding:10px;
-
-text-align:center;
-
+.bomba-desligada {
+background: rgba(150,0,0,0.6);
 }
 
-.bomba-ligada{
-
-background:#064e3b;
-
-}
-
-.bomba-desligada{
-
-background:#3f1d1d;
-
+/* ================= FOOTER ================= */
+footer {
+text-align: center;
+padding: 10px;
+margin-top: 40px;
+background: rgba(0,0,0,0.5);
 }
