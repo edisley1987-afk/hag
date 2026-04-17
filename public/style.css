@@ -30,7 +30,6 @@ header {
   color: #00ffae;
   background: rgba(0,0,0,0.25);
   border-radius: 6px;
-  font-size: 12px;
 }
 
 /* ===============================
@@ -46,48 +45,76 @@ main {
 }
 
 /* ===============================
-   TOPO (RESERVATÓRIOS)
+   TOPO (RESERVATÓRIOS - DESTAQUE)
 =============================== */
 .area-topo {
-  flex: 1; /* 🔥 reduzido */
+  flex: 1.4; /* 🔥 MAIS IMPORTANTE */
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
+  position: relative;
 }
 
+/* Título da seção */
+.area-topo::before {
+  content: "Reservatórios";
+  position: absolute;
+  top: -18px;
+  left: 5px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Container */
 #reservatoriosContainer {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
-/* CARD RESERVATÓRIO */
+/* CARD RESERVATÓRIO (DESTAQUE) */
 .card-reservatorio {
   background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.25));
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 12px;
   text-align: center;
-  font-size: 13px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  font-size: 14px;
+
+  border: 2px solid rgba(0,255,170,0.6);
+  box-shadow: 0 0 15px rgba(0,255,170,0.25);
+
+  transform: scale(1.02);
+  transition: 0.3s;
+}
+
+.card-reservatorio:hover {
+  transform: scale(1.05);
 }
 
 /* TANQUE */
 .tanque-visu {
-  height: 70px;
+  height: 80px;
   background: rgba(255,255,255,0.15);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
+/* ÁGUA */
 .nivel-agua {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: linear-gradient(to top, #00ffae, #0ea5e9);
+  background: linear-gradient(to top, #00ffae, #38bdf8);
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
   transition: height 0.8s ease;
+}
+
+/* TEXTO MAIS VISÍVEL */
+.card-reservatorio strong {
+  font-size: 18px;
 }
 
 /* NÍVEIS */
@@ -99,7 +126,7 @@ main {
    BAIXO
 =============================== */
 .area-bottom {
-  flex: 1.4; /* 🔥 mais espaço pro gráfico */
+  flex: 1;
   display: grid;
   grid-template-columns: 2.3fr 1fr;
   gap: 12px;
@@ -107,7 +134,7 @@ main {
 }
 
 /* ===============================
-   GRÁFICO
+   GRÁFICO (SECUNDÁRIO)
 =============================== */
 #graficoUTI {
   background: rgba(0,0,0,0.45);
@@ -117,7 +144,8 @@ main {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  box-shadow: 0 0 10px rgba(0,255,170,0.1);
+
+  opacity: 0.85; /* 🔥 menos destaque */
 }
 
 #graficoUTI canvas {
@@ -136,30 +164,39 @@ main {
 }
 
 /* ===============================
-   LATERAL (PRESSÃO + BOMBAS)
+   LATERAL (SECUNDÁRIO)
 =============================== */
 #pressaoBombaGrid {
   display: grid;
-  grid-template-columns: 1fr; /* 🔥 coluna única */
+  grid-template-columns: 1fr;
   gap: 10px;
   min-height: 0;
 }
 
-/* CARDS */
+/* CARDS (MAIS DISCRETOS) */
 .card-pressao,
 .card-bomba {
   background: rgba(255,255,255,0.08);
   padding: 10px;
   border-radius: 10px;
   text-align: center;
+  font-size: 12px;
+
+  opacity: 0.75;
+  transform: scale(0.97);
   transition: 0.3s;
-  font-size: 13px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.3);
 }
 
-/* PRESSÃO (BAR) */
+/* Hover */
+.card-pressao:hover,
+.card-bomba:hover {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* PRESSÃO */
 .card-pressao {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: bold;
   background: rgba(0,150,255,0.15);
   border: 1px solid rgba(0,150,255,0.4);
