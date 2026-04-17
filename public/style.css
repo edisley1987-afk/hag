@@ -25,24 +25,34 @@ main {
   padding: 10px;
 }
 
-/* RESERVATÓRIOS */
+/* =========================
+   RESERVATÓRIOS (5 POR LINHA)
+========================= */
 .grid-reservatorios {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
 }
 
-/* BOMBAS */
+.grid-reservatorios .card {
+  height: 160px;
+}
+
+/* =========================
+   BOMBAS (3 POR LINHA)
+========================= */
 .grid-bombas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
-/* PRESSÕES */
+/* =========================
+   PRESSÕES (3 POR LINHA)
+========================= */
 .grid-pressoes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
@@ -65,7 +75,7 @@ main {
   font-weight: bold;
 }
 
-/* BARRA DE NÍVEL */
+/* BARRA */
 .barra {
   position: absolute;
   bottom: 0;
@@ -89,4 +99,26 @@ footer {
   padding: 5px;
   font-size: 12px;
   background: rgba(0,0,0,0.3);
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+@media (max-width: 900px) {
+  .grid-reservatorios {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-bombas,
+  .grid-pressoes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .grid-reservatorios,
+  .grid-bombas,
+  .grid-pressoes {
+    grid-template-columns: 1fr;
+  }
 }
