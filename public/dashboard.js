@@ -224,7 +224,8 @@ async function atualizar(){
 
 try{
 
-const resposta = await fetch("/api/status");
+const resposta = await fetch("/api/dashboard")
+
 
 const data = await resposta.json();
 
