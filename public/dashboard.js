@@ -113,15 +113,19 @@ function renderReservatorios(lista) {
     const card = document.createElement("div");
     card.className = "card-reservatorio";
 
-    if (percent <= 30) card.classList.add("nv-critico");
-    else if (percent <= 60) card.classList.add("nv-alerta");
-    else card.classList.add("nv-normal");
+  if (percent <= 30) card.classList.add("nv-critico");
+else if (percent <= 60) card.classList.add("nv-alerta");
+else if (percent >= 95) card.classList.add("nv-cheio");
+else card.classList.add("nv-normal");
 
-    if (percent < 31 && !manutencao[r.setor]) {
+    if (percent < 31 && percent < 95 && !manutencao[r.setor]) {
+
       card.classList.add("piscar-31");
       if (!alertaNivel31[r.setor]) {
         alertaNivel31[r.setor] = true;
-        bipNivelIntervalo[r.setor] = setInterval(bipCurto, 3000);
+        const intervalo = percent < 15 ? 1000 : 3000;
+bipNivelIntervalo[r.setor] = setInterval(bipCurto, intervalo);
+
       }
     } else {
       clearInterval(bipNivelIntervalo[r.setor]);
@@ -140,7 +144,8 @@ function renderReservatorios(lista) {
       </div>
 
       <div class="tanque-visu">
-        <div class="nivel-agua" style="height:${percent}%"></div>
+        <div class="nivel-agua" style="height:${percent}%; transition: height 1s ease;"></div>
+
         <div class="overlay-info">
           <div class="percent-text">${percent}%</div>
           <div class="liters-text">${litros} L</div>
