@@ -1,154 +1,75 @@
-// ===============================
-// CONFIG
-// ===============================
-const API_URL = "/api/dados"; // 🔴 ajuste se necessário
-const INTERVALO = 5000;
+const API_URL = "/api/dashboard";
 
-// ===============================
-// CARREGAR DADOS
-// ===============================
 async function carregarDados() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL + "?t=" + Date.now()); // evita cache
     const data = await res.json();
 
-    console.log("Dados recebidos:", data);
-
-    // ===============================
-    // RESERVATÓRIOS
-    // ===============================
-    atualizarReservatorio(
-      "Elevador",
-      data.Reservatorio_Elevador_current_percent,
-      data.Reservatorio_Elevador_current
-    );
-
-    atualizarReservatorio(
-      "Osmose",
-      data.Reservatorio_Osmose_current_percent,
-      data.Reservatorio_Osmose_current
-    );
-
-    atualizarReservatorio(
-      "CME",
-      data.Reservatorio_CME_current_percent,
-      data.Reservatorio_CME_current
-    );
-
-    atualizarReservatorio(
-      "Abrandada",
-      data.Reservatorio_Agua_Abrandada_current_percent,
-      data.Reservatorio_Agua_Abrandada_current
-    );
-
-    // ===============================
-    // PRESSÕES (BAR)
-    // ===============================
-    setTexto("pressaoSaida", data.Pressao_Saida_Osmose_current, " bar");
-    setTexto("pressaoRetorno", data.Pressao_Retorno_Osmose_current, " bar");
-    setTexto("pressaoCME", data.Pressao_Saida_CME_current, " bar");
-
-    // ===============================
-    // BOMBAS
-    // ===============================
-    atualizarBomba("cardBomba01", data.Bomba_01_binary);
-    atualizarBomba("cardBomba02", data.Bomba_02_binary);
-    atualizarBomba("cardBombaOsmose", data.Bomba_Osmose_binary);
-
-    // ===============================
-    // DATA
-    // ===============================
-    if (data.seq_timestamp) {
-      document.getElementById("lastUpdate").innerText =
-        "Última atualização: " +
-        new Date(data.seq_timestamp).toLocaleTimeString("pt-BR");
-    }
+    atualizarReservatorios(data.reservatorios);
+    atualizarPressoes(data.pressoes);
+    atualizarHeader(data.lastUpdate);
 
   } catch (err) {
     console.error("Erro ao carregar dados:", err);
-    document.getElementById("lastUpdate").innerText =
-      "Erro ao atualizar dados";
   }
 }
 
-// ===============================
-// RESERVATÓRIO
-// ===============================
-function atualizarReservatorio(nome, percentual, litros) {
-  if (percentual == null) return;
+function atualizarReservatorios(lista) {
+  lista.forEach(r => {
+    const id = r.setor;
 
-  const nivel = document.getElementById("nivel" + nome);
-  const litrosEl = document.getElementById("litros" + nome);
-  const barra = document.getElementById("nivel" + nome + "Bar");
-  const card = document.getElementById("card" + nome);
+    // MAPEAMENTO DOS IDS DO HTML
+    const map = {
+      elevador: "Elevador",
+      osmose: "Osmose",
+      cme: "CME",
+      abrandada: "Abrandada"
+    };
 
-  if (!nivel || !litrosEl || !barra || !card) return;
+    const nome = map[id];
+    if (!nome) return;
 
-  // Texto
-  nivel.innerText = percentual.toFixed(1) + "%";
-  litrosEl.innerText = formatarNumero(litros) + " L";
+    // Atualiza valores
+    document.getElementById(`nivel${nome}`).innerText = `${r.percent}%`;
+    document.getElementById(`litros${nome}`).innerText = `${r.current_liters} L`;
 
-  // Altura da barra
-  barra.style.height = percentual + "%";
+    // Atualiza barra
+    const bar = document.getElementById(`nivel${nome}Bar`);
+    if (bar) {
+      bar.style.height = r.percent + "%";
 
-  // Cor dinâmica
-  card.classList.remove("nv-critico", "nv-alerta", "nv-normal");
-
-  if (percentual < 40) {
-    card.classList.add("nv-critico");
-  } else if (percentual < 80) {
-    card.classList.add("nv-alerta");
-  } else {
-    card.classList.add("nv-normal");
-  }
+      // cor dinâmica
+      if (r.percent < 30) bar.style.background = "#ff4d4d";
+      else if (r.percent < 60) bar.style.background = "#ffaa00";
+      else bar.style.background = "#00ff88";
+    }
+  });
 }
 
-// ===============================
-// PRESSÃO
-// ===============================
-function setTexto(id, valor, sufixo = "") {
-  const el = document.getElementById(id);
-  if (!el || valor == null) return;
-
-  el.innerText = Number(valor).toFixed(2) + sufixo;
+function atualizarPressoes(lista) {
+  lista.forEach(p => {
+    if (p.setor === "saida_osmose") {
+      document.getElementById("pressaoSaida").innerText = `${p.pressao} bar`;
+    }
+    if (p.setor === "retorno_osmose") {
+      document.getElementById("pressaoRetorno").innerText = `${p.pressao} bar`;
+    }
+    if (p.setor === "saida_cme") {
+      document.getElementById("pressaoCME").innerText = `${p.pressao} bar`;
+    }
+  });
 }
 
-// ===============================
-// BOMBAS
-// ===============================
-function atualizarBomba(id, status) {
-  const el = document.getElementById(id);
-  if (!el) return;
+function atualizarHeader(timestamp) {
+  if (!timestamp) return;
 
-  el.classList.remove("bomba-ligada", "bomba-desligada");
-
-  if (status === 1) {
-    el.classList.add("bomba-ligada");
-    el.innerHTML = "⚙️ Ligada";
-  } else {
-    el.classList.add("bomba-desligada");
-    el.innerHTML = "⚙️ Desligada";
-  }
+  const data = new Date(timestamp);
+  document.getElementById("lastUpdate").innerText =
+    "Última atualização: " + data.toLocaleTimeString("pt-BR");
 }
 
-// ===============================
-// UTIL
-// ===============================
-function formatarNumero(num) {
-  if (num == null) return "--";
-  return Number(num).toLocaleString("pt-BR");
-}
+// Atualiza a cada 5 segundos
+setInterval(carregarDados, 5000);
 
-// ===============================
-// HISTÓRICO
-// ===============================
-function abrirHistorico(tag) {
-  alert("Abrir histórico de: " + tag);
-  // 👉 depois você pode abrir modal ou página
-}
-
-// ===============================
-// LOOP
-// ===============================
-setInterval(carregarDados, INTERVALO);
+// Primeira carga
 carregarDados();
