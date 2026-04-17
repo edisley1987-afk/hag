@@ -681,11 +681,19 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
- const rElevador = dados["Reservatorio_Elevador_current"] || {};
-const rOsmose = dados["Reservatorio_Osmose_current"] || {};
-const rCME = dados["Reservatorio_CME_current"] || {};
-const rAbrandada = dados["Reservatorio_Agua_Abrandada_current"] || {};
-const rLavanderia = dados["Reservatorio_lavanderia_current"] || {};
+ function getReservatorio(ref, capacidade) {
+  return {
+    litros: Number(dados[ref] || 0),
+    percent: Number(dados[`${ref}_percent`] || 0),
+    capacidade
+  };
+}
+
+const rElevador = getReservatorio("Reservatorio_Elevador_current", 20000);
+const rOsmose = getReservatorio("Reservatorio_Osmose_current", 200);
+const rCME = getReservatorio("Reservatorio_CME_current", 1000);
+const rAbrandada = getReservatorio("Reservatorio_Agua_Abrandada_current", 9000);
+const rLavanderia = getReservatorio("Reservatorio_lavanderia_current", 10000);
 
 const reservatorios = [
   {
