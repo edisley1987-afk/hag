@@ -1,14 +1,15 @@
 body {
   margin: 0;
   font-family: "Segoe UI";
-  background: #021d1a;
-  color: #fff;
+  background: linear-gradient(135deg, #022c22, #014737);
+  color: white;
 }
 
+/* HEADER */
 header {
   text-align: center;
   padding: 10px;
-  background: #013c30;
+  background: rgba(0, 90, 60, 0.9);
 }
 
 #statusSistema {
@@ -16,19 +17,43 @@ header {
   color: #00ffae;
 }
 
+/* MAIN */
 main {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 10px;
 }
 
+/* RESERVATÓRIOS */
+.grid-reservatorios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+/* BOMBAS */
+.grid-bombas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+/* PRESSÕES */
+.grid-pressoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+/* CARD */
 .card {
-  background: #062f2a;
+  background: rgba(255,255,255,0.08);
   border-radius: 10px;
   padding: 10px;
   position: relative;
   overflow: hidden;
+  transition: 0.3s;
 }
 
 .card h2 {
@@ -40,19 +65,28 @@ main {
   font-weight: bold;
 }
 
+/* BARRA DE NÍVEL */
 .barra {
   position: absolute;
   bottom: 0;
   width: 100%;
   background: #00ff88;
-  transition: 0.5s;
+  transition: height 0.5s;
 }
 
 /* STATUS */
-.critico { border: 2px solid red; }
-.alerta { border: 2px solid orange; }
+.critico { border: 2px solid #ff3b3b; }
+.alerta { border: 2px solid #ffaa00; }
 .normal { border: 2px solid #00ff88; }
 
 /* BOMBAS */
-.ligada { background: #064e3b !important; }
-.desligada { background: #3f3f46 !important; }
+.ligada { background: rgba(0,180,0,0.4) !important; }
+.desligada { background: rgba(180,0,0,0.4) !important; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 5px;
+  font-size: 12px;
+  background: rgba(0,0,0,0.3);
+}
