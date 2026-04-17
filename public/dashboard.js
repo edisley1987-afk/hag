@@ -1,54 +1,61 @@
 ```javascript
-// ========================= CONFIG =========================
+// ================= CONFIG =================
 const API = "/api/dashboard";
 
-// ========================= GRAFICO =========================
 let grafico;
 
-function iniciarGrafico(){
+// ================= INICIAR GRAFICO =================
+function iniciarGrafico() {
 
 const ctx = document.getElementById("graficoUTIChart");
 
-if(!ctx) return;
+if (!ctx) return;
 
-grafico = new Chart(ctx,{
-type:"line",
-data:{
-labels:[],
-datasets:[{
-label:"Consumo Água",
-data:[],
-borderColor:"#00ffd0",
-backgroundColor:"rgba(0,255,208,0.2)",
-tension:0.3,
-fill:true
+grafico = new Chart(ctx, {
+type: "line",
+
+data: {
+labels: [],
+datasets: [{
+label: "Consumo de Água",
+data: [],
+borderColor: "#00ffd0",
+backgroundColor: "rgba(0,255,208,0.2)",
+tension: 0.3,
+fill: true
 }]
 },
-options:{
-responsive:true,
-maintainAspectRatio:false,
-plugins:{
-legend:{labels:{color:"white"}}
+
+options: {
+responsive: true,
+maintainAspectRatio: false,
+
+plugins: {
+legend: {
+labels: { color: "white" }
+}
 },
-scales:{
-x:{ticks:{color:"white"}},
-y:{ticks:{color:"white"}}
+
+scales: {
+x: { ticks: { color: "white" } },
+y: { ticks: { color: "white" } }
 }
 }
 });
 
 }
 
-function atualizarGrafico(valor){
+// ================= ATUALIZAR GRAFICO =================
+function atualizarGrafico(valor) {
 
-if(!grafico) return;
+if (!grafico) return;
 
-const hora=new Date().toLocaleTimeString();
+const hora = new Date().toLocaleTimeString();
 
 grafico.data.labels.push(hora);
 grafico.data.datasets[0].data.push(valor);
 
-if(grafico.data.labels.length>40){
+if (grafico.data.labels.length > 40) {
 grafico.data.labels.shift();
 grafico.data.datasets[0].data.shift();
 }
@@ -57,180 +64,122 @@ grafico.update();
 
 }
 
-// ========================= IA CONSUMO =========================
-function atualizarIA(consumo){
+// ================= IA CONSUMO =================
+function atualizarIA(consumo) {
 
-let texto="Consumo normal";
+let texto = "Consumo normal";
 
-if(consumo>300){
-texto="⚠ Consumo acima do normal";
-}
+if (consumo > 300) texto = "⚠ Consumo acima do normal";
 
-if(consumo>600){
-texto="🚨 Possível vazamento detectado";
-}
+if (consumo > 600) texto = "🚨 Possível vazamento detectado";
 
-const el=document.getElementById("previsaoIA");
-if(el) el.textContent=texto;
+const el = document.getElementById("previsaoIA");
+
+if (el) el.textContent = texto;
 
 }
 
-// ========================= ESTADOS =========================
-let manutencao=JSON.parse(localStorage.getItem("manutencao"))||{};
-
-let ultimasLeituras={
-reservatorios:{},
-pressoes:{},
-bombas:{}
+// ================= ESTADO =================
+let ultimasLeituras = {
+reservatorios: {},
+pressoes: {},
+bombas: {}
 };
 
-// ========================= ALERTAS =========================
-let alertaAtivo={};
-let alertaNivel31={};
-let bipNivelIntervalo={};
+// ================= LOOP HTTP =================
+async function atualizar() {
 
-// ========================= DATA =========================
-function formatarHora(ts){
+try {
 
-const d=ts?new Date(ts):new Date();
+const r = await fetch(API, { cache: "no-store" });
 
-return isNaN(d.getTime())
-?new Date().toLocaleTimeString()
-:d.toLocaleTimeString();
+if (!r.ok) throw new Error();
 
-}
+const dados = await r.json();
 
-// ========================= AUDIO =========================
-let audioCtx=null;
-let audioLiberado=false;
-
-function liberarAudio(){
-
-if(!audioCtx){
-audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-}
-
-if(audioCtx.state==="suspended"){
-audioCtx.resume();
-}
-
-audioLiberado=true;
-
-document.removeEventListener("click",liberarAudio);
-document.removeEventListener("touchstart",liberarAudio);
-
-}
-
-document.addEventListener("click",liberarAudio);
-document.addEventListener("touchstart",liberarAudio);
-
-function bipCurto(){
-
-if(!audioLiberado||!audioCtx) return;
-
-const o=audioCtx.createOscillator();
-
-o.type="square";
-o.frequency.value=600;
-
-o.connect(audioCtx.destination);
-
-o.start();
-o.stop(audioCtx.currentTime+0.12);
-
-}
-
-// ========================= LOOP HTTP =========================
-async function atualizar(){
-
-try{
-
-const r=await fetch(API,{cache:"no-store"});
-
-if(!r.ok) throw new Error();
-
-const dados=await r.json();
-
-atualizarCacheHTTP(dados);
+atualizarCache(dados);
 
 renderTudo();
 
-document.getElementById("lastUpdate").textContent=
-"Atualizado "+formatarHora(dados.lastUpdate);
+document.getElementById("lastUpdate").textContent =
+"Atualizado " + new Date().toLocaleTimeString();
 
-}catch{
+} catch {
 
-renderTudo();
-
-document.getElementById("lastUpdate").textContent=
-"Sem comunicação "+formatarHora();
+document.getElementById("lastUpdate").textContent =
+"Sem comunicação " + new Date().toLocaleTimeString();
 
 }
 
 }
 
-setInterval(atualizar,5000);
+setInterval(atualizar, 5000);
 atualizar();
 
-// ========================= CACHE =========================
-function atualizarCacheHTTP(d){
+// ================= CACHE =================
+function atualizarCache(d) {
 
-d?.reservatorios?.forEach(r=>
-ultimasLeituras.reservatorios[r.setor]=r
-);
+d?.reservatorios?.forEach(r => {
+ultimasLeituras.reservatorios[r.setor] = r;
+});
 
-d?.pressoes?.forEach(p=>
-ultimasLeituras.pressoes[p.setor]=p
-);
+d?.pressoes?.forEach(p => {
+ultimasLeituras.pressoes[p.setor] = p;
+});
 
-d?.bombas?.forEach(b=>
-ultimasLeituras.bombas[b.nome]=b
-);
+d?.bombas?.forEach(b => {
+ultimasLeituras.bombas[b.nome] = b;
+});
 
 }
 
-// ========================= RENDER GERAL =========================
-function renderTudo(){
+// ================= RENDER GERAL =================
+function renderTudo() {
 
-const reservatorios=Object.values(ultimasLeituras.reservatorios);
+const reservatorios = Object.values(ultimasLeituras.reservatorios);
 
 renderReservatorios(reservatorios);
+
 renderPressao(Object.values(ultimasLeituras.pressoes));
+
 renderBombas(ultimasLeituras.bombas);
 
-// dados para IA e gráfico
-const elevador=reservatorios.find(r=>r.setor==="reservatorio_elevador");
+// IA e gráfico
+const elevador = reservatorios.find(r => r.setor === "reservatorio_elevador");
 
-if(elevador){
+if (elevador) {
 
 atualizarGrafico(elevador.current_liters);
 atualizarIA(elevador.current_liters);
 
 }
 
+// alerta nível baixo
+verificarNivelBaixo(reservatorios);
+
 }
 
-// ========================= RESERVATORIOS =========================
-function renderReservatorios(lista){
+// ================= RESERVATORIOS =================
+function renderReservatorios(lista) {
 
-const box=document.getElementById("reservatoriosContainer");
-if(!box) return;
+const box = document.getElementById("reservatoriosContainer");
 
-const frag=document.createDocumentFragment();
+if (!box) return;
 
-lista.forEach(r=>{
+box.innerHTML = "";
 
-const percent=Math.round(r.percent||0);
-const litros=r.current_liters??"--";
+lista.forEach(r => {
 
-const card=document.createElement("div");
-card.className="card-reservatorio";
+const percent = Math.round(r.percent || 0);
+const litros = r.current_liters ?? "--";
 
-card.innerHTML=`
+const card = document.createElement("div");
 
+card.className = "card-reservatorio";
+
+card.innerHTML = `
 <div class="top-bar">
 <h3>${r.nome}</h3>
-<button onclick="toggleManutencao('${r.setor}')">⚙</button>
 </div>
 
 <div class="tanque-visu">
@@ -238,141 +187,119 @@ card.innerHTML=`
 <div class="nivel-agua" style="height:${percent}%"></div>
 
 <div class="overlay-info">
-
 <div class="percent-text">${percent}%</div>
 <div class="liters-text">${litros} L</div>
-
 </div>
 
 </div>
-
-<button onclick="abrirHistorico('${r.setor}')">
-📊 Histórico
-</button>
-
 `;
 
-frag.appendChild(card);
+box.appendChild(card);
 
 });
 
-box.innerHTML="";
-box.appendChild(frag);
-
 }
 
-// ========================= PRESSOES =========================
-function renderPressao(lista){
+// ================= PRESSOES =================
+function renderPressao(lista) {
 
-const mapa={
-saida_osmose:"pSaidaOsmose",
-retorno_osmose:"pRetornoOsmose",
-saida_cme:"pSaidaCME"
+const mapa = {
+saida_osmose: "pSaidaOsmose",
+retorno_osmose: "pRetornoOsmose",
+saida_cme: "pSaidaCME"
 };
 
-lista.forEach(p=>{
+lista.forEach(p => {
 
-const el=document.getElementById(mapa[p.setor]);
+const el = document.getElementById(mapa[p.setor]);
 
-if(el&&p.pressao!=null){
-el.textContent=Number(p.pressao).toFixed(2);
+if (el && p.pressao != null) {
+el.textContent = Number(p.pressao).toFixed(2);
 }
 
 });
 
 }
 
-// ========================= BOMBAS =========================
-function renderBombas(bombas){
+// ================= BOMBAS =================
+function renderBombas(bombas) {
 
-atualizar("Bomba 01","bomba1","b1Status","b1Ciclos");
-atualizar("Bomba 02","bomba2","b2Status","b2Ciclos");
-atualizar("Bomba Osmose","bomba3","b3Status","b3Ciclos");
+atualizar("Bomba 01", "bomba1", "b1Status", "b1Ciclos");
+atualizar("Bomba 02", "bomba2", "b2Status", "b2Ciclos");
+atualizar("Bomba Osmose", "bomba3", "b3Status", "b3Ciclos");
 
-function atualizar(nome,cardId,statusId,cicloId){
+function atualizar(nome, cardId, statusId, cicloId) {
 
-const b=bombas[nome];
-if(!b) return;
+const b = bombas[nome];
 
-const ligada=b.estado_num===1||b.estado==="ligada";
+if (!b) return;
 
-const card=document.getElementById(cardId);
-if(!card) return;
+const ligada = b.estado_num === 1 || b.estado === "ligada";
 
-card.classList.toggle("bomba-ligada",ligada);
-card.classList.toggle("bomba-desligada",!ligada);
+const card = document.getElementById(cardId);
 
-document.getElementById(statusId).textContent=
-ligada?"Ligada":"Desligada";
+if (!card) return;
 
-document.getElementById(cicloId).textContent=b.ciclo??0;
+card.classList.toggle("bomba-ligada", ligada);
+card.classList.toggle("bomba-desligada", !ligada);
 
+document.getElementById(statusId).textContent =
+ligada ? "Ligada" : "Desligada";
+
+document.getElementById(cicloId).textContent = b.ciclo ?? 0;
+
+}
+
+}
+
+// ================= ALERTA NIVEL =================
+function verificarNivelBaixo(lista) {
+
+const alerta = document.getElementById("alerta-nivelbaixo");
+
+const baixo = lista.some(r => (r.percent || 0) <= 50);
+
+if (alerta) {
+alerta.style.display = baixo ? "block" : "none";
 }
 
 }
 
-// ========================= MANUTENCAO =========================
-function toggleManutencao(setor){
-
-manutencao[setor]=!manutencao[setor];
-
-localStorage.setItem(
-"manutencao",
-JSON.stringify(manutencao)
-);
-
-}
-
-function abrirHistorico(setor){
-
-location.href=`/historico.html?setor=${setor}`;
-
-}
-
-// ========================= WEBSOCKET =========================
+// ================= WEBSOCKET =================
 let ws;
 
-function connectWS(){
+function conectarWS() {
 
-const proto=location.protocol==="https:"?"wss":"ws";
+const proto = location.protocol === "https:" ? "wss" : "ws";
 
-ws=new WebSocket(`${proto}://${location.host}`);
+ws = new WebSocket(`${proto}://${location.host}`);
 
-ws.onopen=()=>{
-console.log("WebSocket conectado");
-};
+ws.onmessage = e => {
 
-ws.onmessage=e=>{
+try {
 
-try{
+const msg = JSON.parse(e.data);
 
-const msg=JSON.parse(e.data);
+if (msg.type === "update" || msg.type === "init") {
 
-if(msg.type==="update"||msg.type==="init"){
-
-atualizarCacheHTTP(msg.dados);
+atualizarCache(msg.dados);
 
 renderTudo();
 
-document.getElementById("lastUpdate").textContent=
-"Tempo real "+formatarHora();
-
 }
 
-}catch{}
+} catch {}
 
 };
 
-ws.onclose=()=>{
-setTimeout(connectWS,3000);
-};
+ws.onclose = () => setTimeout(conectarWS, 3000);
 
-ws.onerror=()=>ws.close();
+ws.onerror = () => ws.close();
 
 }
 
-connectWS();
+conectarWS();
 
-// ========================= START =========================
-document.addEventListener("DOMContentLoaded",iniciarGrafico);
+// ================= START =================
+document.addEventListener("DOMContentLoaded", iniciarGrafico);
 ```
