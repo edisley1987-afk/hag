@@ -1,61 +1,69 @@
-console.log("Dashboard carregado");
-
-// ================= CONFIG =================
 const API="/api/dashboard";
 
 let grafico;
 
-// ================= INICIAR GRAFICO =================
+let ultimoNivel=null;
+let horaAtual=null;
+let consumoHora=0;
+
 function iniciarGrafico(){
 
 const ctx=document.getElementById("graficoUTIChart");
 
-if(!ctx) return;
-
 grafico=new Chart(ctx,{
-type:"line",
+
+type:"bar",
 
 data:{
 labels:[],
 datasets:[{
-label:"Consumo Reservatório Elevador",
+
+label:"Consumo por Hora (L)",
+
 data:[],
-borderColor:"#00ffd0",
-backgroundColor:"rgba(0,255,208,0.2)",
-tension:0.3,
-fill:true
+
+backgroundColor:"#00ffd0"
+
 }]
 },
 
 options:{
+
 responsive:true,
-maintainAspectRatio:false,
 
-plugins:{
-legend:{labels:{color:"white"}}
-},
+maintainAspectRatio:false
 
-scales:{
-x:{ticks:{color:"white"}},
-y:{ticks:{color:"white"}}
-}
 }
 
 });
 
 }
 
-// ================= ATUALIZAR GRAFICO =================
-function atualizarGrafico(valor){
+function atualizarGrafico(nivel){
 
-if(!grafico) return;
+const agora=new Date();
 
-const hora=new Date().toLocaleTimeString();
+const hora=agora.getHours();
 
-grafico.data.labels.push(hora);
-grafico.data.datasets[0].data.push(valor);
+if(ultimoNivel!==null){
 
-if(grafico.data.labels.length>40){
+let consumo=ultimoNivel-nivel;
+
+if(consumo<0) consumo=0;
+
+consumoHora+=consumo;
+
+}
+
+if(horaAtual===null) horaAtual=hora;
+
+if(hora!==horaAtual){
+
+grafico.data.labels.push(`${horaAtual}:00`);
+
+grafico.data.datasets[0].data.push(consumoHora);
+
+if(grafico.data.labels.length>24){
 
 grafico.data.labels.shift();
 grafico.data.datasets[0].data.shift();
@@ -64,217 +72,79 @@ grafico.data.datasets[0].data.shift();
 
 grafico.update();
 
+horaAtual=hora;
+
+consumoHora=0;
+
 }
 
-// ================= IA CONSUMO =================
+ultimoNivel=nivel;
+
+}
+
 function atualizarIA(consumo){
 
 const el=document.getElementById("previsaoIA");
 
-if(!el) return;
+if(consumo<5000)
+el.textContent="Consumo normal";
 
-let texto="Consumo normal";
+if(consumo>5000)
+el.textContent="Consumo elevado";
 
-if(consumo>15000)
-texto="⚠ Consumo elevado";
-
-if(consumo>18000)
-texto="🚨 Consumo muito alto";
-
-el.textContent=texto;
+if(consumo>8000)
+el.textContent="Possível vazamento";
 
 }
 
-// ================= AUTONOMIA =================
-function atualizarAutonomia(dados){
+function calcularAutonomia(nivel,consumo){
 
 const el=document.getElementById("autonomiaReservatorio");
 
-if(!el) return;
+if(consumo<=0){
 
-if(!dados.previsao_esvaziamento){
-
-el.textContent="Autonomia desconhecida";
+el.textContent="Consumo baixo";
 
 return;
 
 }
 
-const horas=dados.previsao_esvaziamento.horas;
+let horas=nivel/consumo;
 
-if(horas<=0){
-
-el.textContent="Reservatório cheio";
-
-return;
+el.textContent=horas.toFixed(1)+" horas";
 
 }
 
-const minutos=Math.round(horas*60);
-
-el.textContent=`Autonomia aproximada: ${minutos} min`;
-
-}
-
-// ================= ALERTA CONSUMO =================
-function atualizarAlertaConsumo(dados){
-
-const el=document.getElementById("alertaConsumo");
-
-if(!el) return;
-
-if(!dados.alerta_consumo?.ativo){
-
-el.style.display="none";
-return;
-
-}
-
-el.style.display="block";
-el.textContent=dados.alerta_consumo.mensagem||"Consumo anormal detectado";
-
-}
-
-// ================= CACHE =================
-let ultimasLeituras={
-reservatorios:{},
-pressoes:{},
-bombas:{}
-};
-
-let dadosSistema=null;
-
-// ================= ATUALIZAR HTTP =================
-async function atualizar(){
-
-try{
-
-const r=await fetch(API,{cache:"no-store"});
-
-if(!r.ok) throw new Error();
-
-const dados=await r.json();
-
-dadosSistema=dados;
-
-atualizarCache(dados);
-
-renderTudo();
-
-const el=document.getElementById("lastUpdate");
-
-if(el){
-
-el.textContent="Atualizado "+new Date().toLocaleTimeString();
-
-}
-
-}catch{
-
-const el=document.getElementById("lastUpdate");
-
-if(el){
-
-el.textContent="Sem comunicação "+new Date().toLocaleTimeString();
-
-}
-
-}
-
-}
-
-setInterval(atualizar,5000);
-
-atualizar();
-
-// ================= CACHE =================
-function atualizarCache(d){
-
-d.reservatorios?.forEach(r=>{
-ultimasLeituras.reservatorios[r.setor]=r;
-});
-
-d.pressoes?.forEach(p=>{
-ultimasLeituras.pressoes[p.setor]=p;
-});
-
-d.bombas?.forEach(b=>{
-ultimasLeituras.bombas[b.nome]=b;
-});
-
-}
-
-// ================= RENDER =================
-function renderTudo(){
-
-const reservatorios=Object.values(ultimasLeituras.reservatorios);
-
-renderReservatorios(reservatorios);
-
-renderPressao(Object.values(ultimasLeituras.pressoes));
-
-renderBombas(ultimasLeituras.bombas);
-
-// reservatorio elevador
-const elevador=reservatorios.find(r=>r.setor==="elevador");
-
-if(elevador){
-
-atualizarGrafico(elevador.current_liters);
-
-atualizarIA(elevador.current_liters);
-
-}
-
-verificarNivelBaixo(reservatorios);
-
-if(dadosSistema){
-
-atualizarAutonomia(dadosSistema);
-
-atualizarAlertaConsumo(dadosSistema);
-
-}
-
-}
-
-// ================= RESERVATORIOS =================
 function renderReservatorios(lista){
 
 const box=document.getElementById("reservatoriosContainer");
 
-if(!box) return;
-
 box.innerHTML="";
 
 lista.forEach(r=>{
-
-const percent=Math.round(r.percent||0);
-
-const litros=r.current_liters??"--";
 
 const card=document.createElement("div");
 
 card.className="card-reservatorio";
 
 card.innerHTML=`
-<div class="top-bar">
+
 <h3>${r.nome}</h3>
-</div>
 
 <div class="tanque-visu">
 
-<div class="nivel-agua" style="height:${percent}%"></div>
+<div class="nivel-agua" style="height:${r.percent}%"></div>
 
 <div class="overlay-info">
 
-<div class="percent-text">${percent}%</div>
+<div class="percent-text">${Math.round(r.percent)}%</div>
 
-<div class="liters-text">${litros} L</div>
+<div>${r.current_liters} L</div>
+
+</div>
 
 </div>
 
-</div>
 `;
 
 box.appendChild(card);
@@ -283,109 +153,86 @@ box.appendChild(card);
 
 }
 
-// ================= PRESSAO =================
-function renderPressao(lista){
+function renderBombas(lista){
 
 const mapa={
-saida_osmose:"pSaidaOsmose",
-retorno_osmose:"pRetornoOsmose",
-saida_cme:"pSaidaCME"
+
+"Bomba 01":["bomba1","b1Status","b1Ciclos"],
+
+"Bomba 02":["bomba2","b2Status","b2Ciclos"],
+
+"Bomba Osmose":["bomba3","b3Status","b3Ciclos"]
+
 };
 
-lista.forEach(p=>{
+lista.forEach(b=>{
 
-const el=document.getElementById(mapa[p.setor]);
+const ref=mapa[b.nome];
 
-if(el && p.pressao!=null){
+if(!ref) return;
 
-el.textContent=Number(p.pressao).toFixed(2);
+const card=document.getElementById(ref[0]);
 
-}
+const status=document.getElementById(ref[1]);
+
+const ciclos=document.getElementById(ref[2]);
+
+const ligada=b.estado==="ligada";
+
+status.textContent=b.estado;
+
+ciclos.textContent=b.ciclo;
+
+card.classList.toggle("bomba-ligada",ligada);
+
+card.classList.toggle("bomba-desligada",!ligada);
 
 });
 
 }
 
-// ================= BOMBAS =================
-function renderBombas(bombas){
-
-atualizar("Bomba 01","bomba1","b1Status","b1Ciclos");
-atualizar("Bomba 02","bomba2","b2Status","b2Ciclos");
-atualizar("Bomba Osmose","bomba3","b3Status","b3Ciclos");
-
-function atualizar(nome,cardId,statusId,cicloId){
-
-const b=bombas[nome];
-
-if(!b) return;
-
-const ligada=b.estado_num===1||b.estado==="ligada";
-
-const card=document.getElementById(cardId);
-
-if(!card) return;
-
-card.classList.toggle("bomba-ligada",ligada);
-card.classList.toggle("bomba-desligada",!ligada);
-
-document.getElementById(statusId).textContent=
-ligada?"Ligada":"Desligada";
-
-document.getElementById(cicloId).textContent=b.ciclo??0;
-
-}
-
-}
-
-// ================= ALERTA NIVEL =================
-function verificarNivelBaixo(lista){
+function verificarNivel(lista){
 
 const alerta=document.getElementById("alerta-nivelbaixo");
 
-if(!alerta) return;
-
-const baixo=lista.some(r=>(r.percent||0)<=50);
+const baixo=lista.some(r=>r.percent<50);
 
 alerta.style.display=baixo?"block":"none";
 
 }
 
-// ================= WEBSOCKET =================
-let ws;
+async function atualizar(){
 
-function conectarWS(){
+const r=await fetch(API);
 
-const proto=location.protocol==="https:"?"wss":"ws";
+const dados=await r.json();
 
-ws=new WebSocket(proto+"://"+location.host);
+renderReservatorios(dados.reservatorios);
 
-ws.onmessage=e=>{
+renderBombas(dados.bombas);
 
-try{
+verificarNivel(dados.reservatorios);
 
-const msg=JSON.parse(e.data);
+const elevador=dados.reservatorios.find(r=>r.setor==="elevador");
 
-if(msg.type==="update"||msg.type==="init"){
+if(elevador){
 
-dadosSistema=msg.dados;
+atualizarGrafico(elevador.current_liters);
 
-atualizarCache(msg.dados);
+atualizarIA(elevador.current_liters);
 
-renderTudo();
-
-}
-
-}catch{}
-
-};
-
-ws.onclose=()=>setTimeout(conectarWS,3000);
-
-ws.onerror=()=>ws.close();
+calcularAutonomia(elevador.current_liters,consumoHora);
 
 }
 
-conectarWS();
+}
 
-// ================= START =================
-document.addEventListener("DOMContentLoaded",iniciarGrafico);
+setInterval(atualizar,5000);
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+iniciarGrafico();
+
+atualizar();
+
+});
