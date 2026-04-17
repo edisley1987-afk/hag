@@ -10,15 +10,26 @@
 <body>
 
 <header>
-  <h1>💧 HAG Monitoramento</h1>
+  <h1>💧 Monitoramento HAG</h1>
   <div id="statusSistema">🔄 Conectando...</div>
   <div id="lastUpdate">--</div>
 </header>
 
-<main id="grid"></main>
+<main>
+
+  <!-- 🔵 RESERVATÓRIOS -->
+  <section id="areaReservatorios" class="grid-reservatorios"></section>
+
+  <!-- 🟢 BOMBAS -->
+  <section id="areaBombas" class="grid-bombas"></section>
+
+  <!-- 🟡 PRESSÕES -->
+  <section id="areaPressoes" class="grid-pressoes"></section>
+
+</main>
 
 <footer>
-  Sistema Profissional • Tempo Real • SCADA
+  Sistema Profissional • HAG
 </footer>
 
 <script src="dashboard.js"></script>
