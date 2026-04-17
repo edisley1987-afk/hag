@@ -1,4 +1,5 @@
 const API = "/api/dashboard";
+
 let ws;
 let reconnectDelay = 3000;
 
@@ -18,27 +19,31 @@ function conectarWS() {
 
     ws.onopen = () => {
       setStatus("🟢 Tempo real conectado");
-      reconnectDelay = 3000; // reseta delay
+      reconnectDelay = 3000;
     };
 
     ws.onmessage = (msg) => {
       try {
-        const data = JSON.parse(msg.data);
+        const payload = JSON.parse(msg.data);
 
-        // compatível com {type:"update", dados:{}}
-        if (data.dados) atualizarTela(data.dados);
-        if (data.type === "init" && data.dados) atualizarTela(data.dados);
+        // 🔥 Caso venha dados crus (seu backend WS)
+        if (payload.dados && !payload.reservatorios) {
+          montarEstrutura(payload.dados);
+        }
+
+        // 🔥 Caso venha pronto (/api/dashboard)
+        else if (payload.reservatorios) {
+          atualizarTela(payload);
+        }
 
       } catch (e) {
-        console.error("Erro parse WS:", e);
+        console.error("Erro WS:", e);
       }
     };
 
     ws.onclose = () => {
       setStatus("🔴 Reconectando...");
       setTimeout(conectarWS, reconnectDelay);
-
-      // backoff progressivo
       reconnectDelay = Math.min(reconnectDelay + 2000, 15000);
     };
 
@@ -52,7 +57,7 @@ function conectarWS() {
   }
 }
 
-// ================= FALLBACK HTTP =================
+// ================= FALLBACK =================
 async function fallbackHTTP() {
   if (ws && ws.readyState === 1) return;
 
@@ -68,7 +73,76 @@ async function fallbackHTTP() {
   }
 }
 
-// ================= ATUALIZAÇÃO =================
+// ================= ADAPTA DADOS DO WS =================
+function montarEstrutura(dados) {
+
+  const estrutura = {
+    reservatorios: [
+      {
+        nome: "Reservatório Elevador",
+        percent: dados["Reservatorio_Elevador_current_percent"],
+        current_liters: dados["Reservatorio_Elevador_current"]
+      },
+      {
+        nome: "Reservatório Osmose",
+        percent: dados["Reservatorio_Osmose_current_percent"],
+        current_liters: dados["Reservatorio_Osmose_current"]
+      },
+      {
+        nome: "Reservatório CME",
+        percent: dados["Reservatorio_CME_current_percent"],
+        current_liters: dados["Reservatorio_CME_current"]
+      },
+      {
+        nome: "Água Abrandada",
+        percent: dados["Reservatorio_Agua_Abrandada_current_percent"],
+        current_liters: dados["Reservatorio_Agua_Abrandada_current"]
+      },
+      {
+        nome: "Lavanderia",
+        percent: dados["Reservatorio_lavanderia_current_percent"],
+        current_liters: dados["Reservatorio_lavanderia_current"]
+      }
+    ],
+
+    pressoes: [
+      {
+        nome: "Pressão Saída Osmose",
+        pressao: dados["Pressao_Saida_Osmose_current"]
+      },
+      {
+        nome: "Pressão Retorno Osmose",
+        pressao: dados["Pressao_Retorno_Osmose_current"]
+      },
+      {
+        nome: "Pressão CME",
+        pressao: dados["Pressao_Saida_CME_current"]
+      }
+    ],
+
+    bombas: [
+      {
+        nome: "Bomba 01",
+        estado: dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_01_counter"]
+      },
+      {
+        nome: "Bomba 02",
+        estado: dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_02_counter"]
+      },
+      {
+        nome: "Bomba Osmose",
+        estado: dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_Osmose_counter"]
+      }
+    ]
+  };
+
+  atualizarTela(estrutura);
+}
+
+// ================= ATUALIZA UI =================
 function atualizarTela(data) {
   document.getElementById("lastUpdate").innerText =
     "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
@@ -89,7 +163,7 @@ function renderReservatorios(lista) {
     el.className = "card " + getStatus(r.percent);
 
     el.innerHTML = `
-      <div class="barra" style="height:${r.percent}%"></div>
+      <div class="barra" style="height:${r.percent ?? 0}%"></div>
       <h2>${r.nome}</h2>
       <div class="valor">${r.percent ?? 0}%</div>
       <div>${formatar(r.current_liters)} L</div>
