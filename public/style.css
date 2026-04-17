@@ -7,9 +7,65 @@ color:white;
 
 }
 
+.topo-sistema{
+
+position:fixed;
+
+top:0;
+left:0;
+right:0;
+
+height:50px;
+
+background:#020617;
+
+border-bottom:2px solid #1e293b;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+z-index:999;
+
+}
+
+.mensagem-topo{
+
+display:flex;
+
+gap:20px;
+
+font-size:18px;
+
+font-weight:bold;
+
+}
+
+.titulo-sistema{
+
+color:#38bdf8;
+
+}
+
+.status-sistema{
+
+color:#22c55e;
+
+}
+
+.status-offline{
+
+color:#ef4444;
+
+}
+
 .dashboard{
 
-height:100vh;
+margin-top:55px;
+
+height:calc(100vh - 55px);
 
 display:grid;
 
@@ -78,11 +134,8 @@ transition:height 0.5s;
 position:absolute;
 
 top:0;
-
 left:0;
-
 right:0;
-
 bottom:0;
 
 display:flex;
@@ -148,8 +201,6 @@ text-align:center;
 .alerta{
 
 background:#8b0000;
-
-color:white;
 
 font-weight:bold;
 
