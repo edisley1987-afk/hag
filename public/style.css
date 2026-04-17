@@ -1,22 +1,26 @@
-/* ================= BASE ================= */
+/* ============================= */
+/* BASE */
+/* ============================= */
 
 body{
 margin:0;
-font-family:"Segoe UI",Arial,sans-serif;
-background:linear-gradient(135deg,#022c22,#014737);
+font-family:Segoe UI,Arial,sans-serif;
+background:linear-gradient(135deg,#012a21,#014737);
 color:white;
 }
 
-/* ================= HEADER ================= */
+/* ============================= */
+/* HEADER */
+/* ============================= */
 
 header{
-background:rgba(0,90,60,0.95);
+background:#015c3d;
 padding:20px;
 text-align:center;
 border-bottom:3px solid #00ffae;
 }
 
-.header-content h1{
+header h1{
 margin:0;
 font-size:28px;
 letter-spacing:1px;
@@ -25,10 +29,12 @@ letter-spacing:1px;
 #lastUpdate{
 margin-top:6px;
 font-size:14px;
-opacity:0.9;
+opacity:0.85;
 }
 
-/* ================= STATUS ================= */
+/* ============================= */
+/* STATUS SISTEMA */
+/* ============================= */
 
 #statusSistema{
 text-align:center;
@@ -37,33 +43,9 @@ font-weight:bold;
 font-size:15px;
 }
 
-/* ================= IA ================= */
-
-.box-previsao{
-margin:15px auto;
-padding:12px 20px;
-border-radius:10px;
-text-align:center;
-width:fit-content;
-background:rgba(0,0,0,0.4);
-box-shadow:0 0 10px rgba(0,0,0,0.6);
-font-size:16px;
-}
-
-.previsao-critica{
-color:#ff4e4e;
-animation:blink 1s infinite;
-}
-
-.previsao-alerta{
-color:#ffcc00;
-}
-
-@keyframes blink{
-50%{opacity:0.3;}
-}
-
-/* ================= ALERTA GLOBAL ================= */
+/* ============================= */
+/* ALERTA GLOBAL */
+/* ============================= */
 
 .alerta-global{
 display:none;
@@ -71,19 +53,26 @@ background:#ff4e4e;
 padding:14px;
 border-radius:8px;
 text-align:center;
-margin-bottom:15px;
+margin:15px;
 font-weight:bold;
 font-size:18px;
+box-shadow:0 0 10px rgba(255,0,0,0.6);
 }
 
-/* ================= RESERVATÓRIOS ================= */
+/* ============================= */
+/* GRID RESERVATÓRIOS */
+/* ============================= */
 
 #reservatoriosContainer{
 display:grid;
 gap:20px;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-margin-top:20px;
+grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+padding:20px;
 }
+
+/* ============================= */
+/* CARD RESERVATÓRIO */
+/* ============================= */
 
 .card-reservatorio{
 background:rgba(255,255,255,0.08);
@@ -92,6 +81,7 @@ border-radius:12px;
 text-align:center;
 border:2px solid transparent;
 box-shadow:0 0 12px rgba(0,0,0,0.5);
+transition:0.4s;
 }
 
 .card-reservatorio h3{
@@ -99,7 +89,9 @@ font-size:18px;
 margin-bottom:10px;
 }
 
-/* ================= TANQUE ================= */
+/* ============================= */
+/* TANQUE */
+/* ============================= */
 
 .tanque-visu{
 height:150px;
@@ -108,10 +100,8 @@ border-radius:12px;
 overflow:hidden;
 position:relative;
 margin-bottom:10px;
-box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
 }
-
-/* ÁGUA */
 
 .nivel-agua{
 position:absolute;
@@ -121,18 +111,25 @@ background:linear-gradient(180deg,#19f0b2,#00c78a,#009f6b);
 transition:height 1s;
 }
 
-/* ================= NÚMEROS DO TANQUE ================= */
+/* ============================= */
+/* TEXTO PORCENTAGEM */
+/* ============================= */
 
 .percent-text{
 position:absolute;
-top:8px;
+top:10px;
 left:50%;
 transform:translateX(-50%);
-font-size:34px;
-font-weight:bold;
+font-size:40px;
+font-weight:800;
 color:white;
-text-shadow:0 0 8px rgba(0,0,0,0.8);
+text-shadow:0 0 10px rgba(0,0,0,0.9);
+letter-spacing:1px;
 }
+
+/* ============================= */
+/* TEXTO LITROS */
+/* ============================= */
 
 .liters-text{
 position:absolute;
@@ -145,47 +142,92 @@ color:white;
 text-shadow:0 0 6px rgba(0,0,0,0.8);
 }
 
-/* ================= CORES ================= */
+/* ============================= */
+/* AUTONOMIA */
+/* ============================= */
 
-.nv-critico{
-border-color:red;
-box-shadow:0 0 10px rgba(255,0,0,0.6);
+.autonomia-box{
+margin-top:10px;
+padding:6px;
+border-radius:6px;
+font-size:14px;
+background:rgba(0,0,0,0.45);
 }
 
-.nv-alerta{
-border-color:orange;
-box-shadow:0 0 10px rgba(255,150,0,0.5);
+.autonomia-normal{
+color:#00ffae;
 }
+
+.autonomia-alerta{
+color:#ffcc00;
+}
+
+.autonomia-critica{
+color:#ff4e4e;
+font-weight:bold;
+}
+
+/* ============================= */
+/* ALERTA FALTA DE ÁGUA */
+/* ============================= */
+
+.alerta-falta-agua{
+display:none;
+margin-top:8px;
+padding:6px;
+background:#ff4e4e;
+border-radius:6px;
+font-size:14px;
+font-weight:bold;
+color:white;
+box-shadow:0 0 8px rgba(255,0,0,0.6);
+}
+
+/* ============================= */
+/* NÍVEIS */
+/* ============================= */
 
 .nv-normal{
 border-color:#00ffae;
 }
 
-/* ================= HISTÓRICO ================= */
-
-.btn-historico{
-margin-top:8px;
-font-size:13px;
-padding:4px 8px;
+.nv-alerta{
+border-color:orange;
+box-shadow:0 0 10px rgba(255,150,0,0.6);
 }
 
-/* ================= GRÁFICO ================= */
-
-#graficoUTI{
-background:rgba(0,0,0,0.35);
-border-radius:10px;
-padding:10px;
-margin-top:25px;
-box-shadow:0 0 10px rgba(0,0,0,0.5);
+.nv-critico{
+border-color:red;
+box-shadow:0 0 12px rgba(255,0,0,0.8);
 }
 
-/* ================= PRESSÕES ================= */
+/* ============================= */
+/* TANQUE CHEIO */
+/* ============================= */
+
+.tanque-cheio{
+border-color:#00bfff;
+box-shadow:0 0 18px #00bfff;
+}
+
+.tanque-cheio .nivel-agua{
+background:linear-gradient(180deg,#4cc9ff,#00bfff,#008cff);
+}
+
+.tanque-cheio .percent-text{
+color:#00e1ff;
+text-shadow:0 0 12px #00bfff;
+}
+
+/* ============================= */
+/* PRESSÕES */
+/* ============================= */
 
 #pressaoBombaGrid{
 display:grid;
 gap:20px;
 grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-margin-top:20px;
+padding:20px;
 }
 
 .card-pressao{
@@ -195,13 +237,6 @@ border-radius:12px;
 text-align:center;
 box-shadow:0 0 12px rgba(0,0,0,0.5);
 }
-
-.card-pressao h3{
-font-size:16px;
-margin-bottom:10px;
-}
-
-/* NÚMERO PRESSÃO */
 
 .valor-container{
 display:flex;
@@ -214,17 +249,16 @@ gap:6px;
 font-size:40px;
 font-weight:bold;
 color:#00ffae;
-letter-spacing:1px;
 }
-
-/* UNIDADE */
 
 .unidade{
 font-size:16px;
-opacity:0.85;
+opacity:0.8;
 }
 
-/* ================= BOMBAS ================= */
+/* ============================= */
+/* BOMBAS */
+/* ============================= */
 
 .card-bomba{
 padding:18px;
@@ -248,22 +282,38 @@ background:rgba(0,150,0,0.75);
 background:rgba(150,0,0,0.75);
 }
 
-/* ================= FOOTER ================= */
+/* ============================= */
+/* GRÁFICO */
+/* ============================= */
+
+#graficoUTI{
+background:rgba(0,0,0,0.35);
+border-radius:10px;
+padding:10px;
+margin:20px;
+box-shadow:0 0 10px rgba(0,0,0,0.5);
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
 
 footer{
 text-align:center;
 padding:12px;
-margin-top:40px;
+margin-top:30px;
 background:rgba(0,0,0,0.6);
 font-size:14px;
 opacity:0.9;
 }
 
-/* ================= RESPONSIVO ================= */
+/* ============================= */
+/* RESPONSIVO */
+/* ============================= */
 
 @media(max-width:700px){
 
-.header-content h1{
+header h1{
 font-size:22px;
 }
 
@@ -272,7 +322,7 @@ font-size:30px;
 }
 
 .percent-text{
-font-size:26px;
+font-size:28px;
 }
 
 }
