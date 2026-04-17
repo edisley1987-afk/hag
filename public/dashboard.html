@@ -2,8 +2,10 @@
 <html lang="pt-BR">
 
 <head>
+
 <meta charset="UTF-8">
 <title>Monitoramento - HAG</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="style.css">
@@ -26,27 +28,53 @@
 
 </header>
 
-<!-- STATUS -->
+<!-- STATUS SISTEMA -->
 
 <div id="statusSistema">🟢 Sistema Operacional</div>
 
-<!-- IA PREVISÃO -->
+<!-- PREVISÃO IA -->
 
-<div id="previsaoIA" class="box-previsao"></div>
+<div id="previsaoIA" class="box-previsao">
+
+IA analisando consumo...
+
+</div>
 
 <main>
+
+<!-- ================= RESERVATÓRIOS ================= -->
 
 <h2>Reservatórios</h2>
 
 <!-- ALERTA GLOBAL -->
 
-<div id="alerta-nivelbaixo" class="alerta-global"></div>
+<div id="alerta-nivelbaixo" class="alerta-global">
 
-<div id="reservatoriosContainer"></div>
+⚠ Nível crítico detectado em reservatório
+
+</div>
+
+<!-- GRID DOS RESERVATÓRIOS -->
+
+<div id="reservatoriosContainer">
+
+<!-- Os reservatórios são criados automaticamente pelo JS -->
+
+</div>
+
+
+<!-- ================= GRÁFICO ================= -->
 
 <h2 style="margin-top:40px">Gráfico em Tempo Real</h2>
 
-<canvas id="graficoUTI"></canvas>
+<div id="graficoUTI">
+
+<canvas id="graficoUTIChart"></canvas>
+
+</div>
+
+
+<!-- ================= PRESSÕES E BOMBAS ================= -->
 
 <h2 style="margin-top:50px">Pressões e Bombas</h2>
 
@@ -59,11 +87,15 @@
 <h3>Saída Osmose</h3>
 
 <div class="valor-container">
+
 <span class="valor-pressao" id="pSaidaOsmose">--</span>
+
 <span class="unidade">bar</span>
+
 </div>
 
 </div>
+
 
 <!-- PRESSÃO RETORNO OSMOSE -->
 
@@ -72,24 +104,34 @@
 <h3>Retorno Osmose</h3>
 
 <div class="valor-container">
+
 <span class="valor-pressao" id="pRetornoOsmose">--</span>
+
 <span class="unidade">bar</span>
-</div>
 
 </div>
 
-<!-- PRESSÃO SAÍDA CME -->
+</div>
+
+
+<!-- PRESSÃO CME -->
 
 <div class="card-pressao">
 
 <h3>Saída CME</h3>
 
 <div class="valor-container">
+
 <span class="valor-pressao" id="pSaidaCME">--</span>
+
 <span class="unidade">bar</span>
+
 </div>
 
 </div>
+
+
+<!-- ================= BOMBAS ================= -->
 
 <!-- BOMBA 01 -->
 
@@ -103,6 +145,7 @@
 
 </div>
 
+
 <!-- BOMBA 02 -->
 
 <div class="card-bomba bomba-desligada" id="bomba2">
@@ -114,6 +157,7 @@
 <p>Ciclos: <b id="b2Ciclos">--</b></p>
 
 </div>
+
 
 <!-- BOMBA OSMOSE -->
 
@@ -133,7 +177,8 @@
 
 <footer>
 
-Sistema HAG © 2025
+Sistema HAG © 2025  
+Hospital Arnaldo Gavazza
 
 </footer>
 
