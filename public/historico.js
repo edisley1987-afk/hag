@@ -1,137 +1,129 @@
-// ===============================
-// 🔗 APIs
-// ===============================
-const API_HIST = "/historico";
-const API_CONSUMO = "/consumo/5dias";
+// === historico.js ===
+// Exibe histórico de leituras com tabela e gráfico moderno
 
-const select = document.getElementById("reservatorioSelect");
-let grafico = null;
+const API_URL = window.location.origin + "/historico";
 
-// ===============================
-// 🔧 AGRUPAMENTO MÉDIA 10 MIN
-// ===============================
-function agruparPorMinutos(dados, minutos = 10) {
-  const intervalo = minutos * 60 * 1000;
-  const mapa = new Map();
+async function carregarHistorico() {
+  const container = document.getElementById("historico");
+  const ctx = document.getElementById("graficoHistorico");
+  container.innerHTML = "⏳ Carregando histórico...";
 
-  dados.forEach(d => {
-    const ts = new Date(d.timestamp).getTime();
-    const chave = Math.floor(ts / intervalo) * intervalo;
-
-    if (!mapa.has(chave)) mapa.set(chave, []);
-    mapa.get(chave).push(d.valor);
-  });
-
-  return Array.from(mapa.entries()).map(([ts, valores]) => ({
-    x: new Date(ts),
-    y: valores.reduce((a, b) => a + b, 0) / valores.length
-  }));
-}
-
-// ===============================
-// 📊 CARREGAR GRÁFICO LIMPO
-// ===============================
-async function carregarGrafico() {
   try {
-    const reservatorio = select.value;
-    const resp = await fetch(API_HIST);
-    const dados = await resp.json();
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Erro ao buscar histórico");
+    const historico = await res.json();
 
-    const filtrado = dados
-      .filter(d => d.reservatorio === reservatorio)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (!Object.keys(historico).length) {
+      container.innerHTML = `<p style="text-align:center; color:#555;">📭 Nenhum dado de histórico encontrado.</p>`;
+      return;
+    }
 
-    const dadosAgrupados = agruparPorMinutos(filtrado, 10);
+    // === Montar tabela ===
+    let html = `
+      <table class="tabela-historico">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Sensor</th>
+            <th>Leitura Mínima</th>
+            <th>Leitura Máxima</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-    const ctx = document.getElementById("graficoHistorico").getContext("2d");
-    if (grafico) grafico.destroy();
+    const labels = []; // datas
+    const datasets = {}; // sensores e valores médios
 
-    grafico = new Chart(ctx, {
+    // Ordena as datas
+    const datasOrdenadas = Object.keys(historico).sort();
+
+    datasOrdenadas.forEach((data) => {
+      const sensores = historico[data];
+      labels.push(data);
+
+      Object.entries(sensores).forEach(([nome, valores]) => {
+        const media = (valores.max + valores.min) / 2;
+
+        html += `
+          <tr>
+            <td>${data}</td>
+            <td>${formatarNomeSensor(nome)}</td>
+            <td>${valores.min}</td>
+            <td>${valores.max}</td>
+          </tr>
+        `;
+
+        if (!datasets[nome]) datasets[nome] = [];
+        datasets[nome].push(media);
+      });
+    });
+
+    html += "</tbody></table>";
+    container.innerHTML = html;
+
+    // === Montar gráfico ===
+    const chartData = {
+      labels,
+      datasets: Object.entries(datasets).map(([nome, valores]) => ({
+        label: formatarNomeSensor(nome),
+        data: valores,
+        borderColor: getCorSensor(nome),
+        backgroundColor: getCorSensor(nome),
+        fill: false,
+        tension: 0.2,
+        borderWidth: 2,
+      })),
+    };
+
+    new Chart(ctx, {
       type: "line",
-      data: {
-        datasets: [{
-          label: `Nível – ${reservatorio}`,
-          data: dadosAgrupados,
-          borderColor: "#007b83",
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.35
-        }]
-      },
+      data: chartData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { labels: { font: { size: 14 } } },
-          zoom: {
-            zoom: {
-              wheel: { enabled: true },
-              pinch: { enabled: true },
-              mode: "x"
-            },
-            pan: { enabled: true, mode: "x" }
-          }
+          legend: { position: "bottom" },
+          title: { display: true, text: "Evolução das Leituras (Média Diária)" },
         },
         scales: {
-          x: {
-            type: "time",
-            time: { unit: "hour", tooltipFormat: "dd/MM HH:mm" },
-            ticks: { autoSkip: true, maxTicksLimit: 12 }
-          },
-          y: { beginAtZero: true }
-        }
-      }
+          y: { beginAtZero: true, title: { display: true, text: "Valor" } },
+          x: { title: { display: true, text: "Data" } },
+        },
+      },
     });
-
   } catch (err) {
-    console.error("Erro no gráfico:", err);
+    container.innerHTML = `<p style="color:red;">❌ Erro: ${err.message}</p>`;
+    console.error(err);
   }
 }
 
-// ===============================
-// 📅 CONSUMO DIÁRIO
-// ===============================
-async function carregarConsumo() {
-  const reservatorio = select.value;
-  const RES_CONSUMO = ["elevador", "osmose", "lavanderia"];
-
-  if (!RES_CONSUMO.includes(reservatorio)) {
-    document.getElementById("tabelaConsumo").innerHTML =
-      "<tr><td colspan='3'>Consumo disponível apenas para Elevador, Osmose e Lavanderia</td></tr>";
-    return;
-  }
-
-  try {
-    const endpoint = `${API_CONSUMO}/${reservatorio}`;
-    const resp = await fetch(endpoint);
-    const dados = await resp.json();
-
-    const tabela = document.getElementById("tabelaConsumo");
-    tabela.innerHTML = "";
-
-    dados.forEach(item => {
-      let consumo = Math.abs(item.consumo);
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${item.dia}</td>
-        <td>${reservatorio}</td>
-        <td>${consumo}</td>`;
-      tabela.appendChild(tr);
-    });
-
-  } catch (err) {
-    console.error("Erro consumo:", err);
-  }
+// === Funções auxiliares ===
+function getCorSensor(nome) {
+  const cores = {
+    Reservatorio_Elevador_current: "#007bff",
+    Reservatorio_Osmose_current: "#00bcd4",
+    Reservatorio_CME_current: "#4caf50",
+    Agua_Abrandada_current: "#9c27b0",
+    Pressao_Saida_Osmose_current: "#ff9800",
+    Pressao_Retorno_Osmose_current: "#f44336",
+    Pressao_Saida_CME_current: "#3f51b5",
+  };
+  return cores[nome] || `hsl(${Math.random() * 360}, 70%, 50%)`;
 }
 
-// ===============================
-// EVENTOS
-// ===============================
-select.addEventListener("change", () => {
-  carregarGrafico();
-  carregarConsumo();
-});
+function formatarNomeSensor(nome) {
+  return nome
+    .replace(/_/g, " ")
+    .replace("current", "")
+    .replace("Reservatorio", "Reservatório")
+    .replace("Pressao", "Pressão")
+    .replace("Agua", "Água")
+    .trim();
+}
 
-carregarGrafico();
-carregarConsumo();
+// Inicia o carregamento ao abrir a página
+carregarHistorico();
+
+// (Opcional) Atualiza automaticamente a cada 60s
+// setInterval(carregarHistorico, 60000);

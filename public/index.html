@@ -1,89 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitoramento - HAG</title>
-
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script defer src="dashboard.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoramento - Sistema de Água</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <header>
+    <h1>💧 Monitoramento de Reservatórios e Pressões</h1>
+    <p id="lastUpdate">Atualizado em: --</p>
+  </header>
 
-<header>
-  <h1>🏥 Hospital Arnaldo Gavazza</h1>
-  <div class="header-info">
-    <span id="lastUpdate">⏱ Atualizado --:--:--</span>
-    <span id="statusSistema">🟢 Operando normalmente</span>
-  </div>
-</header>
+  <div class="cards-container" id="cards"></div>
 
-<main>
+  <footer>
+    <p>© 2025 Sistema de Monitoramento Hospitalar</p>
+  </footer>
 
-  <!-- RESERVATÓRIOS -->
-  <section class="area-topo">
-    <div id="reservatoriosContainer"></div>
-  </section>
-
-  <!-- PARTE INFERIOR -->
-  <section class="area-bottom">
-
-    <!-- GRÁFICO -->
-    <div id="graficoUTI" class="card">
-      <div class="card-title">📊 Consumo (L/h)</div>
-      <canvas id="graficoUTIChart"></canvas>
-      <div id="previsaoIA">Coletando dados...</div>
-    </div>
-
-    <!-- LATERAL -->
-    <div id="pressaoBombaGrid">
-
-      <!-- PRESSÃO -->
-      <div class="card card-pressao">
-        <div class="card-title">💧 Saída Osmose</div>
-        <div class="card-value" id="pSaidaOsmose">--</div>
-      </div>
-
-      <div class="card card-pressao">
-        <div class="card-title">💧 Retorno Osmose</div>
-        <div class="card-value" id="pRetornoOsmose">--</div>
-      </div>
-
-      <div class="card card-pressao">
-        <div class="card-title">💧 Saída CME</div>
-        <div class="card-value" id="pSaidaCME">--</div>
-      </div>
-
-      <!-- BOMBAS -->
-      <div class="card card-bomba" id="bomba1">
-        <div class="card-title">⚙️ Bomba 01</div>
-        <div class="card-status" id="b1Status">--</div>
-        <div class="card-sub">Ciclos: <span id="b1Ciclos">--</span></div>
-      </div>
-
-      <div class="card card-bomba" id="bomba2">
-        <div class="card-title">⚙️ Bomba 02</div>
-        <div class="card-status" id="b2Status">--</div>
-        <div class="card-sub">Ciclos: <span id="b2Ciclos">--</span></div>
-      </div>
-
-      <div class="card card-bomba" id="bomba3">
-        <div class="card-title">⚙️ Bomba Osmose</div>
-        <div class="card-status" id="b3Status">--</div>
-        <div class="card-sub">Ciclos: <span id="b3Ciclos">--</span></div>
-      </div>
-
-    </div>
-
-  </section>
-
-</main>
-
-<footer>
-  Sistema HAG © 2025
-</footer>
-
+  <script src="script.js"></script>
 </body>
 </html>
