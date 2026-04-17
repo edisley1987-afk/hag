@@ -14,18 +14,10 @@ window.ultimaLeitura = null;
 // ===============================
 
 function corNivel(percent){
-
-if(percent >= 100)
-return "#2196f3"; // azul
-
-if(percent > 70)
-return "#22c55e"; // verde
-
-if(percent > 40)
-return "#eab308"; // amarelo
-
-return "#ef4444"; // vermelho
-
+  if(percent >= 100) return "#2196f3";
+  if(percent > 70) return "#22c55e";
+  if(percent > 40) return "#eab308";
+  return "#ef4444";
 }
 
 
@@ -35,59 +27,34 @@ return "#ef4444"; // vermelho
 
 function criarGrafico(){
 
-const ctx = document.getElementById("graficoConsumo");
+  const ctx = document.getElementById("graficoUTIChart"); // 🔥 CORRIGIDO
 
-if(!ctx) return;
+  if(!ctx) return;
 
-grafico = new Chart(ctx, {
-
-type: "bar",
-
-data: {
-
-labels: [],
-
-datasets: [{
-label: "Consumo (L/h)",
-data: [],
-backgroundColor: "#22c55e",
-borderColor: "#22c55e",
-borderWidth: 1
-}]
-
-},
-
-options: {
-
-responsive: true,
-
-maintainAspectRatio: false,
-
-plugins: {
-legend: {
-labels:{
-color:"#fff"
-}
-}
-},
-
-scales: {
-
-x:{
-ticks:{color:"#fff"}
-},
-
-y:{
-beginAtZero:true,
-ticks:{color:"#fff"}
-}
-
-}
-
-}
-
-});
-
+  grafico = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Consumo (L/h)",
+        data: [],
+        backgroundColor: "#22c55e",
+        borderColor: "#22c55e",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels:{ color:"#fff" } }
+      },
+      scales: {
+        x:{ ticks:{color:"#fff"} },
+        y:{ beginAtZero:true, ticks:{color:"#fff"} }
+      }
+    }
+  });
 }
 
 
@@ -96,16 +63,12 @@ ticks:{color:"#fff"}
 // ===============================
 
 function atualizarCorGrafico(percent){
+  if(!grafico) return;
 
-if(!grafico) return;
-
-const cor = corNivel(percent);
-
-grafico.data.datasets[0].backgroundColor = cor;
-grafico.data.datasets[0].borderColor = cor;
-
-grafico.update();
-
+  const cor = corNivel(percent);
+  grafico.data.datasets[0].backgroundColor = cor;
+  grafico.data.datasets[0].borderColor = cor;
+  grafico.update();
 }
 
 
@@ -115,61 +78,44 @@ grafico.update();
 
 function atualizarGrafico(nivelAtual){
 
-const agora = Date.now();
+  if(!grafico) return;
 
-if(!window.ultimaLeitura){
+  const agora = Date.now();
 
-window.ultimaLeitura = {
-nivel:nivelAtual,
-tempo:agora
-};
+  if(!window.ultimaLeitura){
+    window.ultimaLeitura = { nivel:nivelAtual, tempo:agora };
+    return;
+  }
 
-return;
+  const diferencaNivel = window.ultimaLeitura.nivel - nivelAtual;
+  const diferencaTempo = (agora - window.ultimaLeitura.tempo)/1000;
 
-}
+  if(diferencaTempo <= 0) return;
 
-const diferencaNivel = window.ultimaLeitura.nivel - nivelAtual;
+  let consumoPorSegundo = diferencaNivel / diferencaTempo;
+  if(consumoPorSegundo < 0) consumoPorSegundo = 0;
 
-const diferencaTempo = (agora - window.ultimaLeitura.tempo)/1000;
+  consumoHora = consumoPorSegundo * 3600;
 
-if(diferencaTempo <= 0) return;
+  window.ultimaLeitura = { nivel:nivelAtual, tempo:agora };
 
-let consumoPorSegundo = diferencaNivel / diferencaTempo;
+  const hora = new Date().getHours();
 
-if(consumoPorSegundo < 0) consumoPorSegundo = 0;
+  if(horaAtual === null) horaAtual = hora;
 
-consumoHora = consumoPorSegundo * 3600;
+  if(hora !== horaAtual){
 
-window.ultimaLeitura = {
-nivel:nivelAtual,
-tempo:agora
-};
+    grafico.data.labels.push(`${horaAtual}:00`);
+    grafico.data.datasets[0].data.push(Math.round(consumoHora));
 
+    if(grafico.data.labels.length > 24){
+      grafico.data.labels.shift();
+      grafico.data.datasets[0].data.shift();
+    }
 
-// atualizar gráfico por hora
-
-const hora = new Date().getHours();
-
-if(horaAtual === null) horaAtual = hora;
-
-if(hora !== horaAtual){
-
-grafico.data.labels.push(`${horaAtual}:00`);
-grafico.data.datasets[0].data.push(Math.round(consumoHora));
-
-if(grafico.data.labels.length > 24){
-
-grafico.data.labels.shift();
-grafico.data.datasets[0].data.shift();
-
-}
-
-grafico.update();
-
-horaAtual = hora;
-
-}
-
+    grafico.update();
+    horaAtual = hora;
+  }
 }
 
 
@@ -179,128 +125,106 @@ horaAtual = hora;
 
 function atualizarIA(consumo,nivel){
 
-const el = document.getElementById("previsaoIA");
+  const el = document.getElementById("previsaoIA");
+  if(!el) return;
 
-if(!el) return;
+  if(consumo === 0){
+    el.textContent="Coletando dados...";
+    return;
+  }
 
-if(consumo === 0){
+  if(nivel < 40){
+    el.textContent="🔴 Nível crítico";
+    return;
+  }
 
-el.textContent="Coletando dados...";
-return;
+  if(consumo < 1500){
+    el.textContent="✔ Consumo normal";
+    return;
+  }
 
-}
+  if(consumo < 4000){
+    el.textContent="⚠ Consumo elevado";
+    return;
+  }
 
-if(nivel < 40){
-
-el.textContent="🔴 Nível crítico no reservatório";
-return;
-
-}
-
-if(consumo < 1500){
-
-el.textContent="✔ Consumo normal";
-return;
-
-}
-
-if(consumo < 4000){
-
-el.textContent="⚠ Consumo elevado";
-return;
-
-}
-
-el.textContent="🚨 Possível vazamento";
-
+  el.textContent="🚨 Possível vazamento";
 }
 
 
 // ===============================
-// ATUALIZAR DADOS DO DASHBOARD
+// ATUALIZAR DADOS
 // ===============================
 
 async function atualizar(){
 
-try{
+  try{
 
-const resposta = await fetch("/api/dashboard")
+    const resposta = await fetch("/api/dashboard");
 
+    const text = await resposta.text();
 
-const data = await resposta.json();
+    let data;
 
-
-// ----------------------------
-// RESERVATÓRIO PRINCIPAL
-// ----------------------------
-
-const elevador = data.reservatorios.find(r=>r.setor==="elevador");
-
-if(elevador){
-
-const nivel = elevador.percent;
-
-document.getElementById("nivelElevador").innerText = nivel.toFixed(1)+"%";
-
-document.getElementById("litrosElevador").innerText =
-elevador.current_liters+" / "+elevador.capacidade+" L";
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      console.error("Resposta não é JSON", text);
+      return;
+    }
 
 
-atualizarGrafico(elevador.current_liters);
+    // ----------------------------
+    // RESERVATÓRIO ELEVADOR
+    // ----------------------------
 
-atualizarCorGrafico(nivel);
+    const elevador = data.reservatorios?.find(r=>r.setor==="elevador");
 
-atualizarIA(consumoHora,nivel);
+    if(elevador){
 
-}
+      atualizarGrafico(elevador.current_liters);
+      atualizarCorGrafico(elevador.percent);
+      atualizarIA(consumoHora,elevador.percent);
 
-
-// ----------------------------
-// PRESSÕES
-// ----------------------------
-
-if(data.pressoes){
-
-data.pressoes.forEach(p=>{
-
-const el = document.getElementById(p.setor);
-
-if(el)
-el.innerText = p.pressao.toFixed(2)+" bar";
-
-});
-
-}
+    }
 
 
-// ----------------------------
-// BOMBAS
-// ----------------------------
+    // ----------------------------
+    // BOMBAS (CORRIGIDO)
+    // ----------------------------
 
-if(data.bombas){
+    if(data.bombas){
 
-data.bombas.forEach(b=>{
+      const mapa = [
+        {status:"b1Status", ciclo:"b1Ciclos"},
+        {status:"b2Status", ciclo:"b2Ciclos"},
+        {status:"b3Status", ciclo:"b3Ciclos"}
+      ];
 
-const el = document.getElementById(b.nome.replace(" ","").toLowerCase());
+      data.bombas.forEach((b,i)=>{
 
-if(el){
+        if(!mapa[i]) return;
 
-el.innerText = b.estado;
+        const elStatus = document.getElementById(mapa[i].status);
+        const elCiclo = document.getElementById(mapa[i].ciclo);
 
-el.style.color = b.estado==="ligada" ? "#22c55e" : "#ef4444";
+        if(elStatus){
+          elStatus.innerText = b.estado;
+          elStatus.style.color = b.estado==="ligada" ? "#22c55e" : "#ef4444";
+        }
 
-}
+        if(elCiclo){
+          elCiclo.innerText = b.ciclo;
+        }
 
-});
+      });
 
-}
+    }
 
-}
-catch(e){
-
-console.error("Erro ao atualizar",e);
-
-}
+  }
+  catch(e){
+    console.error("Erro ao atualizar",e);
+  }
 
 }
 
@@ -310,11 +234,7 @@ console.error("Erro ao atualizar",e);
 // ===============================
 
 window.onload = ()=>{
-
-criarGrafico();
-
-setInterval(atualizar,5000);
-
-atualizar();
-
+  criarGrafico();
+  setInterval(atualizar,5000);
+  atualizar();
 };
