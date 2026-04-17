@@ -8,23 +8,26 @@ window.ultimaLeitura = null;
 
 
 // ===============================
-// COR INTELIGENTE (UTI)
+// COR INTELIGENTE
 // ===============================
 function corNivel(percent){
-  if(percent >= 100) return "#2196f3"; // cheio
-  if(percent > 70) return "#22c55e";   // normal
-  if(percent > 40) return "#eab308";   // alerta
-  return "#ef4444";                    // crítico
+  if(percent >= 100) return "#2196f3";
+  if(percent > 70) return "#22c55e";
+  if(percent > 40) return "#eab308";
+  return "#ef4444";
 }
 
 
 // ===============================
-// CRIAR GRÁFICO
+// GRÁFICO
 // ===============================
 function criarGrafico(){
 
   const ctx = document.getElementById("graficoUTIChart");
-  if(!ctx) return;
+  if(!ctx) {
+    console.warn("Canvas do gráfico não encontrado");
+    return;
+  }
 
   grafico = new Chart(ctx, {
     type: "bar",
@@ -54,7 +57,7 @@ function criarGrafico(){
 
 
 // ===============================
-// ATUALIZAR COR DO GRÁFICO
+// COR GRÁFICO
 // ===============================
 function atualizarCorGrafico(percent){
   if(!grafico) return;
@@ -67,7 +70,7 @@ function atualizarCorGrafico(percent){
 
 
 // ===============================
-// CALCULAR CONSUMO
+// CONSUMO
 // ===============================
 function atualizarGrafico(nivelAtual){
 
@@ -80,15 +83,15 @@ function atualizarGrafico(nivelAtual){
     return;
   }
 
-  const diferencaNivel = window.ultimaLeitura.nivel - nivelAtual;
-  const diferencaTempo = (agora - window.ultimaLeitura.tempo)/1000;
+  const diffNivel = window.ultimaLeitura.nivel - nivelAtual;
+  const diffTempo = (agora - window.ultimaLeitura.tempo)/1000;
 
-  if(diferencaTempo <= 0) return;
+  if(diffTempo <= 0) return;
 
-  let consumoPorSegundo = diferencaNivel / diferencaTempo;
-  if(consumoPorSegundo < 0) consumoPorSegundo = 0;
+  let consumoSeg = diffNivel / diffTempo;
+  if(consumoSeg < 0) consumoSeg = 0;
 
-  consumoHora = consumoPorSegundo * 3600;
+  consumoHora = consumoSeg * 3600;
 
   window.ultimaLeitura = { nivel:nivelAtual, tempo:agora };
 
@@ -113,39 +116,30 @@ function atualizarGrafico(nivelAtual){
 
 
 // ===============================
-// IA DE CONSUMO
+// IA
 // ===============================
 function atualizarIA(consumo,nivel){
 
   const el = document.getElementById("previsaoIA");
   if(!el) return;
 
-  if(!window.ultimaLeitura){
-    el.textContent = "Coletando dados...";
-    return;
-  }
-
   if(nivel < 30){
-    el.textContent="🚨 Nível crítico";
-    return;
+    el.textContent = "🚨 Nível crítico";
   }
-
-  if(consumo < 1500){
-    el.textContent="✔ Consumo normal";
-    return;
+  else if(consumo < 1500){
+    el.textContent = "✔ Consumo normal";
   }
-
-  if(consumo < 4000){
-    el.textContent="⚠ Consumo elevado";
-    return;
+  else if(consumo < 4000){
+    el.textContent = "⚠ Consumo elevado";
   }
-
-  el.textContent="🚨 Possível vazamento";
+  else{
+    el.textContent = "🚨 Possível vazamento";
+  }
 }
 
 
 // ===============================
-// RENDER RESERVATÓRIOS
+// RESERVATÓRIOS
 // ===============================
 function renderReservatorios(lista){
 
@@ -170,32 +164,37 @@ function renderReservatorios(lista){
       <h3>${r.nome}</h3>
 
       <div class="tanque-visu">
-        <div class="nivel-agua" style="height:${percent}%; background:${corNivel(percent)}"></div>
+        <div class="nivel-agua"
+          style="height:${percent}%; background:${corNivel(percent)}">
+        </div>
       </div>
 
-      <div class="percent-text">${percent}%</div>
-      <div class="liters-text">${litros} L</div>
+      <div>${percent}%</div>
+      <div>${litros} L</div>
     `;
 
     container.appendChild(card);
   });
-
 }
 
 
 // ===============================
-// ATUALIZAR DADOS
+// UPDATE PRINCIPAL
 // ===============================
 async function atualizar(){
 
   try{
 
     const resposta = await fetch("/api/dashboard");
+
+    if(!resposta.ok){
+      throw new Error("API não respondeu");
+    }
+
     const data = await resposta.json();
 
-    // ---------------- RESERVATÓRIOS ----------------
+    // RESERVATÓRIOS
     if(data.reservatorios){
-
       renderReservatorios(data.reservatorios);
 
       const elevador = data.reservatorios.find(r=>r.setor==="elevador");
@@ -207,9 +206,8 @@ async function atualizar(){
       }
     }
 
-    // ---------------- PRESSÕES ----------------
+    // PRESSÃO
     if(data.pressoes){
-
       const mapa = {
         saida_osmose: "pSaidaOsmose",
         retorno_osmose: "pRetornoOsmose",
@@ -218,80 +216,65 @@ async function atualizar(){
 
       data.pressoes.forEach(p=>{
         const el = document.getElementById(mapa[p.setor]);
-        if(el){
-          el.innerText = p.pressao != null ? p.pressao.toFixed(2) : "--";
-        }
+        if(el) el.innerText = p.pressao?.toFixed(2) ?? "--";
       });
-
     }
 
-    // ---------------- BOMBAS ----------------
+    // BOMBAS
     if(data.bombas){
-
-      const mapa = [
-        {status:"b1Status", ciclo:"b1Ciclos", card:"bomba1"},
-        {status:"b2Status", ciclo:"b2Ciclos", card:"bomba2"},
-        {status:"b3Status", ciclo:"b3Ciclos", card:"bomba3"}
-      ];
 
       data.bombas.forEach((b,i)=>{
 
-        if(!mapa[i]) return;
+        const ids = [
+          {s:"b1Status", c:"b1Ciclos", card:"bomba1"},
+          {s:"b2Status", c:"b2Ciclos", card:"bomba2"},
+          {s:"b3Status", c:"b3Ciclos", card:"bomba3"}
+        ];
 
-        const elStatus = document.getElementById(mapa[i].status);
-        const elCiclo = document.getElementById(mapa[i].ciclo);
-        const card = document.getElementById(mapa[i].card);
+        if(!ids[i]) return;
 
-        const ligada = b.estado === "ligada" || b.estado_num === 1;
+        const ligada = b.estado === "ligada";
+
+        const elStatus = document.getElementById(ids[i].s);
+        const elCiclo = document.getElementById(ids[i].c);
+        const card = document.getElementById(ids[i].card);
 
         if(elStatus){
           elStatus.innerText = ligada ? "Ligada" : "Desligada";
           elStatus.style.color = ligada ? "#22c55e" : "#ef4444";
         }
 
-        if(elCiclo){
-          elCiclo.innerText = b.ciclo ?? 0;
-        }
+        if(elCiclo) elCiclo.innerText = b.ciclo ?? 0;
 
         if(card){
           card.classList.toggle("bomba-ligada", ligada);
           card.classList.toggle("bomba-desligada", !ligada);
         }
-
       });
-
     }
 
-    // ---------------- STATUS ----------------
+    // STATUS
     const status = document.getElementById("statusSistema");
-    if(status){
-      status.innerText = "🟢 Sistema Operacional";
-    }
+    if(status) status.innerText = "🟢 Sistema Operacional";
 
-    // ---------------- HORA ----------------
     const last = document.getElementById("lastUpdate");
-    if(last){
-      last.innerText = "Atualizado " + new Date().toLocaleTimeString();
-    }
+    if(last) last.innerText = new Date().toLocaleTimeString();
 
   }
-  catch(e){
-    console.error("Erro ao atualizar",e);
+  catch(err){
+    console.error(err);
 
     const status = document.getElementById("statusSistema");
-    if(status){
-      status.innerText = "🔴 Sem comunicação";
-    }
+    if(status) status.innerText = "🔴 Sem comunicação";
   }
-
 }
 
 
 // ===============================
-// INICIALIZAÇÃO
+// INIT
 // ===============================
-window.onload = ()=>{
+document.addEventListener("DOMContentLoaded", () => {
   criarGrafico();
-  setInterval(atualizar,5000);
   atualizar();
-};
+  setInterval(atualizar, 5000);
+});
