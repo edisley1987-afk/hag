@@ -6,7 +6,6 @@
 <title>Monitoramento - HAG</title>
 
 <link rel="stylesheet" href="style.css">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script defer src="dashboard.js"></script>
 </head>
@@ -14,11 +13,12 @@
 <body>
 
 <header>
-  <h1>Hospital Arnaldo Gavazza – Monitoramento</h1>
-  <div id="lastUpdate">Atualizado --:--:--</div>
+  <h1>🏥 Hospital Arnaldo Gavazza</h1>
+  <div class="header-info">
+    <span id="lastUpdate">⏱ Atualizado --:--:--</span>
+    <span id="statusSistema">🟢 Operando normalmente</span>
+  </div>
 </header>
-
-<div id="statusSistema">🟢 Sistema Operacional</div>
 
 <main>
 
@@ -31,45 +31,48 @@
   <section class="area-bottom">
 
     <!-- GRÁFICO -->
-    <div id="graficoUTI">
+    <div id="graficoUTI" class="card">
+      <div class="card-title">📊 Consumo (L/h)</div>
       <canvas id="graficoUTIChart"></canvas>
       <div id="previsaoIA">Coletando dados...</div>
     </div>
 
-    <!-- PRESSÃO + BOMBAS -->
+    <!-- LATERAL -->
     <div id="pressaoBombaGrid">
 
-      <div class="card-pressao">
-        <h3>Saída Osmose</h3>
-        <span id="pSaidaOsmose">--</span>
+      <!-- PRESSÃO -->
+      <div class="card card-pressao">
+        <div class="card-title">💧 Saída Osmose</div>
+        <div class="card-value" id="pSaidaOsmose">--</div>
       </div>
 
-      <div class="card-pressao">
-        <h3>Retorno Osmose</h3>
-        <span id="pRetornoOsmose">--</span>
+      <div class="card card-pressao">
+        <div class="card-title">💧 Retorno Osmose</div>
+        <div class="card-value" id="pRetornoOsmose">--</div>
       </div>
 
-      <div class="card-pressao">
-        <h3>Saída CME</h3>
-        <span id="pSaidaCME">--</span>
+      <div class="card card-pressao">
+        <div class="card-title">💧 Saída CME</div>
+        <div class="card-value" id="pSaidaCME">--</div>
       </div>
 
-      <div class="card-bomba" id="bomba1">
-        <h3>Bomba 01</h3>
-        <p id="b1Status">--</p>
-        <p id="b1Ciclos">--</p>
+      <!-- BOMBAS -->
+      <div class="card card-bomba" id="bomba1">
+        <div class="card-title">⚙️ Bomba 01</div>
+        <div class="card-status" id="b1Status">--</div>
+        <div class="card-sub">Ciclos: <span id="b1Ciclos">--</span></div>
       </div>
 
-      <div class="card-bomba" id="bomba2">
-        <h3>Bomba 02</h3>
-        <p id="b2Status">--</p>
-        <p id="b2Ciclos">--</p>
+      <div class="card card-bomba" id="bomba2">
+        <div class="card-title">⚙️ Bomba 02</div>
+        <div class="card-status" id="b2Status">--</div>
+        <div class="card-sub">Ciclos: <span id="b2Ciclos">--</span></div>
       </div>
 
-      <div class="card-bomba" id="bomba3">
-        <h3>Bomba Osmose</h3>
-        <p id="b3Status">--</p>
-        <p id="b3Ciclos">--</p>
+      <div class="card card-bomba" id="bomba3">
+        <div class="card-title">⚙️ Bomba Osmose</div>
+        <div class="card-status" id="b3Status">--</div>
+        <div class="card-sub">Ciclos: <span id="b3Ciclos">--</span></div>
       </div>
 
     </div>
