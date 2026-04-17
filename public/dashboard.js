@@ -1,7 +1,8 @@
 const API = "/api/dashboard";
 let ws;
+let reconnectDelay = 3000;
 
-// INIT
+// ================= INIT =================
 init();
 
 function init() {
@@ -9,39 +10,65 @@ function init() {
   setInterval(fallbackHTTP, 8000);
 }
 
-// WEBSOCKET
+// ================= WEBSOCKET =================
 function conectarWS() {
-  ws = new WebSocket(`ws://${location.host}`);
+  try {
+    const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${protocolo}//${location.host}`);
 
-  ws.onopen = () => setStatus("🟢 Tempo real conectado");
+    ws.onopen = () => {
+      setStatus("🟢 Tempo real conectado");
+      reconnectDelay = 3000; // reseta delay
+    };
 
-  ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.dados) atualizarTela(data.dados);
-  };
+    ws.onmessage = (msg) => {
+      try {
+        const data = JSON.parse(msg.data);
 
-  ws.onclose = () => {
-    setStatus("🔴 Reconectando...");
-    setTimeout(conectarWS, 3000);
-  };
+        // compatível com {type:"update", dados:{}}
+        if (data.dados) atualizarTela(data.dados);
+        if (data.type === "init" && data.dados) atualizarTela(data.dados);
 
-  ws.onerror = () => setStatus("🟡 Fallback HTTP");
+      } catch (e) {
+        console.error("Erro parse WS:", e);
+      }
+    };
+
+    ws.onclose = () => {
+      setStatus("🔴 Reconectando...");
+      setTimeout(conectarWS, reconnectDelay);
+
+      // backoff progressivo
+      reconnectDelay = Math.min(reconnectDelay + 2000, 15000);
+    };
+
+    ws.onerror = () => {
+      setStatus("🟡 Fallback HTTP");
+    };
+
+  } catch (err) {
+    console.error("Erro WS:", err);
+    setStatus("🔴 Erro conexão");
+  }
 }
 
-// FALLBACK
+// ================= FALLBACK HTTP =================
 async function fallbackHTTP() {
-  if (ws.readyState === 1) return;
+  if (ws && ws.readyState === 1) return;
 
   try {
     const res = await fetch(API + "?t=" + Date.now());
     const data = await res.json();
-    atualizarTela(data);
-  } catch {
+
+    if (data) atualizarTela(data);
+
+  } catch (e) {
+    console.error("Erro HTTP:", e);
     setStatus("🔴 Sem conexão");
   }
 }
 
-// ATUALIZA
+// ================= ATUALIZAÇÃO =================
 function atualizarTela(data) {
   document.getElementById("lastUpdate").innerText =
     "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
@@ -51,7 +78,7 @@ function atualizarTela(data) {
   renderPressoes(data.pressoes || []);
 }
 
-// RESERVATÓRIOS
+// ================= RESERVATÓRIOS =================
 function renderReservatorios(lista) {
   const area = document.getElementById("areaReservatorios");
   area.innerHTML = "";
@@ -64,7 +91,7 @@ function renderReservatorios(lista) {
     el.innerHTML = `
       <div class="barra" style="height:${r.percent}%"></div>
       <h2>${r.nome}</h2>
-      <div class="valor">${r.percent}%</div>
+      <div class="valor">${r.percent ?? 0}%</div>
       <div>${formatar(r.current_liters)} L</div>
     `;
 
@@ -72,7 +99,7 @@ function renderReservatorios(lista) {
   });
 }
 
-// BOMBAS
+// ================= BOMBAS =================
 function renderBombas(lista) {
   const area = document.getElementById("areaBombas");
   area.innerHTML = "";
@@ -80,19 +107,21 @@ function renderBombas(lista) {
   lista.forEach(b => {
     const el = document.createElement("div");
 
-    el.className = "card " + (b.estado === "ligada" ? "ligada" : "desligada");
+    const ligada = b.estado === "ligada";
+
+    el.className = "card " + (ligada ? "ligada" : "desligada");
 
     el.innerHTML = `
       <h2>${b.nome}</h2>
-      <div class="valor">${b.estado.toUpperCase()}</div>
-      <div>${b.ciclo} ciclos</div>
+      <div class="valor">${ligada ? "🟢 LIGADA" : "🔴 DESLIGADA"}</div>
+      <div>${b.ciclo ?? 0} ciclos</div>
     `;
 
     area.appendChild(el);
   });
 }
 
-// PRESSÕES
+// ================= PRESSÕES =================
 function renderPressoes(lista) {
   const area = document.getElementById("areaPressoes");
   area.innerHTML = "";
@@ -111,17 +140,20 @@ function renderPressoes(lista) {
   });
 }
 
-// HELPERS
+// ================= HELPERS =================
 function getStatus(p) {
+  p = Number(p) || 0;
+
   if (p < 30) return "critico";
   if (p < 70) return "alerta";
   return "normal";
 }
 
 function formatar(n) {
-  return Number(n).toLocaleString("pt-BR");
+  return Number(n || 0).toLocaleString("pt-BR");
 }
 
 function setStatus(txt) {
-  document.getElementById("statusSistema").innerText = txt;
+  const el = document.getElementById("statusSistema");
+  if (el) el.innerText = txt;
 }
