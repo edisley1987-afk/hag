@@ -14,7 +14,7 @@ html, body {
    HEADER
 =============================== */
 header {
-  height: 60px; /* 🔴 reduzido */
+  height: 60px;
   background: rgba(0,90,60,0.9);
   display: flex;
   flex-direction: column;
@@ -23,13 +23,13 @@ header {
   font-size: 12px;
 }
 
-/* STATUS */
 #statusSistema {
   text-align: center;
-  padding: 3px;
+  padding: 4px 8px;
   font-weight: bold;
   color: #00ffae;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
   font-size: 12px;
 }
 
@@ -37,71 +37,72 @@ header {
    MAIN
 =============================== */
 main {
-  height: calc(100% - 100px); /* 🔴 ajustado */
+  height: calc(100% - 100px);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-
+  gap: 12px;
+  padding: 12px;
   min-height: 0;
 }
 
 /* ===============================
-   TOPO
+   TOPO (RESERVATÓRIOS)
 =============================== */
 .area-topo {
-  flex: 1.6; /* 🔴 reduzido */
+  flex: 1; /* 🔥 reduzido */
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-
+  gap: 10px;
   min-height: 0;
 }
 
 #reservatoriosContainer {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 
-/* RESERVATÓRIO */
+/* CARD RESERVATÓRIO */
 .card-reservatorio {
-  background: rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 6px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.25));
+  border-radius: 12px;
+  padding: 10px;
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
 }
 
+/* TANQUE */
 .tanque-visu {
-  height: 60px; /* 🔴 menor */
-  background: rgba(255,255,255,0.2);
-  border-radius: 8px;
+  height: 70px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
+  margin-top: 6px;
 }
 
 .nivel-agua {
   position: absolute;
   bottom: 0;
   width: 100%;
+  background: linear-gradient(to top, #00ffae, #0ea5e9);
   transition: height 0.8s ease;
 }
 
-/* CORES */
+/* NÍVEIS */
 .nv-critico { border:2px solid #ef4444; }
 .nv-alerta { border:2px solid #f59e0b; }
-.nv-normal { border:2px solid #00ffae; }
+.nv-normal { border:2px solid #22c55e; }
 
 /* ===============================
    BAIXO
 =============================== */
 .area-bottom {
-  flex: 1;
+  flex: 1.4; /* 🔥 mais espaço pro gráfico */
   display: grid;
-  grid-template-columns: 2.2fr 1fr;
-  gap: 8px;
-
+  grid-template-columns: 2.3fr 1fr;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -109,15 +110,14 @@ main {
    GRÁFICO
 =============================== */
 #graficoUTI {
-  background: rgba(0,0,0,0.35);
-  border-radius: 10px;
-  padding: 6px; /* 🔴 menor */
-
+  background: rgba(0,0,0,0.45);
+  border-radius: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-
   min-height: 0;
   overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,255,170,0.1);
 }
 
 #graficoUTI canvas {
@@ -129,19 +129,19 @@ main {
 
 #previsaoIA {
   text-align: center;
-  margin-top: 3px;
+  margin-top: 6px;
   font-weight: bold;
-  font-size: 12px; /* 🔴 reduzido */
+  font-size: 12px;
+  color: #00ffae;
 }
 
 /* ===============================
-   PRESSÃO + BOMBAS
+   LATERAL (PRESSÃO + BOMBAS)
 =============================== */
 #pressaoBombaGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-
+  grid-template-columns: 1fr; /* 🔥 coluna única */
+  gap: 10px;
   min-height: 0;
 }
 
@@ -149,20 +149,29 @@ main {
 .card-pressao,
 .card-bomba {
   background: rgba(255,255,255,0.08);
-  padding: 6px; /* 🔴 menor */
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 10px;
   text-align: center;
   transition: 0.3s;
-  font-size: 11px;
+  font-size: 13px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+/* PRESSÃO (BAR) */
+.card-pressao {
+  font-size: 15px;
+  font-weight: bold;
+  background: rgba(0,150,255,0.15);
+  border: 1px solid rgba(0,150,255,0.4);
 }
 
 /* BOMBAS */
 .bomba-ligada {
-  background: rgba(0,180,0,0.35) !important;
+  background: rgba(34,197,94,0.25) !important;
 }
 
 .bomba-desligada {
-  background: rgba(180,0,0,0.35) !important;
+  background: rgba(239,68,68,0.25) !important;
 }
 
 /* ===============================
