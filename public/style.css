@@ -1,261 +1,150 @@
-/* ============================ BACKGROUND ============================ */
+/* ================= BASE ================= */
 body {
-    margin: 0;
-    padding: 0;
-    font-family: "Segoe UI", sans-serif;
-
-    background: url("image.png") center center fixed no-repeat;
-    background-size: cover;
-    position: relative;
+margin: 0;
+font-family: "Segoe UI", sans-serif;
+background: linear-gradient(135deg, #022c22, #014737);
+color: white;
 }
 
-body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 40, 25, 0.55);
-    backdrop-filter: blur(4px);
-    z-index: -1;
-}
-
-/* ============================ PALETA ============================ */
-:root {
-    --ok: #00e676;
-    --alerta: #ff9f1a;
-    --critico: #ff2b2b;
-    --cheio: #00e5ff;
-
-    --glass-bg: rgba(255, 255, 255, 0.15);
-}
-
-/* ============================ HEADER ============================ */
+/* ================= HEADER ================= */
 header {
-    background: rgba(0, 90, 60, 0.85);
-    color: white;
-    text-align: center;
-    padding: 22px;
-    border-bottom: 3px solid #3fa58b;
-    backdrop-filter: blur(5px);
+background: rgba(0, 90, 60, 0.9);
+padding: 20px;
+text-align: center;
+border-bottom: 3px solid #00ffae;
 }
 
-h1, h2 {
-    color: white;
-    text-shadow: 0 1px 3px black;
+#statusSistema {
+text-align: center;
+padding: 10px;
+font-weight: bold;
 }
 
-/* ============================ MAIN ============================ */
-main {
-    max-width: 1500px;
-    margin: auto;
-    padding: 20px;
+/* ================= IA ================= */
+.box-previsao {
+margin: 15px auto;
+padding: 12px;
+border-radius: 10px;
+text-align: center;
+width: fit-content;
+background: rgba(0,0,0,0.4);
+box-shadow: 0 0 10px #000;
 }
 
-/* ============================ RESERVATÓRIOS ============================ */
+.previsao-critica {
+color: #ff4e4e;
+animation: blink 1s infinite;
+}
+.previsao-alerta {
+color: #ffcc00;
+}
+
+@keyframes blink {
+50% { opacity: 0.3; }
+}
+
+/* ================= ALERTA GLOBAL ================= */
+.alerta-global {
+display: none;
+background: #ff4e4e;
+padding: 12px;
+border-radius: 8px;
+text-align: center;
+margin-bottom: 15px;
+font-weight: bold;
+}
+
+/* ================= RESERVATÓRIOS ================= */
 #reservatoriosContainer {
-    display: grid;
-    width: 100%;
-    margin-top: 25px;
-    gap: 28px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+display: grid;
+gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .card-reservatorio {
-    background: var(--glass-bg);
-    padding: 15px;
-    border-radius: 14px;
-    text-align: center;
-    color: white;
-    box-shadow: 0 2px 12px #0007;
-    backdrop-filter: blur(10px);
-    transition: 0.3s;
-    border: 2px solid rgba(255,255,255,0.2);
+background: rgba(255,255,255,0.08);
+padding: 12px;
+border-radius: 12px;
+text-align: center;
+border: 2px solid transparent;
 }
 
-.card-reservatorio:hover {
-    transform: scale(1.04);
-}
-
-/* ============================ TANQUE ============================ */
 .tanque-visu {
-    width: 100%;
-    height: 170px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.3);
-    position: relative;
-    overflow: hidden;
+height: 140px;
+background: rgba(255,255,255,0.2);
+border-radius: 10px;
+overflow: hidden;
+position: relative;
 }
 
-/* Água com efeito real */
 .nivel-agua {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 0%;
-    transition: height 0.8s ease, background 0.5s;
-
-    background: linear-gradient(
-        to top,
-        rgba(0,255,150,0.9),
-        rgba(0,255,200,0.5)
-    );
-
-    box-shadow: inset 0 0 12px rgba(0,255,180,0.6);
-}
-
-/* Info sobreposta */
-.overlay-info {
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    text-shadow: 0 1px 4px black;
+position: absolute;
+bottom: 0;
+width: 100%;
+background: #00ffae;
+transition: height 1s;
 }
 
 .percent-text {
-    font-size: 26px;
-    font-weight: bold;
-    letter-spacing: 1px;
+font-size: 20px;
+font-weight: bold;
 }
 
 .liters-text {
-    font-size: 14px;
-    opacity: 0.9;
+font-size: 14px;
 }
 
-/* ============================ CORES INTELIGENTES ============================ */
+/* CORES */
+.nv-critico { border-color: red; }
+.nv-alerta { border-color: orange; }
+.nv-normal { border-color: #00ffae; }
 
-/* 🔴 CRÍTICO */
-.nv-critico {
-    border-color: var(--critico) !important;
-    box-shadow: 0 0 18px var(--critico);
-}
-.nv-critico .nivel-agua {
-    background: linear-gradient(to top, #ff0000, #ff6b6b);
-}
-
-/* 🟠 ALERTA */
-.nv-alerta {
-    border-color: var(--alerta) !important;
-    box-shadow: 0 0 14px var(--alerta);
-}
-.nv-alerta .nivel-agua {
-    background: linear-gradient(to top, #ff7b00, #ffc46b);
+/* ================= GRÁFICO ================= */
+#graficoUTI {
+background: rgba(0,0,0,0.4);
+border-radius: 10px;
+padding: 10px;
+margin-top: 20px;
 }
 
-/* 🟢 NORMAL */
-.nv-normal {
-    border-color: var(--ok) !important;
-    box-shadow: 0 0 10px var(--ok);
-}
-.nv-normal .nivel-agua {
-    background: linear-gradient(to top, #00c853, #69f0ae);
-}
-
-/* 🔵 CHEIO */
-.nv-cheio {
-    border-color: var(--cheio) !important;
-    box-shadow: 0 0 18px var(--cheio);
-}
-.nv-cheio .nivel-agua {
-    background: linear-gradient(to top, #00bcd4, #84ffff);
-}
-
-/* ============================ ALERTA PISCANDO ============================ */
-.piscar-31 {
-    animation: piscarCritico 0.7s infinite;
-}
-
-@keyframes piscarCritico {
-    0%   { transform: scale(1); box-shadow: 0 0 10px red; }
-    50%  { transform: scale(1.03); box-shadow: 0 0 28px red; }
-    100% { transform: scale(1); box-shadow: 0 0 10px red; }
-}
-
-/* ============================ PRESSÃO + BOMBAS ============================ */
+/* ================= PRESSÃO ================= */
 #pressaoBombaGrid {
-    display: grid;
-    margin-top: 35px;
-    width: 100%;
-    gap: 28px;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+display: grid;
+gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.card-pressao, .card-bomba {
-    background: var(--glass-bg);
-    padding: 18px;
-    border-radius: 14px;
-    color: white;
-    text-align: center;
-    box-shadow: 0 2px 10px #0007;
-    backdrop-filter: blur(10px);
-    transition: 0.3s;
-}
-
-.card-pressao:hover,
-.card-bomba:hover {
-    transform: scale(1.05);
+.card-pressao {
+background: rgba(255,255,255,0.08);
+padding: 15px;
+border-radius: 10px;
+text-align: center;
 }
 
 .valor-pressao {
-    font-size: 26px;
-    font-weight: bold;
-    color: #a7ffeb;
+font-size: 24px;
+color: #00ffae;
 }
 
-.unidade {
-    font-size: 11px;
-    opacity: 0.7;
+/* ================= BOMBAS ================= */
+.card-bomba {
+padding: 15px;
+border-radius: 10px;
+text-align: center;
 }
 
-/* ============================ BOMBAS ============================ */
 .bomba-ligada {
-    background: rgba(0, 150, 50, 0.9) !important;
-    border-top: 4px solid #00ff73;
-    box-shadow: 0 0 15px #00ff73;
+background: rgba(0,150,0,0.6);
 }
 
 .bomba-desligada {
-    background: rgba(150, 0, 0, 0.85) !important;
-    border-top: 4px solid #ff4f4f;
-    box-shadow: 0 0 12px #ff4f4f;
+background: rgba(150,0,0,0.6);
 }
 
-/* ============================ MANUTENÇÃO ============================ */
-.manutencao {
-    background: rgba(255, 200, 0, 0.4) !important;
-    border: 3px solid #ffd54f !important;
-    animation: manutBlink 1.3s infinite;
-}
-
-@keyframes manutBlink {
-    0% { box-shadow: 0 0 10px #ffd54f; }
-    50% { box-shadow: 0 0 25px #ffea00; }
-    100% { box-shadow: 0 0 10px #ffd54f; }
-}
-
-/* ============================ BOTÃO ============================ */
-.gear-btn {
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: white;
-    transition: 0.3s;
-}
-
-.gear-btn:hover {
-    transform: rotate(30deg) scale(1.1);
-}
-
-/* ============================ FOOTER ============================ */
+/* ================= FOOTER ================= */
 footer {
-    background: rgba(0, 90, 60, 0.85);
-    padding: 14px;
-    text-align: center;
-    color: white;
-    border-top: 3px solid #3fa58b;
-    margin-top: 60px;
+text-align: center;
+padding: 10px;
+margin-top: 40px;
+background: rgba(0,0,0,0.5);
 }
