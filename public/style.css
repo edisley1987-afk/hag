@@ -1,115 +1,158 @@
+/* ===============================
+   BASE GERAL
+=============================== */
 html, body {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    font-family: "Segoe UI", sans-serif;
-    background: linear-gradient(135deg, #022c22, #014737);
-    color: white;
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #022c22, #014737);
+  color: white;
+  overflow: hidden;
 }
 
-/* HEADER */
+/* ===============================
+   HEADER
+=============================== */
 header {
-    height: 70px;
-    text-align: center;
-    background: rgba(0,90,60,0.9);
+  height: 70px;
+  background: rgba(0,90,60,0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-/* STATUS */
+/* STATUS SISTEMA */
 #statusSistema {
-    text-align: center;
-    padding: 5px;
-    font-weight: bold;
-    color: #00ffae;
+  text-align: center;
+  padding: 5px;
+  font-weight: bold;
+  color: #00ffae;
+  background: rgba(0,0,0,0.2);
 }
 
-/* MAIN */
+/* ===============================
+   MAIN
+=============================== */
 main {
-    height: calc(100% - 120px);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px;
+  height: calc(100% - 120px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
 }
 
-/* TOPO */
+/* ===============================
+   TOPO - RESERVATÓRIOS
+=============================== */
 .area-topo {
-    flex: 2;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+  flex: 2;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  overflow: hidden;
 }
 
-/* RESERVATÓRIOS */
+#reservatoriosContainer {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+/* CARD RESERVATÓRIO */
 .card-reservatorio {
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 8px;
-    text-align: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+  backdrop-filter: blur(5px);
 }
 
+/* TANQUE */
 .tanque-visu {
-    height: 80px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
+  height: 80px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 5px;
 }
 
 .nivel-agua {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    transition: height 1s;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  transition: height 0.8s ease;
 }
 
-/* CORES */
-.nv-critico { border:2px solid red; }
-.nv-alerta { border:2px solid orange; }
+/* CORES NÍVEL */
+.nv-critico { border:2px solid #ef4444; }
+.nv-alerta { border:2px solid #f59e0b; }
 .nv-normal { border:2px solid #00ffae; }
 
-/* BAIXO */
+/* ===============================
+   BAIXO
+=============================== */
 .area-bottom {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 10px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
 }
 
-/* GRÁFICO */
+/* ===============================
+   GRÁFICO
+=============================== */
 #graficoUTI {
-    background: rgba(0,0,0,0.4);
-    border-radius: 10px;
-    padding: 10px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 10px;
+  padding: 10px;
+  position: relative;
 }
 
 #previsaoIA {
-    text-align: center;
-    margin-top: 5px;
-    font-weight: bold;
+  text-align: center;
+  margin-top: 5px;
+  font-weight: bold;
 }
 
-/* GRID */
+/* ===============================
+   PRESSÃO + BOMBAS
+=============================== */
 #pressaoBombaGrid {
-    display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
+/* CARDS */
 .card-pressao,
 .card-bomba {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  transition: 0.3s;
 }
 
 /* BOMBAS */
-.bomba-ligada { background: rgba(0,150,0,0.6); }
-.bomba-desligada { background: rgba(150,0,0,0.6); }
+.bomba-ligada {
+  background: rgba(0,180,0,0.35) !important;
+}
 
-/* FOOTER */
+.bomba-desligada {
+  background: rgba(180,0,0,0.35) !important;
+}
+
+/* ===============================
+   FOOTER
+=============================== */
 footer {
-    height: 30px;
-    text-align: center;
-    background: rgba(0,0,0,0.5);
+  height: 30px;
+  text-align: center;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
 }
