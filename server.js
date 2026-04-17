@@ -224,10 +224,23 @@ function convertAndMerge(dataArray) {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
     } else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-      const percentual = (leitura - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
-      let litros = percentual * sensor.capacidade;
-      litros = Math.max(0, Math.min(sensor.capacidade, litros));
-      novo[ref] = Math.round(litros);
+      const leitura = Number(rawVal) || 0;
+
+let percent =
+  ((leitura - sensor.leituraVazio) /
+    (sensor.leituraCheio - sensor.leituraVazio)) * 100;
+
+// limites
+percent = Math.max(0, Math.min(100, percent));
+
+// litros
+const litros = (percent / 100) * sensor.capacidade;
+
+novo[ref] = {
+  percent: Number(percent.toFixed(1)),
+  litros: Math.round(litros)
+};
+
     } else {
       novo[ref] = rawVal;
     }
