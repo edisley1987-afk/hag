@@ -41,6 +41,7 @@ x: { ticks: { color: "white" } },
 y: { ticks: { color: "white" } }
 }
 }
+
 });
 
 }
@@ -86,7 +87,7 @@ pressoes: {},
 bombas: {}
 };
 
-// ================= LOOP HTTP =================
+// ================= ATUALIZAR HTTP =================
 async function atualizar() {
 
 try {
@@ -133,7 +134,7 @@ ultimasLeituras.bombas[b.nome] = b;
 
 }
 
-// ================= RENDER GERAL =================
+// ================= RENDER =================
 function renderTudo() {
 
 const reservatorios = Object.values(ultimasLeituras.reservatorios);
@@ -144,7 +145,6 @@ renderPressao(Object.values(ultimasLeituras.pressoes));
 
 renderBombas(ultimasLeituras.bombas);
 
-// IA e gráfico
 const elevador = reservatorios.find(r => r.setor === "reservatorio_elevador");
 
 if (elevador) {
@@ -154,7 +154,6 @@ atualizarIA(elevador.current_liters);
 
 }
 
-// alerta nível baixo
 verificarNivelBaixo(reservatorios);
 
 }
