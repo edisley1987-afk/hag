@@ -1,150 +1,146 @@
-/* ================= BASE ================= */
 body {
-margin: 0;
-font-family: "Segoe UI", sans-serif;
-background: linear-gradient(135deg, #022c22, #014737);
-color: white;
+margin:0;
+font-family:Segoe UI;
+background:linear-gradient(135deg,#022c22,#014737);
+color:white;
 }
 
-/* ================= HEADER ================= */
+/* HEADER */
 header {
-background: rgba(0, 90, 60, 0.9);
-padding: 20px;
-text-align: center;
-border-bottom: 3px solid #00ffae;
+background:#014737;
+padding:20px;
+text-align:center;
+border-bottom:3px solid #00ffae;
 }
 
 #statusSistema {
-text-align: center;
-padding: 10px;
-font-weight: bold;
+text-align:center;
+padding:10px;
+color:#00ffae;
+text-shadow:0 0 8px #00ffae;
 }
 
-/* ================= IA ================= */
-.box-previsao {
-margin: 15px auto;
-padding: 12px;
-border-radius: 10px;
-text-align: center;
-width: fit-content;
-background: rgba(0,0,0,0.4);
-box-shadow: 0 0 10px #000;
-}
-
-.previsao-critica {
-color: #ff4e4e;
-animation: blink 1s infinite;
-}
-.previsao-alerta {
-color: #ffcc00;
-}
-
-@keyframes blink {
-50% { opacity: 0.3; }
-}
-
-/* ================= ALERTA GLOBAL ================= */
+/* ALERTA */
 .alerta-global {
-display: none;
-background: #ff4e4e;
-padding: 12px;
-border-radius: 8px;
-text-align: center;
-margin-bottom: 15px;
-font-weight: bold;
+display:none;
+background:red;
+padding:10px;
+border-radius:8px;
+text-align:center;
 }
 
-/* ================= RESERVATÓRIOS ================= */
+/* RESERVATÓRIOS */
 #reservatoriosContainer {
-display: grid;
-gap: 20px;
-grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+display:grid;
+gap:20px;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
 }
 
 .card-reservatorio {
-background: rgba(255,255,255,0.08);
-padding: 12px;
-border-radius: 12px;
-text-align: center;
-border: 2px solid transparent;
+background:rgba(255,255,255,0.08);
+padding:12px;
+border-radius:12px;
+text-align:center;
+transition:0.3s;
+}
+
+.card-reservatorio:hover {
+transform:scale(1.03);
+box-shadow:0 0 15px #00ffae55;
 }
 
 .tanque-visu {
-height: 140px;
-background: rgba(255,255,255,0.2);
-border-radius: 10px;
-overflow: hidden;
-position: relative;
+height:140px;
+background:rgba(255,255,255,0.2);
+border-radius:10px;
+overflow:hidden;
+position:relative;
 }
 
 .nivel-agua {
-position: absolute;
-bottom: 0;
-width: 100%;
-background: #00ffae;
-transition: height 1s;
+position:absolute;
+bottom:0;
+width:100%;
+height:0%;
+background:linear-gradient(#00ffae,#00c98a);
+transition:height 1s;
 }
 
-.percent-text {
-font-size: 20px;
-font-weight: bold;
+.nivel-agua::after {
+content:"";
+position:absolute;
+width:200%;
+height:100%;
+background:rgba(255,255,255,0.2);
+animation:onda 2s infinite linear;
 }
 
-.liters-text {
-font-size: 14px;
+@keyframes onda {
+0%{transform:translateX(0)}
+100%{transform:translateX(50%)}
 }
 
 /* CORES */
-.nv-critico { border-color: red; }
-.nv-alerta { border-color: orange; }
-.nv-normal { border-color: #00ffae; }
-
-/* ================= GRÁFICO ================= */
-#graficoUTI {
-background: rgba(0,0,0,0.4);
-border-radius: 10px;
-padding: 10px;
-margin-top: 20px;
+.nv-critico {
+border:2px solid red;
+animation:pisca 1s infinite;
 }
 
-/* ================= PRESSÃO ================= */
+.nv-alerta { border:2px solid orange; }
+.nv-normal { border:2px solid #00ffae; }
+
+@keyframes pisca {
+50%{box-shadow:0 0 20px red}
+}
+
+/* IA */
+.box-previsao {
+margin:15px auto;
+padding:10px;
+background:rgba(0,0,0,0.5);
+border-radius:10px;
+text-align:center;
+}
+
+/* GRÁFICO */
+#graficoUTI {
+margin-top:20px;
+background:rgba(0,0,0,0.4);
+border-radius:10px;
+}
+
+/* PRESSÃO */
 #pressaoBombaGrid {
-display: grid;
-gap: 20px;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+display:grid;
+gap:20px;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
 }
 
 .card-pressao {
-background: rgba(255,255,255,0.08);
-padding: 15px;
-border-radius: 10px;
-text-align: center;
+background:rgba(255,255,255,0.08);
+padding:10px;
+border-radius:10px;
+text-align:center;
 }
 
 .valor-pressao {
-font-size: 24px;
-color: #00ffae;
+font-size:22px;
+color:#00ffae;
 }
 
-/* ================= BOMBAS ================= */
+/* BOMBAS */
 .card-bomba {
-padding: 15px;
-border-radius: 10px;
-text-align: center;
+padding:10px;
+border-radius:10px;
+text-align:center;
 }
 
-.bomba-ligada {
-background: rgba(0,150,0,0.6);
-}
+.bomba-ligada { background:rgba(0,150,0,0.6); }
+.bomba-desligada { background:rgba(150,0,0,0.6); }
 
-.bomba-desligada {
-background: rgba(150,0,0,0.6);
-}
-
-/* ================= FOOTER ================= */
 footer {
-text-align: center;
-padding: 10px;
-margin-top: 40px;
-background: rgba(0,0,0,0.5);
+text-align:center;
+margin-top:40px;
+padding:10px;
+background:rgba(0,0,0,0.5);
 }
