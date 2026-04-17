@@ -1,86 +1,97 @@
 /* ================= BASE ================= */
-body {
-margin: 0;
-font-family: "Segoe UI", Arial, sans-serif;
-background: linear-gradient(135deg, #022c22, #014737);
-color: white;
+
+body{
+margin:0;
+font-family:"Segoe UI",Arial,sans-serif;
+background:linear-gradient(135deg,#022c22,#014737);
+color:white;
 }
 
 /* ================= HEADER ================= */
-header {
-background: rgba(0, 90, 60, 0.95);
-padding: 20px;
-text-align: center;
-border-bottom: 3px solid #00ffae;
+
+header{
+background:rgba(0,90,60,0.95);
+padding:20px;
+text-align:center;
+border-bottom:3px solid #00ffae;
 }
 
-header h1{
-font-size: 28px;
-letter-spacing: 1px;
+.header-content h1{
+margin:0;
+font-size:28px;
+letter-spacing:1px;
 }
 
-#statusSistema {
-text-align: center;
-padding: 10px;
-font-weight: bold;
-font-size: 14px;
-opacity: 0.9;
+#lastUpdate{
+margin-top:6px;
+font-size:14px;
+opacity:0.9;
+}
+
+/* ================= STATUS ================= */
+
+#statusSistema{
+text-align:center;
+padding:10px;
+font-weight:bold;
+font-size:15px;
 }
 
 /* ================= IA ================= */
-.box-previsao {
-margin: 15px auto;
-padding: 12px 20px;
-border-radius: 10px;
-text-align: center;
-width: fit-content;
-background: rgba(0,0,0,0.4);
-box-shadow: 0 0 10px rgba(0,0,0,0.5);
-font-size: 16px;
+
+.box-previsao{
+margin:15px auto;
+padding:12px 20px;
+border-radius:10px;
+text-align:center;
+width:fit-content;
+background:rgba(0,0,0,0.4);
+box-shadow:0 0 10px rgba(0,0,0,0.6);
+font-size:16px;
 }
 
-.previsao-critica {
-color: #ff4e4e;
-animation: blink 1s infinite;
+.previsao-critica{
+color:#ff4e4e;
+animation:blink 1s infinite;
 }
 
-.previsao-alerta {
-color: #ffcc00;
+.previsao-alerta{
+color:#ffcc00;
 }
 
-@keyframes blink {
-50% { opacity: 0.3; }
+@keyframes blink{
+50%{opacity:0.3;}
 }
 
 /* ================= ALERTA GLOBAL ================= */
-.alerta-global {
-display: none;
-background: #ff4e4e;
-padding: 14px;
-border-radius: 8px;
-text-align: center;
-margin-bottom: 15px;
-font-weight: bold;
-font-size: 18px;
-box-shadow: 0 0 10px rgba(0,0,0,0.6);
+
+.alerta-global{
+display:none;
+background:#ff4e4e;
+padding:14px;
+border-radius:8px;
+text-align:center;
+margin-bottom:15px;
+font-weight:bold;
+font-size:18px;
 }
 
 /* ================= RESERVATÓRIOS ================= */
 
-#reservatoriosContainer {
-display: grid;
-gap: 20px;
-grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-margin-top: 20px;
+#reservatoriosContainer{
+display:grid;
+gap:20px;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+margin-top:20px;
 }
 
-.card-reservatorio {
-background: rgba(255,255,255,0.08);
-padding: 15px;
-border-radius: 12px;
-text-align: center;
-border: 2px solid transparent;
-box-shadow: 0 0 12px rgba(0,0,0,0.5);
+.card-reservatorio{
+background:rgba(255,255,255,0.08);
+padding:15px;
+border-radius:12px;
+text-align:center;
+border:2px solid transparent;
+box-shadow:0 0 12px rgba(0,0,0,0.5);
 }
 
 .card-reservatorio h3{
@@ -90,78 +101,99 @@ margin-bottom:10px;
 
 /* ================= TANQUE ================= */
 
-.tanque-visu {
-height: 150px;
-background: rgba(255,255,255,0.15);
-border-radius: 10px;
-overflow: hidden;
-position: relative;
+.tanque-visu{
+height:150px;
+background:rgba(255,255,255,0.12);
+border-radius:12px;
+overflow:hidden;
+position:relative;
 margin-bottom:10px;
+box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
 }
 
-.nivel-agua {
-position: absolute;
-bottom: 0;
-width: 100%;
-background: linear-gradient(180deg,#00ffae,#00c78a);
-transition: height 1s;
+/* ÁGUA */
+
+.nivel-agua{
+position:absolute;
+bottom:0;
+width:100%;
+background:linear-gradient(180deg,#19f0b2,#00c78a,#009f6b);
+transition:height 1s;
 }
 
-/* ================= NÚMEROS ================= */
+/* ================= NÚMEROS DO TANQUE ================= */
 
-.percent-text {
-font-size: 32px;
-font-weight: bold;
-letter-spacing: 1px;
+.percent-text{
+position:absolute;
+top:8px;
+left:50%;
+transform:translateX(-50%);
+font-size:34px;
+font-weight:bold;
+color:white;
+text-shadow:0 0 8px rgba(0,0,0,0.8);
 }
 
-.liters-text {
-font-size: 16px;
-opacity: 0.9;
-margin-top: 3px;
+.liters-text{
+position:absolute;
+bottom:10px;
+left:50%;
+transform:translateX(-50%);
+font-size:16px;
+font-weight:600;
+color:white;
+text-shadow:0 0 6px rgba(0,0,0,0.8);
 }
 
 /* ================= CORES ================= */
 
-.nv-critico { 
-border-color: red;
-box-shadow: 0 0 10px rgba(255,0,0,0.5);
+.nv-critico{
+border-color:red;
+box-shadow:0 0 10px rgba(255,0,0,0.6);
 }
 
-.nv-alerta { 
-border-color: orange;
-box-shadow: 0 0 10px rgba(255,150,0,0.5);
+.nv-alerta{
+border-color:orange;
+box-shadow:0 0 10px rgba(255,150,0,0.5);
 }
 
-.nv-normal { 
-border-color: #00ffae;
+.nv-normal{
+border-color:#00ffae;
+}
+
+/* ================= HISTÓRICO ================= */
+
+.btn-historico{
+margin-top:8px;
+font-size:13px;
+padding:4px 8px;
 }
 
 /* ================= GRÁFICO ================= */
 
-#graficoUTI {
-background: rgba(0,0,0,0.4);
-border-radius: 10px;
-padding: 10px;
-margin-top: 25px;
-box-shadow: 0 0 10px rgba(0,0,0,0.5);
+#graficoUTI{
+background:rgba(0,0,0,0.35);
+border-radius:10px;
+padding:10px;
+margin-top:25px;
+box-shadow:0 0 10px rgba(0,0,0,0.5);
 }
 
 /* ================= PRESSÕES ================= */
 
-#pressaoBombaGrid {
-display: grid;
-gap: 20px;
-grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-margin-top: 20px;
+#pressaoBombaGrid{
+display:grid;
+gap:20px;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+margin-top:20px;
 }
 
-.card-pressao {
-background: rgba(255,255,255,0.08);
-padding: 18px;
-border-radius: 12px;
-text-align: center;
-box-shadow: 0 0 12px rgba(0,0,0,0.5);
+.card-pressao{
+background:rgba(255,255,255,0.08);
+padding:18px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 0 12px rgba(0,0,0,0.5);
 }
 
 .card-pressao h3{
@@ -169,54 +201,69 @@ font-size:16px;
 margin-bottom:10px;
 }
 
-.valor-pressao {
-font-size: 38px;
-font-weight: bold;
-color: #00ffae;
-letter-spacing: 1px;
+/* NÚMERO PRESSÃO */
+
+.valor-container{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:6px;
 }
 
-.unidade {
-font-size: 16px;
-opacity: 0.8;
-margin-left: 4px;
+.valor-pressao{
+font-size:40px;
+font-weight:bold;
+color:#00ffae;
+letter-spacing:1px;
+}
+
+/* UNIDADE */
+
+.unidade{
+font-size:16px;
+opacity:0.85;
 }
 
 /* ================= BOMBAS ================= */
 
-.card-bomba {
-padding: 18px;
-border-radius: 12px;
-text-align: center;
-font-weight: bold;
-font-size: 18px;
-box-shadow: 0 0 10px rgba(0,0,0,0.5);
+.card-bomba{
+padding:18px;
+border-radius:12px;
+text-align:center;
+font-weight:bold;
+font-size:18px;
+box-shadow:0 0 10px rgba(0,0,0,0.5);
 }
 
-.bomba-ligada {
-background: rgba(0,150,0,0.7);
+.card-bomba p{
+margin:6px 0;
+font-size:16px;
 }
 
-.bomba-desligada {
-background: rgba(150,0,0,0.7);
+.bomba-ligada{
+background:rgba(0,150,0,0.75);
+}
+
+.bomba-desligada{
+background:rgba(150,0,0,0.75);
 }
 
 /* ================= FOOTER ================= */
 
-footer {
-text-align: center;
-padding: 12px;
-margin-top: 40px;
-background: rgba(0,0,0,0.6);
-font-size: 14px;
-opacity: 0.9;
+footer{
+text-align:center;
+padding:12px;
+margin-top:40px;
+background:rgba(0,0,0,0.6);
+font-size:14px;
+opacity:0.9;
 }
 
 /* ================= RESPONSIVO ================= */
 
-@media (max-width:700px){
+@media(max-width:700px){
 
-header h1{
+.header-content h1{
 font-size:22px;
 }
 
