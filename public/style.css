@@ -1,225 +1,58 @@
-/* ===============================
-   BASE
-=============================== */
-html, body {
-  height: 100%;
+body {
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #022c22, #014737);
-  color: white;
-  overflow: hidden;
+  font-family: "Segoe UI";
+  background: #021d1a;
+  color: #fff;
 }
 
-/* ===============================
-   HEADER
-=============================== */
 header {
-  height: 60px;
-  background: rgba(0,90,60,0.9);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+  background: #013c30;
 }
 
 #statusSistema {
-  text-align: center;
-  padding: 4px 8px;
   font-weight: bold;
   color: #00ffae;
-  background: rgba(0,0,0,0.25);
-  border-radius: 6px;
 }
 
-/* ===============================
-   MAIN
-=============================== */
 main {
-  height: calc(100% - 100px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  padding: 10px;
 }
 
-/* ===============================
-   TOPO (RESERVATÓRIOS - DESTAQUE)
-=============================== */
-.area-topo {
-  flex: 1.4; /* 🔥 MAIS IMPORTANTE */
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  min-height: 0;
+.card {
+  background: #062f2a;
+  border-radius: 10px;
+  padding: 10px;
   position: relative;
-}
-
-/* Título da seção */
-.area-topo::before {
-  content: "Reservatórios";
-  position: absolute;
-  top: -18px;
-  left: 5px;
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-/* Container */
-#reservatoriosContainer {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-}
-
-/* CARD RESERVATÓRIO (DESTAQUE) */
-.card-reservatorio {
-  background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.25));
-  border-radius: 14px;
-  padding: 12px;
-  text-align: center;
-  font-size: 14px;
-
-  border: 2px solid rgba(0,255,170,0.6);
-  box-shadow: 0 0 15px rgba(0,255,170,0.25);
-
-  transform: scale(1.02);
-  transition: 0.3s;
-}
-
-.card-reservatorio:hover {
-  transform: scale(1.05);
-}
-
-/* TANQUE */
-.tanque-visu {
-  height: 80px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 12px;
   overflow: hidden;
-  position: relative;
-  margin-top: 8px;
 }
 
-/* ÁGUA */
-.nivel-agua {
+.card h2 {
+  font-size: 14px;
+}
+
+.valor {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.barra {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: linear-gradient(to top, #00ffae, #38bdf8);
-  box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
-  transition: height 0.8s ease;
+  background: #00ff88;
+  transition: 0.5s;
 }
 
-/* TEXTO MAIS VISÍVEL */
-.card-reservatorio strong {
-  font-size: 18px;
-}
-
-/* NÍVEIS */
-.nv-critico { border:2px solid #ef4444; }
-.nv-alerta { border:2px solid #f59e0b; }
-.nv-normal { border:2px solid #22c55e; }
-
-/* ===============================
-   BAIXO
-=============================== */
-.area-bottom {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 2.3fr 1fr;
-  gap: 12px;
-  min-height: 0;
-}
-
-/* ===============================
-   GRÁFICO (SECUNDÁRIO)
-=============================== */
-#graficoUTI {
-  background: rgba(0,0,0,0.45);
-  border-radius: 12px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-
-  opacity: 0.85; /* 🔥 menos destaque */
-}
-
-#graficoUTI canvas {
-  flex: 1;
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-
-#previsaoIA {
-  text-align: center;
-  margin-top: 6px;
-  font-weight: bold;
-  font-size: 12px;
-  color: #00ffae;
-}
-
-/* ===============================
-   LATERAL (SECUNDÁRIO)
-=============================== */
-#pressaoBombaGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  min-height: 0;
-}
-
-/* CARDS (MAIS DISCRETOS) */
-.card-pressao,
-.card-bomba {
-  background: rgba(255,255,255,0.08);
-  padding: 10px;
-  border-radius: 10px;
-  text-align: center;
-  font-size: 12px;
-
-  opacity: 0.75;
-  transform: scale(0.97);
-  transition: 0.3s;
-}
-
-/* Hover */
-.card-pressao:hover,
-.card-bomba:hover {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* PRESSÃO */
-.card-pressao {
-  font-size: 14px;
-  font-weight: bold;
-  background: rgba(0,150,255,0.15);
-  border: 1px solid rgba(0,150,255,0.4);
-}
+/* STATUS */
+.critico { border: 2px solid red; }
+.alerta { border: 2px solid orange; }
+.normal { border: 2px solid #00ff88; }
 
 /* BOMBAS */
-.bomba-ligada {
-  background: rgba(34,197,94,0.25) !important;
-}
-
-.bomba-desligada {
-  background: rgba(239,68,68,0.25) !important;
-}
-
-/* ===============================
-   FOOTER
-=============================== */
-footer {
-  height: 20px;
-  text-align: center;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-}
+.ligada { background: #064e3b !important; }
+.desligada { background: #3f3f46 !important; }
