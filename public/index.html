@@ -4,183 +4,103 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Monitoramento - HAG</title>
+<title>Dashboard Água - HAG</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="style.css">
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script defer src="dashboard.js"></script>
+<link rel="stylesheet" href="style.css">
 
 </head>
 
 <body>
 
-<header>
+<div class="dashboard">
 
-<div class="header-content">
-<h1>Hospital Arnaldo Gavazza – Monitoramento</h1>
-<div id="lastUpdate">Atualizado --:--:--</div>
-</div>
+<div class="reservatorios" id="reservatoriosContainer"></div>
 
-</header>
+<div class="painel-direito">
 
-<!-- STATUS SISTEMA -->
-
-<div id="statusSistema">🟢 Sistema Operacional</div>
-
-<!-- PREVISÃO IA -->
-
-<div id="previsaoIA" class="box-previsao">
-
-IA analisando consumo...
-
-</div>
-
-<main>
-
-<!-- ================= RESERVATÓRIOS ================= -->
-
-<h2>Reservatórios</h2>
-
-<!-- ALERTA GLOBAL -->
-
-<div id="alerta-nivelbaixo" class="alerta-global">
-
-⚠ Nível crítico detectado em reservatório
-
-</div>
-
-<!-- GRID DOS RESERVATÓRIOS -->
-
-<div id="reservatoriosContainer">
-
-<!-- Os reservatórios são criados automaticamente pelo JS -->
-
-</div>
-
-
-<!-- ================= GRÁFICO ================= -->
-
-<h2 style="margin-top:40px">Gráfico em Tempo Real</h2>
-
-<div id="graficoUTI">
+<div class="grafico">
 
 <canvas id="graficoUTIChart"></canvas>
 
 </div>
 
+<div class="indicadores">
 
-<!-- ================= PRESSÕES E BOMBAS ================= -->
+<div class="card">
 
-<h2 style="margin-top:50px">Pressões e Bombas</h2>
+<h3>IA Consumo</h3>
+<div id="previsaoIA">--</div>
 
-<div id="pressaoBombaGrid">
+</div>
 
-<!-- PRESSÃO SAÍDA OSMOSE -->
+<div class="card">
 
-<div class="card-pressao">
+<h3>Autonomia</h3>
+<div id="autonomiaReservatorio">--</div>
 
-<h3>Saída Osmose</h3>
+</div>
 
-<div class="valor-container">
+<div class="card alerta" id="alerta-nivelbaixo">
 
-<span class="valor-pressao" id="pSaidaOsmose">--</span>
-
-<span class="unidade">bar</span>
+⚠ Reservatório abaixo de 50%
 
 </div>
 
 </div>
 
+<div class="bombas">
 
-<!-- PRESSÃO RETORNO OSMOSE -->
-
-<div class="card-pressao">
-
-<h3>Retorno Osmose</h3>
-
-<div class="valor-container">
-
-<span class="valor-pressao" id="pRetornoOsmose">--</span>
-
-<span class="unidade">bar</span>
-
-</div>
-
-</div>
-
-
-<!-- PRESSÃO CME -->
-
-<div class="card-pressao">
-
-<h3>Saída CME</h3>
-
-<div class="valor-container">
-
-<span class="valor-pressao" id="pSaidaCME">--</span>
-
-<span class="unidade">bar</span>
-
-</div>
-
-</div>
-
-
-<!-- ================= BOMBAS ================= -->
-
-<!-- BOMBA 01 -->
-
-<div class="card-bomba bomba-desligada" id="bomba1">
+<div class="bomba" id="bomba1">
 
 <h3>Bomba 01</h3>
 
-<p>Status: <b id="b1Status">--</b></p>
+Status:
+<span id="b1Status">--</span>
 
-<p>Ciclos: <b id="b1Ciclos">--</b></p>
+<br>
+
+Ciclos:
+<span id="b1Ciclos">0</span>
 
 </div>
 
-
-<!-- BOMBA 02 -->
-
-<div class="card-bomba bomba-desligada" id="bomba2">
+<div class="bomba" id="bomba2">
 
 <h3>Bomba 02</h3>
 
-<p>Status: <b id="b2Status">--</b></p>
+Status:
+<span id="b2Status">--</span>
 
-<p>Ciclos: <b id="b2Ciclos">--</b></p>
+<br>
+
+Ciclos:
+<span id="b2Ciclos">0</span>
 
 </div>
 
-
-<!-- BOMBA OSMOSE -->
-
-<div class="card-bomba bomba-desligada" id="bomba3">
+<div class="bomba" id="bomba3">
 
 <h3>Bomba Osmose</h3>
 
-<p>Status: <b id="b3Status">--</b></p>
+Status:
+<span id="b3Status">--</span>
 
-<p>Ciclos: <b id="b3Ciclos">--</b></p>
+<br>
+
+Ciclos:
+<span id="b3Ciclos">0</span>
 
 </div>
 
 </div>
 
-</main>
+</div>
 
-<footer>
+</div>
 
-Sistema HAG © 2025  
-Hospital Arnaldo Gavazza
-
-</footer>
+<script src="dashboard.js"></script>
 
 </body>
 
