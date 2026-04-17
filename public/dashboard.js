@@ -6,46 +6,40 @@ const API = "/api/dashboard";
 let grafico;
 
 // ================= INICIAR GRAFICO =================
-function iniciarGrafico() {
+function iniciarGrafico(){
 
 const ctx = document.getElementById("graficoUTIChart");
 
-if (!ctx) return;
+if(!ctx) return;
 
-grafico = new Chart(ctx, {
-type: "line",
+grafico = new Chart(ctx,{
+type:"line",
 
-data: {
-labels: [],
-datasets: [{
-label: "Consumo de Água",
-data: [],
-borderColor: "#00ffd0",
-backgroundColor: "rgba(0,255,208,0.2)",
-tension: 0.3,
-fill: true
+data:{
+labels:[],
+datasets:[{
+label:"Consumo de Água",
+data:[],
+borderColor:"#00ffd0",
+backgroundColor:"rgba(0,255,208,0.2)",
+tension:0.3,
+fill:true
 }]
 },
 
-options: {
-responsive: true,
-maintainAspectRatio: false,
+options:{
+responsive:true,
+maintainAspectRatio:false,
 
-plugins: {
-legend: {
-labels: {
-color: "white"
-}
+plugins:{
+legend:{
+labels:{color:"white"}
 }
 },
 
-scales: {
-x: {
-ticks: { color: "white" }
-},
-y: {
-ticks: { color: "white" }
-}
+scales:{
+x:{ticks:{color:"white"}},
+y:{ticks:{color:"white"}}
 }
 }
 
@@ -54,16 +48,16 @@ ticks: { color: "white" }
 }
 
 // ================= ATUALIZAR GRAFICO =================
-function atualizarGrafico(valor) {
+function atualizarGrafico(valor){
 
-if (!grafico) return;
+if(!grafico) return;
 
-const hora = new Date().toLocaleTimeString();
+const hora=new Date().toLocaleTimeString();
 
 grafico.data.labels.push(hora);
 grafico.data.datasets[0].data.push(valor);
 
-if (grafico.data.labels.length > 40) {
+if(grafico.data.labels.length>40){
 
 grafico.data.labels.shift();
 grafico.data.datasets[0].data.shift();
@@ -75,87 +69,88 @@ grafico.update();
 }
 
 // ================= IA =================
-function atualizarIA(consumo) {
+function atualizarIA(consumo){
 
-let texto = "Consumo normal";
+const el=document.getElementById("previsaoIA");
 
-if (consumo > 300) texto = "⚠ Consumo acima do normal";
-if (consumo > 600) texto = "🚨 Possível vazamento detectado";
+if(!el) return;
 
-const el = document.getElementById("previsaoIA");
+let texto="Consumo normal";
 
-if (el) el.textContent = texto;
+if(consumo>15000) texto="⚠ Consumo elevado";
+
+if(consumo>18000) texto="🚨 Consumo muito alto";
+
+el.textContent=texto;
 
 }
 
 // ================= CACHE =================
-let ultimasLeituras = {
-
-reservatorios: {},
-pressoes: {},
-bombas: {}
-
+let ultimasLeituras={
+reservatorios:{},
+pressoes:{},
+bombas:{}
 };
 
 // ================= ATUALIZAR HTTP =================
-async function atualizar() {
+async function atualizar(){
 
-try {
+try{
 
-const r = await fetch(API, { cache: "no-store" });
+const r=await fetch(API,{cache:"no-store"});
 
-if (!r.ok) throw new Error();
+if(!r.ok) throw new Error();
 
-const dados = await r.json();
+const dados=await r.json();
 
 atualizarCache(dados);
 
 renderTudo();
 
-const el = document.getElementById("lastUpdate");
+const el=document.getElementById("lastUpdate");
 
-if (el) {
-el.textContent = "Atualizado " + new Date().toLocaleTimeString();
+if(el){
+el.textContent="Atualizado "+new Date().toLocaleTimeString();
 }
 
-} catch {
+}catch{
 
-const el = document.getElementById("lastUpdate");
+const el=document.getElementById("lastUpdate");
 
-if (el) {
-el.textContent = "Sem comunicação " + new Date().toLocaleTimeString();
+if(el){
+el.textContent="Sem comunicação "+new Date().toLocaleTimeString();
 }
 
 }
 
 }
 
-setInterval(atualizar, 5000);
+setInterval(atualizar,5000);
 atualizar();
 
 // ================= ATUALIZAR CACHE =================
-function atualizarCache(d) {
+function atualizarCache(d){
 
-if (d.reservatorios) {
+if(d.reservatorios){
 
-d.reservatorios.forEach(r => {
-ultimasLeituras.reservatorios[r.setor] = r;
+d.reservatorios.forEach(r=>{
+ultimasLeituras.reservatorios[r.setor]=r;
 });
 
 }
 
-if (d.pressoes) {
+if(d.pressoes){
 
-d.pressoes.forEach(p => {
-ultimasLeituras.pressoes[p.setor] = p;
+d.pressoes.forEach(p=>{
+ultimasLeituras.pressoes[p.setor]=p;
 });
 
 }
 
-if (d.bombas) {
+if(d.bombas){
 
-d.bombas.forEach(b => {
-ultimasLeituras.bombas[b.nome] = b;
+d.bombas.forEach(b=>{
+ultimasLeituras.bombas[b.nome]=b;
 });
 
 }
@@ -163,9 +158,9 @@ ultimasLeituras.bombas[b.nome] = b;
 }
 
 // ================= RENDER =================
-function renderTudo() {
+function renderTudo(){
 
-const reservatorios = Object.values(ultimasLeituras.reservatorios);
+const reservatorios=Object.values(ultimasLeituras.reservatorios);
 
 renderReservatorios(reservatorios);
 
@@ -173,11 +168,13 @@ renderPressao(Object.values(ultimasLeituras.pressoes));
 
 renderBombas(ultimasLeituras.bombas);
 
-const elevador = reservatorios.find(r => r.setor === "reservatorio_elevador");
+// pegar reservatorio elevador
+const elevador=reservatorios.find(r=>r.setor==="elevador");
 
-if (elevador) {
+if(elevador){
 
 atualizarGrafico(elevador.current_liters);
+
 atualizarIA(elevador.current_liters);
 
 }
@@ -187,23 +184,24 @@ verificarNivelBaixo(reservatorios);
 }
 
 // ================= RESERVATORIOS =================
-function renderReservatorios(lista) {
+function renderReservatorios(lista){
 
-const box = document.getElementById("reservatoriosContainer");
+const box=document.getElementById("reservatoriosContainer");
 
-if (!box) return;
+if(!box) return;
 
-box.innerHTML = "";
+box.innerHTML="";
 
-lista.forEach(r => {
+lista.forEach(r=>{
 
-const percent = Math.round(r.percent || 0);
-const litros = r.current_liters ?? "--";
+const percent=Math.round(r.percent||0);
+const litros=r.current_liters??"--";
 
-const card = document.createElement("div");
-card.className = "card-reservatorio";
+const card=document.createElement("div");
 
-card.innerHTML = `
+card.className="card-reservatorio";
+
+card.innerHTML=`
 <div class="top-bar">
 <h3>${r.nome}</h3>
 </div>
@@ -227,23 +225,21 @@ box.appendChild(card);
 }
 
 // ================= PRESSAO =================
-function renderPressao(lista) {
+function renderPressao(lista){
 
-const mapa = {
-
-saida_osmose: "pSaidaOsmose",
-retorno_osmose: "pRetornoOsmose",
-saida_cme: "pSaidaCME"
-
+const mapa={
+saida_osmose:"pSaidaOsmose",
+retorno_osmose:"pRetornoOsmose",
+saida_cme:"pSaidaCME"
 };
 
-lista.forEach(p => {
+lista.forEach(p=>{
 
-const el = document.getElementById(mapa[p.setor]);
+const el=document.getElementById(mapa[p.setor]);
 
-if (el && p.pressao != null) {
+if(el && p.pressao!=null){
 
-el.textContent = Number(p.pressao).toFixed(2);
+el.textContent=Number(p.pressao).toFixed(2);
 
 }
 
@@ -252,7 +248,7 @@ el.textContent = Number(p.pressao).toFixed(2);
 }
 
 // ================= BOMBAS =================
-function renderBombas(bombas) {
+function renderBombas(bombas){
 
 atualizarBomba("Bomba 01","bomba1","b1Status","b1Ciclos");
 atualizarBomba("Bomba 02","bomba2","b2Status","b2Ciclos");
@@ -260,29 +256,29 @@ atualizarBomba("Bomba Osmose","bomba3","b3Status","b3Ciclos");
 
 function atualizarBomba(nome,cardId,statusId,cicloId){
 
-const b = bombas[nome];
+const b=bombas[nome];
 
-if (!b) return;
+if(!b) return;
 
-const ligada = b.estado_num === 1 || b.estado === "ligada";
+const ligada=b.estado_num===1||b.estado==="ligada";
 
-const card = document.getElementById(cardId);
+const card=document.getElementById(cardId);
 
-if (!card) return;
+if(!card) return;
 
-card.classList.toggle("bomba-ligada", ligada);
-card.classList.toggle("bomba-desligada", !ligada);
+card.classList.toggle("bomba-ligada",ligada);
+card.classList.toggle("bomba-desligada",!ligada);
 
-const status = document.getElementById(statusId);
+const status=document.getElementById(statusId);
 
-if (status) {
-status.textContent = ligada ? "Ligada" : "Desligada";
+if(status){
+status.textContent=ligada?"Ligada":"Desligada";
 }
 
-const ciclo = document.getElementById(cicloId);
+const ciclo=document.getElementById(cicloId);
 
-if (ciclo) {
-ciclo.textContent = b.ciclo ?? 0;
+if(ciclo){
+ciclo.textContent=b.ciclo??0;
 }
 
 }
@@ -290,34 +286,34 @@ ciclo.textContent = b.ciclo ?? 0;
 }
 
 // ================= ALERTA =================
-function verificarNivelBaixo(lista) {
+function verificarNivelBaixo(lista){
 
-const alerta = document.getElementById("alerta-nivelbaixo");
+const alerta=document.getElementById("alerta-nivelbaixo");
 
-if (!alerta) return;
+if(!alerta) return;
 
-const baixo = lista.some(r => (r.percent || 0) <= 50);
+const baixo=lista.some(r=>(r.percent||0)<=50);
 
-alerta.style.display = baixo ? "block" : "none";
+alerta.style.display=baixo?"block":"none";
 
 }
 
 // ================= WEBSOCKET =================
 let ws;
 
-function conectarWS() {
+function conectarWS(){
 
-const proto = location.protocol === "https:" ? "wss" : "ws";
+const proto=location.protocol==="https:"?"wss":"ws";
 
-ws = new WebSocket(proto + "://" + location.host);
+ws=new WebSocket(proto+"://"+location.host);
 
-ws.onmessage = function(e){
+ws.onmessage=function(e){
 
 try{
 
-const msg = JSON.parse(e.data);
+const msg=JSON.parse(e.data);
 
-if(msg.type === "update" || msg.type === "init"){
+if(msg.type==="update"||msg.type==="init"){
 
 atualizarCache(msg.dados);
 
@@ -325,17 +321,17 @@ renderTudo();
 
 }
 
-}catch(err){}
+}catch{}
 
 };
 
-ws.onclose = function(){
+ws.onclose=function(){
 
 setTimeout(conectarWS,3000);
 
 };
 
-ws.onerror = function(){
+ws.onerror=function(){
 
 ws.close();
 
@@ -346,4 +342,4 @@ ws.close();
 conectarWS();
 
 // ================= START =================
-document.addEventListener("DOMContentLoaded", iniciarGrafico);
+document.addEventListener("DOMContentLoaded",iniciarGrafico);
