@@ -1,12 +1,25 @@
 /* ============================= */
-/* BASE */
+/* RESET */
+/* ============================= */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI, Arial, sans-serif;
+}
+
+/* ============================= */
+/* BODY */
 /* ============================= */
 
 body{
-margin:0;
-font-family:Segoe UI,Arial,sans-serif;
-background:linear-gradient(135deg,#012a21,#014737);
+background:linear-gradient(135deg,#023c2d,#014737);
 color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
 }
 
 /* ============================= */
@@ -14,33 +27,70 @@ color:white;
 /* ============================= */
 
 header{
-background:#015c3d;
-padding:20px;
+padding:10px;
 text-align:center;
-border-bottom:3px solid #00ffae;
+border-bottom:2px solid rgba(255,255,255,0.2);
 }
 
 header h1{
-margin:0;
-font-size:28px;
-letter-spacing:1px;
+font-size:22px;
 }
 
 #lastUpdate{
-margin-top:6px;
-font-size:14px;
-opacity:0.85;
+font-size:13px;
+opacity:0.9;
+margin-top:4px;
 }
 
 /* ============================= */
-/* STATUS SISTEMA */
+/* STATUS */
 /* ============================= */
 
 #statusSistema{
 text-align:center;
+padding:4px;
+font-size:14px;
+}
+
+/* ============================= */
+/* IA PREVISÃO */
+/* ============================= */
+
+.box-previsao{
+text-align:center;
+font-size:14px;
+margin-bottom:5px;
+}
+
+/* ============================= */
+/* MAIN LAYOUT */
+/* ============================= */
+
+main{
+flex:1;
+display:grid;
+
+grid-template-rows:
+
+auto
+1fr
+auto
+1fr;
+
+gap:8px;
+
 padding:10px;
-font-weight:bold;
-font-size:15px;
+
+overflow:hidden;
+}
+
+/* ============================= */
+/* TITULOS */
+/* ============================= */
+
+h2{
+font-size:16px;
+margin-bottom:4px;
 }
 
 /* ============================= */
@@ -50,24 +100,24 @@ font-size:15px;
 .alerta-global{
 display:none;
 background:#ff4e4e;
-padding:14px;
-border-radius:8px;
+padding:6px;
+border-radius:6px;
 text-align:center;
-margin:15px;
-font-weight:bold;
-font-size:18px;
-box-shadow:0 0 10px rgba(255,0,0,0.6);
+font-size:13px;
 }
 
 /* ============================= */
-/* GRID RESERVATÓRIOS */
+/* RESERVATÓRIOS */
 /* ============================= */
 
 #reservatoriosContainer{
+
 display:grid;
-gap:20px;
-grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-padding:20px;
+
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+
+gap:10px;
+
 }
 
 /* ============================= */
@@ -75,18 +125,19 @@ padding:20px;
 /* ============================= */
 
 .card-reservatorio{
-background:rgba(255,255,255,0.08);
-padding:15px;
-border-radius:12px;
-text-align:center;
-border:2px solid transparent;
-box-shadow:0 0 12px rgba(0,0,0,0.5);
-transition:0.4s;
-}
 
-.card-reservatorio h3{
-font-size:18px;
-margin-bottom:10px;
+background:rgba(255,255,255,0.08);
+
+border-radius:10px;
+
+padding:10px;
+
+text-align:center;
+
+box-shadow:0 0 10px rgba(0,0,0,0.4);
+
+border:2px solid rgba(255,255,255,0.08);
+
 }
 
 /* ============================= */
@@ -94,111 +145,77 @@ margin-bottom:10px;
 /* ============================= */
 
 .tanque-visu{
-height:150px;
-background:rgba(255,255,255,0.12);
-border-radius:12px;
-overflow:hidden;
-position:relative;
-margin-bottom:10px;
-box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
-}
 
-.nivel-agua{
-position:absolute;
-bottom:0;
-width:100%;
-background:linear-gradient(180deg,#19f0b2,#00c78a,#009f6b);
-transition:height 1s;
+position:relative;
+
+height:90px;
+
+border-radius:8px;
+
+overflow:hidden;
+
+background:rgba(255,255,255,0.1);
+
+margin:8px 0;
+
 }
 
 /* ============================= */
-/* TEXTO PORCENTAGEM */
+/* NÍVEL DA ÁGUA */
+/* ============================= */
+
+.nivel-agua{
+
+position:absolute;
+
+bottom:0;
+
+width:100%;
+
+background:linear-gradient(#2ee6a6,#00b388);
+
+transition:height 0.6s;
+
+}
+
+/* ============================= */
+/* PORCENTAGEM */
 /* ============================= */
 
 .percent-text{
+
 position:absolute;
-top:10px;
-left:50%;
-transform:translateX(-50%);
-font-size:40px;
-font-weight:800;
-color:white;
-text-shadow:0 0 10px rgba(0,0,0,0.9);
-letter-spacing:1px;
+
+top:6px;
+
+width:100%;
+
+text-align:center;
+
+font-size:22px;
+
+font-weight:bold;
+
+text-shadow:0 0 8px rgba(0,0,0,0.7);
+
 }
 
 /* ============================= */
-/* TEXTO LITROS */
+/* LITROS */
 /* ============================= */
 
 .liters-text{
+
 position:absolute;
-bottom:10px;
-left:50%;
-transform:translateX(-50%);
-font-size:16px;
-font-weight:600;
-color:white;
-text-shadow:0 0 6px rgba(0,0,0,0.8);
-}
 
-/* ============================= */
-/* AUTONOMIA */
-/* ============================= */
+bottom:5px;
 
-.autonomia-box{
-margin-top:10px;
-padding:6px;
-border-radius:6px;
-font-size:14px;
-background:rgba(0,0,0,0.45);
-}
+width:100%;
 
-.autonomia-normal{
-color:#00ffae;
-}
+text-align:center;
 
-.autonomia-alerta{
-color:#ffcc00;
-}
+font-size:12px;
 
-.autonomia-critica{
-color:#ff4e4e;
-font-weight:bold;
-}
-
-/* ============================= */
-/* ALERTA FALTA DE ÁGUA */
-/* ============================= */
-
-.alerta-falta-agua{
-display:none;
-margin-top:8px;
-padding:6px;
-background:#ff4e4e;
-border-radius:6px;
-font-size:14px;
-font-weight:bold;
-color:white;
-box-shadow:0 0 8px rgba(255,0,0,0.6);
-}
-
-/* ============================= */
-/* NÍVEIS */
-/* ============================= */
-
-.nv-normal{
-border-color:#00ffae;
-}
-
-.nv-alerta{
-border-color:orange;
-box-shadow:0 0 10px rgba(255,150,0,0.6);
-}
-
-.nv-critico{
-border-color:red;
-box-shadow:0 0 12px rgba(255,0,0,0.8);
 }
 
 /* ============================= */
@@ -206,80 +223,61 @@ box-shadow:0 0 12px rgba(255,0,0,0.8);
 /* ============================= */
 
 .tanque-cheio{
-border-color:#00bfff;
-box-shadow:0 0 18px #00bfff;
-}
 
-.tanque-cheio .nivel-agua{
-background:linear-gradient(180deg,#4cc9ff,#00bfff,#008cff);
-}
+border-color:#00e1ff;
 
-.tanque-cheio .percent-text{
-color:#00e1ff;
-text-shadow:0 0 12px #00bfff;
+box-shadow:0 0 10px #00e1ff;
+
 }
 
 /* ============================= */
-/* PRESSÕES */
+/* AUTONOMIA */
 /* ============================= */
 
-#pressaoBombaGrid{
-display:grid;
-gap:20px;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-padding:20px;
+.autonomia-box{
+
+font-size:12px;
+
+margin-top:4px;
+
+padding:3px;
+
+border-radius:4px;
+
 }
 
-.card-pressao{
-background:rgba(255,255,255,0.08);
-padding:18px;
-border-radius:12px;
-text-align:center;
-box-shadow:0 0 12px rgba(0,0,0,0.5);
+.autonomia-normal{
+
+background:#0e7490;
+
 }
 
-.valor-container{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:6px;
+.autonomia-alerta{
+
+background:#b45309;
+
 }
 
-.valor-pressao{
-font-size:40px;
-font-weight:bold;
-color:#00ffae;
-}
+.autonomia-critica{
 
-.unidade{
-font-size:16px;
-opacity:0.8;
+background:#b91c1c;
+
 }
 
 /* ============================= */
-/* BOMBAS */
+/* ALERTA FALTA ÁGUA */
 /* ============================= */
 
-.card-bomba{
-padding:18px;
-border-radius:12px;
-text-align:center;
-font-weight:bold;
-font-size:18px;
-box-shadow:0 0 10px rgba(0,0,0,0.5);
-}
+.alerta-falta-agua{
 
-.card-bomba p{
-margin:6px 0;
-font-size:16px;
-}
+display:none;
 
-.bomba-ligada{
-background:rgba(0,150,0,0.75);
-}
+font-size:12px;
 
-.bomba-desligada{
-background:rgba(150,0,0,0.75);
+color:#ff6b6b;
+
+margin-top:3px;
+
 }
 
 /* ============================= */
@@ -287,11 +285,125 @@ background:rgba(150,0,0,0.75);
 /* ============================= */
 
 #graficoUTI{
-background:rgba(0,0,0,0.35);
+
+height:180px;
+
+background:rgba(0,0,0,0.3);
+
 border-radius:10px;
+
+padding:8px;
+
+}
+
+#graficoUTI canvas{
+
+height:100% !important;
+
+}
+
+/* ============================= */
+/* PRESSÕES E BOMBAS */
+/* ============================= */
+
+#pressaoBombaGrid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+
+gap:10px;
+
+}
+
+/* ============================= */
+/* CARD PRESSÃO */
+/* ============================= */
+
+.card-pressao{
+
+background:rgba(255,255,255,0.08);
+
+border-radius:10px;
+
 padding:10px;
-margin:20px;
-box-shadow:0 0 10px rgba(0,0,0,0.5);
+
+text-align:center;
+
+box-shadow:0 0 10px rgba(0,0,0,0.3);
+
+}
+
+/* ============================= */
+/* VALOR PRESSÃO */
+/* ============================= */
+
+.valor-container{
+
+display:flex;
+
+justify-content:center;
+
+align-items:flex-end;
+
+gap:4px;
+
+}
+
+.valor-pressao{
+
+font-size:26px;
+
+font-weight:bold;
+
+color:#00ffd0;
+
+}
+
+.unidade{
+
+font-size:12px;
+
+}
+
+/* ============================= */
+/* BOMBAS */
+/* ============================= */
+
+.card-bomba{
+
+border-radius:10px;
+
+padding:10px;
+
+text-align:center;
+
+font-size:14px;
+
+font-weight:bold;
+
+box-shadow:0 0 10px rgba(0,0,0,0.3);
+
+}
+
+.card-bomba p{
+
+font-size:12px;
+
+margin-top:3px;
+
+}
+
+.bomba-ligada{
+
+background:#0a7d3c;
+
+}
+
+.bomba-desligada{
+
+background:#8b1c1c;
+
 }
 
 /* ============================= */
@@ -299,30 +411,13 @@ box-shadow:0 0 10px rgba(0,0,0,0.5);
 /* ============================= */
 
 footer{
+
 text-align:center;
-padding:12px;
-margin-top:30px;
-background:rgba(0,0,0,0.6);
-font-size:14px;
-opacity:0.9;
-}
 
-/* ============================= */
-/* RESPONSIVO */
-/* ============================= */
+padding:5px;
 
-@media(max-width:700px){
+font-size:12px;
 
-header h1{
-font-size:22px;
-}
-
-.valor-pressao{
-font-size:30px;
-}
-
-.percent-text{
-font-size:28px;
-}
+opacity:0.8;
 
 }
