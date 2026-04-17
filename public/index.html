@@ -1,3 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Hospital Arnaldo Gavazza – Monitoramento</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
 <div class="topo-sistema">
 
 <div class="mensagem-topo">
@@ -11,22 +27,8 @@ Conectando...
 </span>
 
 </div>
+
 </div>
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-
-<meta charset="UTF-8">
-<title>Dashboard Água - HAG</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="style.css">
-
-</head>
-
-<body>
 
 <div class="dashboard">
 
@@ -35,31 +37,23 @@ Conectando...
 <div class="painel-direito">
 
 <div class="grafico">
-
 <canvas id="graficoUTIChart"></canvas>
-
 </div>
 
 <div class="indicadores">
 
 <div class="card">
-
-<h3>IA Consumo</h3>
+<h3>IA do Consumo</h3>
 <div id="previsaoIA">--</div>
-
 </div>
 
 <div class="card">
-
 <h3>Autonomia</h3>
 <div id="autonomiaReservatorio">--</div>
-
 </div>
 
 <div class="card alerta" id="alerta-nivelbaixo">
-
 ⚠ Reservatório abaixo de 50%
-
 </div>
 
 </div>
@@ -67,45 +61,24 @@ Conectando...
 <div class="bombas">
 
 <div class="bomba" id="bomba1">
-
 <h3>Bomba 01</h3>
-
-Status:
-<span id="b1Status">--</span>
-
+Status: <span id="b1Status">--</span>
 <br>
-
-Ciclos:
-<span id="b1Ciclos">0</span>
-
+Ciclos: <span id="b1Ciclos">0</span>
 </div>
 
 <div class="bomba" id="bomba2">
-
 <h3>Bomba 02</h3>
-
-Status:
-<span id="b2Status">--</span>
-
+Status: <span id="b2Status">--</span>
 <br>
-
-Ciclos:
-<span id="b2Ciclos">0</span>
-
+Ciclos: <span id="b2Ciclos">0</span>
 </div>
 
 <div class="bomba" id="bomba3">
-
 <h3>Bomba Osmose</h3>
-
-Status:
-<span id="b3Status">--</span>
-
+Status: <span id="b3Status">--</span>
 <br>
-
-Ciclos:
-<span id="b3Ciclos">0</span>
-
+Ciclos: <span id="b3Ciclos">0</span>
 </div>
 
 </div>
@@ -117,5 +90,4 @@ Ciclos:
 <script src="dashboard.js"></script>
 
 </body>
-
 </html>
