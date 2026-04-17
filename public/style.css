@@ -14,44 +14,46 @@ html, body {
    HEADER
 =============================== */
 header {
-  height: 70px;
+  height: 60px; /* 🔴 reduzido */
   background: rgba(0,90,60,0.9);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  font-size: 12px;
 }
 
 /* STATUS */
 #statusSistema {
   text-align: center;
-  padding: 5px;
+  padding: 3px;
   font-weight: bold;
   color: #00ffae;
   background: rgba(0,0,0,0.2);
+  font-size: 12px;
 }
 
 /* ===============================
    MAIN
 =============================== */
 main {
-  height: calc(100% - 120px);
+  height: calc(100% - 100px); /* 🔴 ajustado */
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  padding: 8px;
 
-  min-height: 0; /* 🔴 IMPORTANTE */
+  min-height: 0;
 }
 
 /* ===============================
    TOPO
 =============================== */
 .area-topo {
-  flex: 2;
+  flex: 1.6; /* 🔴 reduzido */
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 8px;
 
   min-height: 0;
 }
@@ -59,19 +61,20 @@ main {
 #reservatoriosContainer {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 /* RESERVATÓRIO */
 .card-reservatorio {
   background: rgba(255,255,255,0.08);
   border-radius: 10px;
-  padding: 8px;
+  padding: 6px;
   text-align: center;
+  font-size: 12px;
 }
 
 .tanque-visu {
-  height: 80px;
+  height: 60px; /* 🔴 menor */
   background: rgba(255,255,255,0.2);
   border-radius: 8px;
   overflow: hidden;
@@ -96,40 +99,39 @@ main {
 .area-bottom {
   flex: 1;
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 10px;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 8px;
 
   min-height: 0;
 }
 
 /* ===============================
-   GRÁFICO (CORRIGIDO)
+   GRÁFICO
 =============================== */
 #graficoUTI {
   background: rgba(0,0,0,0.35);
   border-radius: 10px;
-  padding: 10px;
+  padding: 6px; /* 🔴 menor */
 
   display: flex;
   flex-direction: column;
 
-  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
 #graficoUTI canvas {
-  flex: 1; /* 🔴 ESSENCIAL */
+  flex: 1;
   width: 100% !important;
   height: 100% !important;
   display: block;
 }
 
-/* IA */
 #previsaoIA {
   text-align: center;
-  margin-top: 5px;
+  margin-top: 3px;
   font-weight: bold;
+  font-size: 12px; /* 🔴 reduzido */
 }
 
 /* ===============================
@@ -138,17 +140,20 @@ main {
 #pressaoBombaGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 6px;
+
+  min-height: 0;
 }
 
 /* CARDS */
 .card-pressao,
 .card-bomba {
   background: rgba(255,255,255,0.08);
-  padding: 10px;
+  padding: 6px; /* 🔴 menor */
   border-radius: 8px;
   text-align: center;
   transition: 0.3s;
+  font-size: 11px;
 }
 
 /* BOMBAS */
@@ -164,11 +169,11 @@ main {
    FOOTER
 =============================== */
 footer {
-  height: 30px;
+  height: 20px;
   text-align: center;
   background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
 }
