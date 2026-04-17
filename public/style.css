@@ -1,40 +1,49 @@
 /* ================= BASE ================= */
 body {
 margin: 0;
-font-family: "Segoe UI", sans-serif;
+font-family: "Segoe UI", Arial, sans-serif;
 background: linear-gradient(135deg, #022c22, #014737);
 color: white;
 }
 
 /* ================= HEADER ================= */
 header {
-background: rgba(0, 90, 60, 0.9);
+background: rgba(0, 90, 60, 0.95);
 padding: 20px;
 text-align: center;
 border-bottom: 3px solid #00ffae;
+}
+
+header h1{
+font-size: 28px;
+letter-spacing: 1px;
 }
 
 #statusSistema {
 text-align: center;
 padding: 10px;
 font-weight: bold;
+font-size: 14px;
+opacity: 0.9;
 }
 
 /* ================= IA ================= */
 .box-previsao {
 margin: 15px auto;
-padding: 12px;
+padding: 12px 20px;
 border-radius: 10px;
 text-align: center;
 width: fit-content;
 background: rgba(0,0,0,0.4);
-box-shadow: 0 0 10px #000;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
+font-size: 16px;
 }
 
 .previsao-critica {
 color: #ff4e4e;
 animation: blink 1s infinite;
 }
+
 .previsao-alerta {
 color: #ffcc00;
 }
@@ -47,104 +56,176 @@ color: #ffcc00;
 .alerta-global {
 display: none;
 background: #ff4e4e;
-padding: 12px;
+padding: 14px;
 border-radius: 8px;
 text-align: center;
 margin-bottom: 15px;
 font-weight: bold;
+font-size: 18px;
+box-shadow: 0 0 10px rgba(0,0,0,0.6);
 }
 
 /* ================= RESERVATÓRIOS ================= */
+
 #reservatoriosContainer {
 display: grid;
 gap: 20px;
 grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+margin-top: 20px;
 }
 
 .card-reservatorio {
 background: rgba(255,255,255,0.08);
-padding: 12px;
+padding: 15px;
 border-radius: 12px;
 text-align: center;
 border: 2px solid transparent;
+box-shadow: 0 0 12px rgba(0,0,0,0.5);
 }
 
+.card-reservatorio h3{
+font-size:18px;
+margin-bottom:10px;
+}
+
+/* ================= TANQUE ================= */
+
 .tanque-visu {
-height: 140px;
-background: rgba(255,255,255,0.2);
+height: 150px;
+background: rgba(255,255,255,0.15);
 border-radius: 10px;
 overflow: hidden;
 position: relative;
+margin-bottom:10px;
 }
 
 .nivel-agua {
 position: absolute;
 bottom: 0;
 width: 100%;
-background: #00ffae;
+background: linear-gradient(180deg,#00ffae,#00c78a);
 transition: height 1s;
 }
 
+/* ================= NÚMEROS ================= */
+
 .percent-text {
-font-size: 20px;
+font-size: 32px;
 font-weight: bold;
+letter-spacing: 1px;
 }
 
 .liters-text {
-font-size: 14px;
+font-size: 16px;
+opacity: 0.9;
+margin-top: 3px;
 }
 
-/* CORES */
-.nv-critico { border-color: red; }
-.nv-alerta { border-color: orange; }
-.nv-normal { border-color: #00ffae; }
+/* ================= CORES ================= */
+
+.nv-critico { 
+border-color: red;
+box-shadow: 0 0 10px rgba(255,0,0,0.5);
+}
+
+.nv-alerta { 
+border-color: orange;
+box-shadow: 0 0 10px rgba(255,150,0,0.5);
+}
+
+.nv-normal { 
+border-color: #00ffae;
+}
 
 /* ================= GRÁFICO ================= */
+
 #graficoUTI {
 background: rgba(0,0,0,0.4);
 border-radius: 10px;
 padding: 10px;
-margin-top: 20px;
+margin-top: 25px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
-/* ================= PRESSÃO ================= */
+/* ================= PRESSÕES ================= */
+
 #pressaoBombaGrid {
 display: grid;
 gap: 20px;
-grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+margin-top: 20px;
 }
 
 .card-pressao {
 background: rgba(255,255,255,0.08);
-padding: 15px;
-border-radius: 10px;
+padding: 18px;
+border-radius: 12px;
 text-align: center;
+box-shadow: 0 0 12px rgba(0,0,0,0.5);
+}
+
+.card-pressao h3{
+font-size:16px;
+margin-bottom:10px;
 }
 
 .valor-pressao {
-font-size: 24px;
+font-size: 38px;
+font-weight: bold;
 color: #00ffae;
+letter-spacing: 1px;
+}
+
+.unidade {
+font-size: 16px;
+opacity: 0.8;
+margin-left: 4px;
 }
 
 /* ================= BOMBAS ================= */
+
 .card-bomba {
-padding: 15px;
-border-radius: 10px;
+padding: 18px;
+border-radius: 12px;
 text-align: center;
+font-weight: bold;
+font-size: 18px;
+box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
 .bomba-ligada {
-background: rgba(0,150,0,0.6);
+background: rgba(0,150,0,0.7);
 }
 
 .bomba-desligada {
-background: rgba(150,0,0,0.6);
+background: rgba(150,0,0,0.7);
 }
 
 /* ================= FOOTER ================= */
+
 footer {
 text-align: center;
-padding: 10px;
+padding: 12px;
 margin-top: 40px;
-background: rgba(0,0,0,0.5);
+background: rgba(0,0,0,0.6);
+font-size: 14px;
+opacity: 0.9;
+}
+
+/* ================= RESPONSIVO ================= */
+
+@media (max-width:700px){
+
+header h1{
+font-size:22px;
+}
+
+.valor-pressao{
+font-size:30px;
+}
+
+.percent-text{
+font-size:26px;
+}
+
 }
