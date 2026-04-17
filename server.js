@@ -224,7 +224,6 @@ function convertAndMerge(dataArray) {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
     } else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-      const leitura = Number(rawVal) || 0;
 
 let percent =
   ((leitura - sensor.leituraVazio) /
