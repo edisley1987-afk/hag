@@ -17,24 +17,18 @@ body::before {
     width: 100%;
     height: 100%;
     background: rgba(0, 40, 25, 0.55);
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(4px);
     z-index: -1;
 }
 
 /* ============================ PALETA ============================ */
 :root {
-    --verde-principal: #0b5e45;
-    --verde-claro: #2e8b70;
-    --verde-medio: #3fa58b;
-    --verde-suave: #d9f4ec;
+    --ok: #00e676;
+    --alerta: #ff9f1a;
+    --critico: #ff2b2b;
+    --cheio: #00e5ff;
 
-    --branco: #ffffff;
-
-    --erro: #d9534f;
-    --alerta: #f0ad4e;
-    --ok: #5cb85c;
-
-    --glass-bg: rgba(255, 255, 255, 0.18);
+    --glass-bg: rgba(255, 255, 255, 0.15);
 }
 
 /* ============================ HEADER ============================ */
@@ -43,7 +37,7 @@ header {
     color: white;
     text-align: center;
     padding: 22px;
-    border-bottom: 3px solid var(--verde-medio);
+    border-bottom: 3px solid #3fa58b;
     backdrop-filter: blur(5px);
 }
 
@@ -59,9 +53,9 @@ main {
     padding: 20px;
 }
 
-/* ============================================================= RESERVATÓRIOS ============================================================= */
+/* ============================ RESERVATÓRIOS ============================ */
 #reservatoriosContainer {
-    display: grid !important;
+    display: grid;
     width: 100%;
     margin-top: 25px;
     gap: 28px;
@@ -74,83 +68,115 @@ main {
     border-radius: 14px;
     text-align: center;
     color: white;
-    box-shadow: 0 2px 8px #0007;
-    backdrop-filter: blur(6px);
-    transition: 0.25s;
-    border: 3px solid transparent;
+    box-shadow: 0 2px 12px #0007;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+    border: 2px solid rgba(255,255,255,0.2);
 }
 
 .card-reservatorio:hover {
-    transform: scale(1.03);
+    transform: scale(1.04);
 }
 
+/* ============================ TANQUE ============================ */
 .tanque-visu {
     width: 100%;
-    height: 160px;
+    height: 170px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.25);
-    border: 3px solid var(--verde-medio);
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
     position: relative;
     overflow: hidden;
 }
 
+/* Água com efeito real */
 .nivel-agua {
     position: absolute;
     bottom: 0;
     width: 100%;
     height: 0%;
-    transition: height 1s ease;
-    background: var(--verde-claro);
+    transition: height 0.8s ease, background 0.5s;
+
+    background: linear-gradient(
+        to top,
+        rgba(0,255,150,0.9),
+        rgba(0,255,200,0.5)
+    );
+
+    box-shadow: inset 0 0 12px rgba(0,255,180,0.6);
 }
 
+/* Info sobreposta */
 .overlay-info {
     position: absolute;
-    top: 8px;
+    top: 10px;
     width: 100%;
-    text-shadow: 0 1px 3px black;
+    text-shadow: 0 1px 4px black;
 }
 
 .percent-text {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .liters-text {
-    font-size: 16px;
+    font-size: 14px;
+    opacity: 0.9;
 }
 
-/* ================= CORES POR NÍVEL ================= */
+/* ============================ CORES INTELIGENTES ============================ */
+
+/* 🔴 CRÍTICO */
 .nv-critico {
-    border-color: var(--erro) !important;
+    border-color: var(--critico) !important;
+    box-shadow: 0 0 18px var(--critico);
 }
 .nv-critico .nivel-agua {
-    background: var(--erro) !important;
+    background: linear-gradient(to top, #ff0000, #ff6b6b);
 }
 
+/* 🟠 ALERTA */
 .nv-alerta {
     border-color: var(--alerta) !important;
+    box-shadow: 0 0 14px var(--alerta);
 }
 .nv-alerta .nivel-agua {
-    background: var(--alerta) !important;
+    background: linear-gradient(to top, #ff7b00, #ffc46b);
 }
 
+/* 🟢 NORMAL */
 .nv-normal {
     border-color: var(--ok) !important;
+    box-shadow: 0 0 10px var(--ok);
 }
 .nv-normal .nivel-agua {
-    background: var(--ok) !important;
+    background: linear-gradient(to top, #00c853, #69f0ae);
 }
 
+/* 🔵 CHEIO */
 .nv-cheio {
-    border-color: var(--verde-claro) !important;
+    border-color: var(--cheio) !important;
+    box-shadow: 0 0 18px var(--cheio);
 }
 .nv-cheio .nivel-agua {
-    background: var(--verde-claro) !important;
+    background: linear-gradient(to top, #00bcd4, #84ffff);
 }
 
-/* ============================================================= PRESSÕES + BOMBAS ============================================================= */
+/* ============================ ALERTA PISCANDO ============================ */
+.piscar-31 {
+    animation: piscarCritico 0.7s infinite;
+}
+
+@keyframes piscarCritico {
+    0%   { transform: scale(1); box-shadow: 0 0 10px red; }
+    50%  { transform: scale(1.03); box-shadow: 0 0 28px red; }
+    100% { transform: scale(1); box-shadow: 0 0 10px red; }
+}
+
+/* ============================ PRESSÃO + BOMBAS ============================ */
 #pressaoBombaGrid {
-    display: grid !important;
+    display: grid;
     margin-top: 35px;
     width: 100%;
     gap: 28px;
@@ -163,20 +189,20 @@ main {
     border-radius: 14px;
     color: white;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    backdrop-filter: blur(6px);
-    transition: 0.25s;
+    box-shadow: 0 2px 10px #0007;
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
 }
 
 .card-pressao:hover,
 .card-bomba:hover {
-    transform: scale(1.04);
+    transform: scale(1.05);
 }
 
 .valor-pressao {
     font-size: 26px;
     font-weight: bold;
-    color: var(--verde-suave);
+    color: #a7ffeb;
 }
 
 .unidade {
@@ -184,25 +210,44 @@ main {
     opacity: 0.7;
 }
 
-/* ================= BOMBA ================= */
+/* ============================ BOMBAS ============================ */
 .bomba-ligada {
-    background: rgba(0, 140, 40, 0.85) !important;
+    background: rgba(0, 150, 50, 0.9) !important;
     border-top: 4px solid #00ff73;
+    box-shadow: 0 0 15px #00ff73;
 }
 
 .bomba-desligada {
-    background: rgba(140, 0, 0, 0.80) !important;
+    background: rgba(150, 0, 0, 0.85) !important;
     border-top: 4px solid #ff4f4f;
+    box-shadow: 0 0 12px #ff4f4f;
 }
 
-.alerta-bomba {
-    margin-top: 8px;
-    padding: 6px;
-    border-radius: 8px;
-    background: #d64545;
-    text-align: center;
-    font-size: 12px;
-    font-weight: bold;
+/* ============================ MANUTENÇÃO ============================ */
+.manutencao {
+    background: rgba(255, 200, 0, 0.4) !important;
+    border: 3px solid #ffd54f !important;
+    animation: manutBlink 1.3s infinite;
+}
+
+@keyframes manutBlink {
+    0% { box-shadow: 0 0 10px #ffd54f; }
+    50% { box-shadow: 0 0 25px #ffea00; }
+    100% { box-shadow: 0 0 10px #ffd54f; }
+}
+
+/* ============================ BOTÃO ============================ */
+.gear-btn {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    transition: 0.3s;
+}
+
+.gear-btn:hover {
+    transform: rotate(30deg) scale(1.1);
 }
 
 /* ============================ FOOTER ============================ */
@@ -211,61 +256,6 @@ footer {
     padding: 14px;
     text-align: center;
     color: white;
-    border-top: 3px solid var(--verde-medio);
+    border-top: 3px solid #3fa58b;
     margin-top: 60px;
-}
-
-/* ================== ALERTA DE NÍVEL (VERMELHO PISCANDO) ================== */
-.alerta-nivel {
-    border: 3px solid red !important;
-    animation: alertaBlink 0.9s infinite;
-}
-
-@keyframes alertaBlink {
-    0% { box-shadow: 0 0 10px red; }
-    50% { box-shadow: 0 0 25px red; }
-    100% { box-shadow: 0 0 10px red; }
-}
-
-/* ================== MODO MANUTENÇÃO ================== */
-.manutencao {
-    background: rgba(240, 180, 20, 0.45) !important;
-    border: 3px solid #ffdd55 !important;
-    animation: manutBlink 1.3s infinite;
-}
-
-@keyframes manutBlink {
-    0% { box-shadow: 0 0 10px #ffdd55; }
-    50% { box-shadow: 0 0 25px #ffcc00; }
-    100% { box-shadow: 0 0 10px #ffdd55; }
-}
-
-.msg-manutencao {
-    margin-top: 10px;
-    padding: 6px;
-    font-weight: bold;
-    font-size: 14px;
-    background: rgba(255, 215, 0, 0.85);
-    border-radius: 6px;
-    animation: textBlink 1s infinite;
-}
-
-@keyframes textBlink {
-    0% { opacity: 1; }
-    50% { opacity: 0.3; }
-    100% { opacity: 1; }
-}
-
-/* ================== BOTÃO ENGENAGEM ================== */
-.gear-btn {
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: white;
-    transition: 0.25s;
-}
-
-.gear-btn:hover {
-    transform: rotate(25deg);
 }
