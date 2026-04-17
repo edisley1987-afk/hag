@@ -235,10 +235,10 @@ percent = Math.max(0, Math.min(100, percent));
 // litros
 const litros = (percent / 100) * sensor.capacidade;
 
-novo[ref] = {
-  percent: Number(percent.toFixed(1)),
-  litros: Math.round(litros)
-};
+novo[ref] = Math.round(litros); // mantém compatibilidade
+
+novo[`${ref}_percent`] = Number(percent.toFixed(1)); // novo campo %
+
 
     } else {
       novo[ref] = rawVal;
