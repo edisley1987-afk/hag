@@ -1,29 +1,29 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Monitoramento - HAG</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
+<head>
+<meta charset="UTF-8">
+<title>Monitoramento - HAG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="style.css">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script defer src="dashboard.js"></script>
-```
 
 </head>
 
 <body>
 
 <header>
-    <div class="header-content">
-        <h1>Hospital Arnaldo Gavazza – Monitoramento</h1>
-        <div id="lastUpdate">Atualizado --:--:--</div>
-    </div>
+
+<div class="header-content">
+<h1>Hospital Arnaldo Gavazza – Monitoramento</h1>
+<div id="lastUpdate">Atualizado --:--:--</div>
+</div>
+
 </header>
 
 <!-- STATUS -->
@@ -36,67 +36,107 @@
 
 <main>
 
-```
 <h2>Reservatórios</h2>
 
 <!-- ALERTA GLOBAL -->
+
 <div id="alerta-nivelbaixo" class="alerta-global"></div>
 
 <div id="reservatoriosContainer"></div>
 
 <h2 style="margin-top:40px">Gráfico em Tempo Real</h2>
+
 <canvas id="graficoUTI"></canvas>
 
 <h2 style="margin-top:50px">Pressões e Bombas</h2>
 
 <div id="pressaoBombaGrid">
 
-    <!-- PRESSÕES -->
-    <div class="card-pressao">
-        <h3>Saída Osmose</h3>
-        <span class="valor-pressao" id="pSaidaOsmose">--</span>
-        <span class="unidade"> bar</span>
-    </div>
+<!-- PRESSÃO SAÍDA OSMOSE -->
 
-    <div class="card-pressao">
-        <h3>Retorno Osmose</h3>
-        <span class="valor-pressao" id="pRetornoOsmose">--</span>
-        <span class="unidade"> bar</span>
-    </div>
+<div class="card-pressao">
 
-    <div class="card-pressao">
-        <h3>Saída CME</h3>
-        <span class="valor-pressao" id="pSaidaCME">--</span>
-        <span class="unidade"> bar</span>
-    </div>
+<h3>Saída Osmose</h3>
 
-    <!-- BOMBAS -->
-    <div class="card-bomba bomba-desligada" id="bomba1">
-        <h3>Bomba 01</h3>
-        <p>Status: <b id="b1Status">--</b></p>
-        <p>Ciclos: <b id="b1Ciclos">--</b></p>
-    </div>
-
-    <div class="card-bomba bomba-desligada" id="bomba2">
-        <h3>Bomba 02</h3>
-        <p>Status: <b id="b2Status">--</b></p>
-        <p>Ciclos: <b id="b2Ciclos">--</b></p>
-    </div>
-
-    <div class="card-bomba bomba-desligada" id="bomba3">
-        <h3>Bomba Osmose</h3>
-        <p>Status: <b id="b3Status">--</b></p>
-        <p>Ciclos: <b id="b3Ciclos">--</b></p>
-    </div>
+<div class="valor-container">
+<span class="valor-pressao" id="pSaidaOsmose">--</span>
+<span class="unidade">bar</span>
+</div>
 
 </div>
-```
+
+<!-- PRESSÃO RETORNO OSMOSE -->
+
+<div class="card-pressao">
+
+<h3>Retorno Osmose</h3>
+
+<div class="valor-container">
+<span class="valor-pressao" id="pRetornoOsmose">--</span>
+<span class="unidade">bar</span>
+</div>
+
+</div>
+
+<!-- PRESSÃO SAÍDA CME -->
+
+<div class="card-pressao">
+
+<h3>Saída CME</h3>
+
+<div class="valor-container">
+<span class="valor-pressao" id="pSaidaCME">--</span>
+<span class="unidade">bar</span>
+</div>
+
+</div>
+
+<!-- BOMBA 01 -->
+
+<div class="card-bomba bomba-desligada" id="bomba1">
+
+<h3>Bomba 01</h3>
+
+<p>Status: <b id="b1Status">--</b></p>
+
+<p>Ciclos: <b id="b1Ciclos">--</b></p>
+
+</div>
+
+<!-- BOMBA 02 -->
+
+<div class="card-bomba bomba-desligada" id="bomba2">
+
+<h3>Bomba 02</h3>
+
+<p>Status: <b id="b2Status">--</b></p>
+
+<p>Ciclos: <b id="b2Ciclos">--</b></p>
+
+</div>
+
+<!-- BOMBA OSMOSE -->
+
+<div class="card-bomba bomba-desligada" id="bomba3">
+
+<h3>Bomba Osmose</h3>
+
+<p>Status: <b id="b3Status">--</b></p>
+
+<p>Ciclos: <b id="b3Ciclos">--</b></p>
+
+</div>
+
+</div>
 
 </main>
 
 <footer>
-    Sistema HAG © 2025
+
+Sistema HAG © 2025
+
 </footer>
 
 </body>
+
 </html>
