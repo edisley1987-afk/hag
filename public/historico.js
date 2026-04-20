@@ -1,79 +1,138 @@
-// === historico.js ===
-// Exibe histórico de leituras com tabela e gráfico moderno
+// ===============================
+// 📊 HISTÓRICO PROFISSIONAL HAG
+// ===============================
 
 const API_URL = window.location.origin + "/historico";
 
+// ===============================
+// ⚙️ CALIBRAÇÃO REAL DOS TANQUES
+// ===============================
+const CALIBRACAO = {
+  Reservatorio_Elevador_current: { vazio: 0.005250, cheio: 0.009018, capacidade: 20000 },
+  Reservatorio_Osmose_current: { vazio: 0.00505, cheio: 0.006853, capacidade: 200 },
+  Reservatorio_CME_current: { vazio: 0.004088, cheio: 0.00537, capacidade: 1000 },
+  Reservatorio_Agua_Abrandada_current: { vazio: 0.004048, cheio: 0.004929, capacidade: 9000 },
+  Reservatorio_lavanderia_current: { vazio: 0.006012, cheio: 0.011623, capacidade: 10000 }
+};
+
+// ===============================
+// 🎨 CORES FIXAS PROFISSIONAIS
+// ===============================
+const CORES = {
+  Reservatorio_Elevador_current: "#00e5ff",
+  Reservatorio_Osmose_current: "#00bcd4",
+  Reservatorio_CME_current: "#00ff88",
+  Reservatorio_Agua_Abrandada_current: "#b388ff",
+  Reservatorio_lavanderia_current: "#ffd600",
+
+  Pressao_Saida_Osmose_current: "#ff9800",
+  Pressao_Retorno_Osmose_current: "#ff5252",
+  Pressao_Saida_CME_current: "#3f51b5"
+};
+
+// ===============================
+// 🧮 CONVERSÃO INTELIGENTE
+// ===============================
+function calcularNivel(valor, conf) {
+  if (!conf) return { percent: valor, litros: valor };
+
+  let percent = ((valor - conf.vazio) / (conf.cheio - conf.vazio)) * 100;
+  percent = Math.max(0, Math.min(100, percent));
+
+  const litros = (percent / 100) * conf.capacidade;
+
+  return {
+    percent: Number(percent.toFixed(1)),
+    litros: Math.round(litros)
+  };
+}
+
+// ===============================
+// 🚀 CARREGAR HISTÓRICO
+// ===============================
 async function carregarHistorico() {
+
   const container = document.getElementById("historico");
   const ctx = document.getElementById("graficoHistorico");
+
   container.innerHTML = "⏳ Carregando histórico...";
 
   try {
+
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Erro ao buscar histórico");
+
     const historico = await res.json();
 
     if (!Object.keys(historico).length) {
-      container.innerHTML = `<p style="text-align:center; color:#555;">📭 Nenhum dado de histórico encontrado.</p>`;
+      container.innerHTML = `<p style="text-align:center;">📭 Nenhum histórico encontrado</p>`;
       return;
     }
 
-    // === Montar tabela ===
+    // ===============================
+    // 📋 TABELA PROFISSIONAL
+    // ===============================
     let html = `
-      <table class="tabela-historico">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Sensor</th>
-            <th>Leitura Mínima</th>
-            <th>Leitura Máxima</th>
-          </tr>
-        </thead>
-        <tbody>
+    <table class="tabela-historico">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Sensor</th>
+          <th>Nível (%)</th>
+          <th>Volume (L)</th>
+        </tr>
+      </thead>
+      <tbody>
     `;
 
-    const labels = []; // datas
-    const datasets = {}; // sensores e valores médios
+    const labels = [];
+    const datasets = {};
 
-    // Ordena as datas
     const datasOrdenadas = Object.keys(historico).sort();
 
     datasOrdenadas.forEach((data) => {
-      const sensores = historico[data];
+
       labels.push(data);
 
-      Object.entries(sensores).forEach(([nome, valores]) => {
+      Object.entries(historico[data]).forEach(([nome, valores]) => {
+
         const media = (valores.max + valores.min) / 2;
+
+        const conf = CALIBRACAO[nome];
+        const nivel = calcularNivel(media, conf);
 
         html += `
           <tr>
             <td>${data}</td>
             <td>${formatarNomeSensor(nome)}</td>
-            <td>${valores.min}</td>
-            <td>${valores.max}</td>
+            <td>${nivel.percent.toFixed(1)}%</td>
+            <td>${formatarNumero(nivel.litros)} L</td>
           </tr>
         `;
 
         if (!datasets[nome]) datasets[nome] = [];
-        datasets[nome].push(media);
+        datasets[nome].push(nivel.percent);
       });
+
     });
 
     html += "</tbody></table>";
     container.innerHTML = html;
 
-    // === Montar gráfico ===
+    // ===============================
+    // 📈 GRÁFICO PROFISSIONAL
+    // ===============================
     const chartData = {
       labels,
       datasets: Object.entries(datasets).map(([nome, valores]) => ({
         label: formatarNomeSensor(nome),
         data: valores,
-        borderColor: getCorSensor(nome),
-        backgroundColor: getCorSensor(nome),
-        fill: false,
-        tension: 0.2,
-        borderWidth: 2,
-      })),
+        borderColor: CORES[nome] || "#999",
+        backgroundColor: CORES[nome] || "#999",
+        tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 3
+      }))
     };
 
     new Chart(ctx, {
@@ -82,37 +141,44 @@ async function carregarHistorico() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+
         plugins: {
           legend: { position: "bottom" },
-          title: { display: true, text: "Evolução das Leituras (Média Diária)" },
+          title: {
+            display: true,
+            text: "📊 Nível dos Reservatórios (%)"
+          }
         },
+
         scales: {
-          y: { beginAtZero: true, title: { display: true, text: "Valor" } },
-          x: { title: { display: true, text: "Data" } },
-        },
-      },
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: "Nível (%)"
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: "Data"
+            }
+          }
+        }
+      }
     });
+
   } catch (err) {
-    container.innerHTML = `<p style="color:red;">❌ Erro: ${err.message}</p>`;
+    container.innerHTML = `<p style="color:red;">❌ ${err.message}</p>`;
     console.error(err);
   }
 }
 
-// === Funções auxiliares ===
-function getCorSensor(nome) {
-  const cores = {
-    Reservatorio_Elevador_current: "#007bff",
-    Reservatorio_Osmose_current: "#00bcd4",
-    Reservatorio_CME_current: "#4caf50",
-    Agua_Abrandada_current: "#9c27b0",
-    Pressao_Saida_Osmose_current: "#ff9800",
-    Pressao_Retorno_Osmose_current: "#f44336",
-    Pressao_Saida_CME_current: "#3f51b5",
-  };
-  return cores[nome] || `hsl(${Math.random() * 360}, 70%, 50%)`;
-}
-
-function formatarNomeSensor(nome) {
+// ===============================
+// 🔧 UTILITÁRIOS
+// ===============================
+function formatarNomeSensor(nome){
   return nome
     .replace(/_/g, " ")
     .replace("current", "")
@@ -122,8 +188,11 @@ function formatarNomeSensor(nome) {
     .trim();
 }
 
-// Inicia o carregamento ao abrir a página
-carregarHistorico();
+function formatarNumero(n){
+  return Number(n || 0).toLocaleString("pt-BR");
+}
 
-// (Opcional) Atualiza automaticamente a cada 60s
-// setInterval(carregarHistorico, 60000);
+// ===============================
+// 🚀 START
+// ===============================
+carregarHistorico();
