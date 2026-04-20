@@ -1,53 +1,97 @@
+/* =========================
+   BASE
+========================= */
 body{
 margin:0;
-font-family:Segoe UI,Arial;
+font-family:Segoe UI, Arial, sans-serif;
 background:linear-gradient(135deg,#022c22,#014737);
-color:white;
+color:#ffffff;
 }
 
+/* =========================
+   HEADER
+========================= */
 header{
 text-align:center;
-padding:14px;
+padding:16px;
 background:#064e3b;
+box-shadow:0 4px 12px rgba(0,0,0,0.4);
 }
 
+header h1{
+margin:0;
+font-size:22px;
+}
+
+#statusSistema{
+margin-top:6px;
+font-weight:bold;
+color:#00ffae;
+font-size:14px;
+}
+
+/* =========================
+   MAIN
+========================= */
 main{
-padding:12px;
 display:flex;
 flex-direction:column;
-gap:14px;
+gap:16px;
+padding:14px;
 }
 
+/* =========================
+   GRID RESERVATÓRIOS
+========================= */
 .grid-reservatorios{
 display:grid;
 grid-template-columns:repeat(5,1fr);
-gap:12px;
+gap:14px;
 }
 
+/* =========================
+   GRID BOMBAS
+========================= */
 .grid-bombas{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:12px;
+gap:14px;
 }
 
+/* =========================
+   GRID PRESSÕES
+========================= */
 .grid-pressoes{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:12px;
+gap:14px;
 }
 
+/* =========================
+   CARD BASE
+========================= */
 .card{
-background:rgba(0,0,0,0.3);
-border-radius:12px;
-padding:14px;
-box-shadow:0 6px 14px rgba(0,0,0,0.5);
+background:rgba(0,0,0,0.35);
+border-radius:14px;
+padding:16px;
+box-shadow:0 6px 16px rgba(0,0,0,0.5);
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-3px);
+box-shadow:0 10px 20px rgba(0,0,0,0.6);
 }
 
 .card h2{
+margin:0 0 8px;
 font-size:14px;
-margin:0 0 6px;
+opacity:0.9;
 }
 
+/* =========================
+   TEXTO
+========================= */
 .valor{
 font-size:28px;
 font-weight:bold;
@@ -58,77 +102,138 @@ font-size:14px;
 opacity:0.9;
 }
 
-.reservatorio{
-height:260px;
+/* =========================
+   RESERVATÓRIO CARD
+========================= */
+.card.reservatorio{
 display:flex;
 flex-direction:column;
+align-items:center;
 justify-content:space-between;
+height:260px;
 }
 
+/* =========================
+   TANQUE CILÍNDRICO
+========================= */
 .tanque{
 
 position:relative;
-height:150px;
-border-radius:80px/25px;
-border:3px solid rgba(255,255,255,0.5);
+
+width:120px;
+height:160px;
+
+border-radius:60px / 20px;
+
+border:3px solid rgba(255,255,255,0.45);
+
 background:rgba(0,0,0,0.4);
+
 overflow:hidden;
 
 box-shadow:
-inset 0 0 25px rgba(0,255,150,0.3),
-0 8px 18px rgba(0,0,0,0.6);
+inset 0 0 25px rgba(0,255,150,0.25),
+0 8px 20px rgba(0,0,0,0.6);
 
 }
 
+/* TOPO DO CILINDRO */
 .tanque:before{
 
 content:"";
+
 position:absolute;
+
 top:-10px;
+left:0;
+
 width:100%;
 height:20px;
+
 border-radius:50%;
-background:rgba(255,255,255,0.25);
+
+background:rgba(255,255,255,0.35);
 
 }
 
-.nivel{
-
-position:absolute;
-bottom:0;
-width:100%;
-height:0%;
-
-transition:height 1s;
-
-}
-
-.nivel:after{
+/* REFLEXO VIDRO */
+.tanque:after{
 
 content:"";
-position:absolute;
-top:-6px;
-width:100%;
-height:10px;
 
-background:radial-gradient(
-ellipse at center,
-rgba(255,255,255,0.5),
+position:absolute;
+
+left:20%;
+top:0;
+
+width:60%;
+height:100%;
+
+background:linear-gradient(
+90deg,
+transparent,
+rgba(255,255,255,0.25),
 transparent
 );
 
 }
 
+/* =========================
+   ÁGUA
+========================= */
+.nivel{
+
+position:absolute;
+
+bottom:0;
+
+width:100%;
+
+height:0%;
+
+border-radius:0 0 60px 60px;
+
+transition:height 1s ease;
+
+}
+
+/* SUPERFÍCIE DA ÁGUA */
+.nivel:after{
+
+content:"";
+
+position:absolute;
+
+top:-6px;
+
+width:100%;
+height:12px;
+
+background:radial-gradient(
+ellipse at center,
+rgba(255,255,255,0.5),
+transparent 70%
+);
+
+}
+
+/* =========================
+   ESCALA LATERAL
+========================= */
 .escala{
 
 position:absolute;
-right:-10px;
-top:15px;
+
+right:-12px;
+
+top:18px;
 
 height:120px;
 
 display:flex;
+
 flex-direction:column;
+
 justify-content:space-between;
 
 }
@@ -137,16 +242,45 @@ justify-content:space-between;
 
 width:12px;
 height:3px;
+
 background:white;
 
+opacity:0.7;
+
 }
 
+/* =========================
+   INFO
+========================= */
 .info{
 text-align:center;
+margin-top:8px;
 }
 
+/* =========================
+   BOMBAS
+========================= */
+.ligada{
+border-left:6px solid #00ff88;
+}
+
+.desligada{
+border-left:6px solid #ff3b3b;
+}
+
+/* =========================
+   PRESSÃO
+========================= */
+.card.pressao .valor{
+font-size:26px;
+}
+
+/* =========================
+   FOOTER
+========================= */
 footer{
 text-align:center;
-padding:10px;
+padding:12px;
 opacity:0.7;
+font-size:13px;
 }
