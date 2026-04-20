@@ -36,11 +36,11 @@ function conectarWS(){
   ws.onmessage = (msg)=>{
 
     try{
-
       ultimoDado = Date.now();
 
       const payload = JSON.parse(msg.data);
 
+      // trata todos os tipos
       if (payload.type === "init" || payload.type === "update" || payload.type === "heartbeat") {
         montarEstrutura(payload.dados);
         return;
@@ -79,7 +79,6 @@ function conectarWS(){
 async function fallbackHTTP(){
 
   try{
-
     const res = await fetch(API + "?ts=" + Date.now());
     const data = await res.json();
 
@@ -96,70 +95,60 @@ async function fallbackHTTP(){
 // =======================
 function montarEstrutura(dados){
 
+  if(!dados) return;
+
   const estrutura = {
 
     reservatorios:[
-
       {
         nome:"Reservatório Elevador",
-        percent:dados["Reservatorio_Elevador_current_percent"],
-        current_liters:dados["Reservatorio_Elevador_current"]
+        percent:dados["Reservatorio_Elevador_current_percent"] || 0,
+        current_liters:dados["Reservatorio_Elevador_current"] || 0
       },
-
       {
         nome:"Reservatório Osmose",
-        percent:dados["Reservatorio_Osmose_current_percent"],
-        current_liters:dados["Reservatorio_Osmose_current"]
+        percent:dados["Reservatorio_Osmose_current_percent"] || 0,
+        current_liters:dados["Reservatorio_Osmose_current"] || 0
       },
-
       {
         nome:"Reservatório CME",
-        percent:dados["Reservatorio_CME_current_percent"],
-        current_liters:dados["Reservatorio_CME_current"]
+        percent:dados["Reservatorio_CME_current_percent"] || 0,
+        current_liters:dados["Reservatorio_CME_current"] || 0
       },
-
       {
         nome:"Água Abrandada",
-        percent:dados["Reservatorio_Agua_Abrandada_current_percent"],
-        current_liters:dados["Reservatorio_Agua_Abrandada_current"]
+        percent:dados["Reservatorio_Agua_Abrandada_current_percent"] || 0,
+        current_liters:dados["Reservatorio_Agua_Abrandada_current"] || 0
       },
-
       {
         nome:"Lavanderia",
-        percent:dados["Reservatorio_lavanderia_current_percent"],
-        current_liters:dados["Reservatorio_lavanderia_current"]
+        percent:dados["Reservatorio_lavanderia_current_percent"] || 0,
+        current_liters:dados["Reservatorio_lavanderia_current"] || 0
       }
-
     ],
 
     bombas:[
-
       {
         nome:"Bomba 01",
         estado:dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_01_counter"]
+        ciclo:dados["Ciclos_Bomba_01_counter"] || 0
       },
-
       {
         nome:"Bomba 02",
         estado:dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_02_counter"]
+        ciclo:dados["Ciclos_Bomba_02_counter"] || 0
       },
-
       {
         nome:"Bomba Osmose",
         estado:dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_Osmose_counter"]
+        ciclo:dados["Ciclos_Bomba_Osmose_counter"] || 0
       }
-
     ],
 
     pressoes:[
-
       {nome:"Pressão Saída Osmose",pressao:dados["Pressao_Saida_Osmose_current"]},
       {nome:"Pressão Retorno Osmose",pressao:dados["Pressao_Retorno_Osmose_current"]},
       {nome:"Pressão CME",pressao:dados["Pressao_Saida_CME_current"]}
-
     ]
 
   };
@@ -173,7 +162,7 @@ function montarEstrutura(dados){
 // =======================
 function atualizarTela(data){
 
-  // 🔥 CORREÇÃO: usa ID correto (hora)
+  // hora segura
   const elHora = document.getElementById("hora");
   if(elHora){
     elHora.innerText = new Date().toLocaleTimeString("pt-BR");
@@ -200,12 +189,10 @@ function renderReservatorios(lista){
     const percent = Math.max(0,Math.min(100,Number(r.percent)||0));
 
     let cor="#22c55e";
-
     if(percent < 30) cor="#ff3b3b";
     else if(percent < 60) cor="#ffaa00";
 
     const el = document.createElement("div");
-
     el.className="card reservatorio";
 
     el.innerHTML=`
@@ -229,7 +216,6 @@ function renderReservatorios(lista){
     `;
 
     area.appendChild(el);
-
   });
 
 }
@@ -249,7 +235,6 @@ function renderBombas(lista){
     const ligada = b.estado==="ligada";
 
     const el=document.createElement("div");
-
     el.className="card "+(ligada?"ligada":"desligada");
 
     el.innerHTML=`
@@ -259,7 +244,6 @@ function renderBombas(lista){
     `;
 
     area.appendChild(el);
-
   });
 
 }
@@ -277,7 +261,6 @@ function renderPressoes(lista){
   lista.forEach(p=>{
 
     const el=document.createElement("div");
-
     el.className="card";
 
     el.innerHTML=`
@@ -286,7 +269,6 @@ function renderPressoes(lista){
     `;
 
     area.appendChild(el);
-
   });
 
 }
