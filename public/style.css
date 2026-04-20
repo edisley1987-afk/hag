@@ -42,6 +42,12 @@ main {
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
+.grid-reservatorios .card {
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
 /* =========================
    GRID BOMBAS
