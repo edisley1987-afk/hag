@@ -9,10 +9,8 @@ init();
 function init(){
   conectarWS();
 
-  // fallback sempre ativo
   setInterval(fallbackHTTP, 8000);
 
-  // monitor de travamento
   setInterval(() => {
     if (Date.now() - ultimoDado > 10000) {
       setStatus("🟡 Sem atualização");
@@ -36,11 +34,11 @@ function conectarWS(){
   ws.onmessage = (msg)=>{
 
     try{
+
       ultimoDado = Date.now();
 
       const payload = JSON.parse(msg.data);
 
-      // trata todos os tipos
       if (payload.type === "init" || payload.type === "update" || payload.type === "heartbeat") {
         montarEstrutura(payload.dados);
         return;
@@ -81,9 +79,7 @@ async function fallbackHTTP(){
   try{
     const res = await fetch(API + "?ts=" + Date.now());
     const data = await res.json();
-
     atualizarTela(data);
-
   }catch(e){
     setStatus("🔴 Sem conexão");
   }
@@ -95,35 +91,32 @@ async function fallbackHTTP(){
 // =======================
 function montarEstrutura(dados){
 
-  if(!dados) return;
-
   const estrutura = {
-
-    reservatorios:[
+    reservatorios: [
       {
         nome:"Reservatório Elevador",
-        percent:dados["Reservatorio_Elevador_current_percent"] || 0,
-        current_liters:dados["Reservatorio_Elevador_current"] || 0
+        percent:dados["Reservatorio_Elevador_current_percent"],
+        current_liters:dados["Reservatorio_Elevador_current"]
       },
       {
         nome:"Reservatório Osmose",
-        percent:dados["Reservatorio_Osmose_current_percent"] || 0,
-        current_liters:dados["Reservatorio_Osmose_current"] || 0
+        percent:dados["Reservatorio_Osmose_current_percent"],
+        current_liters:dados["Reservatorio_Osmose_current"]
       },
       {
         nome:"Reservatório CME",
-        percent:dados["Reservatorio_CME_current_percent"] || 0,
-        current_liters:dados["Reservatorio_CME_current"] || 0
+        percent:dados["Reservatorio_CME_current_percent"],
+        current_liters:dados["Reservatorio_CME_current"]
       },
       {
         nome:"Água Abrandada",
-        percent:dados["Reservatorio_Agua_Abrandada_current_percent"] || 0,
-        current_liters:dados["Reservatorio_Agua_Abrandada_current"] || 0
+        percent:dados["Reservatorio_Agua_Abrandada_current_percent"],
+        current_liters:dados["Reservatorio_Agua_Abrandada_current"]
       },
       {
         nome:"Lavanderia",
-        percent:dados["Reservatorio_lavanderia_current_percent"] || 0,
-        current_liters:dados["Reservatorio_lavanderia_current"] || 0
+        percent:dados["Reservatorio_lavanderia_current_percent"],
+        current_liters:dados["Reservatorio_lavanderia_current"]
       }
     ],
 
@@ -131,17 +124,17 @@ function montarEstrutura(dados){
       {
         nome:"Bomba 01",
         estado:dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_01_counter"] || 0
+        ciclo:dados["Ciclos_Bomba_01_counter"]
       },
       {
         nome:"Bomba 02",
         estado:dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_02_counter"] || 0
+        ciclo:dados["Ciclos_Bomba_02_counter"]
       },
       {
         nome:"Bomba Osmose",
         estado:dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_Osmose_counter"] || 0
+        ciclo:dados["Ciclos_Bomba_Osmose_counter"]
       }
     ],
 
@@ -150,11 +143,9 @@ function montarEstrutura(dados){
       {nome:"Pressão Retorno Osmose",pressao:dados["Pressao_Retorno_Osmose_current"]},
       {nome:"Pressão CME",pressao:dados["Pressao_Saida_CME_current"]}
     ]
-
   };
 
   atualizarTela(estrutura);
-
 }
 
 // =======================
@@ -162,7 +153,6 @@ function montarEstrutura(dados){
 // =======================
 function atualizarTela(data){
 
-  // hora segura
   const elHora = document.getElementById("hora");
   if(elHora){
     elHora.innerText = new Date().toLocaleTimeString("pt-BR");
@@ -171,7 +161,26 @@ function atualizarTela(data){
   renderReservatorios(data.reservatorios || []);
   renderBombas(data.bombas || []);
   renderPressoes(data.pressoes || []);
+}
 
+// =======================
+// 🎨 COR NEON DINÂMICA
+// =======================
+function corNivel(percent){
+
+  if(percent >= 100){
+    return ["#00e5ff","#006eff"]; // 🔵 azul neon cheio
+  }
+
+  if(percent >= 70){
+    return ["#00ff88","#00c853"]; // 🟢 verde neon
+  }
+
+  if(percent >= 40){
+    return ["#ffd600","#ff8f00"]; // 🟡 amarelo neon
+  }
+
+  return ["#ff1744","#b71c1c"]; // 🔴 vermelho neon
 }
 
 // =======================
@@ -187,10 +196,7 @@ function renderReservatorios(lista){
   lista.forEach(r=>{
 
     const percent = Math.max(0,Math.min(100,Number(r.percent)||0));
-
-    let cor="#22c55e";
-    if(percent < 30) cor="#ff3b3b";
-    else if(percent < 60) cor="#ffaa00";
+    const [cor1, cor2] = corNivel(percent);
 
     const el = document.createElement("div");
     el.className="card reservatorio";
@@ -204,8 +210,11 @@ function renderReservatorios(lista){
       </div>
 
       <div class="nivel"
-      style="height:${percent}%;
-      background:linear-gradient(180deg,${cor},${cor}bb)">
+      style="
+        height:${percent}%;
+        background:linear-gradient(180deg, ${cor1}, ${cor2});
+        box-shadow:0 0 20px ${cor1};
+      ">
       </div>
     </div>
 
@@ -216,8 +225,8 @@ function renderReservatorios(lista){
     `;
 
     area.appendChild(el);
-  });
 
+  });
 }
 
 // =======================
@@ -244,8 +253,8 @@ function renderBombas(lista){
     `;
 
     area.appendChild(el);
-  });
 
+  });
 }
 
 // =======================
@@ -269,8 +278,8 @@ function renderPressoes(lista){
     `;
 
     area.appendChild(el);
-  });
 
+  });
 }
 
 // =======================
