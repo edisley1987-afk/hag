@@ -2,6 +2,7 @@ const API = "/api/dashboard";
 
 let ws;
 let reconnectDelay = 3000;
+let ultimoUpdate = 0;
 
 // ================= INIT =================
 init();
@@ -26,18 +27,23 @@ function conectarWS() {
       try {
         const payload = JSON.parse(msg.data);
 
-        // 🔥 Caso venha dados crus (seu backend WS)
+        if (!payload) return;
+
+        // evita atualizar com dados antigos
+        if (payload.lastUpdate && payload.lastUpdate === ultimoUpdate) return;
+
+        // 🔥 Dados crus do WS
         if (payload.dados && !payload.reservatorios) {
           montarEstrutura(payload.dados);
         }
 
-        // 🔥 Caso venha pronto (/api/dashboard)
+        // 🔥 Dados já estruturados
         else if (payload.reservatorios) {
           atualizarTela(payload);
         }
 
       } catch (e) {
-        console.error("Erro WS:", e);
+        console.error("Erro ao processar WS:", e);
       }
     };
 
@@ -57,7 +63,7 @@ function conectarWS() {
   }
 }
 
-// ================= FALLBACK =================
+// ================= FALLBACK HTTP =================
 async function fallbackHTTP() {
   if (ws && ws.readyState === 1) return;
 
@@ -73,9 +79,8 @@ async function fallbackHTTP() {
   }
 }
 
-// ================= ADAPTA DADOS DO WS =================
+// ================= ADAPTADOR =================
 function montarEstrutura(dados) {
-
   const estrutura = {
     reservatorios: [
       {
@@ -106,18 +111,9 @@ function montarEstrutura(dados) {
     ],
 
     pressoes: [
-      {
-        nome: "Pressão Saída Osmose",
-        pressao: dados["Pressao_Saida_Osmose_current"]
-      },
-      {
-        nome: "Pressão Retorno Osmose",
-        pressao: dados["Pressao_Retorno_Osmose_current"]
-      },
-      {
-        nome: "Pressão CME",
-        pressao: dados["Pressao_Saida_CME_current"]
-      }
+      { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"] },
+      { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"] },
+      { nome: "Pressão CME", pressao: dados["Pressao_Saida_CME_current"] }
     ],
 
     bombas: [
@@ -142,8 +138,10 @@ function montarEstrutura(dados) {
   atualizarTela(estrutura);
 }
 
-// ================= ATUALIZA UI =================
+// ================= UPDATE UI =================
 function atualizarTela(data) {
+  ultimoUpdate = data.lastUpdate || Date.now();
+
   document.getElementById("lastUpdate").innerText =
     "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
 
@@ -152,16 +150,15 @@ function atualizarTela(data) {
   renderPressoes(data.pressoes || []);
 }
 
-// ================= RESERVATÓRIOS =================
+// ================= RESERVATÓRIOS 3D =================
 function renderReservatorios(lista) {
   const area = document.getElementById("areaReservatorios");
   area.innerHTML = "";
 
   lista.forEach(r => {
+    const percent = Math.max(0, Math.min(100, Number(r.percent) || 0));
+
     const el = document.createElement("div");
-
-    const percent = Number(r.percent) || 0;
-
     el.className = "card reservatorio " + getStatus(percent);
 
     el.innerHTML = `
@@ -178,6 +175,12 @@ function renderReservatorios(lista) {
     `;
 
     area.appendChild(el);
+
+    // animação suave após render
+    setTimeout(() => {
+      const nivel = el.querySelector(".nivel");
+      if (nivel) nivel.style.height = percent + "%";
+    }, 50);
   });
 }
 
@@ -187,10 +190,9 @@ function renderBombas(lista) {
   area.innerHTML = "";
 
   lista.forEach(b => {
-    const el = document.createElement("div");
-
     const ligada = b.estado === "ligada";
 
+    const el = document.createElement("div");
     el.className = "card " + (ligada ? "ligada" : "desligada");
 
     el.innerHTML = `
@@ -210,12 +212,11 @@ function renderPressoes(lista) {
 
   lista.forEach(p => {
     const el = document.createElement("div");
-
-    el.className = "card";
+    el.className = "card pressao";
 
     el.innerHTML = `
       <h2>${p.nome}</h2>
-      <div class="valor">${p.pressao ?? "--"} bar</div>
+      <div class="valor">${formatarPressao(p.pressao)}</div>
     `;
 
     area.appendChild(el);
@@ -224,8 +225,6 @@ function renderPressoes(lista) {
 
 // ================= HELPERS =================
 function getStatus(p) {
-  p = Number(p) || 0;
-
   if (p < 30) return "critico";
   if (p < 70) return "alerta";
   return "normal";
@@ -233,6 +232,11 @@ function getStatus(p) {
 
 function formatar(n) {
   return Number(n || 0).toLocaleString("pt-BR");
+}
+
+function formatarPressao(p) {
+  if (p === null || p === undefined) return "--";
+  return Number(p).toFixed(2) + " bar";
 }
 
 function setStatus(txt) {
