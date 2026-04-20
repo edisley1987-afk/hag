@@ -3,6 +3,12 @@
 // ===============================
 
 const API_URL = window.location.origin + "/historico";
+// ===============================
+// 🎯 FILTRO: SOMENTE RESERVATÓRIOS
+// ===============================
+function ehReservatorio(nome){
+  return nome.toLowerCase().includes("reservatorio");
+}
 
 // ===============================
 // ⚙️ CALIBRAÇÃO REAL DOS TANQUES
