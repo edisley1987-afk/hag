@@ -41,13 +41,11 @@ function conectarWS(){
 
       const payload = JSON.parse(msg.data);
 
-      // 🔥 trata TODOS os tipos do servidor
       if (payload.type === "init" || payload.type === "update" || payload.type === "heartbeat") {
         montarEstrutura(payload.dados);
         return;
       }
 
-      // fallback compatível
       if(payload.dados){
         montarEstrutura(payload.dados);
         return;
@@ -175,8 +173,11 @@ function montarEstrutura(dados){
 // =======================
 function atualizarTela(data){
 
-  document.getElementById("lastUpdate").innerText =
-  "Atualizado: " + new Date().toLocaleTimeString("pt-BR");
+  // 🔥 CORREÇÃO: usa ID correto (hora)
+  const elHora = document.getElementById("hora");
+  if(elHora){
+    elHora.innerText = new Date().toLocaleTimeString("pt-BR");
+  }
 
   renderReservatorios(data.reservatorios || []);
   renderBombas(data.bombas || []);
@@ -190,6 +191,8 @@ function atualizarTela(data){
 function renderReservatorios(lista){
 
   const area = document.getElementById("areaReservatorios");
+  if(!area) return;
+
   area.innerHTML = "";
 
   lista.forEach(r=>{
@@ -237,6 +240,8 @@ function renderReservatorios(lista){
 function renderBombas(lista){
 
   const area = document.getElementById("areaBombas");
+  if(!area) return;
+
   area.innerHTML="";
 
   lista.forEach(b=>{
@@ -265,6 +270,8 @@ function renderBombas(lista){
 function renderPressoes(lista){
 
   const area=document.getElementById("areaPressoes");
+  if(!area) return;
+
   area.innerHTML="";
 
   lista.forEach(p=>{
