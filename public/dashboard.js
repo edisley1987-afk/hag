@@ -2,22 +2,34 @@ const API = "/api/dashboard";
 
 let ws;
 let reconnectDelay = 3000;
-let ultimoUpdate = 0;
+let ultimoDado = Date.now();
 
 init();
 
 function init(){
   conectarWS();
-  setInterval(fallbackHTTP,8000);
+
+  // fallback sempre ativo
+  setInterval(fallbackHTTP, 8000);
+
+  // monitor de travamento
+  setInterval(() => {
+    if (Date.now() - ultimoDado > 10000) {
+      setStatus("🟡 Sem atualização");
+    }
+  }, 5000);
 }
 
+// =======================
+// 🔌 WEBSOCKET
+// =======================
 function conectarWS(){
 
   const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
-
   ws = new WebSocket(`${protocolo}//${location.host}`);
 
   ws.onopen = () =>{
+    console.log("WS conectado");
     setStatus("🟢 Tempo real conectado");
   }
 
@@ -25,35 +37,52 @@ function conectarWS(){
 
     try{
 
+      ultimoDado = Date.now();
+
       const payload = JSON.parse(msg.data);
 
-      if(payload.dados && !payload.reservatorios){
+      // 🔥 trata TODOS os tipos do servidor
+      if (payload.type === "init" || payload.type === "update" || payload.type === "heartbeat") {
         montarEstrutura(payload.dados);
+        return;
       }
-      else if(payload.reservatorios){
+
+      // fallback compatível
+      if(payload.dados){
+        montarEstrutura(payload.dados);
+        return;
+      }
+
+      if(payload.reservatorios){
         atualizarTela(payload);
       }
 
     }catch(e){
-      console.log(e);
+      console.log("Erro WS:", e);
     }
 
   }
 
   ws.onclose = ()=>{
+    console.log("WS desconectado");
     setStatus("🔴 Reconectando...");
-    setTimeout(conectarWS,reconnectDelay);
+    setTimeout(conectarWS, reconnectDelay);
+  }
+
+  ws.onerror = ()=>{
+    ws.close();
   }
 
 }
 
+// =======================
+// 🌐 FALLBACK HTTP
+// =======================
 async function fallbackHTTP(){
-
-  if(ws && ws.readyState === 1) return;
 
   try{
 
-    const res = await fetch(API);
+    const res = await fetch(API + "?ts=" + Date.now());
     const data = await res.json();
 
     atualizarTela(data);
@@ -64,6 +93,9 @@ async function fallbackHTTP(){
 
 }
 
+// =======================
+// 🔄 CONVERSÃO DE DADOS
+// =======================
 function montarEstrutura(dados){
 
   const estrutura = {
@@ -138,6 +170,9 @@ function montarEstrutura(dados){
 
 }
 
+// =======================
+// 🎨 ATUALIZA UI
+// =======================
 function atualizarTela(data){
 
   document.getElementById("lastUpdate").innerText =
@@ -149,6 +184,9 @@ function atualizarTela(data){
 
 }
 
+// =======================
+// 💧 RESERVATÓRIOS
+// =======================
 function renderReservatorios(lista){
 
   const area = document.getElementById("areaReservatorios");
@@ -168,31 +206,23 @@ function renderReservatorios(lista){
     el.className="card reservatorio";
 
     el.innerHTML=`
-
     <h2>${r.nome}</h2>
 
     <div class="tanque">
-
       <div class="escala">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span><span></span><span></span>
       </div>
 
       <div class="nivel"
       style="height:${percent}%;
       background:linear-gradient(180deg,${cor},${cor}bb)">
       </div>
-
     </div>
 
     <div class="info">
       <div class="valor">${percent.toFixed(1)}%</div>
       <div class="litros">${formatar(r.current_liters)} L</div>
     </div>
-
     `;
 
     area.appendChild(el);
@@ -201,6 +231,9 @@ function renderReservatorios(lista){
 
 }
 
+// =======================
+// 🔄 BOMBAS
+// =======================
 function renderBombas(lista){
 
   const area = document.getElementById("areaBombas");
@@ -215,11 +248,9 @@ function renderBombas(lista){
     el.className="card "+(ligada?"ligada":"desligada");
 
     el.innerHTML=`
-
     <h2>${b.nome}</h2>
     <div class="valor">${ligada?"🟢 LIGADA":"🔴 DESLIGADA"}</div>
     <div>${b.ciclo||0} ciclos</div>
-
     `;
 
     area.appendChild(el);
@@ -228,6 +259,9 @@ function renderBombas(lista){
 
 }
 
+// =======================
+// ⚙️ PRESSÕES
+// =======================
 function renderPressoes(lista){
 
   const area=document.getElementById("areaPressoes");
@@ -240,10 +274,8 @@ function renderPressoes(lista){
     el.className="card";
 
     el.innerHTML=`
-
     <h2>${p.nome}</h2>
     <div class="valor">${formatarPressao(p.pressao)}</div>
-
     `;
 
     area.appendChild(el);
@@ -252,6 +284,9 @@ function renderPressoes(lista){
 
 }
 
+// =======================
+// 🧮 FORMATOS
+// =======================
 function formatar(n){
   return Number(n||0).toLocaleString("pt-BR");
 }
@@ -261,6 +296,9 @@ function formatarPressao(p){
   return Number(p).toFixed(2)+" bar";
 }
 
+// =======================
+// 📡 STATUS
+// =======================
 function setStatus(txt){
   const el=document.getElementById("statusSistema");
   if(el) el.innerText=txt;
