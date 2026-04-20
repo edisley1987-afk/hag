@@ -363,25 +363,50 @@ function preverEsvaziamento(litros, consumoPorMinuto) {
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(chalk.green(`Servidor HAG otimizado ativo na porta ${process.env.PORT || 3000}`));
 });
-
 // WebSocket server ligado ao mesmo HTTP server
 const wss = new WebSocketServer({ server });
+
 function wsBroadcast(obj) {
   const msg = JSON.stringify(obj);
   let count = 0;
+
   wss.clients.forEach(c => {
     if (c.readyState === c.OPEN) {
-      try { c.send(msg); count++; } catch (e) { /* ignore */ }
+      try { 
+        c.send(msg); 
+        count++; 
+      } catch (e) {}
     }
   });
+
   if (count) console.log(chalk.cyan(`WS broadcast → ${count} clients`));
 }
+
+// 🔁 HEARTBEAT (AGORA NO LUGAR CERTO)
+setInterval(() => {
+
+  const dados = safeReadJson(DATA_FILE, {});
+
+  if (dados && Object.keys(dados).length > 0) {
+    wsBroadcast({
+      type: "heartbeat",
+      dados
+    });
+  }
+
+}, 3000);
+
+// conexão
 wss.on("connection", ws => {
   console.log(chalk.cyan("WS client connected"));
-  // enviar estado atual assim que conectar
+
   const dados = safeReadJson(DATA_FILE, {});
-  try { ws.send(JSON.stringify({ type: "init", dados })); } catch (e) {}
+
+  try { 
+    ws.send(JSON.stringify({ type: "init", dados })); 
+  } catch (e) {}
 });
+
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
