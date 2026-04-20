@@ -1,187 +1,198 @@
 /* =========================
-   BASE
+BASE
 ========================= */
+
 body{
 margin:0;
-font-family:Segoe UI, Arial, sans-serif;
+font-family:Segoe UI,Arial,sans-serif;
 background:linear-gradient(135deg,#022c22,#014737);
-color:#ffffff;
+color:white;
 }
 
 /* =========================
-   HEADER
+HEADER
 ========================= */
+
 header{
 text-align:center;
-padding:16px;
+padding:20px;
 background:#064e3b;
-box-shadow:0 4px 12px rgba(0,0,0,0.4);
+box-shadow:0 4px 10px rgba(0,0,0,0.4);
 }
 
 header h1{
 margin:0;
-font-size:22px;
+font-size:28px;
 }
 
 #statusSistema{
 margin-top:6px;
+color:#00ff88;
 font-weight:bold;
-color:#00ffae;
-font-size:14px;
 }
 
 /* =========================
-   MAIN
+MAIN GRID
 ========================= */
+
 main{
+padding:20px;
 display:flex;
 flex-direction:column;
-gap:16px;
-padding:14px;
+gap:20px;
 }
 
-/* =========================
-   GRID RESERVATÓRIOS
-========================= */
 .grid-reservatorios{
 display:grid;
 grid-template-columns:repeat(5,1fr);
-gap:14px;
+gap:18px;
 }
 
-/* =========================
-   GRID BOMBAS
-========================= */
 .grid-bombas{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:14px;
+gap:18px;
 }
 
-/* =========================
-   GRID PRESSÕES
-========================= */
 .grid-pressoes{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:14px;
+gap:18px;
 }
 
 /* =========================
-   CARD BASE
+CARD
 ========================= */
+
 .card{
+
 background:rgba(0,0,0,0.35);
+
 border-radius:14px;
+
 padding:16px;
-box-shadow:0 6px 16px rgba(0,0,0,0.5);
+
+box-shadow:0 8px 18px rgba(0,0,0,0.6);
+
 transition:0.3s;
+
 }
 
 .card:hover{
 transform:translateY(-3px);
-box-shadow:0 10px 20px rgba(0,0,0,0.6);
 }
 
 .card h2{
-margin:0 0 8px;
+margin:0 0 10px;
 font-size:14px;
-opacity:0.9;
 }
 
 /* =========================
-   TEXTO
+RESERVATORIO
 ========================= */
-.valor{
-font-size:28px;
-font-weight:bold;
-}
 
-.litros{
-font-size:14px;
-opacity:0.9;
-}
-
-/* =========================
-   RESERVATÓRIO CARD
-========================= */
 .card.reservatorio{
+
 display:flex;
+
 flex-direction:column;
+
 align-items:center;
-justify-content:space-between;
-height:260px;
+
+height:250px;
+
 }
 
 /* =========================
-   TANQUE CILÍNDRICO
+TANQUE
 ========================= */
+
 .tanque{
 
 position:relative;
 
-width:120px;
-height:160px;
+width:140px;
+height:120px;
 
-border-radius:60px / 20px;
+margin:auto;
 
-border:3px solid rgba(255,255,255,0.45);
+border-left:2px solid rgba(255,255,255,0.4);
+border-right:2px solid rgba(255,255,255,0.4);
+border-bottom:2px solid rgba(255,255,255,0.4);
 
-background:rgba(0,0,0,0.4);
+border-radius:0 0 18px 18px;
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.08),
+rgba(0,0,0,0.2)
+);
 
 overflow:hidden;
 
 box-shadow:
-inset 0 0 25px rgba(0,255,150,0.25),
-0 8px 20px rgba(0,0,0,0.6);
+inset 0 0 25px rgba(0,255,120,0.2),
+0 0 12px rgba(0,255,120,0.2);
 
 }
 
-/* TOPO DO CILINDRO */
+/* =========================
+TOPO OVAL
+========================= */
+
 .tanque:before{
 
 content:"";
 
 position:absolute;
 
-top:-10px;
+top:-12px;
 left:0;
 
 width:100%;
-height:20px;
+height:22px;
 
 border-radius:50%;
 
-background:rgba(255,255,255,0.35);
+border:2px solid rgba(255,255,255,0.5);
+
+background:linear-gradient(
+180deg,
+rgba(255,255,255,0.35),
+rgba(255,255,255,0.05)
+);
 
 }
 
-/* REFLEXO VIDRO */
+/* =========================
+FUNDO OVAL
+========================= */
+
 .tanque:after{
 
 content:"";
 
 position:absolute;
 
-left:20%;
-top:0;
+bottom:-12px;
+left:0;
 
-width:60%;
-height:100%;
+width:100%;
+height:22px;
 
-background:linear-gradient(
-90deg,
-transparent,
-rgba(255,255,255,0.25),
-transparent
-);
+border-radius:50%;
+
+border:2px solid rgba(255,255,255,0.3);
+
+background:rgba(0,0,0,0.3);
 
 }
 
 /* =========================
-   ÁGUA
+AGUA
 ========================= */
-.nivel{
+
+.agua{
 
 position:absolute;
 
@@ -189,46 +200,63 @@ bottom:0;
 
 width:100%;
 
-height:0%;
-
-border-radius:0 0 60px 60px;
-
-transition:height 1s ease;
-
-}
-
-/* SUPERFÍCIE DA ÁGUA */
-.nivel:after{
-
-content:"";
-
-position:absolute;
-
-top:-6px;
-
-width:100%;
-height:12px;
-
-background:radial-gradient(
-ellipse at center,
-rgba(255,255,255,0.5),
-transparent 70%
+background:linear-gradient(
+180deg,
+#ffcc33,
+#ff7b00,
+#ff3d00
 );
+
+box-shadow:0 0 15px rgba(255,140,0,0.6);
+
+transition:height 1s;
 
 }
 
 /* =========================
-   ESCALA LATERAL
+ONDA
 ========================= */
+
+.onda{
+
+position:absolute;
+
+top:-5px;
+
+width:200%;
+
+height:10px;
+
+background:radial-gradient(
+ellipse at center,
+rgba(255,255,255,0.7),
+rgba(255,255,255,0.1)
+);
+
+animation:onda 4s linear infinite;
+
+}
+
+@keyframes onda{
+
+0%{transform:translateX(0);}
+100%{transform:translateX(-50%);}
+
+}
+
+/* =========================
+ESCALA
+========================= */
+
 .escala{
 
 position:absolute;
 
-right:-12px;
+right:8px;
 
 top:18px;
 
-height:120px;
+height:80%;
 
 display:flex;
 
@@ -240,47 +268,84 @@ justify-content:space-between;
 
 .escala span{
 
-width:12px;
-height:3px;
+width:16px;
+height:4px;
 
 background:white;
 
 opacity:0.7;
 
+border-radius:2px;
+
 }
 
 /* =========================
-   INFO
+INFO
 ========================= */
+
 .info{
 text-align:center;
-margin-top:8px;
+margin-top:10px;
+}
+
+.valor{
+font-size:28px;
+font-weight:bold;
+}
+
+.litros{
+opacity:0.8;
+font-size:14px;
 }
 
 /* =========================
-   BOMBAS
+BOMBAS
 ========================= */
+
 .ligada{
+
+background:linear-gradient(
+90deg,
+#014d2c,
+#087f3e
+);
+
 border-left:6px solid #00ff88;
+
 }
 
 .desligada{
-border-left:6px solid #ff3b3b;
+
+background:linear-gradient(
+90deg,
+#4a0000,
+#7a0000
+);
+
+border-left:6px solid #ff2e2e;
+
 }
 
 /* =========================
-   PRESSÃO
+PRESSAO
 ========================= */
+
 .card.pressao .valor{
 font-size:26px;
 }
 
 /* =========================
-   FOOTER
+FOOTER
 ========================= */
+
 footer{
+
 text-align:center;
+
 padding:12px;
+
 opacity:0.7;
+
 font-size:13px;
+
 }
