@@ -48,9 +48,9 @@ main {
   gap: 12px;
 }
 
-/* 👇 RESERVATÓRIOS MAIORES */
+/* reservatórios maiores */
 .grid-reservatorios .card {
-  height: 200px;
+  height: 260px;
 }
 
 /* =========================
@@ -85,7 +85,6 @@ main {
   transition: 0.3s;
 }
 
-/* Hover profissional */
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 18px rgba(0,0,0,0.6);
@@ -97,43 +96,26 @@ main {
 .card h2 {
   font-size: 14px;
   margin: 0 0 6px;
-  z-index: 2;
   position: relative;
+  z-index: 2;
 }
 
-/* % grande */
 .valor {
   font-size: 32px;
   font-weight: bold;
-  z-index: 2;
   position: relative;
+  z-index: 2;
 }
 
-/* litros */
 .litros {
   font-size: 15px;
   opacity: 0.9;
-  z-index: 2;
   position: relative;
+  z-index: 2;
 }
 
 /* =========================
-   BARRA DE NÍVEL
-========================= */
-.barra {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0%;
-  background: linear-gradient(180deg, #00ff88, #00c96b);
-  opacity: 0.25;
-  z-index: 1;
-  transition: height 0.6s ease;
-}
-
-/* =========================
-   STATUS VISUAL
+   STATUS BORDA
 ========================= */
 .normal {
   border: 2px solid #00ff88;
@@ -145,6 +127,133 @@ main {
 
 .critico {
   border: 2px solid #ff3b3b;
+}
+
+/* =========================
+   RESERVATÓRIO 3D
+========================= */
+.card.reservatorio {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* tanque */
+.tanque {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.12),
+    rgba(0,0,0,0.6)
+  );
+
+  border: 2px solid rgba(0,255,150,0.5);
+
+  box-shadow:
+    inset 0 0 25px rgba(0,255,150,0.25),
+    inset 0 -10px 20px rgba(0,0,0,0.6),
+    0 5px 12px rgba(0,0,0,0.6);
+}
+
+/* brilho vidro */
+.tanque::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20%;
+  width: 60%;
+  height: 100%;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.25),
+    transparent
+  );
+
+  opacity: 0.5;
+}
+
+/* água */
+.nivel {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+
+  transition: height 0.8s ease;
+
+  box-shadow:
+    inset 0 5px 10px rgba(255,255,255,0.2),
+    inset 0 -5px 15px rgba(0,0,0,0.4);
+}
+
+/* superfície */
+.nivel::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255,255,255,0.6),
+    rgba(255,255,255,0.1)
+  );
+
+  border-radius: 50%;
+}
+
+/* onda */
+.nivel::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 200%;
+  height: 20px;
+
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+
+  animation: onda 4s linear infinite;
+}
+
+@keyframes onda {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* cores dinâmicas */
+.nivel.verde {
+  background: linear-gradient(180deg, #00ff88, #00c96b, #008f4f);
+}
+
+.nivel.amarelo {
+  background: linear-gradient(180deg, #ffaa00, #cc8800);
+}
+
+.nivel.vermelho {
+  background: linear-gradient(180deg, #ff3b3b, #aa0000);
+}
+
+/* info */
+.info {
+  margin-top: 8px;
+}
+
+.info .valor {
+  font-size: 22px;
+}
+
+.info .litros {
+  font-size: 13px;
 }
 
 /* =========================
@@ -187,8 +296,6 @@ footer {
 /* =========================
    RESPONSIVO
 ========================= */
-
-/* Tablet */
 @media (max-width: 1100px) {
   .grid-reservatorios {
     grid-template-columns: repeat(3, 1fr);
@@ -200,7 +307,6 @@ footer {
   }
 }
 
-/* Celular */
 @media (max-width: 600px) {
   .grid-reservatorios,
   .grid-bombas,
