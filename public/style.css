@@ -1,112 +1,180 @@
+/* =========================
+   BASE
+========================= */
 body {
   margin: 0;
-  font-family: "Segoe UI";
+  font-family: "Segoe UI", Arial, sans-serif;
   background: linear-gradient(135deg, #022c22, #014737);
-  color: white;
+  color: #ffffff;
 }
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
 header {
   text-align: center;
-  padding: 10px;
-  background: rgba(0, 90, 60, 0.9);
+  padding: 12px;
+  background: rgba(0, 90, 60, 0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 #statusSistema {
   font-weight: bold;
   color: #00ffae;
-}
-
-/* MAIN */
-main {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 10px;
+  font-size: 14px;
 }
 
 /* =========================
-   RESERVATÓRIOS (5 POR LINHA)
+   MAIN
+========================= */
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+}
+
+/* =========================
+   GRID RESERVATÓRIOS
 ========================= */
 .grid-reservatorios {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-}
-
-.grid-reservatorios .card {
-  height: 160px;
+  gap: 12px;
 }
 
 /* =========================
-   BOMBAS (3 POR LINHA)
+   GRID BOMBAS
 ========================= */
 .grid-bombas {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 /* =========================
-   PRESSÕES (3 POR LINHA)
+   GRID PRESSÕES
 ========================= */
 .grid-pressoes {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
-/* CARD */
+/* =========================
+   CARD BASE
+========================= */
 .card {
-  background: rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 10px;
   position: relative;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 12px;
   overflow: hidden;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   transition: 0.3s;
 }
 
+/* hover elegante */
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================
+   TEXTO (IMPORTANTE)
+========================= */
 .card h2 {
-  font-size: 14px;
+  font-size: 15px;
+  margin: 0 0 6px;
+  position: relative;
+  z-index: 2;
 }
 
 .valor {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: bold;
+  position: relative;
+  z-index: 2;
 }
 
-/* BARRA */
+.litros {
+  font-size: 14px;
+  opacity: 0.9;
+  position: relative;
+  z-index: 2;
+}
+
+/* =========================
+   BARRA DE NÍVEL (CORRIGIDA)
+========================= */
 .barra {
   position: absolute;
   bottom: 0;
+  left: 0;
   width: 100%;
-  background: #00ff88;
-  transition: height 0.5s;
+  height: 0%;
+  background: linear-gradient(180deg, #00ff88, #00c96b);
+  opacity: 0.35; /* 👈 transparência p/ não esconder texto */
+  z-index: 1;
+  transition: height 0.6s ease;
 }
 
-/* STATUS */
-.critico { border: 2px solid #ff3b3b; }
-.alerta { border: 2px solid #ffaa00; }
-.normal { border: 2px solid #00ff88; }
+/* =========================
+   STATUS VISUAL
+========================= */
+.normal {
+  border: 2px solid #00ff88;
+}
 
-/* BOMBAS */
-.ligada { background: rgba(0,180,0,0.4) !important; }
-.desligada { background: rgba(180,0,0,0.4) !important; }
+.alerta {
+  border: 2px solid #ffaa00;
+}
 
-/* FOOTER */
+.critico {
+  border: 2px solid #ff3b3b;
+}
+
+/* =========================
+   BOMBAS
+========================= */
+.ligada {
+  background: linear-gradient(135deg, rgba(0,180,0,0.6), rgba(0,80,0,0.6));
+}
+
+.desligada {
+  background: linear-gradient(135deg, rgba(180,0,0,0.6), rgba(80,0,0,0.6));
+}
+
+/* =========================
+   PRESSÃO
+========================= */
+.card.pressao {
+  text-align: center;
+}
+
+.card.pressao .valor {
+  font-size: 22px;
+}
+
+/* =========================
+   FOOTER
+========================= */
 footer {
   text-align: center;
-  padding: 5px;
+  padding: 6px;
   font-size: 12px;
   background: rgba(0,0,0,0.3);
+  opacity: 0.8;
 }
 
 /* =========================
    RESPONSIVO
 ========================= */
-@media (max-width: 900px) {
+
+/* Tablet */
+@media (max-width: 1100px) {
   .grid-reservatorios {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .grid-bombas,
@@ -115,7 +183,8 @@ footer {
   }
 }
 
-@media (max-width: 500px) {
+/* Celular */
+@media (max-width: 600px) {
   .grid-reservatorios,
   .grid-bombas,
   .grid-pressoes {
