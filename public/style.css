@@ -130,43 +130,83 @@ main {
 }
 
 /* =========================
-   RESERVATÓRIO 3D
+   RESERVATÓRIO 3D REAL
 ========================= */
+
 .card.reservatorio {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  height: 260px;
+  perspective: 800px; /* profundidade */
 }
 
-/* tanque */
+/* TANQUE 3D */
 .tanque {
   position: relative;
   width: 100%;
   height: 150px;
   border-radius: 12px;
-  overflow: hidden;
 
+  /* efeito vidro */
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,0.12),
+    rgba(255,255,255,0.15),
     rgba(0,0,0,0.6)
   );
 
   border: 2px solid rgba(0,255,150,0.5);
 
+  /* profundidade */
+  transform: rotateX(8deg);
   box-shadow:
     inset 0 0 25px rgba(0,255,150,0.25),
-    inset 0 -10px 20px rgba(0,0,0,0.6),
-    0 5px 12px rgba(0,0,0,0.6);
+    0 10px 20px rgba(0,0,0,0.6);
+
+  overflow: hidden;
 }
 
-/* brilho vidro */
+/* ÁGUA (3D) */
+.nivel {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+
+  background: linear-gradient(
+    180deg,
+    #00ff88 0%,
+    #00c96b 60%,
+    #009e55 100%
+  );
+
+  box-shadow:
+    inset 0 5px 10px rgba(255,255,255,0.3),
+    inset 0 -10px 20px rgba(0,0,0,0.4);
+
+  transition: height 1s ease;
+}
+
+/* SUPERFÍCIE DA ÁGUA (onda fake) */
+.nivel::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5), transparent 70%);
+  opacity: 0.6;
+}
+
+/* BRILHO DO VIDRO */
 .tanque::before {
   content: "";
   position: absolute;
   top: 0;
-  left: 20%;
-  width: 60%;
+  left: 15%;
+  width: 70%;
   height: 100%;
 
   background: linear-gradient(
@@ -179,138 +219,34 @@ main {
   opacity: 0.5;
 }
 
-/* água */
-.nivel {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 0%;
-
-  transition: height 0.8s ease;
-
-  box-shadow:
-    inset 0 5px 10px rgba(255,255,255,0.2),
-    inset 0 -5px 15px rgba(0,0,0,0.4);
-}
-
-/* superfície */
-.nivel::before {
+/* REFLEXO SUPERIOR */
+.tanque::after {
   content: "";
   position: absolute;
-  top: -6px;
+  top: 0;
   left: 0;
   width: 100%;
-  height: 12px;
+  height: 30%;
 
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255,255,255,0.6),
-    rgba(255,255,255,0.1)
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.25),
+    transparent
   );
-
-  border-radius: 50%;
 }
 
-/* onda */
-.nivel::after {
-  content: "";
-  position: absolute;
-  top: -10px;
-  width: 200%;
-  height: 20px;
-
-  background: rgba(255,255,255,0.15);
-  border-radius: 50%;
-
-  animation: onda 4s linear infinite;
-}
-
-@keyframes onda {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* cores dinâmicas */
-.nivel.verde {
-  background: linear-gradient(180deg, #00ff88, #00c96b, #008f4f);
-}
-
-.nivel.amarelo {
-  background: linear-gradient(180deg, #ffaa00, #cc8800);
-}
-
-.nivel.vermelho {
-  background: linear-gradient(180deg, #ff3b3b, #aa0000);
-}
-
-/* info */
+/* INFO */
 .info {
-  margin-top: 8px;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .info .valor {
-  font-size: 22px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .info .litros {
   font-size: 13px;
-}
-
-/* =========================
-   BOMBAS
-========================= */
-.ligada {
-  background: linear-gradient(135deg, rgba(0,180,0,0.6), rgba(0,80,0,0.7));
-}
-
-.desligada {
-  background: linear-gradient(135deg, rgba(180,0,0,0.6), rgba(80,0,0,0.7));
-}
-
-.card.bomba .valor {
-  font-size: 20px;
-}
-
-/* =========================
-   PRESSÃO
-========================= */
-.card.pressao {
-  text-align: center;
-}
-
-.card.pressao .valor {
-  font-size: 22px;
-}
-
-/* =========================
-   FOOTER
-========================= */
-footer {
-  text-align: center;
-  padding: 6px;
-  font-size: 12px;
-  background: rgba(0,0,0,0.3);
-  opacity: 0.8;
-}
-
-/* =========================
-   RESPONSIVO
-========================= */
-@media (max-width: 1100px) {
-  .grid-reservatorios {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .grid-bombas,
-  .grid-pressoes {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .grid-reservatorios,
-  .grid-bombas,
-  .grid-pressoes {
-    grid-template-columns: 1fr;
-  }
+  opacity: 0.85;
 }
