@@ -256,17 +256,20 @@ Sistema Profissional - HAG
 
 <script>
 
-function atualizarHora(){
+document.addEventListener("DOMContentLoaded", () => {
 
-const agora = new Date()
+  function atualizarHora(){
+    const el = document.getElementById("hora");
+    if(el){
+      el.innerText = new Date().toLocaleTimeString();
+    }
+  }
 
-const hora = agora.toLocaleTimeString()
+  setInterval(atualizarHora,1000);
 
-document.getElementById("hora").innerText = hora
+});
 
-}
-
-setInterval(atualizarHora,1000)
+</script>
 
 </script>
 <script src="dashboard.js"></script>
