@@ -100,7 +100,11 @@ async function carregarHistorico() {
 
       labels.push(data);
 
-      Object.entries(historico[data]).forEach(([nome, valores]) => {
+     Object.entries(historico[data]).forEach(([nome, valores]) => {
+
+  // 🚫 IGNORA sensores que NÃO são reservatórios
+  if(!ehReservatorio(nome)) return;
+
 
         const media = (valores.max + valores.min) / 2;
 
