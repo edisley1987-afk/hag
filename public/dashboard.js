@@ -160,13 +160,21 @@ function renderReservatorios(lista) {
   lista.forEach(r => {
     const el = document.createElement("div");
 
-    el.className = "card " + getStatus(r.percent);
+    const percent = Number(r.percent) || 0;
+
+    el.className = "card reservatorio " + getStatus(percent);
 
     el.innerHTML = `
-      <div class="barra" style="height:${r.percent ?? 0}%"></div>
       <h2>${r.nome}</h2>
-      <div class="valor">${r.percent ?? 0}%</div>
-      <div>${formatar(r.current_liters)} L</div>
+
+      <div class="tanque">
+        <div class="nivel" style="height:${percent}%"></div>
+      </div>
+
+      <div class="info">
+        <div class="valor">${percent.toFixed(1)}%</div>
+        <div class="litros">${formatar(r.current_liters)} L</div>
+      </div>
     `;
 
     area.appendChild(el);
