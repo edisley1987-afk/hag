@@ -1,95 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoramento — Hospital Arnaldo Gavazza</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAG Monitoramento</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header>
-  <h1>💧 Monitoramento dos Reservatórios — Hospital Arnaldo Gavazza</h1>
-  <div id="lastUpdate">Última atualização: --</div>
+  <h1>💧 Monitoramento HAG</h1>
+  <div id="statusSistema">🔄 Conectando...</div>
+  <div id="lastUpdate">--</div>
 </header>
 
-<main class="cards-container">
+<main>
 
-  <!-- RESERVATÓRIOS -->
-  <div class="card" id="cardElevador">
-    <div class="nivel-bar" id="nivelElevadorBar"></div>
-    <h2>Reservatório Elevador</h2>
-    <p class="valor" id="nivelElevador">--%</p>
-    <p class="litros" id="litrosElevador">-- L</p>
-  </div>
+  <!-- 🔵 RESERVATÓRIOS -->
+  <section id="areaReservatorios" class="grid-reservatorios"></section>
 
-  <div class="card" id="cardOsmose">
-    <div class="nivel-bar" id="nivelOsmoseBar"></div>
-    <h2>Reservatório Osmose</h2>
-    <p class="valor" id="nivelOsmose">--%</p>
-    <p class="litros" id="litrosOsmose">-- L</p>
-  </div>
+  <!-- 🟢 BOMBAS -->
+  <section id="areaBombas" class="grid-bombas"></section>
 
-  <div class="card" id="cardCME">
-    <div class="nivel-bar" id="nivelCMEBar"></div>
-    <h2>Reservatório CME</h2>
-    <p class="valor" id="nivelCME">--%</p>
-    <p class="litros" id="litrosCME">-- L</p>
-  </div>
-
-  <div class="card" id="cardAbrandada">
-    <div class="nivel-bar" id="nivelAbrandadaBar"></div>
-    <h2>Água Abrandada</h2>
-    <p class="valor" id="nivelAbrandada">--%</p>
-    <p class="litros" id="litrosAbrandada">-- L</p>
-  </div>
-
-  <div class="card" id="cardLavanderia">
-    <div class="nivel-bar" id="nivelLavanderiaBar"></div>
-    <h2>Lavanderia</h2>
-    <p class="valor" id="nivelLavanderia">--%</p>
-    <p class="litros" id="litrosLavanderia">-- L</p>
-  </div>
-
-  <!-- PRESSÕES -->
-  <div class="card pressao">
-    <h2>Pressão Saída Osmose</h2>
-    <p class="valor" id="pressaoSaida">-- bar</p>
-  </div>
-
-  <div class="card pressao">
-    <h2>Pressão Retorno Osmose</h2>
-    <p class="valor" id="pressaoRetorno">-- bar</p>
-  </div>
-
-  <div class="card pressao">
-    <h2>Pressão CME</h2>
-    <p class="valor" id="pressaoCME">-- bar</p>
-  </div>
-
-  <!-- BOMBAS -->
-  <div class="card bomba" id="bomba1">
-    <h2>Bomba 01</h2>
-    <p class="valor" id="statusBomba1">--</p>
-    <p class="ciclos" id="ciclosBomba1">-- ciclos</p>
-  </div>
-
-  <div class="card bomba" id="bomba2">
-    <h2>Bomba 02</h2>
-    <p class="valor" id="statusBomba2">--</p>
-    <p class="ciclos" id="ciclosBomba2">-- ciclos</p>
-  </div>
-
-  <div class="card bomba" id="bombaOsmose">
-    <h2>Bomba Osmose</h2>
-    <p class="valor" id="statusBombaOsmose">--</p>
-    <p class="ciclos" id="ciclosBombaOsmose">-- ciclos</p>
-  </div>
+  <!-- 🟡 PRESSÕES -->
+  <section id="areaPressoes" class="grid-pressoes"></section>
 
 </main>
 
 <footer>
-  © Hospital Arnaldo Gavazza — Sistema de Monitoramento
+  Sistema Profissional • HAG
 </footer>
 
 <script src="dashboard.js"></script>
