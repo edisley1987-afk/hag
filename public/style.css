@@ -361,3 +361,26 @@ opacity:0.7;
 font-size:13px;
 
 }
+/* =========================
+BOTÃO HISTÓRICO
+========================= */
+
+.btn-historico{
+  position:absolute;
+  right:20px;
+  top:20px;
+  padding:10px 14px;
+  background:linear-gradient(90deg,#00ff88,#00c853);
+  border:none;
+  border-radius:8px;
+  color:#003b2a;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 0 10px rgba(0,255,120,0.6);
+  transition:0.3s;
+}
+
+.btn-historico:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 18px rgba(0,255,120,0.9);
+}
