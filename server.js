@@ -195,12 +195,6 @@ function safeReadJson(filePath, fallback) {
   }
 }
 
-
-    writing = false;
-    processQueue();
-  });
-}
-
 function getManutencao() {
   try { return JSON.parse(fs.readFileSync(MANUT_FILE, "utf8")); } catch { return { ativo: false }; }
 }
