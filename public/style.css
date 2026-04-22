@@ -204,25 +204,20 @@ AGUA
 ========================= */
 
 .agua{
-
 position:absolute;
-
 bottom:0;
-
 width:100%;
-
 background:linear-gradient(
 180deg,
 #ffcc33,
 #ff7b00,
 #ff3d00
 );
-
 box-shadow:0 0 15px rgba(255,140,0,0.6);
-
 transition:height 1s;
-
+z-index:2;
 }
+
 
 /* =========================
 ONDA
@@ -260,34 +255,23 @@ ESCALA
 ========================= */
 
 .escala{
-
 position:absolute;
-
-right:8px;
-
+right:6px;
 top:18px;
-
 height:80%;
-
 display:flex;
-
 flex-direction:column;
-
 justify-content:space-between;
-
+z-index:5;
 }
 
+
 .escala span{
-
-width:16px;
-height:4px;
-
-background:white;
-
-opacity:0.7;
-
-border-radius:2px;
-
+background:#00ff88;
+height:2px;
+width:18px;
+box-shadow:0 0 6px #00ff88;
+opacity:0.9;
 }
 
 /* =========================
@@ -382,4 +366,7 @@ BOTÃO HISTÓRICO
 .btn-historico:hover{
   transform:scale(1.05);
   box-shadow:0 0 18px rgba(0,255,120,0.9);
+}
+.btn-historico{
+z-index:1000;
 }
