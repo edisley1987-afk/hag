@@ -264,7 +264,26 @@ function registrarHistorico(dadosConvertidos) {
     const sensor = SENSORES[ref];
     if (!sensor || !sensor.capacidade) return;
 
-    if (!historico[hoje][ref]) historico[hoje][ref] = { min: valor, max: valor, pontos: [] };
+   const percent = dadosConvertidos[`${ref}_percent`] || 0;
+
+if (!historico[hoje][ref]) {
+  historico[hoje][ref] = {
+    min: valor,
+    max: valor,
+    min_percent: percent,
+    max_percent: percent,
+    pontos: []
+  };
+}
+
+const reg = historico[hoje][ref];
+
+reg.min = Math.min(reg.min, valor);
+reg.max = Math.max(reg.max, valor);
+
+reg.min_percent = Math.min(reg.min_percent, percent);
+reg.max_percent = Math.max(reg.max_percent, percent);
+
     const reg = historico[hoje][ref];
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
