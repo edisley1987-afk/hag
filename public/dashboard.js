@@ -139,28 +139,22 @@ function montarEstrutura(dados){
     ],
 
     bombas: [
-      {
-        nome: "Bomba 01",
-        estado: dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
-        ciclo: dados["Ciclos_Bomba_01_counter"] || 0
-      },
-      {
-        nome: "Bomba 02",
-        estado: dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
-        ciclo: dados["Ciclos_Bomba_02_counter"] || 0
-      },
-      {
-        nome: "Bomba Osmose",
-        estado: dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
-        ciclo: dados["Ciclos_Bomba_Osmose_counter"] || 0
-      }
-    ],
-
-    pressoes: [
-      { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"] },
-      { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"] },
-      { nome: "Pressão CME", pressao: dados["Pressao_Saida_CME_current"] }
-    ]
+  {
+    nome: "Bomba 01",
+    estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
+    ciclo: dados["Ciclos_Bomba_01_counter"] || 0
+  },
+  {
+    nome: "Bomba 02",
+    estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
+    ciclo: dados["Ciclos_Bomba_02_counter"] || 0
+  },
+  {
+    nome: "Bomba Osmose",
+    estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada",
+    ciclo: dados["Ciclos_Bomba_Osmose_counter"] || 0
+  }
+]
   };
 
   atualizarTela(estrutura);
@@ -377,17 +371,19 @@ function atualizarKPIs(reservatorios, bombas){
 
     if(deltaTempo <= 0) return;
 
-    const consumoPorSegundo = deltaNivel / deltaTempo;
+    const consumoPorSegundo = Math.max(0, deltaNivel / deltaTempo);
 
     // tempo restante
     if(consumoPorSegundo > 0){
 
       const tempoRestanteSeg = r.current_liters / consumoPorSegundo;
-
+      if(tempoRestanteSeg > 86400) return;
+if(tempoRestanteSeg < 60) return;
+if(tempoRestanteSeg > 86400) return; // ignora previsão maior que 24h
       const horas = Math.floor(tempoRestanteSeg / 3600);
       const minutos = Math.floor((tempoRestanteSeg % 3600) / 60);
 
-      const card = document.querySelector(`[data-nome="${r.nome}"]`);
+      const card = document.querySelector(`.reservatorio[data-nome="${r.nome}"]`);
 
       if(card){
 
