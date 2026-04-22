@@ -3,13 +3,14 @@ const API = "/api/dashboard";
 let ws = null;
 let reconnectDelay = 3000;
 let ultimoDado = Date.now();
+let historicoNivel = {};
 
 init();
 
 // =======================
 // INIT
 // =======================
-function init(){
+function init() {
   conectarWS();
   setInterval(fallbackHTTP, 8000);
 
@@ -23,7 +24,7 @@ function init(){
 // =======================
 // WEBSOCKET
 // =======================
-function conectarWS(){
+function conectarWS() {
 
   if (ws) {
     ws.close();
@@ -36,6 +37,7 @@ function conectarWS(){
   ws.onopen = () => {
     console.log("WS conectado");
     setStatus("🟢 Tempo real conectado");
+    reconnectDelay = 3000;
   };
 
   ws.onmessage = (msg) => {
@@ -75,7 +77,9 @@ function conectarWS(){
   ws.onclose = () => {
     console.log("WS desconectado");
     setStatus("🔴 Reconectando...");
+
     setTimeout(conectarWS, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 1.5, 30000);
   };
 
   ws.onerror = () => {
@@ -87,7 +91,9 @@ function conectarWS(){
 // =======================
 // FALLBACK HTTP
 // =======================
-async function fallbackHTTP(){
+async function fallbackHTTP() {
+
+  if (ws && ws.readyState === 1) return;
 
   try {
     const res = await fetch(API + "?ts=" + Date.now());
@@ -105,7 +111,7 @@ async function fallbackHTTP(){
 // =======================
 // ESTRUTURA DADOS
 // =======================
-function montarEstrutura(dados){
+function montarEstrutura(dados) {
 
   if (!dados || typeof dados !== "object") return;
 
@@ -139,22 +145,37 @@ function montarEstrutura(dados){
     ],
 
     bombas: [
-  {
-    nome: "Bomba 01",
-    estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
-    ciclo: dados["Ciclos_Bomba_01_counter"] || 0
-  },
-  {
-    nome: "Bomba 02",
-    estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
-    ciclo: dados["Ciclos_Bomba_02_counter"] || 0
-  },
-  {
-    nome: "Bomba Osmose",
-    estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada",
-    ciclo: dados["Ciclos_Bomba_Osmose_counter"] || 0
-  }
-]
+      {
+        nome: "Bomba 01",
+        estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_01_counter"] || 0
+      },
+      {
+        nome: "Bomba 02",
+        estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_02_counter"] || 0
+      },
+      {
+        nome: "Bomba Osmose",
+        estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_Osmose_counter"] || 0
+      }
+    ],
+
+    pressoes: [
+      {
+        nome: "Pressão Saída Osmose",
+        pressao: dados["Pressao_Saida_Osmose_current"] || 0
+      },
+      {
+        nome: "Pressão Retorno Osmose",
+        pressao: dados["Pressao_Retorno_Osmose_current"] || 0
+      },
+      {
+        nome: "Pressão CME",
+        pressao: dados["Pressao_Saida_CME_current"] || 0
+      }
+    ]
   };
 
   atualizarTela(estrutura);
@@ -163,7 +184,7 @@ function montarEstrutura(dados){
 // =======================
 // UPDATE UI
 // =======================
-function atualizarTela(data){
+function atualizarTela(data) {
 
   const elHora = document.getElementById("hora");
   if (elHora) {
@@ -174,42 +195,41 @@ function atualizarTela(data){
   const bombas = data.bombas || [];
   const pressoes = data.pressoes || [];
 
- renderReservatorios(reservatorios);
-renderBombas(bombas);
-renderPressoes(pressoes);
+  renderReservatorios(reservatorios);
+  renderBombas(bombas);
+  renderPressoes(pressoes);
 
-atualizarBombasAtivas(bombas);
-atualizarKPIs(reservatorios, bombas);
-
+  atualizarBombasAtivas(bombas);
+  atualizarKPIs(reservatorios, bombas);
 }
-function atualizarBombasAtivas(lista){
+
+// =======================
+// BOMBAS ATIVAS
+// =======================
+function atualizarBombasAtivas(lista) {
 
   const el = document.getElementById("bombasAtivas");
   if (!el) return;
 
-  let total = 0;
-
-  lista.forEach(b => {
-    if (b.estado === "ligada") total++;
-  });
-
+  const total = lista.filter(b => b.estado === "ligada").length;
   el.innerText = total;
 }
-// =======================
-// COR NEON
-// =======================
-function corNivel(percent){
 
-  if (percent >= 100) return ["#00e5ff","#006eff"];
-  if (percent >= 70)  return ["#00ff88","#00c853"];
-  if (percent >= 40)  return ["#ffd600","#ff8f00"];
-  return ["#ff1744","#b71c1c"];
+// =======================
+// CORES NIVEL
+// =======================
+function corNivel(percent) {
+
+  if (percent >= 100) return ["#00e5ff", "#006eff"];
+  if (percent >= 70) return ["#00ff88", "#00c853"];
+  if (percent >= 40) return ["#ffd600", "#ff8f00"];
+  return ["#ff1744", "#b71c1c"];
 }
 
 // =======================
 // RESERVATORIOS
 // =======================
-function renderReservatorios(lista){
+function renderReservatorios(lista) {
 
   const area = document.getElementById("areaReservatorios");
   if (!area) return;
@@ -222,8 +242,8 @@ function renderReservatorios(lista){
     const [cor1, cor2] = corNivel(percent);
 
     const el = document.createElement("div");
-el.className = "card reservatorio";
-el.setAttribute("data-nome", r.nome);
+    el.className = "card reservatorio";
+    el.setAttribute("data-nome", r.nome);
 
     el.innerHTML = `
       <h2>${r.nome}</h2>
@@ -234,11 +254,9 @@ el.setAttribute("data-nome", r.nome);
         </div>
 
         <div class="agua"
-          style="
-            height:${percent}%;
-            background:linear-gradient(180deg, ${cor1}, ${cor2});
-            box-shadow:0 0 20px ${cor1};
-          ">
+          style="height:${percent}%;
+          background:linear-gradient(180deg, ${cor1}, ${cor2});
+          box-shadow:0 0 20px ${cor1};">
         </div>
       </div>
 
@@ -255,7 +273,7 @@ el.setAttribute("data-nome", r.nome);
 // =======================
 // BOMBAS
 // =======================
-function renderBombas(lista){
+function renderBombas(lista) {
 
   const area = document.getElementById("areaBombas");
   if (!area) return;
@@ -282,7 +300,7 @@ function renderBombas(lista){
 // =======================
 // PRESSÃO
 // =======================
-function renderPressoes(lista){
+function renderPressoes(lista) {
 
   const area = document.getElementById("areaPressoes");
   if (!area) return;
@@ -306,11 +324,11 @@ function renderPressoes(lista){
 // =======================
 // FORMATOS
 // =======================
-function formatar(n){
+function formatar(n) {
   return Number(n || 0).toLocaleString("pt-BR");
 }
 
-function formatarPressao(p){
+function formatarPressao(p) {
   if (p === null || p === undefined) return "--";
   return Number(p).toFixed(2) + " bar";
 }
@@ -318,45 +336,29 @@ function formatarPressao(p){
 // =======================
 // STATUS
 // =======================
-function setStatus(txt){
+function setStatus(txt) {
   const el = document.getElementById("statusSistema");
   if (el) el.innerText = txt;
 }
+
 // =======================
-// KPIs INDUSTRIAIS
+// KPIs
 // =======================
+function atualizarKPIs(reservatorios, bombas) {
 
-let historicoNivel = {};
-
-function atualizarKPIs(reservatorios, bombas){
-
-  // ------------------
-  // BOMBAS ATIVAS
-  // ------------------
   const bombasAtivas = bombas.filter(b => b.estado === "ligada").length;
-
   const elBombas = document.getElementById("kpiBombas");
-  if(elBombas) elBombas.innerText = bombasAtivas;
+  if (elBombas) elBombas.innerText = bombasAtivas;
 
-
-  // ------------------
-  // RESERVATORIOS CRITICOS
-  // ------------------
   const criticos = reservatorios.filter(r => r.percent < 30).length;
-
   const elCritico = document.getElementById("kpiCritico");
-  if(elCritico) elCritico.innerText = criticos;
+  if (elCritico) elCritico.innerText = criticos;
 
-
-  // ------------------
-  // CONSUMO E PREVISÃO
-  // ------------------
+  const agora = Date.now();
 
   reservatorios.forEach(r => {
 
-    const agora = Date.now();
-
-    if(!historicoNivel[r.nome]){
+    if (!historicoNivel[r.nome]) {
       historicoNivel[r.nome] = {
         nivel: r.current_liters,
         tempo: agora
@@ -365,39 +367,36 @@ function atualizarKPIs(reservatorios, bombas){
     }
 
     const anterior = historicoNivel[r.nome];
-
     const deltaNivel = anterior.nivel - r.current_liters;
     const deltaTempo = (agora - anterior.tempo) / 1000;
 
-    if(deltaTempo <= 0) return;
+    if (deltaTempo <= 0) return;
 
-    const consumoPorSegundo = Math.max(0, deltaNivel / deltaTempo);
+    const consumo = Math.max(0, deltaNivel / deltaTempo);
 
-    // tempo restante
-    if(consumoPorSegundo > 0){
+    if (consumo <= 0) return;
 
-      const tempoRestanteSeg = r.current_liters / consumoPorSegundo;
-      if(tempoRestanteSeg > 86400) return;
-if(tempoRestanteSeg < 60) return;
-if(tempoRestanteSeg > 86400) return; // ignora previsão maior que 24h
-      const horas = Math.floor(tempoRestanteSeg / 3600);
-      const minutos = Math.floor((tempoRestanteSeg % 3600) / 60);
+    const tempoRestanteSeg = r.current_liters / consumo;
 
-      const card = document.querySelector(`.reservatorio[data-nome="${r.nome}"]`);
+    if (tempoRestanteSeg < 60 || tempoRestanteSeg > 86400) return;
 
-      if(card){
+    const horas = Math.floor(tempoRestanteSeg / 3600);
+    const minutos = Math.floor((tempoRestanteSeg % 3600) / 60);
 
-        let tempoEl = card.querySelector(".tempoRestante");
+    const safeName = CSS.escape(r.nome);
+    const card = document.querySelector(`.reservatorio[data-nome="${safeName}"]`);
 
-        if(!tempoEl){
-          tempoEl = document.createElement("div");
-          tempoEl.className = "tempoRestante";
-          card.appendChild(tempoEl);
-        }
+    if (card) {
 
-        tempoEl.innerText = `⏳ ${horas}h ${minutos}m restantes`;
+      let tempoEl = card.querySelector(".tempoRestante");
+
+      if (!tempoEl) {
+        tempoEl = document.createElement("div");
+        tempoEl.className = "tempoRestante";
+        card.appendChild(tempoEl);
       }
 
+      tempoEl.innerText = `⏳ ${horas}h ${minutos}m restantes`;
     }
 
     historicoNivel[r.nome] = {
@@ -406,5 +405,4 @@ if(tempoRestanteSeg > 86400) return; // ignora previsão maior que 24h
     };
 
   });
-
 }
