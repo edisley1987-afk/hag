@@ -37,6 +37,8 @@ import cors from "cors";
 import compression from "compression";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
+
+// ========================= IO QUEUE =========================
 let writing = false;
 const queue = [];
 const MAX_QUEUE = 1000;
@@ -66,10 +68,18 @@ function processQueue() {
       console.error("Erro escrita JSON:", file, e);
     }
 
+    writing = false;
+    processQueue();
+  });
+}
+
+// ========================= PATHS =========================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ========================= APP =========================
 const app = express();
+);
 
 // ------------------------- ARQUIVOS E CONSTANTES -------------------------
 const DATA_DIR = path.join(__dirname, "data");
