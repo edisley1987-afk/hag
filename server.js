@@ -35,7 +35,6 @@ import fs from "fs";
 import path from "path";
 import cors from "cors";
 import compression from "compression";
-import { WebSocketServer } from "ws";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 
@@ -141,16 +140,43 @@ function safeReadJson(filePath, fallback) {
     const s = fs.readFileSync(filePath, "utf8");
     return JSON.parse(s || "{}");
   } catch (e) {
-    console.error("safeReadJson error", filePath, e);
+    console.error("Erro leitura JSON:", filePath, e);
     return fallback;
   }
 }
+
+let writing = false;
+const queue = [];
+const MAX_QUEUE = 1000;
+
 function safeWriteJson(filePath, data) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error("safeWriteJson error", filePath, e);
+  if (queue.length > MAX_QUEUE) {
+    console.warn("Fila cheia, descartando escrita:", filePath);
+    return;
   }
+
+  queue.push({ file: filePath, data });
+  processQueue();
+}
+
+function processQueue() {
+  if (writing || queue.length === 0) return;
+
+  writing = true;
+  const { file, data } = queue.shift();
+
+  setImmediate(() => {
+    try {
+      const tmp = file + ".tmp";
+      fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+      fs.renameSync(tmp, file);
+    } catch (e) {
+      console.error("Erro escrita JSON:", file, e);
+    }
+
+    writing = false;
+    processQueue();
+  });
 }
 
 function getManutencao() {
@@ -254,49 +280,75 @@ novo[`${ref}_percent`] = Number(percent.toFixed(1)); // novo campo %
 }
 
 // registra histórico diário (min/max + pontos relevantes)
+// ------------------------- LIMPEZA DE HISTÓRICO -------------------------
+function limparHistoricoAntigo() {
+  const historico = safeReadJson(HIST_FILE, {});
+  const limiteDias = 7;
+
+  const datas = Object.keys(historico).sort();
+
+  if (datas.length > limiteDias) {
+    const remover = datas.slice(0, datas.length - limiteDias);
+    remover.forEach(d => delete historico[d]);
+
+    safeWriteJson(HIST_FILE, historico);
+    console.log("🧹 Histórico antigo removido:", remover.length, "dias");
+  }
+}
+
+// ------------------------- HISTÓRICO -------------------------
 function registrarHistorico(dadosConvertidos) {
   const hoje = new Date().toISOString().split("T")[0];
   const historico = safeReadJson(HIST_FILE, {});
+
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dadosConvertidos).forEach(([ref, valor]) => {
     if (ref.endsWith("_timestamp") || ref === "timestamp") return;
+
     const sensor = SENSORES[ref];
     if (!sensor || !sensor.capacidade) return;
 
-   const percent = dadosConvertidos[`${ref}_percent`] || 0;
+    const percent = dadosConvertidos[`${ref}_percent`] || 0;
 
-if (!historico[hoje][ref]) {
-  historico[hoje][ref] = {
-    min: valor,
-    max: valor,
-    min_percent: percent,
-    max_percent: percent,
-    pontos: []
-  };
-}
-
-const reg = historico[hoje][ref];
-
-reg.min = Math.min(reg.min, valor);
-reg.max = Math.max(reg.max, valor);
-
-reg.min_percent = Math.min(reg.min_percent, percent);
-reg.max_percent = Math.max(reg.max_percent, percent);
+    if (!historico[hoje][ref]) {
+      historico[hoje][ref] = {
+        min: valor,
+        max: valor,
+        min_percent: percent,
+        max_percent: percent,
+        pontos: []
+      };
+    }
 
     const reg = historico[hoje][ref];
+
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
+    reg.min_percent = Math.min(reg.min_percent, percent);
+    reg.max_percent = Math.max(reg.max_percent, percent);
+
     const variacao = Math.max(1, sensor.capacidade * 0.02);
     const ultimo = reg.pontos.at(-1);
+
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
-      reg.pontos.push({ hora: new Date().toLocaleTimeString("pt-BR"), valor });
+      reg.pontos.push({
+        hora: new Date().toISOString(),
+        valor,
+        percent
+      });
+
+      if (reg.pontos.length > 200) {
+        reg.pontos.shift();
+      }
     }
   });
 
+  limparHistoricoAntigo();
   safeWriteJson(HIST_FILE, historico);
 }
+
 function aplicarFailSafeBombas(dados) {
   const agora = Date.now();
 
@@ -310,7 +362,7 @@ function aplicarFailSafeBombas(dados) {
     const tsKey = `${ref}_timestamp`;
     const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : 0;
 
-    if (!ts || agora - ts > DATA_TIMEOUT_MS) {
+    if (!ts || (agora - ts > DATA_TIMEOUT_MS && dados[ref] === 1)) {
       dados[ref] = 0;
       dados[tsKey] = new Date().toISOString();
     }
@@ -318,6 +370,7 @@ function aplicarFailSafeBombas(dados) {
 
   return dados;
 }
+
 // ------------------------- CONSUMO / ALERTAS -------------------------
 if (!fs.existsSync(CONSUMO_FILE)) {
   safeWriteJson(CONSUMO_FILE, {
@@ -342,25 +395,32 @@ function calcularConsumoOsmose(nivelAtual) {
   let consumido = 0;
 
   if (consumo.ultimoNivel > 0 && nivelAtual < consumo.ultimoNivel) {
-    consumido = consumo.ultimoNivel - nivelAtual;
-    consumo.totalConsumido += consumido;
-  }
+    const diff = consumo.ultimoNivel - nivelAtual;
 
-  const agora = Date.now();
-  if (consumo.timestamp) {
-    const minutos = (agora - new Date(consumo.timestamp).getTime()) / 60000;
-    if (minutos > 0) {
-      consumo.media_por_minuto =
-        Number(((consumido / minutos) || consumo.media_por_minuto).toFixed(3));
+    // filtro de ruído
+    if (diff > 1 && diff < 50) {
+      consumido = diff;
+      consumo.totalConsumido += consumido;
     }
   }
 
+  const agora = Date.now();
+
+  if (consumo.timestamp) {
+    const minutos = (agora - new Date(consumo.timestamp).getTime()) / 60000;
+
+    if (minutos > 0 && consumido > 0) {
+  consumo.media_por_minuto = Number((consumido / minutos).toFixed(3));
+}
+  }
   consumo.ultimoNivel = nivelAtual;
   consumo.timestamp = new Date().toISOString();
+
   safeWriteJson(CONSUMO_FILE, consumo);
 
   return consumo;
 }
+
 
 function detectarConsumoAnormal(consumoAtual, media) {
   if (!media || media <= 0) return false;
@@ -379,6 +439,7 @@ function preverEsvaziamento(litros, consumoPorMinuto) {
 }
 
 // ------------------------- WEBSOCKET (tempo real) -------------------------
+ import { WebSocketServer, WebSocket } from "ws"; 
 const server = app.listen(process.env.PORT || 3000, () => {
   console.log(chalk.green(`Servidor HAG otimizado ativo na porta ${process.env.PORT || 3000}`));
 });
@@ -390,16 +451,19 @@ function wsBroadcast(obj) {
   let count = 0;
 
   wss.clients.forEach(c => {
-    if (c.readyState === c.OPEN) {
-      try { 
-        c.send(msg); 
-        count++; 
-      } catch (e) {}
-    }
+    try {
+      if (c.readyState === WebSocket.OPEN) {
+        c.send(msg);
+        count++;
+      }
+    } catch (e) {}
   });
 
-  if (count) console.log(chalk.cyan(`WS broadcast → ${count} clients`));
+  if (count) {
+    console.log(chalk.cyan(`WS broadcast → ${count} clients`));
+  }
 }
+
 
 // 🔁 HEARTBEAT (AGORA NO LUGAR CERTO)
 setInterval(() => {
@@ -419,17 +483,38 @@ setInterval(() => {
 wss.on("connection", ws => {
   console.log(chalk.cyan("WS client connected"));
 
+  ws.isAlive = true;
+
+  ws.on("pong", () => {
+    ws.isAlive = true;
+  });
+
   const dados = safeReadJson(DATA_FILE, {});
 
-  try { 
-    ws.send(JSON.stringify({ type: "init", dados })); 
+  try {
+    ws.send(JSON.stringify({ type: "init", dados }));
   } catch (e) {}
 });
+
+// 💓 MONITORAMENTO DE CONEXÃO
+setInterval(() => {
+  wss.clients.forEach(ws => {
+    if (!ws.isAlive) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
 
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
 app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
+
+  // 🔒 SEGURANÇA
+  const apiKey = req.headers["x-api-key"];
+  if (process.env.API_KEY && apiKey !== process.env.API_KEY) {
+  return res.status(403).json({ erro: "Não autorizado" });
+}
   try {
     let rawBody = req.body;
     if (!rawBody || (typeof rawBody === "string" && rawBody.trim() === "")) {
@@ -481,11 +566,14 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
     // 📉 CONSUMO OSMOSE
     // ============================================================
     const consumoAnterior = safeReadJson(CONSUMO_FILE, {});
-const consumoAtualMin =
-  consumoAnterior.ultimoNivel > nivelAtualOsmose
-    ? consumoAnterior.ultimoNivel - nivelAtualOsmose
-    : 0;
+let consumoAtualMin = 0;
 
+const diff = consumoAnterior.ultimoNivel - nivelAtualOsmose;
+
+// ignora ruído e picos irreais
+if (diff > 1 && diff < 50) {
+  consumoAtualMin = diff;
+}
 // agora sim atualiza consumo
 const consumo = calcularConsumoOsmose(nivelAtualOsmose);
 const mediaMin = consumo.media_por_minuto || 0;
@@ -577,7 +665,8 @@ app.get("/historico", (req, res) => {
 
       // pontos relevantes
       for (const p of dados.pontos || []) {
-        const ts = new Date(`${data} ${p.hora}`).getTime();
+        const ts = new Date(p.hora).getTime();
+
         if (!isNaN(ts)) {
           saida.push({
             reservatorio: nome,
@@ -610,7 +699,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
     const pontos = sensores?.[ref]?.pontos || [];
 
     for (const p of pontos) {
-      const ts = new Date(`${data} ${p.hora}`).getTime();
+      const ts = new Date(p.hora).getTime();
       if (!isNaN(ts) && (agora - ts <= 24 * 60 * 60 * 1000)) {
         saida.push({
           reservatorio: nome,
@@ -851,4 +940,11 @@ setInterval(() => {
     }
   } catch (e) {}
 }, 60 * 1000);
+process.on("uncaughtException", err => {
+  console.error("🔥 ERRO CRÍTICO:", err);
+});
+
+process.on("unhandledRejection", err => {
+  console.error("🔥 PROMISE NÃO TRATADA:", err);
+});
 
