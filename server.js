@@ -37,6 +37,34 @@ import cors from "cors";
 import compression from "compression";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
+let writing = false;
+const queue = [];
+const MAX_QUEUE = 1000;
+
+function safeWriteJson(filePath, data) {
+  if (queue.length > MAX_QUEUE) {
+    console.warn("Fila cheia, descartando escrita:", filePath);
+    return;
+  }
+
+  queue.push({ file: filePath, data });
+  processQueue();
+}
+
+function processQueue() {
+  if (writing || queue.length === 0) return;
+
+  writing = true;
+  const { file, data } = queue.shift();
+
+  setImmediate(() => {
+    try {
+      const tmp = file + ".tmp";
+      fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+      fs.renameSync(tmp, file);
+    } catch (e) {
+      console.error("Erro escrita JSON:", file, e);
+    }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -158,34 +186,6 @@ function safeReadJson(filePath, fallback) {
   }
 }
 
-let writing = false;
-const queue = [];
-const MAX_QUEUE = 1000;
-
-function safeWriteJson(filePath, data) {
-  if (queue.length > MAX_QUEUE) {
-    console.warn("Fila cheia, descartando escrita:", filePath);
-    return;
-  }
-
-  queue.push({ file: filePath, data });
-  processQueue();
-}
-
-function processQueue() {
-  if (writing || queue.length === 0) return;
-
-  writing = true;
-  const { file, data } = queue.shift();
-
-  setImmediate(() => {
-    try {
-      const tmp = file + ".tmp";
-      fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-      fs.renameSync(tmp, file);
-    } catch (e) {
-      console.error("Erro escrita JSON:", file, e);
-    }
 
     writing = false;
     processQueue();
