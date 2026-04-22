@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 
 <meta charset="UTF-8">
@@ -11,9 +12,12 @@
 
 </head>
 
+
 <body>
 
 <header>
+
+<!-- TOPO -->
 
 <div class="header-top">
 
@@ -25,9 +29,15 @@
 
 </div>
 
+
+<!-- STATUS -->
+
 <div id="statusSistema">
 🟢 Tempo real conectado
 </div>
+
+
+<!-- DATA E HORA -->
 
 <div class="header-info">
 
@@ -41,13 +51,24 @@
 
 </div>
 
+
 <!-- KPIs -->
 
 <div class="kpis">
 
 <div class="kpi">
-Consumo Hoje
-<span id="kpiConsumo">0 L</span>
+Elevador Hoje
+<span id="kpiElevador">0 L</span>
+</div>
+
+<div class="kpi">
+Lavanderia Hoje
+<span id="kpiLavanderia">0 L</span>
+</div>
+
+<div class="kpi">
+Osmose Hoje
+<span id="kpiOsmose">0 L</span>
 </div>
 
 <div class="kpi">
@@ -64,6 +85,7 @@ Reservatórios Críticos
 
 </header>
 
+
 <main>
 
 <!-- =========================
@@ -76,11 +98,12 @@ RESERVATÓRIOS
 Reservatórios
 </h2>
 
-<section id="areaReservatorios" class="grid-reservatorios">
+<div id="areaReservatorios" class="grid-reservatorios">
 <!-- JS PREENCHE -->
-</section>
+</div>
 
 </section>
+
 
 
 <!-- =========================
@@ -93,11 +116,12 @@ BOMBAS
 Bombas
 </h2>
 
-<section id="areaBombas" class="grid-bombas">
+<div id="areaBombas" class="grid-bombas">
 <!-- JS PREENCHE -->
-</section>
+</div>
 
 </section>
+
 
 
 <!-- =========================
@@ -110,17 +134,21 @@ PRESSÕES
 Pressões
 </h2>
 
-<section id="areaPressoes" class="grid-pressoes">
+<div id="areaPressoes" class="grid-pressoes">
 <!-- JS PREENCHE -->
-</section>
+</div>
 
 </section>
 
 </main>
 
+
+
 <footer>
 Sistema Profissional - HAG
 </footer>
+
+
 
 <!-- =========================
 ⏰ RELÓGIO + DATA
@@ -153,6 +181,8 @@ setInterval(atualizarHora,1000)
 })
 
 </script>
+
+
 
 <!-- =========================
 📡 DASHBOARD
