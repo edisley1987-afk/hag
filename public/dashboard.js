@@ -1,14 +1,16 @@
 const API = "/api/dashboard";
 
-let ws;
+let ws = null;
 let reconnectDelay = 3000;
 let ultimoDado = Date.now();
 
 init();
 
+// =======================
+// INIT
+// =======================
 function init(){
   conectarWS();
-
   setInterval(fallbackHTTP, 8000);
 
   setInterval(() => {
@@ -19,129 +21,145 @@ function init(){
 }
 
 // =======================
-// 🔌 WEBSOCKET
+// WEBSOCKET
 // =======================
 function conectarWS(){
+
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
 
   const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(`${protocolo}//${location.host}`);
 
-  ws.onopen = () =>{
+  ws.onopen = () => {
     console.log("WS conectado");
     setStatus("🟢 Tempo real conectado");
-  }
+  };
 
-  ws.onmessage = (msg)=>{
+  ws.onmessage = (msg) => {
 
-    try{
+    let payload;
 
-      ultimoDado = Date.now();
-
-      const payload = JSON.parse(msg.data);
-
-      if (payload.type === "init" || payload.type === "update" || payload.type === "heartbeat") {
-        montarEstrutura(payload.dados);
-        return;
-      }
-
-      if(payload.dados){
-        montarEstrutura(payload.dados);
-        return;
-      }
-
-      if(payload.reservatorios){
-        atualizarTela(payload);
-      }
-
-    }catch(e){
-      console.log("Erro WS:", e);
+    try {
+      payload = JSON.parse(msg.data);
+    } catch (e) {
+      console.log("JSON inválido WS");
+      return;
     }
 
-  }
+    ultimoDado = Date.now();
 
-  ws.onclose = ()=>{
+    if (!payload) return;
+
+    if (
+      payload.type === "init" ||
+      payload.type === "update" ||
+      payload.type === "heartbeat"
+    ) {
+      if (payload.dados) montarEstrutura(payload.dados);
+      return;
+    }
+
+    if (payload.dados) {
+      montarEstrutura(payload.dados);
+      return;
+    }
+
+    if (payload.reservatorios) {
+      atualizarTela(payload);
+    }
+  };
+
+  ws.onclose = () => {
     console.log("WS desconectado");
     setStatus("🔴 Reconectando...");
     setTimeout(conectarWS, reconnectDelay);
-  }
+  };
 
-  ws.onerror = ()=>{
+  ws.onerror = () => {
+    console.log("Erro WS");
     ws.close();
-  }
-
+  };
 }
 
 // =======================
-// 🌐 FALLBACK HTTP
+// FALLBACK HTTP
 // =======================
 async function fallbackHTTP(){
 
-  try{
+  try {
     const res = await fetch(API + "?ts=" + Date.now());
+
+    if (!res.ok) throw new Error("HTTP error");
+
     const data = await res.json();
     atualizarTela(data);
-  }catch(e){
+
+  } catch (e) {
     setStatus("🔴 Sem conexão");
   }
-
 }
 
 // =======================
-// 🔄 CONVERSÃO DE DADOS
+// ESTRUTURA DADOS
 // =======================
 function montarEstrutura(dados){
+
+  if (!dados || typeof dados !== "object") return;
 
   const estrutura = {
     reservatorios: [
       {
-        nome:"Reservatório Elevador",
-        percent:dados["Reservatorio_Elevador_current_percent"],
-        current_liters:dados["Reservatorio_Elevador_current"]
+        nome: "Reservatório Elevador",
+        percent: Number(dados["Reservatorio_Elevador_current_percent"] || 0),
+        current_liters: dados["Reservatorio_Elevador_current"] || 0
       },
       {
-        nome:"Reservatório Osmose",
-        percent:dados["Reservatorio_Osmose_current_percent"],
-        current_liters:dados["Reservatorio_Osmose_current"]
+        nome: "Reservatório Osmose",
+        percent: Number(dados["Reservatorio_Osmose_current_percent"] || 0),
+        current_liters: dados["Reservatorio_Osmose_current"] || 0
       },
       {
-        nome:"Reservatório CME",
-        percent:dados["Reservatorio_CME_current_percent"],
-        current_liters:dados["Reservatorio_CME_current"]
+        nome: "Reservatório CME",
+        percent: Number(dados["Reservatorio_CME_current_percent"] || 0),
+        current_liters: dados["Reservatorio_CME_current"] || 0
       },
       {
-        nome:"Água Abrandada",
-        percent:dados["Reservatorio_Agua_Abrandada_current_percent"],
-        current_liters:dados["Reservatorio_Agua_Abrandada_current"]
+        nome: "Água Abrandada",
+        percent: Number(dados["Reservatorio_Agua_Abrandada_current_percent"] || 0),
+        current_liters: dados["Reservatorio_Agua_Abrandada_current"] || 0
       },
       {
-        nome:"Lavanderia",
-        percent:dados["Reservatorio_lavanderia_current_percent"],
-        current_liters:dados["Reservatorio_lavanderia_current"]
+        nome: "Lavanderia",
+        percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
+        current_liters: dados["Reservatorio_lavanderia_current"] || 0
       }
     ],
 
-    bombas:[
+    bombas: [
       {
-        nome:"Bomba 01",
-        estado:dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_01_counter"]
+        nome: "Bomba 01",
+        estado: dados["Bomba_01_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_01_counter"] || 0
       },
       {
-        nome:"Bomba 02",
-        estado:dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_02_counter"]
+        nome: "Bomba 02",
+        estado: dados["Bomba_02_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_02_counter"] || 0
       },
       {
-        nome:"Bomba Osmose",
-        estado:dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
-        ciclo:dados["Ciclos_Bomba_Osmose_counter"]
+        nome: "Bomba Osmose",
+        estado: dados["Bomba_Osmose_binary"] === 1 ? "ligada" : "desligada",
+        ciclo: dados["Ciclos_Bomba_Osmose_counter"] || 0
       }
     ],
 
-    pressoes:[
-      {nome:"Pressão Saída Osmose",pressao:dados["Pressao_Saida_Osmose_current"]},
-      {nome:"Pressão Retorno Osmose",pressao:dados["Pressao_Retorno_Osmose_current"]},
-      {nome:"Pressão CME",pressao:dados["Pressao_Saida_CME_current"]}
+    pressoes: [
+      { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"] },
+      { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"] },
+      { nome: "Pressão CME", pressao: dados["Pressao_Saida_CME_current"] }
     ]
   };
 
@@ -149,12 +167,12 @@ function montarEstrutura(dados){
 }
 
 // =======================
-// 🎨 ATUALIZA UI
+// UPDATE UI
 // =======================
 function atualizarTela(data){
 
   const elHora = document.getElementById("hora");
-  if(elHora){
+  if (elHora) {
     elHora.innerText = new Date().toLocaleTimeString("pt-BR");
   }
 
@@ -164,140 +182,128 @@ function atualizarTela(data){
 }
 
 // =======================
-// 🎨 COR NEON DINÂMICA
+// COR NEON
 // =======================
 function corNivel(percent){
 
-  if(percent >= 100){
-    return ["#00e5ff","#006eff"]; // 🔵 azul neon cheio
-  }
-
-  if(percent >= 70){
-    return ["#00ff88","#00c853"]; // 🟢 verde neon
-  }
-
-  if(percent >= 40){
-    return ["#ffd600","#ff8f00"]; // 🟡 amarelo neon
-  }
-
-  return ["#ff1744","#b71c1c"]; // 🔴 vermelho neon
+  if (percent >= 100) return ["#00e5ff","#006eff"];
+  if (percent >= 70)  return ["#00ff88","#00c853"];
+  if (percent >= 40)  return ["#ffd600","#ff8f00"];
+  return ["#ff1744","#b71c1c"];
 }
 
 // =======================
-// 💧 RESERVATÓRIOS
+// RESERVATORIOS
 // =======================
 function renderReservatorios(lista){
 
   const area = document.getElementById("areaReservatorios");
-  if(!area) return;
+  if (!area) return;
 
   area.innerHTML = "";
 
-  lista.forEach(r=>{
+  lista.forEach(r => {
 
-    const percent = Math.max(0,Math.min(100,Number(r.percent)||0));
+    const percent = Math.max(0, Math.min(100, Number(r.percent) || 0));
     const [cor1, cor2] = corNivel(percent);
 
     const el = document.createElement("div");
-    el.className="card reservatorio";
+    el.className = "card reservatorio";
 
-    el.innerHTML=`
-    <h2>${r.nome}</h2>
+    el.innerHTML = `
+      <h2>${r.nome}</h2>
 
-    <div class="tanque">
-      <div class="escala">
-        <span></span><span></span><span></span><span></span><span></span>
+      <div class="tanque">
+        <div class="escala">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="agua"
+          style="
+            height:${percent}%;
+            background:linear-gradient(180deg, ${cor1}, ${cor2});
+            box-shadow:0 0 20px ${cor1};
+          ">
+        </div>
       </div>
 
-      <div class="nivel"
-      style="
-        height:${percent}%;
-        background:linear-gradient(180deg, ${cor1}, ${cor2});
-        box-shadow:0 0 20px ${cor1};
-      ">
+      <div class="info">
+        <div class="valor">${percent.toFixed(1)}%</div>
+        <div class="litros">${formatar(r.current_liters)} L</div>
       </div>
-    </div>
-
-    <div class="info">
-      <div class="valor">${percent.toFixed(1)}%</div>
-      <div class="litros">${formatar(r.current_liters)} L</div>
-    </div>
     `;
 
     area.appendChild(el);
-
   });
 }
 
 // =======================
-// 🔄 BOMBAS
+// BOMBAS
 // =======================
 function renderBombas(lista){
 
   const area = document.getElementById("areaBombas");
-  if(!area) return;
+  if (!area) return;
 
-  area.innerHTML="";
+  area.innerHTML = "";
 
-  lista.forEach(b=>{
+  lista.forEach(b => {
 
-    const ligada = b.estado==="ligada";
+    const ligada = b.estado === "ligada";
 
-    const el=document.createElement("div");
-    el.className="card "+(ligada?"ligada":"desligada");
+    const el = document.createElement("div");
+    el.className = "card " + (ligada ? "ligada" : "desligada");
 
-    el.innerHTML=`
-    <h2>${b.nome}</h2>
-    <div class="valor">${ligada?"🟢 LIGADA":"🔴 DESLIGADA"}</div>
-    <div>${b.ciclo||0} ciclos</div>
+    el.innerHTML = `
+      <h2>${b.nome}</h2>
+      <div class="valor">${ligada ? "🟢 LIGADA" : "🔴 DESLIGADA"}</div>
+      <div>${b.ciclo || 0} ciclos</div>
     `;
 
     area.appendChild(el);
-
   });
 }
 
 // =======================
-// ⚙️ PRESSÕES
+// PRESSÃO
 // =======================
 function renderPressoes(lista){
 
-  const area=document.getElementById("areaPressoes");
-  if(!area) return;
+  const area = document.getElementById("areaPressoes");
+  if (!area) return;
 
-  area.innerHTML="";
+  area.innerHTML = "";
 
-  lista.forEach(p=>{
+  lista.forEach(p => {
 
-    const el=document.createElement("div");
-    el.className="card";
+    const el = document.createElement("div");
+    el.className = "card";
 
-    el.innerHTML=`
-    <h2>${p.nome}</h2>
-    <div class="valor">${formatarPressao(p.pressao)}</div>
+    el.innerHTML = `
+      <h2>${p.nome}</h2>
+      <div class="valor">${formatarPressao(p.pressao)}</div>
     `;
 
     area.appendChild(el);
-
   });
 }
 
 // =======================
-// 🧮 FORMATOS
+// FORMATOS
 // =======================
 function formatar(n){
-  return Number(n||0).toLocaleString("pt-BR");
+  return Number(n || 0).toLocaleString("pt-BR");
 }
 
 function formatarPressao(p){
-  if(p===null||p===undefined) return "--";
-  return Number(p).toFixed(2)+" bar";
+  if (p === null || p === undefined) return "--";
+  return Number(p).toFixed(2) + " bar";
 }
 
 // =======================
-// 📡 STATUS
+// STATUS
 // =======================
 function setStatus(txt){
-  const el=document.getElementById("statusSistema");
-  if(el) el.innerText=txt;
+  const el = document.getElementById("statusSistema");
+  if (el) el.innerText = txt;
 }
