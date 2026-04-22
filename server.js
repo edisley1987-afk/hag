@@ -80,8 +80,6 @@ const __dirname = path.dirname(__filename);
 
 // ========================= APP =========================
 const app = express();
-);
-
 // ------------------------- ARQUIVOS E CONSTANTES -------------------------
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
