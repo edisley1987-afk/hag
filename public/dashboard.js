@@ -175,12 +175,27 @@ function atualizarTela(data){
   if (elHora) {
     elHora.innerText = new Date().toLocaleTimeString("pt-BR");
   }
+renderReservatorios(data.reservatorios || []);
 
-  renderReservatorios(data.reservatorios || []);
-  renderBombas(data.bombas || []);
-  renderPressoes(data.pressoes || []);
+const bombas = data.bombas || [];
+renderBombas(bombas);
+atualizarBombasAtivas(bombas);
+
+renderPressoes(data.pressoes || []);
 }
+function atualizarBombasAtivas(lista){
 
+  const el = document.getElementById("bombasAtivas");
+  if (!el) return;
+
+  let total = 0;
+
+  lista.forEach(b => {
+    if (b.estado === "ligada") total++;
+  });
+
+  el.innerText = total;
+}
 // =======================
 // COR NEON
 // =======================
