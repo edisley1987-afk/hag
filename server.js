@@ -513,7 +513,15 @@ const server = app.listen(process.env.PORT || 3000, () => {
 });
 // WebSocket server ligado ao mesmo HTTP server
 const wss = new WebSocketServer({ server });
+// 🔁 HEARTBEAT
+setInterval(() => {
 
+  wsBroadcast({
+    type: "heartbeat",
+    timestamp: Date.now()
+  });
+
+}, 5000);
 function wsBroadcast(obj) {
   const msg = JSON.stringify(obj);
   let count = 0;
@@ -556,7 +564,16 @@ wss.on("connection", ws => {
   ws.on("pong", () => {
     ws.isAlive = true;
   });
+ws.on("message", msg => {
+  try {
+    const data = JSON.parse(msg);
 
+    if (data.type === "ping") {
+      ws.send(JSON.stringify({ type: "pong" }));
+    }
+
+  } catch (e) {}
+});
   const dados = safeReadJson(DATA_FILE, {});
 
   try {
