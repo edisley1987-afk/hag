@@ -15,12 +15,51 @@
 
 <header>
 
+<div class="header-top">
+
 <h1>💧 Monitoramento HAG</h1>
+
+<button class="btn-historico">
+📊 Histórico
+</button>
+
+</div>
 
 <div id="statusSistema">
 🟢 Tempo real conectado
-<br>
-Atualizado: <span id="hora">--:--</span>
+</div>
+
+<div class="header-info">
+
+<div>
+📅 <span id="dataSistema"></span>
+</div>
+
+<div>
+⏰ <span id="hora">--:--</span>
+</div>
+
+</div>
+
+<!-- KPIs -->
+
+<div class="kpis">
+
+<div class="kpi">
+Consumo Hoje
+<span id="kpiConsumo">0 L</span>
+</div>
+
+<div class="kpi">
+Bombas Ativas
+<span id="kpiBombas">0</span>
+</div>
+
+<div class="kpi">
+Reservatórios Críticos
+<span id="kpiCritico">0</span>
+</div>
+
 </div>
 
 </header>
@@ -31,8 +70,16 @@ Atualizado: <span id="hora">--:--</span>
 RESERVATÓRIOS
 ========================= -->
 
+<section>
+
+<h2 class="titulo-area">
+Reservatórios
+</h2>
+
 <section id="areaReservatorios" class="grid-reservatorios">
-<!-- JS VAI PREENCHER AQUI -->
+<!-- JS PREENCHE -->
+</section>
+
 </section>
 
 
@@ -40,8 +87,16 @@ RESERVATÓRIOS
 BOMBAS
 ========================= -->
 
+<section>
+
+<h2 class="titulo-area">
+Bombas
+</h2>
+
 <section id="areaBombas" class="grid-bombas">
-<!-- JS VAI PREENCHER AQUI -->
+<!-- JS PREENCHE -->
+</section>
+
 </section>
 
 
@@ -49,8 +104,16 @@ BOMBAS
 PRESSÕES
 ========================= -->
 
+<section>
+
+<h2 class="titulo-area">
+Pressões
+</h2>
+
 <section id="areaPressoes" class="grid-pressoes">
-<!-- JS VAI PREENCHER AQUI -->
+<!-- JS PREENCHE -->
+</section>
+
 </section>
 
 </main>
@@ -60,27 +123,41 @@ Sistema Profissional - HAG
 </footer>
 
 <!-- =========================
-⏰ RELÓGIO (CORRIGIDO)
+⏰ RELÓGIO + DATA
 ========================= -->
+
 <script>
+
 document.addEventListener("DOMContentLoaded", () => {
 
-  function atualizarHora(){
-    const el = document.getElementById("hora");
-    if(el){
-      el.innerText = new Date().toLocaleTimeString("pt-BR");
-    }
-  }
+function atualizarHora(){
 
-  atualizarHora(); // executa imediato
-  setInterval(atualizarHora,1000);
+const agora = new Date()
 
-});
+const hora = document.getElementById("hora")
+const data = document.getElementById("dataSistema")
+
+if(hora){
+hora.innerText = agora.toLocaleTimeString("pt-BR")
+}
+
+if(data){
+data.innerText = agora.toLocaleDateString("pt-BR")
+}
+
+}
+
+atualizarHora()
+setInterval(atualizarHora,1000)
+
+})
+
 </script>
 
 <!-- =========================
 📡 DASHBOARD
 ========================= -->
+
 <script src="dashboard.js"></script>
 
 </body>
