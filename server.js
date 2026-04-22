@@ -52,6 +52,19 @@ const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
 // ------------------------- CONSUMO / ALERTAS -------------------------
 const CONSUMO_FILE = path.join(DATA_DIR, "consumo_osmose.json");
 const ALERTA_FILE = path.join(DATA_DIR, "alerta_consumo.json");
+// ------------------------- INTELIGÊNCIA -------------------------
+const INTELIGENCIA_FILE = path.join(DATA_DIR, "inteligencia.json");
+
+if (!fs.existsSync(INTELIGENCIA_FILE)) {
+  safeWriteJson(INTELIGENCIA_FILE, {
+    historicoInicio: [],
+    mediaInicio: 0,
+    ultimoNivel: 0,
+    ultimoTimestamp: null,
+    alerta: false,
+    mensagem: null
+  });
+}
 
 // tempo máximo sem atualização de bomba (ms)
 const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos
@@ -393,6 +406,58 @@ if (!fs.existsSync(ALERTA_FILE)) {
 function calcularConsumoOsmose(nivelAtual) {
   const consumo = safeReadJson(CONSUMO_FILE, {});
   let consumido = 0;
+function analisarEnchimento(nivelAtual) {
+
+  const intel = safeReadJson(INTELIGENCIA_FILE, {});
+  const agora = Date.now();
+
+  let subindo = false;
+
+  // 📈 Detecta subida real
+  if (intel.ultimoNivel && nivelAtual > intel.ultimoNivel + 0.5) {
+    subindo = true;
+
+    // guarda ponto de início
+    intel.historicoInicio.push(intel.ultimoNivel);
+
+    // limita histórico
+    if (intel.historicoInicio.length > 50) {
+      intel.historicoInicio.shift();
+    }
+
+    // recalcula média
+    const soma = intel.historicoInicio.reduce((a, b) => a + b, 0);
+    intel.mediaInicio = soma / intel.historicoInicio.length;
+  }
+
+  // ⏱️ tempo sem subir
+  let minutosSemSubir = 0;
+
+  if (intel.ultimoTimestamp) {
+    minutosSemSubir = (agora - new Date(intel.ultimoTimestamp).getTime()) / 60000;
+  }
+
+  // 🚨 REGRA DE ALERTA
+  if (
+    intel.mediaInicio > 0 &&
+    nivelAtual < intel.mediaInicio &&
+    minutosSemSubir > 5 &&   // tolerância (ajustável)
+    !subindo
+  ) {
+    intel.alerta = true;
+    intel.mensagem = "⚠️ Bomba não acionou (nível não subiu como esperado)";
+  } else {
+    intel.alerta = false;
+    intel.mensagem = null;
+  }
+
+  intel.ultimoNivel = nivelAtual;
+  intel.ultimoTimestamp = new Date().toISOString();
+
+  safeWriteJson(INTELIGENCIA_FILE, intel);
+
+  return intel;
+}
 
   if (consumo.ultimoNivel > 0 && nivelAtual < consumo.ultimoNivel) {
     const diff = consumo.ultimoNivel - nivelAtual;
@@ -576,6 +641,12 @@ if (diff > 1 && diff < 50) {
 }
 // agora sim atualiza consumo
 const consumo = calcularConsumoOsmose(nivelAtualOsmose);
+    // 🧠 INTELIGÊNCIA DE ENCHIMENTO
+const nivelPercent = novo["Reservatorio_Osmose_current_percent"] || 0;
+
+const inteligencia = analisarEnchimento(nivelPercent);
+// 🔴 SALVAR NO OBJETO PRINCIPAL
+novo.inteligencia = inteligencia;
 const mediaMin = consumo.media_por_minuto || 0;
 
 
