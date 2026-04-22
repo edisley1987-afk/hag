@@ -175,13 +175,18 @@ function atualizarTela(data){
   if (elHora) {
     elHora.innerText = new Date().toLocaleTimeString("pt-BR");
   }
-renderReservatorios(data.reservatorios || []);
 
-const bombas = data.bombas || [];
+  const reservatorios = data.reservatorios || [];
+  const bombas = data.bombas || [];
+  const pressoes = data.pressoes || [];
+
+ renderReservatorios(reservatorios);
 renderBombas(bombas);
-atualizarBombasAtivas(bombas);
+renderPressoes(pressoes);
 
-renderPressoes(data.pressoes || []);
+atualizarBombasAtivas(bombas);
+atualizarKPIs(reservatorios, bombas);
+
 }
 function atualizarBombasAtivas(lista){
 
@@ -223,7 +228,8 @@ function renderReservatorios(lista){
     const [cor1, cor2] = corNivel(percent);
 
     const el = document.createElement("div");
-    el.className = "card reservatorio";
+el.className = "card reservatorio";
+el.setAttribute("data-nome", r.nome);
 
     el.innerHTML = `
       <h2>${r.nome}</h2>
@@ -321,4 +327,88 @@ function formatarPressao(p){
 function setStatus(txt){
   const el = document.getElementById("statusSistema");
   if (el) el.innerText = txt;
+}
+// =======================
+// KPIs INDUSTRIAIS
+// =======================
+
+let historicoNivel = {};
+
+function atualizarKPIs(reservatorios, bombas){
+
+  // ------------------
+  // BOMBAS ATIVAS
+  // ------------------
+  const bombasAtivas = bombas.filter(b => b.estado === "ligada").length;
+
+  const elBombas = document.getElementById("kpiBombas");
+  if(elBombas) elBombas.innerText = bombasAtivas;
+
+
+  // ------------------
+  // RESERVATORIOS CRITICOS
+  // ------------------
+  const criticos = reservatorios.filter(r => r.percent < 30).length;
+
+  const elCritico = document.getElementById("kpiCritico");
+  if(elCritico) elCritico.innerText = criticos;
+
+
+  // ------------------
+  // CONSUMO E PREVISÃO
+  // ------------------
+
+  reservatorios.forEach(r => {
+
+    const agora = Date.now();
+
+    if(!historicoNivel[r.nome]){
+      historicoNivel[r.nome] = {
+        nivel: r.current_liters,
+        tempo: agora
+      };
+      return;
+    }
+
+    const anterior = historicoNivel[r.nome];
+
+    const deltaNivel = anterior.nivel - r.current_liters;
+    const deltaTempo = (agora - anterior.tempo) / 1000;
+
+    if(deltaTempo <= 0) return;
+
+    const consumoPorSegundo = deltaNivel / deltaTempo;
+
+    // tempo restante
+    if(consumoPorSegundo > 0){
+
+      const tempoRestanteSeg = r.current_liters / consumoPorSegundo;
+
+      const horas = Math.floor(tempoRestanteSeg / 3600);
+      const minutos = Math.floor((tempoRestanteSeg % 3600) / 60);
+
+      const card = document.querySelector(`[data-nome="${r.nome}"]`);
+
+      if(card){
+
+        let tempoEl = card.querySelector(".tempoRestante");
+
+        if(!tempoEl){
+          tempoEl = document.createElement("div");
+          tempoEl.className = "tempoRestante";
+          card.appendChild(tempoEl);
+        }
+
+        tempoEl.innerText = `⏳ ${horas}h ${minutos}m restantes`;
+      }
+
+    }
+
+    historicoNivel[r.nome] = {
+      nivel: r.current_liters,
+      tempo: agora
+    };
+
+  });
+
 }
