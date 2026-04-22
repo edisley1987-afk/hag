@@ -2,83 +2,126 @@
 <html lang="pt-BR">
 <head>
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Histórico — Monitoramento HAG</title>
+<title>Histórico — Monitoramento HAG</title>
 
-  <link rel="stylesheet" href="style-historico.css" />
+<link rel="stylesheet" href="style-historico.css" />
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
 <body>
 
-  <!-- ================= HEADER ================= -->
-  <header class="topo">
+<!-- ================= HEADER ================= -->
+<header class="topo">
 
-    <div class="topo-esquerda">
-      <h1>📊 Histórico de Monitoramento</h1>
-      <span class="subtitulo">Reservatórios e Pressões</span>
-    </div>
+<div class="topo-esquerda">
+<h1>📊 Histórico de Monitoramento</h1>
+<span class="subtitulo">Reservatórios e Pressões</span>
+</div>
 
-    <div class="topo-direita">
-      <div id="statusHistorico" class="status">
-        🟢 Sistema ativo<br>
-        Atualizado: <span id="horaHistorico">--:--</span>
-      </div>
+<div class="topo-direita">
 
-      <a href="dashboard.html" class="voltar-btn">⬅ Painel</a>
-    </div>
+<div id="statusHistorico" class="status">
+🟢 Sistema ativo<br>
+Atualizado: <span id="horaHistorico">--:--</span>
+</div>
 
-  </header>
+<a href="dashboard.html" class="voltar-btn">⬅ Painel</a>
 
-  <!-- ================= MAIN ================= -->
-  <main class="historico-main">
+</div>
 
-    <!-- ===== GRÁFICO ===== -->
-    <section class="card grafico-card">
-      <h2>📈 Evolução dos Níveis</h2>
-      <div class="grafico-container">
-        <canvas id="graficoHistorico"></canvas>
-      </div>
-    </section>
+</header>
 
-    <!-- ===== TABELA ===== -->
-    <section class="card tabela-card">
-      <h2>📋 Histórico Detalhado</h2>
-      <div id="historico"></div>
-    </section>
 
-  </main>
+<!-- ================= CONSUMO ================= -->
 
-  <!-- ================= FOOTER ================= -->
-  <footer>
-    Sistema Profissional — Hospital Arnaldo Gavazza
-  </footer>
+<section class="kpis-historico">
 
-  <!-- ================= SCRIPTS ================= -->
-  <script>
+<div class="kpi">
+Elevador Hoje
+<span id="consumoElevador">0 L</span>
+</div>
 
-    // relógio + status
-    document.addEventListener("DOMContentLoaded", () => {
+<div class="kpi">
+Lavanderia Hoje
+<span id="consumoLavanderia">0 L</span>
+</div>
 
-      function atualizarHora(){
-        const el = document.getElementById("horaHistorico");
-        if(el){
-          el.innerText = new Date().toLocaleTimeString("pt-BR");
-        }
-      }
+<div class="kpi">
+Osmose Hoje
+<span id="consumoOsmose">0 L</span>
+</div>
 
-      setInterval(atualizarHora, 1000);
+<div class="kpi">
+Consumo Total
+<span id="consumoTotal">0 L</span>
+</div>
 
-    });
+</section>
 
-  </script>
 
-  <script src="historico.js"></script>
+<!-- ================= MAIN ================= -->
+<main class="historico-main">
+
+<!-- ===== GRÁFICO ===== -->
+<section class="card grafico-card">
+
+<h2>📈 Evolução dos Níveis</h2>
+
+<div class="grafico-container">
+<canvas id="graficoHistorico"></canvas>
+</div>
+
+</section>
+
+
+<!-- ===== TABELA ===== -->
+<section class="card tabela-card">
+
+<h2>📋 Histórico Detalhado</h2>
+
+<div id="historico"></div>
+
+</section>
+
+</main>
+
+
+<!-- ================= FOOTER ================= -->
+<footer>
+Sistema Profissional — Hospital Arnaldo Gavazza
+</footer>
+
+
+<!-- ================= RELÓGIO ================= -->
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+function atualizarHora(){
+
+const el = document.getElementById("horaHistorico");
+
+if(el){
+el.innerText = new Date().toLocaleTimeString("pt-BR");
+}
+
+}
+
+setInterval(atualizarHora,1000)
+
+})
+
+</script>
+
+
+<!-- ================= JS ================= -->
+<script src="historico.js"></script>
 
 </body>
 </html>
