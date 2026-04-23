@@ -12,6 +12,9 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- ✅ ADAPTER DE DATA (OBRIGATÓRIO para eixo time) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
 </head>
 
 <body>
@@ -39,7 +42,6 @@ Atualizado: <span id="horaHistorico">--:--</span>
 
 
 <!-- ================= CONSUMO ================= -->
-
 <section class="kpis-historico">
 
 <div class="kpi">
@@ -100,25 +102,19 @@ Sistema Profissional — Hospital Arnaldo Gavazza
 
 <!-- ================= RELÓGIO ================= -->
 <script>
-
 document.addEventListener("DOMContentLoaded", () => {
 
 function atualizarHora(){
-
-const el = document.getElementById("horaHistorico");
-
-if(el){
-el.innerText = new Date().toLocaleTimeString("pt-BR");
-}
-
+  const el = document.getElementById("horaHistorico");
+  if(el){
+    el.innerText = new Date().toLocaleTimeString("pt-BR");
+  }
 }
 
 setInterval(atualizarHora,1000)
 
 })
-
 </script>
-
 
 <!-- ================= JS ================= -->
 <script src="historico.js"></script>
