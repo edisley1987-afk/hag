@@ -3,15 +3,18 @@ const API = "/api/dashboard";
 let ws = null;
 let reconnectDelay = 3000;
 let ultimoDado = Date.now();
-let historicoNivel = {};
 
-init();
+let historicoNivel = {};
+let renderPending = false;
 
 // =======================
 // INIT
 // =======================
+init();
+
 function init() {
   conectarWS();
+
   setInterval(fallbackHTTP, 8000);
 
   setInterval(() => {
@@ -19,13 +22,17 @@ function init() {
       setStatus("🟡 Sem atualização");
     }
   }, 5000);
+
+  // limpeza de cache de consumo interno
+  setInterval(() => {
+    historicoNivel = {};
+  }, 10 * 60 * 1000);
 }
 
 // =======================
 // WEBSOCKET
 // =======================
 function conectarWS() {
-
   if (ws) {
     ws.close();
     ws = null;
@@ -41,36 +48,12 @@ function conectarWS() {
   };
 
   ws.onmessage = (msg) => {
-
-    let payload;
-
     try {
-      payload = JSON.parse(msg.data);
+      const payload = JSON.parse(msg.data);
+      ultimoDado = Date.now();
+      processarPayload(payload);
     } catch (e) {
       console.log("JSON inválido WS");
-      return;
-    }
-
-    ultimoDado = Date.now();
-
-    if (!payload) return;
-
-    if (
-      payload.type === "init" ||
-      payload.type === "update" ||
-      payload.type === "heartbeat"
-    ) {
-      if (payload.dados) montarEstrutura(payload.dados);
-      return;
-    }
-
-    if (payload.dados) {
-      montarEstrutura(payload.dados);
-      return;
-    }
-
-    if (payload.reservatorios) {
-      atualizarTela(payload);
     }
   };
 
@@ -78,7 +61,9 @@ function conectarWS() {
     console.log("WS desconectado");
     setStatus("🔴 Reconectando...");
 
-    setTimeout(conectarWS, reconnectDelay);
+    const jitter = Math.random() * 1000;
+    setTimeout(conectarWS, reconnectDelay + jitter);
+
     reconnectDelay = Math.min(reconnectDelay * 1.5, 30000);
   };
 
@@ -92,16 +77,14 @@ function conectarWS() {
 // FALLBACK HTTP
 // =======================
 async function fallbackHTTP() {
-
   if (ws && ws.readyState === 1) return;
 
   try {
     const res = await fetch(API + "?ts=" + Date.now());
-
     if (!res.ok) throw new Error("HTTP error");
 
     const data = await res.json();
-    atualizarTela(data);
+    processarPayload(data);
 
   } catch (e) {
     setStatus("🔴 Sem conexão");
@@ -109,13 +92,30 @@ async function fallbackHTTP() {
 }
 
 // =======================
-// ESTRUTURA DADOS
+// PROCESSADOR ÚNICO
+// =======================
+function processarPayload(payload) {
+  if (!payload) return;
+
+  if (payload.dados) {
+    const estrutura = montarEstrutura(payload.dados);
+    scheduleRender(estrutura);
+    return;
+  }
+
+  if (payload.reservatorios || payload.bombas) {
+    scheduleRender(payload);
+  }
+}
+
+// =======================
+// MONTA ESTRUTURA
 // =======================
 function montarEstrutura(dados) {
 
-  if (!dados || typeof dados !== "object") return;
+  if (!dados || typeof dados !== "object") return null;
 
-  const estrutura = {
+  return {
     reservatorios: [
       {
         nome: "Reservatório Elevador",
@@ -177,8 +177,20 @@ function montarEstrutura(dados) {
       }
     ]
   };
+}
 
-  atualizarTela(estrutura);
+// =======================
+// RENDER SCHEDULER (ANTI-FLICKER)
+// =======================
+function scheduleRender(data) {
+  if (renderPending) return;
+
+  renderPending = true;
+
+  requestAnimationFrame(() => {
+    atualizarTela(data);
+    renderPending = false;
+  });
 }
 
 // =======================
@@ -204,10 +216,17 @@ function atualizarTela(data) {
 }
 
 // =======================
+// STATUS
+// =======================
+function setStatus(txt) {
+  const el = document.getElementById("statusSistema");
+  if (el) el.innerText = txt;
+}
+
+// =======================
 // BOMBAS ATIVAS
 // =======================
 function atualizarBombasAtivas(lista) {
-
   const el = document.getElementById("bombasAtivas");
   if (!el) return;
 
@@ -219,7 +238,6 @@ function atualizarBombasAtivas(lista) {
 // CORES NIVEL
 // =======================
 function corNivel(percent) {
-
   if (percent >= 100) return ["#00e5ff", "#006eff"];
   if (percent >= 70) return ["#00ff88", "#00c853"];
   if (percent >= 40) return ["#ffd600", "#ff8f00"];
@@ -230,7 +248,6 @@ function corNivel(percent) {
 // RESERVATORIOS
 // =======================
 function renderReservatorios(lista) {
-
   const area = document.getElementById("areaReservatorios");
   if (!area) return;
 
@@ -240,6 +257,11 @@ function renderReservatorios(lista) {
 
     const percent = Math.max(0, Math.min(100, Number(r.percent) || 0));
     const [cor1, cor2] = corNivel(percent);
+
+    const safeName =
+      window.CSS?.escape
+        ? CSS.escape(r.nome)
+        : r.nome.replace(/\s/g, "-");
 
     const el = document.createElement("div");
     el.className = "card reservatorio";
@@ -274,7 +296,6 @@ function renderReservatorios(lista) {
 // BOMBAS
 // =======================
 function renderBombas(lista) {
-
   const area = document.getElementById("areaBombas");
   if (!area) return;
 
@@ -301,14 +322,12 @@ function renderBombas(lista) {
 // PRESSÃO
 // =======================
 function renderPressoes(lista) {
-
   const area = document.getElementById("areaPressoes");
   if (!area) return;
 
   area.innerHTML = "";
 
   lista.forEach(p => {
-
     const el = document.createElement("div");
     el.className = "card";
 
@@ -334,15 +353,7 @@ function formatarPressao(p) {
 }
 
 // =======================
-// STATUS
-// =======================
-function setStatus(txt) {
-  const el = document.getElementById("statusSistema");
-  if (el) el.innerText = txt;
-}
-
-// =======================
-// KPIs
+// KPIs + CONSUMO (FIXADO)
 // =======================
 function atualizarKPIs(reservatorios, bombas) {
 
@@ -367,14 +378,13 @@ function atualizarKPIs(reservatorios, bombas) {
     }
 
     const anterior = historicoNivel[r.nome];
-    const deltaNivel = anterior.nivel - r.current_liters;
+
+    const deltaNivel = Math.max(0, anterior.nivel - r.current_liters);
     const deltaTempo = (agora - anterior.tempo) / 1000;
 
-    if (deltaTempo <= 0) return;
+    if (deltaTempo <= 0 || deltaNivel <= 0) return;
 
-    const consumo = Math.max(0, deltaNivel / deltaTempo);
-
-    if (consumo <= 0) return;
+    const consumo = deltaNivel / deltaTempo;
 
     const tempoRestanteSeg = r.current_liters / consumo;
 
@@ -383,11 +393,14 @@ function atualizarKPIs(reservatorios, bombas) {
     const horas = Math.floor(tempoRestanteSeg / 3600);
     const minutos = Math.floor((tempoRestanteSeg % 3600) / 60);
 
-    const safeName = CSS.escape(r.nome);
+    const safeName =
+      window.CSS?.escape
+        ? CSS.escape(r.nome)
+        : r.nome.replace(/\s/g, "-");
+
     const card = document.querySelector(`.reservatorio[data-nome="${safeName}"]`);
 
     if (card) {
-
       let tempoEl = card.querySelector(".tempoRestante");
 
       if (!tempoEl) {
@@ -403,6 +416,5 @@ function atualizarKPIs(reservatorios, bombas) {
       nivel: r.current_liters,
       tempo: agora
     };
-
   });
 }
