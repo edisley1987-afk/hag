@@ -271,19 +271,45 @@ function convertAndMerge(dataArray) {
     } else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
 
+// 🔍 DEBUG (pode remover depois)
+if (ref === "Reservatorio_Elevador_current") {
+  console.log("DEBUG ELEVADOR:", {
+    leitura,
+    vazio: sensor.leituraVazio,
+    cheio: sensor.leituraCheio
+  });
+}
+
+// 🧠 CÁLCULO COM TOLERÂNCIA
+const tolerancia = 0.0002;
+
 let percent =
   ((leitura - sensor.leituraVazio) /
     (sensor.leituraCheio - sensor.leituraVazio)) * 100;
 
-// limites
+// 🔧 Correção por faixa inválida
+if (leitura > sensor.leituraCheio + tolerancia) {
+  console.warn(`⚠️ ${ref} acima do cheio`, leitura);
+  percent = 100;
+}
+
+if (leitura < sensor.leituraVazio - tolerancia) {
+  console.warn(`⚠️ ${ref} abaixo do vazio`, leitura);
+  percent = 0;
+}
+
+// clamp final
 percent = Math.max(0, Math.min(100, percent));
 
 // litros
 const litros = (percent / 100) * sensor.capacidade;
 
-novo[ref] = Math.round(litros); // mantém compatibilidade
+// salvar
+novo[ref] = Math.round(litros);
+novo[`${ref}_percent`] = Number(percent.toFixed(1));
 
-novo[`${ref}_percent`] = Number(percent.toFixed(1)); // novo campo %
+// opcional (fortemente recomendado)
+novo[`${ref}_raw`] = leitura;
 
 
     } else {
