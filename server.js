@@ -43,8 +43,11 @@ let writing = false;
 const queue = [];
 const MAX_QUEUE = 1000;
 
+// 🔒 CONTROLE DE CONCORRÊNCIA (rota /atualizar)
+let processing = false;
+
 function safeWriteJson(filePath, data) {
-  if (queue.length > MAX_QUEUE) {
+  if (queue.length >= MAX_QUEUE) {
     console.warn("Fila cheia, descartando escrita:", filePath);
     return;
   }
@@ -53,17 +56,17 @@ function safeWriteJson(filePath, data) {
   processQueue();
 }
 
-function processQueue() {
+async function processQueue() {
   if (writing || queue.length === 0) return;
 
   writing = true;
   const { file, data } = queue.shift();
 
-  setImmediate(() => {
+  setImmediate(async () => {
     try {
       const tmp = file + ".tmp";
-      fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-      fs.renameSync(tmp, file);
+      await fs.promises.writeFile(tmp, JSON.stringify(data, null, 2));
+      await fs.promises.rename(tmp, file);
     } catch (e) {
       console.error("Erro escrita JSON:", file, e);
     }
@@ -72,6 +75,7 @@ function processQueue() {
     processQueue();
   });
 }
+
 
 
 // ========================= PATHS =========================
@@ -406,49 +410,40 @@ if (!fs.existsSync(ALERTA_FILE)) {
   });
 }
 
-function calcularConsumoOsmose(nivelAtual) {
-  const consumo = safeReadJson(CONSUMO_FILE, {});
-  let consumido = 0;
-function analisarEnchimento(nivelAtual) {
-
+// ========================= INTELIGÊNCIA =========================
+function analisarEnchimento(nivelAtual, bombaLigada) {
   const intel = safeReadJson(INTELIGENCIA_FILE, {});
   const agora = Date.now();
 
   let subindo = false;
 
-  // 📈 Detecta subida real
   if (intel.ultimoNivel && nivelAtual > intel.ultimoNivel + 0.5) {
     subindo = true;
 
-    // guarda ponto de início
     intel.historicoInicio.push(intel.ultimoNivel);
 
-    // limita histórico
     if (intel.historicoInicio.length > 50) {
       intel.historicoInicio.shift();
     }
 
-    // recalcula média
     const soma = intel.historicoInicio.reduce((a, b) => a + b, 0);
     intel.mediaInicio = soma / intel.historicoInicio.length;
   }
 
-  // ⏱️ tempo sem subir
   let minutosSemSubir = 0;
 
   if (intel.ultimoTimestamp) {
     minutosSemSubir = (agora - new Date(intel.ultimoTimestamp).getTime()) / 60000;
   }
 
-  // 🚨 REGRA DE ALERTA
   if (
     intel.mediaInicio > 0 &&
-    nivelAtual < intel.mediaInicio &&
-    minutosSemSubir > 5 &&   // tolerância (ajustável)
+    bombaLigada === 1 &&
+    minutosSemSubir > 5 &&
     !subindo
   ) {
     intel.alerta = true;
-    intel.mensagem = "⚠️ Bomba não acionou (nível não subiu como esperado)";
+    intel.mensagem = "⚠️ Bomba ligada mas nível não sobe";
   } else {
     intel.alerta = false;
     intel.mensagem = null;
@@ -461,6 +456,11 @@ function analisarEnchimento(nivelAtual) {
 
   return intel;
 }
+
+// ========================= CONSUMO =========================
+function calcularConsumoOsmose(nivelAtual) {
+  const consumo = safeReadJson(CONSUMO_FILE, {});
+  let consumido = 0;
 
   if (consumo.ultimoNivel > 0 && nivelAtual < consumo.ultimoNivel) {
     const diff = consumo.ultimoNivel - nivelAtual;
@@ -478,9 +478,10 @@ function analisarEnchimento(nivelAtual) {
     const minutos = (agora - new Date(consumo.timestamp).getTime()) / 60000;
 
     if (minutos > 0 && consumido > 0) {
-  consumo.media_por_minuto = Number((consumido / minutos).toFixed(3));
-}
+      consumo.media_por_minuto = Number((consumido / minutos).toFixed(3));
+    }
   }
+
   consumo.ultimoNivel = nivelAtual;
   consumo.timestamp = new Date().toISOString();
 
@@ -488,8 +489,6 @@ function analisarEnchimento(nivelAtual) {
 
   return consumo;
 }
-
-
 function detectarConsumoAnormal(consumoAtual, media) {
   if (!media || media <= 0) return false;
   return consumoAtual > media * ALERTA_FATOR;
@@ -513,15 +512,6 @@ const server = app.listen(process.env.PORT || 3000, () => {
 });
 // WebSocket server ligado ao mesmo HTTP server
 const wss = new WebSocketServer({ server });
-// 🔁 HEARTBEAT
-setInterval(() => {
-
-  wsBroadcast({
-    type: "heartbeat",
-    timestamp: Date.now()
-  });
-
-}, 5000);
 function wsBroadcast(obj) {
   const msg = JSON.stringify(obj);
   let count = 0;
@@ -556,24 +546,32 @@ setInterval(() => {
 }, 3000);
 
 // conexão
-wss.on("connection", ws => {
-  console.log(chalk.cyan("WS client connected"));
+wss.on("connection", (ws, req) => {
+  const ip = req.socket.remoteAddress;
+
+  console.log(chalk.cyan(`WS client connected: ${ip}`));
 
   ws.isAlive = true;
 
   ws.on("pong", () => {
     ws.isAlive = true;
   });
-ws.on("message", msg => {
-  try {
-    const data = JSON.parse(msg);
 
-    if (data.type === "ping") {
-      ws.send(JSON.stringify({ type: "pong" }));
-    }
+  ws.on("message", msg => {
+    try {
+      const data = JSON.parse(msg);
 
-  } catch (e) {}
-});
+      if (data.type === "ping") {
+        ws.send(JSON.stringify({ type: "pong" }));
+      }
+
+    } catch (e) {}
+  });
+
+  ws.on("close", () => {
+    console.log(chalk.yellow(`WS client disconnected: ${ip}`));
+  });
+
   const dados = safeReadJson(DATA_FILE, {});
 
   try {
@@ -598,30 +596,49 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
   // 🔒 SEGURANÇA
   const apiKey = req.headers["x-api-key"];
   if (process.env.API_KEY && apiKey !== process.env.API_KEY) {
-  return res.status(403).json({ erro: "Não autorizado" });
-}
+    return res.status(403).json({ erro: "Não autorizado" });
+  }
+
+  // 🔒 LOCK DE PROCESSAMENTO
+  if (processing) {
+    return res.status(429).json({ erro: "Servidor ocupado, tente novamente" });
+  }
+
+  processing = true;
+
   try {
     let rawBody = req.body;
+
     if (!rawBody || (typeof rawBody === "string" && rawBody.trim() === "")) {
       rawBody = req._rawBody || req.body;
     }
 
     const parsed = parseBodyGuess(rawBody);
+
     if (!parsed) {
       console.warn(
         chalk.yellow("Payload não entendível:"),
-        typeof rawBody === "string" ? (rawBody || "").slice(0, 500) : rawBody
+        typeof rawBody === "string"
+          ? (rawBody || "").slice(0, 500)
+          : rawBody
       );
       return res.status(400).json({ erro: "Payload inválido ou vazio" });
     }
 
     const arr = normalizePacket(parsed);
+
     if (!arr.length) {
       return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
     }
 
-    // converter e mesclar
+    // ============================================================
+    // 🔄 CONVERSÃO + MERGE
+    // ============================================================
     const novo = convertAndMerge(arr);
+
+    // ============================================================
+    // 🛡 FAIL SAFE BOMBAS
+    // ============================================================
     aplicarFailSafeBombas(novo);
 
     // ============================================================
@@ -650,25 +667,28 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
     // ============================================================
     // 📉 CONSUMO OSMOSE
     // ============================================================
+
+    // calcula consumo atual
+    const consumo = calcularConsumoOsmose(nivelAtualOsmose);
+
+    // pega histórico anterior para média real
     const consumoAnterior = safeReadJson(CONSUMO_FILE, {});
-let consumoAtualMin = 0;
 
-const diff = consumoAnterior.ultimoNivel - nivelAtualOsmose;
+    // valores para análise
+    const consumoAtualMin = consumo.media_por_minuto || 0;
+    const mediaMin = consumoAnterior.media_por_minuto || 0;
 
-// ignora ruído e picos irreais
-if (diff > 1 && diff < 50) {
-  consumoAtualMin = diff;
-}
-// agora sim atualiza consumo
-const consumo = calcularConsumoOsmose(nivelAtualOsmose);
+    // ============================================================
     // 🧠 INTELIGÊNCIA DE ENCHIMENTO
-const nivelPercent = novo["Reservatorio_Osmose_current_percent"] || 0;
+    // ============================================================
+    const nivelPercent = novo["Reservatorio_Osmose_current_percent"] || 0;
 
-const inteligencia = analisarEnchimento(nivelPercent);
-// 🔴 SALVAR NO OBJETO PRINCIPAL
-novo.inteligencia = inteligencia;
-const mediaMin = consumo.media_por_minuto || 0;
+    const inteligencia = analisarEnchimento(
+      nivelPercent,
+      novo["Bomba_Osmose_binary"]
+    );
 
+    novo.inteligencia = inteligencia;
 
     // ============================================================
     // 🚨 ALERTA DE CONSUMO ANORMAL
@@ -689,7 +709,6 @@ const mediaMin = consumo.media_por_minuto || 0;
       alertas.desde = null;
     }
 
-    // salva alerta (uma única vez)
     safeWriteJson(ALERTA_FILE, alertas);
 
     // ============================================================
@@ -701,7 +720,11 @@ const mediaMin = consumo.media_por_minuto || 0;
       console.error("Erro historico:", e);
     }
 
-    wsBroadcast({ type: "update", dados: novo, recebido: arr.length });
+    wsBroadcast({
+      type: "update",
+      dados: novo,
+      recebido: arr.length
+    });
 
     console.log(
       chalk.green(
@@ -709,14 +732,25 @@ const mediaMin = consumo.media_por_minuto || 0;
       )
     );
 
-    return res.json({ status: "ok", dados: novo, recebido: arr.length });
+    return res.json({
+      status: "ok",
+      dados: novo,
+      recebido: arr.length
+    });
+
   } catch (err) {
     console.error("Erro processar /atualizar:", err);
+
     return res.status(500).json({
       erro: err?.message || "erro interno"
     });
+
+  } finally {
+    // 🔓 LIBERA O LOCK SEMPRE
+    processing = false;
   }
 });
+
 
 
 // ------------------------- ENDPOINTS DE LEITURA -------------------------
@@ -1027,7 +1061,10 @@ setInterval(() => {
       const host = process.env.RENDER_INTERNAL_HOSTNAME || process.env.HOSTNAME || "localhost";
       const port = process.env.PORT || 3000;
       // não await para não bloquear
-      fetch(`http://${host}:${port}/api/ping`).catch(() => {});
+   if (host == "localhost") return;
+
+fetch(`http://${host}:${port}/api/ping`).catch(() => {});
+
     }
   } catch (e) {}
 }, 60 * 1000);
