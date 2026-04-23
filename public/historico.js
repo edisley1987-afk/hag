@@ -1,5 +1,5 @@
 // ===============================
-// 📊 HISTÓRICO PROFISSIONAL HAG (V3)
+// 📊 HISTÓRICO PROFISSIONAL HAG (V4)
 // ===============================
 
 const API_URL = window.location.origin + "/historico";
@@ -30,13 +30,13 @@ async function carregarHistorico() {
     }
 
     // ===============================
-    // 🔄 ORDENAR POR DATA
+    // 🔄 ORDENAR
     // ===============================
-    dados.sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp));
+    dados.sort((a,b)=> a.timestamp - b.timestamp);
 
 
     // ===============================
-    // 📊 CALCULAR CONSUMO
+    // 📊 CONSUMO
     // ===============================
     let consumoElevador = 0;
     let consumoLavanderia = 0;
@@ -63,10 +63,9 @@ async function carregarHistorico() {
 
 
     // ===============================
-    // 📈 DADOS PARA GRÁFICO
+    // 📈 GRÁFICO
     // ===============================
     const datasets = {};
-
 
 
     dados.forEach(p => {
@@ -76,25 +75,24 @@ async function carregarHistorico() {
       const percent = Number(p.percent || 0);
 
       // ===============================
-      // 📊 CALCULO DE CONSUMO
+      // 📊 CONSUMO INTELIGENTE
       // ===============================
       if(ultimoNivel[p.reservatorio] !== undefined){
 
         const diferenca = ultimoNivel[p.reservatorio] - volume;
 
-        if(diferenca > 0){
+        // ignora ruído e reset
+        if(diferenca > 1 && diferenca < 1000){
 
-          if(p.reservatorio.toLowerCase().includes("elevador"))
+          if(p.reservatorio === "elevador")
             consumoElevador += diferenca;
 
-          if(p.reservatorio.toLowerCase().includes("lavanderia"))
+          if(p.reservatorio === "lavanderia")
             consumoLavanderia += diferenca;
 
-          if(p.reservatorio.toLowerCase().includes("osmose"))
+          if(p.reservatorio === "osmose")
             consumoOsmose += diferenca;
-
         }
-
       }
 
       ultimoNivel[p.reservatorio] = volume;
@@ -134,36 +132,22 @@ async function carregarHistorico() {
     container.innerHTML = html;
 
 
-
     // ===============================
     // 📊 MOSTRAR CONSUMO
     // ===============================
-    const elElevador = document.getElementById("consumoElevador");
-    const elLavanderia = document.getElementById("consumoLavanderia");
-    const elOsmose = document.getElementById("consumoOsmose");
-    const elTotal = document.getElementById("consumoTotal");
+    setText("consumoElevador", consumoElevador);
+    setText("consumoLavanderia", consumoLavanderia);
+    setText("consumoOsmose", consumoOsmose);
 
-    if(elElevador)
-      elElevador.innerText = formatarNumero(consumoElevador) + " L";
-
-    if(elLavanderia)
-      elLavanderia.innerText = formatarNumero(consumoLavanderia) + " L";
-
-    if(elOsmose)
-      elOsmose.innerText = formatarNumero(consumoOsmose) + " L";
-
-    if(elTotal)
-      elTotal.innerText =
-        formatarNumero(consumoElevador + consumoLavanderia + consumoOsmose) + " L";
-
+    setText("consumoTotal",
+      consumoElevador + consumoLavanderia + consumoOsmose
+    );
 
 
     // ===============================
-    // 📊 DESTRUIR GRÁFICO ANTIGO
+    // 📊 RESET GRÁFICO
     // ===============================
-    if (grafico) {
-      grafico.destroy();
-    }
+    if (grafico) grafico.destroy();
 
 
     // ===============================
@@ -198,7 +182,6 @@ async function carregarHistorico() {
 
           tension: 0.3,
           borderWidth: 2,
-
           pointRadius: 1,
           fill:false
 
@@ -212,67 +195,32 @@ async function carregarHistorico() {
         maintainAspectRatio:false,
 
         plugins: {
-
-          legend:{
-            position:"bottom"
-          },
-
+          legend:{ position:"bottom" },
           title:{
             display:true,
-            text:"📊 Histórico de Nível dos Reservatórios (%)"
-          },
-
-          tooltip:{
-            callbacks:{
-              label:function(context){
-                return context.dataset.label + ": " +
-                context.parsed.y.toFixed(1) + "%";
-              }
-            }
+            text:"📊 Histórico de Nível (%)"
           }
-
         },
 
         scales:{
-
           x:{
             type:"time",
-            time:{
-              unit:"hour",
-              tooltipFormat:"dd/MM HH:mm"
-            },
-            title:{
-              display:true,
-              text:"Tempo"
-            }
+            time:{ unit:"hour" }
           },
-
           y:{
             beginAtZero:true,
-            max:100,
-            title:{
-              display:true,
-              text:"Nível (%)"
-            }
+            max:100
           }
-
         }
-
       }
-
     });
 
 
-
     // ===============================
-    // ⏰ ATUALIZAR HORA
+    // ⏰ HORA
     // ===============================
     const elHora = document.getElementById("horaHistorico");
-
-    if(elHora){
-      elHora.innerText = new Date().toLocaleTimeString("pt-BR");
-    }
-
+    if(elHora) elHora.innerText = new Date().toLocaleTimeString("pt-BR");
 
 
   } catch (err) {
@@ -285,35 +233,31 @@ async function carregarHistorico() {
 }
 
 
-
 // ===============================
-// 🔧 UTILITÁRIOS
+// 🔧 UTIL
 // ===============================
 function formatarNome(nome){
-
   return nome
     .replace(/_/g," ")
     .replace(/reservatorio/gi,"Reservatório")
     .replace(/agua/gi,"Água")
     .trim();
-
 }
-
-
 
 function formatarNumero(n){
-
   return Number(n || 0).toLocaleString("pt-BR");
-
 }
 
+function setText(id, valor){
+  const el = document.getElementById(id);
+  if(el) el.innerText = formatarNumero(valor) + " L";
+}
 
 
 // ===============================
 // 🔄 AUTO REFRESH
 // ===============================
 setInterval(carregarHistorico, 60000);
-
 
 
 // ===============================
