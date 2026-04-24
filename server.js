@@ -203,7 +203,9 @@ function convertAndMerge(dataArray) {
     const ref = item.ref;
     let rawVal = item.value;
 
-    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) rawVal = Number(rawVal);
+    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
+      rawVal = Number(rawVal);
+    }
 
     const sensor = SENSORES[ref];
 
@@ -213,33 +215,64 @@ function convertAndMerge(dataArray) {
       continue;
     }
 
+    // ================= PRESSÃO =================
     if (sensor.tipo === "pressao") {
-      let valorNum = Number(rawVal) || 0;
-      let convertido = ((valorNum - 0.004) / 0.016) * 20;
-      convertido = Math.max(0, Math.min(20, convertido));
-      novo[ref] = Number(convertido.toFixed(2));
-    } else if (sensor.tipo === "bomba") {
+      if (rawVal == null || rawVal === "") {
+        novo[ref] = null;
+      } else {
+        let valorNum = Number(rawVal);
+        let convertido = ((valorNum - 0.004) / 0.016) * 20;
+
+        convertido = Math.max(0, Math.min(20, convertido));
+        novo[ref] = Number(convertido.toFixed(2));
+      }
+    }
+
+    // ================= BOMBA =================
+    else if (sensor.tipo === "bomba") {
       novo[ref] = Number(rawVal) === 1 ? 1 : 0;
-    } else if (sensor.tipo === "ciclo") {
+    }
+
+    // ================= CICLO =================
+    else if (sensor.tipo === "ciclo") {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
-    } else if (sensor.capacidade) {
+    }
+
+    // ================= RESERVATÓRIO =================
+    else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-      const percentual = (leitura - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
+
+      let percentual =
+        (leitura - sensor.leituraVazio) /
+        (sensor.leituraCheio - sensor.leituraVazio);
+
+      // 🔒 proteção contra ruído
+      percentual = Math.max(0, Math.min(1, percentual));
+
+      // 🔒 zona morta (evita falso nível baixo)
+      if (percentual < 0.02) percentual = 0;
+
       let litros = percentual * sensor.capacidade;
-      litros = Math.max(0, Math.min(sensor.capacidade, litros));
+
       novo[ref] = Math.round(litros);
-    } else {
+    }
+
+    else {
       novo[ref] = rawVal;
     }
 
-    novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
+    novo[`${ref}_timestamp`] = item.time
+      ? new Date(item.time).toISOString()
+      : timestampNow;
   }
 
-  // *** CORREÇÃO: gerar timestamp sempre único (evita dashboard congelado) ***
-  // Usamos ISO + millis + pequeno sufixo aleatório para garantir unicidade.
-  novo.timestamp = `${new Date().toISOString()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  // timestamp estável + versão incremental
+  novo.timestamp = new Date().toISOString();
+  novo.version = Date.now();
+
   return novo;
 }
+
 
 // registra histórico diário (min/max + pontos relevantes)
 function registrarHistorico(dadosConvertidos) {
