@@ -119,7 +119,7 @@ function montarEstrutura(dados) {
     reservatorios: [
   {
     nome: "Reservatório Elevador",
-    percent: (dados["Reservatorio_Elevador_current"] / 20000) * 100,
+    percent: Number(dados["Reservatorio_Elevador_current_percent"] || 0),
     current_liters: dados["Reservatorio_Elevador_current"] || 0
   },
   {
@@ -142,7 +142,8 @@ function montarEstrutura(dados) {
     percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
     current_liters: dados["Reservatorio_lavanderia_current"] || 0
   }
-],
+]
+
 
     bombas: [
       {
