@@ -41,7 +41,7 @@ import chalk from "chalk";
 // ========================= IO QUEUE =========================
 let writing = false;
 const queue = [];
-const MAX_QUEUE = 1000;
+const MAX_QUEUE = 5000;
 
 // 🔒 CONTROLE DE CONCORRÊNCIA (rota /atualizar)
 let processing = false;
@@ -70,7 +70,7 @@ async function processQueue() {
     console.error("Erro escrita JSON:", file, e);
   } finally {
     writing = false;
-    setImmediate(processQueue);
+    setImmediate(() => processQueue());
   }
 }
 
@@ -107,7 +107,7 @@ if (!fs.existsSync(INTELIGENCIA_FILE)) {
 }
 
 // tempo máximo sem atualização de bomba (ms)
-const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos
+const DATA_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutos
 
 // fator para considerar consumo anormal
 const ALERTA_FATOR = 2.5;
@@ -209,8 +209,12 @@ function calcularNivel(leitura, sensor) {
 function safeReadJson(filePath, fallback) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
-    const s = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(s || "{}");
+
+    const s = fs.readFileSync(filePath, "utf8").trim();
+    if (!s) return fallback;
+
+    return JSON.parse(s);
+
   } catch (e) {
     console.error("Erro leitura JSON:", filePath, e);
     return fallback;
@@ -257,7 +261,6 @@ function normalizePacket(raw) {
   }
   return arr.filter(x => x.ref !== undefined);
 }
-
 // converte valores segundo SENSORES e mescla com ultimo estado (patch)
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
@@ -268,13 +271,17 @@ function convertAndMerge(dataArray) {
     const ref = item.ref;
     let rawVal = item.value;
 
-    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) rawVal = Number(rawVal);
+    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
+      rawVal = Number(rawVal);
+    }
 
     const sensor = SENSORES[ref];
 
     if (!sensor) {
       novo[ref] = rawVal;
-      novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
+      novo[`${ref}_timestamp`] = item.time
+        ? new Date(item.time).toISOString()
+        : timestampNow;
       continue;
     }
 
@@ -283,85 +290,40 @@ function convertAndMerge(dataArray) {
       let convertido = ((valorNum - 0.004) / 0.016) * 20;
       convertido = Math.max(0, Math.min(20, convertido));
       novo[ref] = Number(convertido.toFixed(2));
-    } else if (sensor.tipo === "bomba") {
-      novo[ref] = Number(rawVal) === 1 ? 1 : 0;
-    } else if (sensor.tipo === "ciclo") {
-      novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
-    } else if (sensor.capacidade) {
-      const leitura = Number(rawVal) || 0;
-
-// 🔍 DEBUG (pode remover depois)
-if (ref === "Reservatorio_Elevador_current") {
-  console.log("DEBUG ELEVADOR:", {
-    leitura,
-    vazio: sensor.leituraVazio,
-    cheio: sensor.leituraCheio
-  });
-}
-
-// 🧠 CÁLCULO COM TOLERÂNCIA
-const tolerancia = 0.0002;
-
-const resultado = calcularNivel(leitura, sensor);
-
-novo[ref] = resultado.litros;
-novo[`${ref}_percent`] = resultado.percent;
-novo[`${ref}_raw`] = leitura;
-
-
-// 🔧 Correção por faixa inválida
-const leitura = Number(rawVal) || 0;
-const tolerancia = 0.0002;
-
-let resultado = calcularNivel(leitura, sensor);
-
-// proteção de limites físicos
-if (leitura > sensor.leituraCheio + tolerancia) {
-  resultado.percent = 100;
-  resultado.litros = sensor.capacidade;
-}
-
-if (leitura < sensor.leituraVazio - tolerancia) {
-  resultado.percent = 0;
-  resultado.litros = 0;
-}
-
-novo[ref] = Math.round(resultado.litros);
-novo[`${ref}_percent`] = Number(resultado.percent.toFixed(1));
-novo[`${ref}_raw`] = leitura;
-
-// clamp final
-percent = Math.max(0, Math.min(100, percent));
-
-// litros
-const litros = (percent / 100) * sensor.capacidade;
-
-// salvar
-novo[ref] = Math.round(litros);
-novo[`${ref}_percent`] = Number(percent.toFixed(1));
-
-// opcional (fortemente recomendado)
-novo[`${ref}_raw`] = leitura;
-
-
-    } else {
-      novo[ref] = rawVal;
     }
 
-    novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
+    else if (sensor.tipo === "bomba") {
+      novo[ref] = Number(rawVal) === 1 ? 1 : 0;
+    }
+
+    else if (sensor.tipo === "ciclo") {
+      novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
+    }
+
+    else if (sensor.capacidade) {
+      const leitura = Number(rawVal) || 0;
+      const resultado = calcularNivel(leitura, sensor);
+
+      novo[ref] = Math.round(resultado.litros);
+      novo[`${ref}_percent`] = Number(resultado.percent.toFixed(1));
+      novo[`${ref}_raw`] = leitura;
+    }
+
+    novo[`${ref}_timestamp`] = item.time
+      ? new Date(item.time).toISOString()
+      : timestampNow;
   }
 
-  // *** CORREÇÃO: gerar timestamp sempre único (evita dashboard congelado) ***
-  // Usamos ISO + millis + pequeno sufixo aleatório para garantir unicidade.
+  // timestamp único (evita congelamento do dashboard)
   novo.timestamp = `${new Date().toISOString()}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+
   return novo;
 }
-
 // registra histórico diário (min/max + pontos relevantes)
 // ------------------------- LIMPEZA DE HISTÓRICO -------------------------
 function limparHistoricoAntigo() {
   const historico = safeReadJson(HIST_FILE, {});
-  const limiteDias = 7;
+  const limiteDias = 30;
 
   const datas = Object.keys(historico).sort();
 
@@ -574,15 +536,16 @@ function wsBroadcast(obj) {
   const msg = JSON.stringify(obj);
   let count = 0;
 
-  wss.clients.forEach(c => {
+ wss.clients.forEach(c => {
+  if (c.readyState === WebSocket.OPEN) {
     try {
-      if (c.readyState === WebSocket.OPEN) {
-        c.send(msg);
-        count++;
-      }
-    } catch (e) {}
-  });
-
+      c.send(msg);
+      count++;
+    } catch (e) {
+      console.warn("Erro WS send");
+    }
+  }
+});
   if (count) {
     console.log(chalk.cyan(`WS broadcast → ${count} clients`));
   }
@@ -594,15 +557,14 @@ setInterval(() => {
 
   const dados = safeReadJson(DATA_FILE, {});
 
-  if (dados && Object.keys(dados).length > 0) {
+  if (dados && dados.timestamp) {
     wsBroadcast({
       type: "heartbeat",
-      dados
+      timestamp: dados.timestamp
     });
   }
 
 }, 3000);
-
 // conexão
 wss.on("connection", (ws, req) => {
   const ip = req.socket.remoteAddress;
@@ -645,7 +607,16 @@ setInterval(() => {
     ws.ping();
   });
 }, 30000);
+// backup periódico no histórico (proteção contra restart do servidor)
+setInterval(() => {
 
+  const dados = safeReadJson(DATA_FILE, {});
+
+  if (dados && Object.keys(dados).length > 0) {
+    registrarHistorico(dados);
+  }
+
+}, 5 * 60 * 1000);
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
