@@ -944,18 +944,38 @@ app.get("/api/consumo_diario", (req, res) => {
     lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
+// ------------------------- MANUTENÇÃO -------------------------
+app.get("/manutencao", (req, res) => res.json(getManutencao()));
+
+app.post("/manutencao", (req, res) => {
+  const { ativo } = req.body;
+  if (typeof ativo !== "boolean")
+    return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
+
+  setManutencao(ativo);
+
+  res.json({
+    status: "ok",
+    ativo
+  });
+});
+
+
+// 👇 COLE AQUI A ROTA DO DASHBOARD
+
+
 // ------------------------- DASHBOARD SIMPLIFICADO -------------------------
-// Reforçamos headers anti-cache específicos desta rota também.
 app.get("/api/dashboard", (req, res) => {
+
   res.setHeader("Cache-Control", "no-store, must-revalidate, max-age=0, private");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
-  // cabeçalhos extras que ajudam CDNs/Proxies (Akamai/Render)
   res.setHeader("Surrogate-Control", "no-store");
   res.setHeader("CDN-Cache-Control", "no-store");
   res.setHeader("Vary", "Accept-Encoding");
 
   const dados = safeReadJson(DATA_FILE, {});
+
   if (!dados || Object.keys(dados).length === 0) {
     return res.json({
       lastUpdate: "-",
@@ -968,118 +988,83 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
- function getReservatorio(ref, capacidade) {
-  return {
-    litros: Number(dados[ref] || 0),
-    percent: Number(dados[`${ref}_percent`] || 0),
-    capacidade
-  };
-}
-
-const rElevador = getReservatorio("Reservatorio_Elevador_current", 20000);
-const rOsmose = getReservatorio("Reservatorio_Osmose_current", 200);
-const rCME = getReservatorio("Reservatorio_CME_current", 1000);
-const rAbrandada = getReservatorio("Reservatorio_Agua_Abrandada_current", 9000);
-const rLavanderia = getReservatorio("Reservatorio_lavanderia_current", 10000);
-
-const reservatorios = [
-  {
-    nome: "Reservatório Elevador",
-    setor: "elevador",
-    percent: rElevador.percent ?? 0,
-    current_liters: rElevador.litros ?? 0,
-    capacidade: 20000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Reservatório Osmose",
-    setor: "osmose",
-    percent: rOsmose.percent ?? 0,
-    current_liters: rOsmose.litros ?? 0,
-    capacidade: 200,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Reservatório CME",
-    setor: "cme",
-    percent: rCME.percent ?? 0,
-    current_liters: rCME.litros ?? 0,
-    capacidade: 1000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Água Abrandada",
-    setor: "abrandada",
-    percent: rAbrandada.percent ?? 0,
-    current_liters: rAbrandada.litros ?? 0,
-    capacidade: 9000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Lavanderia",
-    setor: "lavanderia",
-    percent: rLavanderia.percent ?? 0,
-    current_liters: rLavanderia.litros ?? 0,
-    capacidade: 10000,
-    manutencao: getManutencao().ativo
+  function getReservatorio(ref, capacidade) {
+    return {
+      litros: Number(dados[ref] || 0),
+      percent: Number(dados[`${ref}_percent`] || 0),
+      capacidade
+    };
   }
-];
+
+  const rElevador = getReservatorio("Reservatorio_Elevador_current", 20000);
+  const rOsmose = getReservatorio("Reservatorio_Osmose_current", 200);
+  const rCME = getReservatorio("Reservatorio_CME_current", 1000);
+  const rAbrandada = getReservatorio("Reservatorio_Agua_Abrandada_current", 9000);
+  const rLavanderia = getReservatorio("Reservatorio_lavanderia_current", 10000);
+
+  const reservatorios = [
+    { nome: "Reservatório Elevador", setor: "elevador", percent: rElevador.percent, current_liters: rElevador.litros, capacidade: 20000 },
+    { nome: "Reservatório Osmose", setor: "osmose", percent: rOsmose.percent, current_liters: rOsmose.litros, capacidade: 200 },
+    { nome: "Reservatório CME", setor: "cme", percent: rCME.percent, current_liters: rCME.litros, capacidade: 1000 },
+    { nome: "Água Abrandada", setor: "abrandada", percent: rAbrandada.percent, current_liters: rAbrandada.litros, capacidade: 9000 },
+    { nome: "Lavanderia", setor: "lavanderia", percent: rLavanderia.percent, current_liters: rLavanderia.litros, capacidade: 10000 }
+  ];
 
   const pressoes = [
-    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null, manutencao: getManutencao().ativo }
+    { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null },
+    { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null },
+    { nome: "Pressão Saída CME", pressao: dados["Pressao_Saida_CME_current"] ?? null }
   ];
 
   const bombas = [
-    { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0, manutencao: getManutencao().ativo },
-    { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo },
-    { nome: "Bomba Osmose", estado_num: Number(dados["Bomba_Osmose_binary"]) || 0, estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0, manutencao: getManutencao().ativo }
+    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
+    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
+    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
   ];
 
   const bombasLigadas = bombas
     .filter(b => b.estado === "ligada")
     .map(b => b.nome);
 
-  // 🧠 consumo + previsão
   const consumo = safeReadJson(CONSUMO_FILE, {});
+
   const previsao = preverEsvaziamento(
     Number(dados["Reservatorio_Osmose_current"] || 0),
     consumo.media_por_minuto
   );
 
-  return res.json({
+  res.json({
     lastUpdate: dados.timestamp,
     reservatorios,
     pressoes,
     bombas,
-    manutencao: getManutencao().ativo,
     bombasLigadas,
-
-    // 🧠 previsão de esvaziamento
+    manutencao: getManutencao().ativo,
     previsao_esvaziamento: previsao,
-
-    // 🚨 alerta de consumo anormal
     alerta_consumo: safeReadJson(ALERTA_FILE, {})
   });
+
 });
 
-// ------------------------- MANUTENÇÃO -------------------------
-app.get("/manutencao", (req, res) => res.json(getManutencao()));
-app.post("/manutencao", (req, res) => {
-  const { ativo } = req.body;
-  if (typeof ativo !== "boolean") return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
-  setManutencao(ativo);
-  res.json({ status: "ok", ativo });
-});
 
 // ------------------------- ARQUIVOS ESTÁTICOS -------------------------
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.get("/dashboard", (_, res) => res.sendFile(path.join(__dirname, "public", "dashboard.html")));
-app.get("/historico-view", (_, res) => res.sendFile(path.join(__dirname, "public", "historico.html")));
-app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login.html")));
 
+app.get("/", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+
+app.get("/dashboard", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"))
+);
+
+app.get("/historico-view", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "historico.html"))
+);
+
+app.get("/login", (_, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
+);
 // ------------------------- PING / KEEP ALIVE -------------------------
 app.get("/api/ping", (req, res) => res.json({ ok: true, timestamp: Date.now() }));
 
