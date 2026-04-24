@@ -4,199 +4,184 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoramento - HAG</title>
 
-<title>Monitoramento HAG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="style.css">
 
-</head>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script defer src="dashboard.js"></script>
+
+</head>
 
 <body>
 
 <header>
 
-<!-- TOPO -->
-
-<div class="cabecalho">
-
-<h1>💧 Monitoramento HAG</h1>
-
-<div class="subtitulo">
-Sistema de Monitoramento de Reservatórios
-</div>
-
-<div class="status">
-<span class="status-dot"></span>
-Tempo real conectado • <span id="dataHora"></span>
-</div>
-
-<a href="historico.html" class="btn-historico">
-📊 Histórico
-</a>
-
-</div>
-
-<!-- STATUS -->
-
-<div id="statusSistema">
-🟢 Tempo real conectado
-</div>
-
-
-<!-- DATA E HORA -->
-
-<div class="header-info">
-
-<div>
-📅 <span id="dataSistema"></span>
-</div>
-
-<div>
-⏰ <span id="hora">--:--</span>
-</div>
-
-</div>
-
-
-<!-- KPIs -->
-
-<div class="kpis">
-
-<div class="kpi">
-Elevador Hoje
-<span id="kpiElevador">0 L</span>
-</div>
-
-<div class="kpi">
-Lavanderia Hoje
-<span id="kpiLavanderia">0 L</span>
-</div>
-
-<div class="kpi">
-Osmose Hoje
-<span id="kpiOsmose">0 L</span>
-</div>
-
-<div class="kpi">
-Bombas Ativas
-<span id="kpiBombas">0</span>
-</div>
-
-<div class="kpi">
-Reservatórios Críticos
-<span id="kpiCritico">0</span>
-</div>
-
+<div class="header-content">
+<h1>Hospital Arnaldo Gavazza – Monitoramento</h1>
+<div id="lastUpdate">Atualizado --:--:--</div>
 </div>
 
 </header>
 
+<!-- STATUS SISTEMA -->
+
+<div id="statusSistema">🟢 Sistema Operacional</div>
+
+<!-- PREVISÃO IA -->
+
+<div id="previsaoIA" class="box-previsao">
+
+IA analisando consumo...
+
+</div>
 
 <main>
 
-<!-- =========================
-RESERVATÓRIOS
-========================= -->
+<!-- ================= RESERVATÓRIOS ================= -->
 
-<section>
+<h2>Reservatórios</h2>
 
-<h2 class="titulo-area">
-Reservatórios
-</h2>
+<!-- ALERTA GLOBAL -->
 
-<div id="areaReservatorios" class="grid-reservatorios">
-<!-- JS PREENCHE -->
+<div id="alerta-nivelbaixo" class="alerta-global">
+
+⚠ Nível crítico detectado em reservatório
+
 </div>
 
-</section>
+<!-- GRID DOS RESERVATÓRIOS -->
 
+<div id="reservatoriosContainer">
 
+<!-- Os reservatórios são criados automaticamente pelo JS -->
 
-<!-- =========================
-BOMBAS
-========================= -->
-
-<section>
-
-<h2 class="titulo-area">
-Bombas
-</h2>
-
-<div id="areaBombas" class="grid-bombas">
-<!-- JS PREENCHE -->
 </div>
 
-</section>
 
+<!-- ================= GRÁFICO ================= -->
 
+<h2 style="margin-top:40px">Gráfico em Tempo Real</h2>
 
-<!-- =========================
-PRESSÕES
-========================= -->
+<div id="graficoUTI">
 
-<section>
+<canvas id="graficoUTIChart"></canvas>
 
-<h2 class="titulo-area">
-Pressões
-</h2>
-
-<div id="areaPressoes" class="grid-pressoes">
-<!-- JS PREENCHE -->
 </div>
 
-</section>
+
+<!-- ================= PRESSÕES E BOMBAS ================= -->
+
+<h2 style="margin-top:50px">Pressões e Bombas</h2>
+
+<div id="pressaoBombaGrid">
+
+<!-- PRESSÃO SAÍDA OSMOSE -->
+
+<div class="card-pressao">
+
+<h3>Saída Osmose</h3>
+
+<div class="valor-container">
+
+<span class="valor-pressao" id="pSaidaOsmose">--</span>
+
+<span class="unidade">bar</span>
+
+</div>
+
+</div>
+
+
+<!-- PRESSÃO RETORNO OSMOSE -->
+
+<div class="card-pressao">
+
+<h3>Retorno Osmose</h3>
+
+<div class="valor-container">
+
+<span class="valor-pressao" id="pRetornoOsmose">--</span>
+
+<span class="unidade">bar</span>
+
+</div>
+
+</div>
+
+
+<!-- PRESSÃO CME -->
+
+<div class="card-pressao">
+
+<h3>Saída CME</h3>
+
+<div class="valor-container">
+
+<span class="valor-pressao" id="pSaidaCME">--</span>
+
+<span class="unidade">bar</span>
+
+</div>
+
+</div>
+
+
+<!-- ================= BOMBAS ================= -->
+
+<!-- BOMBA 01 -->
+
+<div class="card-bomba bomba-desligada" id="bomba1">
+
+<h3>Bomba 01</h3>
+
+<p>Status: <b id="b1Status">--</b></p>
+
+<p>Ciclos: <b id="b1Ciclos">--</b></p>
+
+</div>
+
+
+<!-- BOMBA 02 -->
+
+<div class="card-bomba bomba-desligada" id="bomba2">
+
+<h3>Bomba 02</h3>
+
+<p>Status: <b id="b2Status">--</b></p>
+
+<p>Ciclos: <b id="b2Ciclos">--</b></p>
+
+</div>
+
+
+<!-- BOMBA OSMOSE -->
+
+<div class="card-bomba bomba-desligada" id="bomba3">
+
+<h3>Bomba Osmose</h3>
+
+<p>Status: <b id="b3Status">--</b></p>
+
+<p>Ciclos: <b id="b3Ciclos">--</b></p>
+
+</div>
+
+</div>
 
 </main>
 
-
-
 <footer>
-Sistema Profissional - HAG
+
+Sistema HAG © 2025  
+Hospital Arnaldo Gavazza
+
 </footer>
 
-
-
-<!-- =========================
-⏰ RELÓGIO + DATA
-========================= -->
-
-<script>
-
-document.addEventListener("DOMContentLoaded", () => {
-
-function atualizarHora(){
-
-const agora = new Date()
-
-const hora = document.getElementById("hora")
-const data = document.getElementById("dataSistema")
-
-if(hora){
-hora.innerText = agora.toLocaleTimeString("pt-BR")
-}
-
-if(data){
-data.innerText = agora.toLocaleDateString("pt-BR")
-}
-
-}
-
-atualizarHora()
-setInterval(atualizarHora,1000)
-
-})
-
-</script>
-
-
-
-<!-- =========================
-📡 DASHBOARD
-========================= -->
-
-<script src="dashboard.js"></script>
-
 </body>
+
 </html>
