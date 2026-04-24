@@ -92,25 +92,25 @@ app.use((req, res, next) => {
 const SENSORES = {
   "Reservatorio_Elevador_current": { 
     leituraVazio: 0.005250, 
-    leituraCheio: 0.009018, 
+    leituraCheio: 0.008742, 
     capacidade: 20000 
   },
 
   "Reservatorio_Osmose_current": { 
     leituraVazio: 0.00505, 
-    leituraCheio: 0.006853, 
+    leituraCheio: 0.006734, 
     capacidade: 200 
   },
 
   "Reservatorio_CME_current": { 
     leituraVazio: 0.004088, 
-    leituraCheio: 0.005370, 
+    leituraCheio: 0.005330, 
     capacidade: 1000 
   },
 
   "Reservatorio_Agua_Abrandada_current": { 
     leituraVazio: 0.004048, 
-    leituraCheio: 0.004929, 
+    leituraCheio: 0.004849, 
     capacidade: 9000 
   },
 
@@ -224,22 +224,10 @@ function convertAndMerge(dataArray) {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
     } else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-
-let percent =
-  ((leitura - sensor.leituraVazio) /
-    (sensor.leituraCheio - sensor.leituraVazio)) * 100;
-
-// limites
-percent = Math.max(0, Math.min(100, percent));
-
-// litros
-const litros = (percent / 100) * sensor.capacidade;
-
-novo[ref] = Math.round(litros); // mantém compatibilidade
-
-novo[`${ref}_percent`] = Number(percent.toFixed(1)); // novo campo %
-
-
+      const percentual = (leitura - sensor.leituraVazio) / (sensor.leituraCheio - sensor.leituraVazio);
+      let litros = percentual * sensor.capacidade;
+      litros = Math.max(0, Math.min(sensor.capacidade, litros));
+      novo[ref] = Math.round(litros);
     } else {
       novo[ref] = rawVal;
     }
@@ -681,62 +669,18 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
- function getReservatorio(ref, capacidade) {
-  return {
-    litros: Number(dados[ref] || 0),
-    percent: Number(dados[`${ref}_percent`] || 0),
-    capacidade
-  };
-}
-
-const rElevador = getReservatorio("Reservatorio_Elevador_current", 20000);
-const rOsmose = getReservatorio("Reservatorio_Osmose_current", 200);
-const rCME = getReservatorio("Reservatorio_CME_current", 1000);
-const rAbrandada = getReservatorio("Reservatorio_Agua_Abrandada_current", 9000);
-const rLavanderia = getReservatorio("Reservatorio_lavanderia_current", 10000);
-
-const reservatorios = [
-  {
-    nome: "Reservatório Elevador",
-    setor: "elevador",
-    percent: rElevador.percent ?? 0,
-    current_liters: rElevador.litros ?? 0,
-    capacidade: 20000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Reservatório Osmose",
-    setor: "osmose",
-    percent: rOsmose.percent ?? 0,
-    current_liters: rOsmose.litros ?? 0,
-    capacidade: 200,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Reservatório CME",
-    setor: "cme",
-    percent: rCME.percent ?? 0,
-    current_liters: rCME.litros ?? 0,
-    capacidade: 1000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Água Abrandada",
-    setor: "abrandada",
-    percent: rAbrandada.percent ?? 0,
-    current_liters: rAbrandada.litros ?? 0,
-    capacidade: 9000,
-    manutencao: getManutencao().ativo
-  },
-  {
-    nome: "Lavanderia",
-    setor: "lavanderia",
-    percent: rLavanderia.percent ?? 0,
-    current_liters: rLavanderia.litros ?? 0,
-    capacidade: 10000,
-    manutencao: getManutencao().ativo
-  }
-];
+  const reservatorios = [
+    { nome: "Reservatório Elevador", setor: "elevador", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100) + 3)
+, current_liters: Number(dados["Reservatorio_Elevador_current"] || 0), capacidade: 20000, manutencao: getManutencao().ativo },
+    { nome: "Reservatório Osmose", setor: "osmose", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Osmose_current"] || 0) / 200) * 100) + 3)
+, current_liters: Number(dados["Reservatorio_Osmose_current"] || 0), capacidade: 200, manutencao: getManutencao().ativo },
+    { nome: "Reservatório CME", setor: "cme", percent: Math.min(100, Math.round((Number(dados["Reservatorio_CME_current"] || 0) / 1000) * 100) + 3)
+, current_liters: Number(dados["Reservatorio_CME_current"] || 0), capacidade: 1000, manutencao: getManutencao().ativo },
+    { nome: "Água Abrandada", setor: "abrandada", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100) + 3)
+, current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0), capacidade: 9000, manutencao: getManutencao().ativo },
+    { nome: "Lavanderia", setor: "lavanderia", percent: Math.min(100, Math.round((Number(dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100) + 3)
+, current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0), capacidade: 10000, manutencao: getManutencao().ativo }
+  ];
 
   const pressoes = [
     { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
