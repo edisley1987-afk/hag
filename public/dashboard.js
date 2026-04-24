@@ -183,6 +183,7 @@ function montarEstrutura(dados) {
 // RENDER SCHEDULER (ANTI-FLICKER)
 // =======================
 function scheduleRender(data) {
+  if (!data) return;
   if (renderPending) return;
 
   renderPending = true;
@@ -265,7 +266,7 @@ function renderReservatorios(lista) {
 
     const el = document.createElement("div");
     el.className = "card reservatorio";
-    el.setAttribute("data-nome", r.nome);
+    el.setAttribute("data-nome", safeName);
 
     el.innerHTML = `
       <h2>${r.nome}</h2>
@@ -379,14 +380,23 @@ function atualizarKPIs(reservatorios, bombas) {
 
     const anterior = historicoNivel[r.nome];
 
-    const deltaNivel = Math.max(0, anterior.nivel - r.current_liters);
+    const deltaNivel = anterior.nivel - r.current_liters;
+
+if (deltaNivel <= 0) {
+  historicoNivel[r.nome] = {
+    nivel: r.current_liters,
+    tempo: agora
+  };
+  return;
+}
     const deltaTempo = (agora - anterior.tempo) / 1000;
 
     if (deltaTempo <= 0 || deltaNivel <= 0) return;
 
-    const consumo = deltaNivel / deltaTempo;
+  const consumo = deltaTempo > 0 ? deltaNivel / deltaTempo : 0;
+if (consumo <= 0) return;
 
-    const tempoRestanteSeg = r.current_liters / consumo;
+    const tempoRestanteSeg = consumo > 0 ? r.current_liters / consumo : 0;
 
     if (tempoRestanteSeg < 60 || tempoRestanteSeg > 86400) return;
 
