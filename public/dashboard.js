@@ -119,7 +119,9 @@ function montarEstrutura(dados) {
     reservatorios: [
       {
         nome: "Reservatório Elevador",
-        percent: Number(dados["Reservatorio_Elevador_current_percent"] || 0),
+        const capacidadeElevador = 20000;
+
+percent: (dados["Reservatorio_Elevador_current"] / capacidadeElevador) * 100
         current_liters: dados["Reservatorio_Elevador_current"] || 0
       },
       {
