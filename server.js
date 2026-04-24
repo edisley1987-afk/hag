@@ -62,19 +62,18 @@ async function processQueue() {
   writing = true;
   const { file, data } = queue.shift();
 
-  setImmediate(async () => {
-    try {
-      const tmp = file + ".tmp";
-      await fs.promises.writeFile(tmp, JSON.stringify(data, null, 2));
-      await fs.promises.rename(tmp, file);
-    } catch (e) {
-      console.error("Erro escrita JSON:", file, e);
-    }
-
+  try {
+    const tmp = file + ".tmp";
+    await fs.promises.writeFile(tmp, JSON.stringify(data, null, 2));
+    await fs.promises.rename(tmp, file);
+  } catch (e) {
+    console.error("Erro escrita JSON:", file, e);
+  } finally {
     writing = false;
-    processQueue();
-  });
+    setImmediate(processQueue);
+  }
 }
+
 
 
 
@@ -187,6 +186,25 @@ const SENSORES = {
   "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
 
+
+// ========================= CÁLCULO DE NÍVEL =========================
+function calcularNivel(leitura, sensor) {
+
+  const range = sensor.leituraCheio - sensor.leituraVazio;
+
+  if (range <= 0) return { percent: 0, litros: 0 };
+
+  let percent = (leitura - sensor.leituraVazio) / range;
+
+  // proteção contra ruído físico
+  percent = Math.max(0, Math.min(1, percent));
+
+  return {
+    percent: Number((percent * 100).toFixed(1)),
+    litros: Math.round(percent * sensor.capacidade)
+  };
+}
+
 // ------------------------- HELPERS IO -------------------------
 function safeReadJson(filePath, fallback) {
   try {
@@ -198,6 +216,7 @@ function safeReadJson(filePath, fallback) {
     return fallback;
   }
 }
+
 
 function getManutencao() {
   try { return JSON.parse(fs.readFileSync(MANUT_FILE, "utf8")); } catch { return { ativo: false }; }
@@ -283,20 +302,33 @@ if (ref === "Reservatorio_Elevador_current") {
 // 🧠 CÁLCULO COM TOLERÂNCIA
 const tolerancia = 0.0002;
 
-let percent =
-  ((leitura - sensor.leituraVazio) /
-    (sensor.leituraCheio - sensor.leituraVazio)) * 100;
+const resultado = calcularNivel(leitura, sensor);
+
+novo[ref] = resultado.litros;
+novo[`${ref}_percent`] = resultado.percent;
+novo[`${ref}_raw`] = leitura;
+
 
 // 🔧 Correção por faixa inválida
+const leitura = Number(rawVal) || 0;
+const tolerancia = 0.0002;
+
+let resultado = calcularNivel(leitura, sensor);
+
+// proteção de limites físicos
 if (leitura > sensor.leituraCheio + tolerancia) {
-  console.warn(`⚠️ ${ref} acima do cheio`, leitura);
-  percent = 100;
+  resultado.percent = 100;
+  resultado.litros = sensor.capacidade;
 }
 
 if (leitura < sensor.leituraVazio - tolerancia) {
-  console.warn(`⚠️ ${ref} abaixo do vazio`, leitura);
-  percent = 0;
+  resultado.percent = 0;
+  resultado.litros = 0;
 }
+
+novo[ref] = Math.round(resultado.litros);
+novo[`${ref}_percent`] = Number(resultado.percent.toFixed(1));
+novo[`${ref}_raw`] = leitura;
 
 // clamp final
 percent = Math.max(0, Math.min(100, percent));
