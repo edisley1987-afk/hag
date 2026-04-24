@@ -117,34 +117,32 @@ function montarEstrutura(dados) {
 
   return {
     reservatorios: [
-      {
-        nome: "Reservatório Elevador",
-        const capacidadeElevador = 20000;
-
-percent: (dados["Reservatorio_Elevador_current"] / capacidadeElevador) * 100
-        current_liters: dados["Reservatorio_Elevador_current"] || 0
-      },
-      {
-        nome: "Reservatório Osmose",
-        percent: Number(dados["Reservatorio_Osmose_current_percent"] || 0),
-        current_liters: dados["Reservatorio_Osmose_current"] || 0
-      },
-      {
-        nome: "Reservatório CME",
-        percent: Number(dados["Reservatorio_CME_current_percent"] || 0),
-        current_liters: dados["Reservatorio_CME_current"] || 0
-      },
-      {
-        nome: "Água Abrandada",
-        percent: Number(dados["Reservatorio_Agua_Abrandada_current_percent"] || 0),
-        current_liters: dados["Reservatorio_Agua_Abrandada_current"] || 0
-      },
-      {
-        nome: "Lavanderia",
-        percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
-        current_liters: dados["Reservatorio_lavanderia_current"] || 0
-      }
-    ],
+  {
+    nome: "Reservatório Elevador",
+    percent: (dados["Reservatorio_Elevador_current"] / 20000) * 100,
+    current_liters: dados["Reservatorio_Elevador_current"] || 0
+  },
+  {
+    nome: "Reservatório Osmose",
+    percent: Number(dados["Reservatorio_Osmose_current_percent"] || 0),
+    current_liters: dados["Reservatorio_Osmose_current"] || 0
+  },
+  {
+    nome: "Reservatório CME",
+    percent: Number(dados["Reservatorio_CME_current_percent"] || 0),
+    current_liters: dados["Reservatorio_CME_current"] || 0
+  },
+  {
+    nome: "Água Abrandada",
+    percent: Number(dados["Reservatorio_Agua_Abrandada_current_percent"] || 0),
+    current_liters: dados["Reservatorio_Agua_Abrandada_current"] || 0
+  },
+  {
+    nome: "Lavanderia",
+    percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
+    current_liters: dados["Reservatorio_lavanderia_current"] || 0
+  }
+],
 
     bombas: [
       {
