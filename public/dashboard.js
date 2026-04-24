@@ -142,7 +142,7 @@ function montarEstrutura(dados) {
     percent: Number(dados["Reservatorio_lavanderia_current_percent"] || 0),
     current_liters: dados["Reservatorio_lavanderia_current"] || 0
   }
-]
+],
 
 
     bombas: [
