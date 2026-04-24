@@ -38,6 +38,8 @@ import compression from "compression";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 
+const app = express();
+
 // ========================= IO QUEUE =========================
 let writing = false;
 const queue = [];
@@ -45,7 +47,6 @@ const MAX_QUEUE = 5000;
 
 // 🔒 CONTROLE DE CONCORRÊNCIA (rota /atualizar)
 let processing = false;
-
 function safeWriteJson(filePath, data) {
   if (queue.length >= MAX_QUEUE) {
     console.warn("Fila cheia, descartando escrita:", filePath);
@@ -80,9 +81,6 @@ async function processQueue() {
 // ========================= PATHS =========================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// ========================= APP =========================
-const app = express();
 // ------------------------- ARQUIVOS E CONSTANTES -------------------------
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
@@ -118,11 +116,12 @@ if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ at
 // ------------------------- MIDDLEWARES -------------------------
 app.use(cors());
 app.use(compression()); // gzip/deflate
+
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: ["text/*", "application/*"], limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Prevent caching of API responses (dashboard needs fresh) - global
+// Prevent caching of API responses
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
   res.setHeader("Pragma", "no-cache");
@@ -130,12 +129,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging with timing
+// Request logging
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const ms = Date.now() - start;
-    console.log(chalk.gray(`[${new Date().toISOString()}] [${req.method}] ${req.originalUrl} → ${ms}ms`));
+    console.log(
+      chalk.gray(`[${new Date().toISOString()}] [${req.method}] ${req.originalUrl} → ${ms}ms`)
+    );
   });
   next();
 });
@@ -280,7 +281,8 @@ function convertAndMerge(dataArray) {
     if (!sensor) {
       novo[ref] = rawVal;
       novo[`${ref}_timestamp`] = item.time
-        ? new Date(item.time).toISOString()
+        ? new Date(Math.floor(item.time / 1000)).toISOString()
+    
         : timestampNow;
       continue;
     }
@@ -310,7 +312,7 @@ function convertAndMerge(dataArray) {
     }
 
     novo[`${ref}_timestamp`] = item.time
-      ? new Date(item.time).toISOString()
+     ? new Date(Math.floor(item.time / 1000)).toISOString()
       : timestampNow;
   }
 
