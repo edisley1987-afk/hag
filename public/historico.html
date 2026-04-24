@@ -1,123 +1,123 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Histórico - Gráfico e Consumo</title>
 
-  <!-- Chart.js + plugins necessários -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    body {
-      background: #f4f6f8;
-      font-family: Arial, sans-serif;
-    }
+<title>Histórico — Monitoramento HAG</title>
 
-    h1 {
-      text-align: center;
-      margin-top: 20px;
-    }
+<link rel="stylesheet" href="style-historico.css" />
 
-    #grafico-wrapper {
-      width: 95%;
-      height: 420px;
-      margin: 20px auto;
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    table {
-      width: 95%;
-      margin: 25px auto;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
+<!-- ✅ ADAPTER DE DATA (OBRIGATÓRIO para eixo time) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #007b83;
-      color: white;
-      font-size: 16px;
-    }
-
-    .btn-voltar {
-      display: inline-block;
-      padding: 10px 18px;
-      background: #007b83;
-      color: white;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 10px;
-    }
-
-    .btn-consumo {
-      display: inline-block;
-      padding: 10px 18px;
-      background: #0a8f7a;
-      color: white;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 10px;
-    }
-
-    select {
-      padding: 5px 10px;
-      font-size: 16px;
-    }
-  </style>
 </head>
 
 <body>
 
-  <div style="text-align:center; margin-top: 20px;">
-    <a href="index.html" class="btn-voltar">⬅ Voltar para Reservatórios</a>
-    <a href="consumo.html" class="btn-consumo">📉 Ir para Consumo Diário</a>
-  </div>
+<!-- ================= HEADER ================= -->
+<header class="topo">
 
-  <h1>📊 Histórico e Consumo Diário</h1>
+<div class="topo-esquerda">
+<h1>📊 Histórico de Monitoramento</h1>
+<span class="subtitulo">Reservatórios e Pressões</span>
+</div>
 
-  <div style="text-align:center;">
-    <label><strong>Reservatório:</strong></label>
-    <select id="reservatorioSelect">
-      <option value="elevador">Elevador</option>
-      <option value="osmose">Osmose</option>
-      <option value="lavanderia">Lavanderia</option>
-      <option value="cme">CME</option>
-      <option value="abrandada">Abrandada</option>
-    </select>
-  </div>
+<div class="topo-direita">
 
-  <div id="grafico-wrapper">
-    <canvas id="graficoHistorico"></canvas>
-  </div>
+<div id="statusHistorico" class="status">
+🟢 Sistema ativo<br>
+Atualizado: <span id="horaHistorico">--:--</span>
+</div>
 
-  <h2 style="text-align:center;">📅 Consumo Diário</h2>
+<a href="dashboard.html" class="voltar-btn">⬅ Painel</a>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Dia</th>
-        <th>Reservatório</th>
-        <th>Consumo (Litros)</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaConsumo"></tbody>
-  </table>
+</div>
 
-  <script src="historico.js"></script>
+</header>
+
+
+<!-- ================= CONSUMO ================= -->
+<section class="kpis-historico">
+
+<div class="kpi">
+Elevador Hoje
+<span id="consumoElevador">0 L</span>
+</div>
+
+<div class="kpi">
+Lavanderia Hoje
+<span id="consumoLavanderia">0 L</span>
+</div>
+
+<div class="kpi">
+Osmose Hoje
+<span id="consumoOsmose">0 L</span>
+</div>
+
+<div class="kpi">
+Consumo Total
+<span id="consumoTotal">0 L</span>
+</div>
+
+</section>
+
+
+<!-- ================= MAIN ================= -->
+<main class="historico-main">
+
+<!-- ===== GRÁFICO ===== -->
+<section class="card grafico-card">
+
+<h2>📈 Evolução dos Níveis</h2>
+
+<div class="grafico-container">
+<canvas id="graficoHistorico"></canvas>
+</div>
+
+</section>
+
+
+<!-- ===== TABELA ===== -->
+<section class="card tabela-card">
+
+<h2>📋 Histórico Detalhado</h2>
+
+<div id="historico"></div>
+
+</section>
+
+</main>
+
+
+<!-- ================= FOOTER ================= -->
+<footer>
+Sistema Profissional — Hospital Arnaldo Gavazza
+</footer>
+
+
+<!-- ================= RELÓGIO ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+function atualizarHora(){
+  const el = document.getElementById("horaHistorico");
+  if(el){
+    el.innerText = new Date().toLocaleTimeString("pt-BR");
+  }
+}
+
+setInterval(atualizarHora,1000)
+
+})
+</script>
+
+<!-- ================= JS ================= -->
+<script src="historico.js"></script>
+
 </body>
 </html>
