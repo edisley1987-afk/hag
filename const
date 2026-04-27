@@ -501,112 +501,84 @@ function detectarConsumoAnormal(consumoAtual, media) {
 }
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
-// Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
 app.use(["/atualizar", "/iot"], async (req, res) => {
   try {
-// ignorar chamadas sem dados (browser, favicon, etc)
-if (req.method === "GET" && Object.keys(req.query).length === 0) {
-  return res.status(200).send("OK");
-}
-  
-    console.log("🔥 CHEGOU DADO DO GATEWAY");
-    console.log("📥 BODY:", req.body);
-    console.log("📡 HEADERS:", req.headers);
-
-    let rawBody = req.body;
-    if (!rawBody || (typeof rawBody === "string" && rawBody.trim() === "")) {
-      rawBody = req._rawBody || req.body;
+    // ignorar chamadas vazias
+    if (req.method === "GET" && Object.keys(req.query).length === 0) {
+      return res.status(200).send("OK");
     }
 
-   let parsed = extractAnyPayload(req);
+    console.log("🔥 CHEGOU DADO DO GATEWAY");
+    console.log("📥 BODY:", req.body);
 
-// 🔥 fallback para GET (query string)
-if (!parsed || Object.keys(parsed).length === 0) {
-  parsed = req.query;
-}
+    // extrai payload
+    let parsed = extractAnyPayload(req);
 
-    if (!parsed) {
-      console.warn(
-        chalk.yellow("Payload não entendível:"),
-        typeof rawBody === "string" ? (rawBody || "").slice(0, 500) : rawBody
-      );
+    // fallback GET
+    if (Object.keys(parsed).length === 0) {
+      parsed = req.query;
+    }
+
+    // validação
+    if (!parsed || Object.keys(parsed).length === 0) {
+      console.warn("⚠️ Payload vazio");
       return res.status(400).json({ erro: "Payload inválido ou vazio" });
     }
 
+    // normaliza
     const arr = normalizePacket(parsed);
+
     if (!arr.length) {
       return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
     }
 
-   // converter e mesclar
-const novo = convertAndMerge(arr);
+    // ================= PROCESSAMENTO =================
+    const novo = convertAndMerge(arr);
 
-aplicarFailSafeBombas(novo);
+    aplicarFailSafeBombas(novo);
 
-// ============================================================
-// 🔴 AUTO DESLIGAMENTO – BOMBA OSMOSE
-// ============================================================
-const CAPACIDADE_OSMOSE = 200;
-const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
-const percentualOsmose = (nivelAtualOsmose / CAPACIDADE_OSMOSE) * 100;
+    // auto desligamento osmose
+    const CAPACIDADE_OSMOSE = 200;
+    const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
+    const percentualOsmose = (nivelAtualOsmose / CAPACIDADE_OSMOSE) * 100;
 
-if (percentualOsmose >= 99) {
-  novo["Bomba_Osmose_binary"] = 0;
-  novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
-}
+    if (percentualOsmose >= 99) {
+      novo["Bomba_Osmose_binary"] = 0;
+      novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
+    }
+   // 🧠 consumo osmose
+const consumoData = calcularConsumoOsmose(nivelAtualOsmose);
 
-// ============================================================
-// 💾 SALVA
-// ============================================================
-safeWriteJson(DATA_FILE, novo);
+const consumoAtualMin = consumoData.historico.at(-1)?.v || 0;
+const mediaMin = consumoData.media_por_minuto;
 
-// ============================================================
-// 📉 CONSUMO
-// ============================================================
-const consumoAnterior = safeReadJson(CONSUMO_FILE, {});
-const consumoAtualMin =
-  consumoAnterior.ultimoNivel > nivelAtualOsmose
-    ? consumoAnterior.ultimoNivel - nivelAtualOsmose
-    : 0;
-
-const consumo = calcularConsumoOsmose(nivelAtualOsmose);
-const mediaMin = consumo.media_por_minuto || 0;
-
-// ============================================================
-// 🚨 ALERTA
-// ============================================================
+// 🚨 alerta
 const alertas = safeReadJson(ALERTA_FILE, {});
 
 if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
-  if (!alertas.ativo) {
-    alertas.ativo = true;
-    alertas.tipo = "CONSUMO_ANORMAL";
-    alertas.mensagem = "Consumo acima do padrão";
-    alertas.desde = new Date().toISOString();
-  }
-} else {
-  alertas.ativo = false;
-  alertas.tipo = null;
-  alertas.mensagem = null;
-  alertas.desde = null;
-}
+      if (!alertas.ativo) {
+        alertas.ativo = true;
+        alertas.tipo = "CONSUMO_ANORMAL";
+        alertas.mensagem = "Consumo acima do padrão";
+        alertas.desde = new Date().toISOString();
+      }
+    } else {
+      alertas.ativo = false;
+      alertas.tipo = null;
+      alertas.mensagem = null;
+      alertas.desde = null;
+    }
 
-safeWriteJson(ALERTA_FILE, alertas);
+    safeWriteJson(ALERTA_FILE, alertas);
 
-// ============================================================
-// 📊 HISTÓRICO
-// ============================================================
-registrarHistorico(novo);
+    // histórico
+    registrarHistorico(novo);
 
-// ============================================================
-// 📡 WEBSOCKET
-// ============================================================
-wsBroadcast({ type: "update", dados: novo });
+    // websocket
+    wsBroadcast({ type: "update", dados: novo });
 
-// ============================================================
-// ✅ RESPOSTA FINAL (AGORA SIM)
-// ============================================================
-return res.json({ ok: true });
+    return res.json({ ok: true });
+
   } catch (err) {
     console.error("Erro processar /atualizar:", err);
     return res.status(500).json({
@@ -614,7 +586,6 @@ return res.json({ ok: true });
     });
   }
 });
-
 
 // ------------------------- ENDPOINTS DE LEITURA -------------------------
 app.get("/dados", (req, res) => {
