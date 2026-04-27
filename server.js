@@ -443,6 +443,11 @@ function detectarConsumoAnormal(consumoAtual, media) {
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
 app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
   try {
+
+    console.log("🔥 CHEGOU DADO DO GATEWAY");
+    console.log("📥 BODY:", req.body);
+    console.log("📡 HEADERS:", req.headers);
+
     let rawBody = req.body;
     if (!rawBody || (typeof rawBody === "string" && rawBody.trim() === "")) {
       rawBody = req._rawBody || req.body;
