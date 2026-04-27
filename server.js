@@ -105,7 +105,7 @@ if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ at
 app.use(cors());
 app.use(compression()); // gzip/deflate
 app.use(express.json({ limit: "10mb", strict: false }));
-app.use(express.text({ type: ["text/*", "application/*"], limit: "10mb" }));
+app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Prevent caching of API responses (dashboard needs fresh) - global
