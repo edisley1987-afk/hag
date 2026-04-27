@@ -285,34 +285,32 @@ function normalizePacket(raw) {
   return arr.filter(x => x.ref !== undefined);
 }
 
-// converte valores segundo SENSORES e mescla com ultimo estado (patch)
 function parseTimestamp(t, fallback) {
   if (!t) return fallback;
 
-  // microsegundos (seu gateway)
-  if (t > 1e14) return new Date(Math.floor(t / 1000)).toISOString();
+  let ms;
+  // Se for microssegundos (16 dígitos ou mais)
+  if (t > 1e14) {
+    ms = Math.floor(t / 1000);
+  } else if (t > 1e10) {
+    // Se for milissegundos (13 dígitos)
+    ms = t;
+  } else {
+    // Se for segundos (10 dígitos)
+    ms = t * 1000;
+  }
 
-  // milissegundos
-  if (t > 1e10) return new Date(t).toISOString();
+  const date = new Date(ms);
+  
+  // VALIDAÇÃO CRÍTICA: Se a data convertida for inválida ou 
+  // estiver muito fora da realidade (ex: futuro distante ou 1970), usa o agora.
+  const agora = Date.now();
+  if (isNaN(date.getTime()) || Math.abs(agora - ms) > 24 * 60 * 60 * 1000) {
+    return fallback; 
+  }
 
-  return fallback;
+  return date.toISOString();
 }
-
-function convertAndMerge(dataArray) {
-  const ultimo = safeReadJson(DATA_FILE, {});
-  const novo = { ...ultimo };
-  const timestampNow = new Date().toISOString();
-
-  for (const item of dataArray) {
-    const ref = item.ref;
-    let rawVal = item.value;
-
-    // 🔧 converte string numérica
-    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
-      rawVal = Number(rawVal);
-    }
-
-    const sensor = SENSORES[ref];
 
     // ================= SENSOR DESCONHECIDO =================
     if (!sensor) {
