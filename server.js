@@ -28,6 +28,7 @@
 // @last_update: 2025-12-18
 // @environment: Production (Render)
 
+
 // server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
 // Requer: express, cors, compression, ws, chalk
 import express from "express";
