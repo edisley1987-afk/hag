@@ -316,21 +316,16 @@ function parseTimestamp(t, fallback) {
 
   let ms;
   if (t > 1e14) {
-    ms = Math.floor(t / 1000);
+    ms = Math.floor(t / 1000); // nanos -> ms
   } else if (t > 1e10) {
-    ms = t;
+    ms = t; // ms
   } else {
-    ms = t * 1000;
+    ms = t * 1000; // sec -> ms
   }
 
   const date = new Date(ms);
-  const agora = Date.now();
-
-  // VALIDAÇÃO: Se a data for inválida ou muito fora da realidade, usa o fallback
-  if (isNaN(date.getTime()) || Math.abs(agora - ms) > 24 * 60 * 60 * 1000) {
-    return fallback;
-  }
-
+  if (isNaN(date.getTime())) return fallback; // só valida se é data válida
+  
   return date.toISOString();
 }
 
