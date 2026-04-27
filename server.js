@@ -479,9 +479,13 @@ function detectarConsumoAnormal(consumoAtual, media) {
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
-app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
+app.use(["/atualizar", "/iot"], async (req, res) => {
   try {
-
+// ignorar chamadas sem dados (browser, favicon, etc)
+if (req.method === "GET" && Object.keys(req.query).length === 0) {
+  return res.status(200).send("OK");
+}
+  
     console.log("🔥 CHEGOU DADO DO GATEWAY");
     console.log("📥 BODY:", req.body);
     console.log("📡 HEADERS:", req.headers);
@@ -514,6 +518,11 @@ if (!parsed || Object.keys(parsed).length === 0) {
     // converter e mesclar
     const novo = convertAndMerge(arr);
     aplicarFailSafeBombas(novo);
+    safeWriteJson(DATA_FILE, novo);
+
+wsBroadcast({ type: "update", dados: novo });
+
+return res.json({ ok: true });
 
     // ============================================================
     // 🔴 AUTO DESLIGAMENTO – BOMBA OSMOSE
