@@ -248,37 +248,34 @@ function extractAnyPayload(req) {
   return {};
 }
 
-// normaliza vários formatos em [{ref,value,dev_id,time},...]
+// Substitua a função normalizePacket atual por esta:
 function normalizePacket(raw) {
   let arr = [];
   if (!raw) return arr;
 
-  // ✅ ARRAY direto
-  if (Array.isArray(raw)) {
-    arr = raw.map(i => ({
-      ref: i.ref ?? i.name ?? i.key,
-      value: i.value ?? i.v ?? i.val ?? i,
-      dev_id: i.dev_id ?? i.devId ?? i.device,
-      time: i.time
-    }));
-  }
-
-  // ✅ FORMATO { data: [...] }
-  else if (raw.data && Array.isArray(raw.data)) {
+  // Se o dado vier dentro de "data" (Padrão Khomp ITG 200)
+  if (raw.data && Array.isArray(raw.data)) {
     arr = raw.data.map(i => ({
-      ref: i.ref ?? i.name ?? i.key,
-      value: i.value ?? i.v ?? i.val ?? i,
-      dev_id: i.dev_id ?? i.devId ?? i.device,
-      time: i.time
+      ref: i.ref || i.name || i.key,
+      value: i.value !== undefined ? i.value : i.v,
+      dev_id: i.dev_id || raw.dev_id, // usa o ID do pacote se o item não tiver
+      time: i.time || Date.now()
+    }));
+  } 
+  // Se vier como um Array direto
+  else if (Array.isArray(raw)) {
+    arr = raw.map(i => ({
+      ref: i.ref,
+      value: i.value,
+      time: i.time || Date.now()
     }));
   }
-
-  // 🔥 QUERY STRING (SEU CASO)
+  // Se vier como pares de chave=valor (Query String)
   else if (typeof raw === "object") {
     arr = Object.keys(raw).map(k => ({
       ref: k,
       value: raw[k],
-      time: Date.now() // 👈 ESSENCIAL
+      time: Date.now()
     }));
   }
 
