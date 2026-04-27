@@ -289,34 +289,46 @@ function parseTimestamp(t, fallback) {
   if (!t) return fallback;
 
   let ms;
-  // Se for microssegundos (16 dígitos ou mais)
   if (t > 1e14) {
     ms = Math.floor(t / 1000);
   } else if (t > 1e10) {
-    // Se for milissegundos (13 dígitos)
     ms = t;
   } else {
-    // Se for segundos (10 dígitos)
     ms = t * 1000;
   }
 
   const date = new Date(ms);
-  
-  // VALIDAÇÃO CRÍTICA: Se a data convertida for inválida ou 
-  // estiver muito fora da realidade (ex: futuro distante ou 1970), usa o agora.
   const agora = Date.now();
+
+  // VALIDAÇÃO: Se a data for inválida ou muito fora da realidade, usa o fallback
   if (isNaN(date.getTime()) || Math.abs(agora - ms) > 24 * 60 * 60 * 1000) {
-    return fallback; 
+    return fallback;
   }
 
   return date.toISOString();
 }
 
+function convertAndMerge(dataArray) {
+  const ultimo = safeReadJson(DATA_FILE, {});
+  const novo = { ...ultimo };
+  const timestampNow = new Date().toISOString();
+
+  for (const item of dataArray) {
+    const ref = item.ref;
+    let rawVal = item.value;
+
+    // Converte string para número se necessário
+    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
+      rawVal = Number(rawVal);
+    }
+
+    const sensor = SENSORES[ref];
+
     // ================= SENSOR DESCONHECIDO =================
     if (!sensor) {
       novo[ref] = rawVal;
       novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
-      continue;
+      continue; 
     }
 
     // ================= PRESSÃO =================
@@ -325,10 +337,8 @@ function parseTimestamp(t, fallback) {
         novo[ref] = null;
       } else {
         let valorNum = Number(rawVal);
-
         let convertido = ((valorNum - 0.004) / 0.016) * 20;
         convertido = Math.max(0, Math.min(20, convertido));
-
         novo[ref] = Number(convertido.toFixed(2));
       }
     }
@@ -346,19 +356,13 @@ function parseTimestamp(t, fallback) {
     // ================= RESERVATÓRIO =================
     else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
-
       const span = sensor.leituraCheio - sensor.leituraVazio;
-
-      let percentual = span > 0
-        ? (leitura - sensor.leituraVazio) / span
-        : 0;
-
+      let percentual = span > 0 ? (leitura - sensor.leituraVazio) / span : 0;
       percentual = Math.max(0, Math.min(1, percentual));
-
+      
       if (percentual < 0.02) percentual = 0;
-
+      
       const litros = percentual * sensor.capacidade;
-
       novo[ref] = Math.round(litros);
     }
 
@@ -367,17 +371,18 @@ function parseTimestamp(t, fallback) {
       novo[ref] = rawVal;
     }
 
-    // ✅ TIMESTAMP POR SENSOR (OBRIGATÓRIO)
+    // Timestamp individual por sensor
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
 
-  // ✅ TIMESTAMP GLOBAL
+  // Finalização e Persistência
   novo.timestamp = timestampNow;
   novo.version = Date.now();
+  
+  safeWriteJson(DATA_FILE, novo);
 
   return novo;
 }
-
 
 // ================= TIMESTAMP =================
 function registrarHistorico(dadosConvertidos) {
