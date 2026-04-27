@@ -817,29 +817,29 @@ app.get("/api/dashboard", (req, res) => {
     { 
       nome: "Reservatório Osmose", 
       setor: "osmose", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.005240, 0.008450) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.005240, 0.008450) * 200),
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.00505, 0.008450) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.00505, 0.008450) * 200),
       capacidade: 200 
     },
     { 
       nome: "Reservatório CME", 
       setor: "cme", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.005240, 0.008320) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.005240, 0.008320) * 1000),
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.004088, 0.008320) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.004088, 0.008320) * 1000),
       capacidade: 1000 
     },
     { 
       nome: "Água Abrandada", 
       setor: "abrandada", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.005240, 0.008125) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.005240, 0.008125) * 9000),
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.004048, 0.008125) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.004048, 0.008125) * 9000),
       capacidade: 9000 
     },
     { 
       nome: "Lavanderia", 
       setor: "lavanderia", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.005240, 0.008100) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.005240, 0.008100) * 10000),
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.006012, 0.008100) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.006012, 0.008100) * 10000),
       capacidade: 10000 
     }
   ];
