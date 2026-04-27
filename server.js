@@ -173,24 +173,41 @@ function preverEsvaziamento(nivelAtual, consumoPorMinuto) {
 }
 
 // tenta extrair JSON do body (strings ou pares k=v)
-function parseBodyGuess(body) {
-  if (!body) return null;
-  if (typeof body === "object") return body;
-  if (typeof body === "string") {
-    const s = body.trim();
-    try { return JSON.parse(s); } catch {}
-    if (s.includes("=") && s.includes("&")) {
-      const parts = s.split("&");
+function extractAnyPayload(req) {
+  let raw = req.body;
+
+  // fallback (alguns gateways usam rawBody)
+  if (!raw || raw === "") {
+    raw = req._rawBody;
+  }
+
+  // já é objeto
+  if (typeof raw === "object") return raw;
+
+  // string
+  if (typeof raw === "string") {
+    const s = raw.trim();
+
+    // tenta JSON
+    try {
+      return JSON.parse(s);
+    } catch {}
+
+    // formato k=v ou k=v&k=v
+    if (s.includes("=")) {
       const obj = {};
-      parts.forEach(p => {
+      s.split("&").forEach(p => {
         const [k, v] = p.split("=");
-        obj[decodeURIComponent(k || "")] = decodeURIComponent(v || "");
+        if (k) obj[decodeURIComponent(k)] = decodeURIComponent(v || "");
       });
       return obj;
     }
-    return null;
+
+    // fallback bruto
+    return { raw: s };
   }
-  return null;
+
+  return {};
 }
 
 // normaliza vários formatos em [{ref,value,dev_id,time},...]
@@ -431,7 +448,8 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
       rawBody = req._rawBody || req.body;
     }
 
-    const parsed = parseBodyGuess(rawBody);
+    const parsed = extractAnyPayload(req);
+
     if (!parsed) {
       console.warn(
         chalk.yellow("Payload não entendível:"),
