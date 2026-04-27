@@ -43,6 +43,44 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+import http from "http";
+
+const server = http.createServer(app);
+// ================= WEBSOCKET =================
+const wss = new WebSocketServer({ server });
+
+const clients = new Set();
+
+wss.on("connection", (ws) => {
+  console.log(chalk.blue("🔌 Cliente WebSocket conectado"));
+
+  clients.add(ws);
+
+  ws.on("close", () => {
+    console.log(chalk.red("❌ Cliente desconectado"));
+    clients.delete(ws);
+  });
+
+  ws.on("error", (err) => {
+    console.error("WebSocket erro:", err);
+    clients.delete(ws);
+  });
+});
+
+// broadcast seguro
+function wsBroadcast(data) {
+  const msg = JSON.stringify(data);
+
+  for (const client of clients) {
+    if (client.readyState === 1) { // OPEN
+      try {
+        client.send(msg);
+      } catch (e) {
+        console.error("Erro ao enviar WS:", e);
+      }
+    }
+  }
+}
 
 // ------------------------- ARQUIVOS E CONSTANTES -------------------------
 const DATA_DIR = path.join(__dirname, "data");
@@ -825,10 +863,11 @@ setInterval(() => {
     }
   } catch (e) {}
 }, 60 * 1000);
+
+
 // ------------------------- START SERVER -------------------------
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(chalk.green(`🚀 Servidor rodando na porta ${PORT}`));
 });
-
