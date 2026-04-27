@@ -491,7 +491,12 @@ app.all(["/atualizar", "/atualizar/*", "/iot", "/iot/*"], async (req, res) => {
       rawBody = req._rawBody || req.body;
     }
 
-    const parsed = extractAnyPayload(req);
+   let parsed = extractAnyPayload(req);
+
+// 🔥 fallback para GET (query string)
+if (!parsed || Object.keys(parsed).length === 0) {
+  parsed = req.query;
+}
 
     if (!parsed) {
       console.warn(
