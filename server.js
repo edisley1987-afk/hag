@@ -158,6 +158,20 @@ function getManutencao() {
 }
 function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2)); }
 
+// ================= PREVISÃO DE ESVAZIAMENTO =================
+function preverEsvaziamento(nivelAtual, consumoPorMinuto) {
+  if (!consumoPorMinuto || consumoPorMinuto <= 0) return null;
+
+  const minutos = nivelAtual / consumoPorMinuto;
+
+  const data = new Date(Date.now() + minutos * 60000);
+
+  return {
+    minutos_restantes: Math.round(minutos),
+    previsao: data.toISOString()
+  };
+}
+
 // tenta extrair JSON do body (strings ou pares k=v)
 function parseBodyGuess(body) {
   if (!body) return null;
@@ -361,6 +375,52 @@ function aplicarFailSafeBombas(dados) {
 }
 
 
+// ================= CONSUMO OSMOSE =================
+function calcularConsumoOsmose(nivelAtual) {
+  const anterior = safeReadJson(CONSUMO_FILE, {
+    ultimoNivel: nivelAtual,
+    media_por_minuto: 0,
+    historico: []
+  });
+
+  const agora = Date.now();
+
+  let consumoMin = 0;
+
+  if (anterior.ultimoNivel > nivelAtual) {
+    consumoMin = anterior.ultimoNivel - nivelAtual;
+  }
+
+  const historico = anterior.historico || [];
+
+  historico.push({
+    t: agora,
+    v: consumoMin
+  });
+
+  // mantém últimos 60 pontos (~1h se 1/min)
+  if (historico.length > 60) historico.shift();
+
+  const media =
+    historico.reduce((s, i) => s + i.v, 0) / (historico.length || 1);
+
+  const novo = {
+    ultimoNivel: nivelAtual,
+    media_por_minuto: Number(media.toFixed(4)),
+    historico
+  };
+
+  safeWriteJson(CONSUMO_FILE, novo);
+
+  return novo;
+}
+
+// ================= ALERTA =================
+function detectarConsumoAnormal(consumoAtual, media) {
+  if (!media || media <= 0) return false;
+
+  return consumoAtual > media * ALERTA_FATOR;
+}
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
