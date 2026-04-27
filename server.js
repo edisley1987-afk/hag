@@ -1,36 +1,33 @@
 /**
  * =========================================================
- *  Sistema de Monitoramento de Reservatórios – HAG
+ * Sistema de Monitoramento de Reservatórios – HAG
  * =========================================================
  *
- *  Autor: Edisley Afonso Costa
- *  Projeto: Hospital Arnaldo Gavazza
+ * Autor: Edisley Afonso Costa
+ * Projeto: Hospital Arnaldo Gavazza
  *
- *  Descrição:
- *    Servidor Node.js responsável pelo processamento
- *    de dados IoT, histórico, consumo, alertas e dashboard
- *    em tempo real (WebSocket).
+ * Descrição:
+ * Servidor Node.js responsável pelo processamento
+ * de dados IoT, histórico, consumo, alertas e dashboard
+ * em tempo real (WebSocket).
  *
- *  Tecnologias:
- *    - Node.js (ESModules)
- *    - Express
- *    - WebSocket (ws)
- *    - Render Cloud
+ * Tecnologias:
+ * - Node.js (ESModules)
+ * - Express
+ * - WebSocket (ws)
+ * - Render Cloud
  *
- *  Criado em: 2025
- *  Direitos autorais © 2025 Edisley Afonso Costa
+ * Criado em: 2025
+ * Direitos autorais © 2025 Edisley Afonso Costa
  *
- *  Uso autorizado exclusivamente para o projeto HAG.
+ * Uso autorizado exclusivamente para o projeto HAG.
  * =========================================================
  */
 // @author: Edisley Afonso Costa
-// @version: 1.0.0
-// @last_update: 2025-12-18
+// @version: 1.0.1
+// @last_update: 2026-04-27
 // @environment: Production (Render)
 
-
-// server.js - Servidor HAG otimizado (ESModules) + WebSocket (tempo real)
-// Requer: express, cors, compression, ws, chalk
 import express from "express";
 import fs from "fs";
 import path from "path";
@@ -47,33 +44,28 @@ const app = express();
 import http from "http";
 
 const server = http.createServer(app);
+
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
-
 const clients = new Set();
 
 wss.on("connection", (ws) => {
   console.log(chalk.blue("🔌 Cliente WebSocket conectado"));
-
   clients.add(ws);
-
   ws.on("close", () => {
     console.log(chalk.red("❌ Cliente desconectado"));
     clients.delete(ws);
   });
-
   ws.on("error", (err) => {
     console.error("WebSocket erro:", err);
     clients.delete(ws);
   });
 });
 
-// broadcast seguro
 function wsBroadcast(data) {
   const msg = JSON.stringify(data);
-
   for (const client of clients) {
-    if (client.readyState === 1) { // OPEN
+    if (client.readyState === 1) {
       try {
         client.send(msg);
       } catch (e) {
@@ -88,15 +80,10 @@ const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
-
-// ------------------------- CONSUMO / ALERTAS -------------------------
 const CONSUMO_FILE = path.join(DATA_DIR, "consumo_osmose.json");
 const ALERTA_FILE = path.join(DATA_DIR, "alerta_consumo.json");
 
-// tempo máximo sem atualização de bomba (ms)
 const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos
-
-// fator para considerar consumo anormal
 const ALERTA_FATOR = 2.5;
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -104,12 +91,11 @@ if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ at
 
 // ------------------------- MIDDLEWARES -------------------------
 app.use(cors());
-app.use(compression()); // gzip/deflate
+app.use(compression());
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Prevent caching of API responses (dashboard needs fresh) - global
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
   res.setHeader("Pragma", "no-cache");
@@ -117,7 +103,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging with timing
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -129,34 +114,39 @@ app.use((req, res, next) => {
 
 // ================= SENSORES / CALIBRAÇÃO =================
 const SENSORES = {
-  "Reservatorio_Elevador_current": { 
-    leituraVazio: 0.005250, 
-    leituraCheio: 0.008742, 
-    capacidade: 20000 
+  "Reservatorio_Elevador_current": {
+    leituraVazio: 0.005250,
+    leituraCheio: 0.009018,
+    capacidade: 20000,
+    altura: 1.45
   },
 
-  "Reservatorio_Osmose_current": { 
-    leituraVazio: 0.00505, 
-    leituraCheio: 0.006734, 
-    capacidade: 200 
+  "Reservatorio_Osmose_current": {
+    leituraVazio: 0.00505,
+    leituraCheio: 0.006853,
+    capacidade: 200,
+    altura: 1.0
   },
 
-  "Reservatorio_CME_current": { 
-    leituraVazio: 0.004088, 
-    leituraCheio: 0.005330, 
-    capacidade: 1000 
+  "Reservatorio_CME_current": {
+    leituraVazio: 0.004088,
+    leituraCheio: 0.00537,
+    capacidade: 1000,
+    altura: 0.45
   },
 
-  "Reservatorio_Agua_Abrandada_current": { 
-    leituraVazio: 0.004048, 
-    leituraCheio: 0.004849, 
-    capacidade: 9000 
+  "Reservatorio_Agua_Abrandada_current": {
+    leituraVazio: 0.004048,
+    leituraCheio: 0.004929,
+    capacidade: 9000,
+    altura: 0.6
   },
 
-  "Reservatorio_lavanderia_current": { 
-    leituraVazio: 0.006012, 
-    leituraCheio: 0.011623, 
-    capacidade: 10000 
+  "Reservatorio_lavanderia_current": {
+    leituraVazio: 0.006012,
+    leituraCheio: 0.011623,
+    capacidade: 10000,
+    altura: 1.45
   },
 
   "Pressao_Saida_Osmose_current": { tipo: "pressao" },
@@ -165,10 +155,8 @@ const SENSORES = {
 
   "Bomba_01_binary": { tipo: "bomba" },
   "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
-
   "Bomba_02_binary": { tipo: "bomba" },
   "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
-
   "Bomba_Osmose_binary": { tipo: "bomba" },
   "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
 };
@@ -197,42 +185,42 @@ function getManutencao() {
 }
 function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2)); }
 
+// ================= CALIBRAÇÃO UNIFICADA =================
+function calcularNivel(ref, leitura) {
+  const sensor = SENSORES[ref];
+  if (!sensor ||!sensor.capacidade) return { percentual: 0, litros: 0, altura: 0 };
+
+  const span = sensor.leituraCheio - sensor.leituraVazio;
+  let percentual = span > 0? (leitura - sensor.leituraVazio) / span : 0;
+  percentual = Math.max(0, Math.min(1, percentual));
+
+  if (percentual < 0.02) percentual = 0; // corte de ruído
+
+  const litros = Math.round(percentual * sensor.capacidade);
+  const alturaCm = Math.round(percentual * sensor.altura * 100);
+
+  return { percentual, litros, altura: alturaCm };
+}
+
 // ================= PREVISÃO DE ESVAZIAMENTO =================
 function preverEsvaziamento(nivelAtual, consumoPorMinuto) {
   if (!consumoPorMinuto || consumoPorMinuto <= 0) return null;
-
   const minutos = nivelAtual / consumoPorMinuto;
-
   const data = new Date(Date.now() + minutos * 60000);
-
   return {
     minutos_restantes: Math.round(minutos),
     previsao: data.toISOString()
   };
 }
 
-// tenta extrair JSON do body (strings ou pares k=v)
+// tenta extrair JSON do body
 function extractAnyPayload(req) {
   let raw = req.body;
-
-  // fallback (alguns gateways usam rawBody)
-  if (!raw || raw === "") {
-    raw = req._rawBody;
-  }
-
-  // já é objeto
+  if (!raw || raw === "") raw = req._rawBody;
   if (typeof raw === "object") return raw;
-
-  // string
   if (typeof raw === "string") {
     const s = raw.trim();
-
-    // tenta JSON
-    try {
-      return JSON.parse(s);
-    } catch {}
-
-    // formato k=v ou k=v&k=v
+    try { return JSON.parse(s); } catch {}
     if (s.includes("=")) {
       const obj = {};
       s.split("&").forEach(p => {
@@ -241,118 +229,89 @@ function extractAnyPayload(req) {
       });
       return obj;
     }
-
-    // fallback bruto
     return { raw: s };
   }
-
   return {};
 }
+
 function normalizarNomeSensor(ref) {
   const mapa = {
-    // ===== RESERVATÓRIOS =====
     "Reservatorio_Elevador": "Reservatorio_Elevador_current",
     "Reservatorio_Osmose": "Reservatorio_Osmose_current",
     "Reservatorio_CME": "Reservatorio_CME_current",
     "Reservatorio_Agua_Abrandada": "Reservatorio_Agua_Abrandada_current",
     "Reservatorio_lavanderia": "Reservatorio_lavanderia_current",
-
-    // ===== PRESSÕES =====
     "Pressao_Saida_Osmose": "Pressao_Saida_Osmose_current",
     "Pressao_Retorno_Osmose": "Pressao_Retorno_Osmose_current",
     "Pressao_Saida_CME": "Pressao_Saida_CME_current",
-
-    // ===== BOMBAS =====
     "Bomba_01": "Bomba_01_binary",
     "Bomba_02": "Bomba_02_binary",
     "Bomba_Osmose": "Bomba_Osmose_binary",
-
-    // ===== CICLOS =====
     "Ciclos_Bomba_01": "Ciclos_Bomba_01_counter",
     "Ciclos_Bomba_02": "Ciclos_Bomba_02_counter",
     "Ciclos_Bomba_Osmose": "Ciclos_Bomba_Osmose_counter"
   };
-
   return mapa[ref] || ref;
 }
-// Substitua a função normalizePacket atual por esta:
+
 function normalizePacket(raw) {
   let arr = [];
   if (!raw) return arr;
 
-  // 🔥 FORMATO KHOMP (data[])
   if (raw.data && Array.isArray(raw.data)) {
     arr = raw.data.map(i => ({
       ref: normalizarNomeSensor(i.ref || i.name || i.key),
-      value: i.value !== undefined ? i.value : i.v,
+      value: i.value!== undefined? i.value : i.v,
       dev_id: i.dev_id || raw.dev_id,
       time: i.time || Date.now()
     }));
-  } 
-
-  // 🔥 ARRAY DIRETO
-  else if (Array.isArray(raw)) {
+  } else if (Array.isArray(raw)) {
     arr = raw.map(i => ({
       ref: normalizarNomeSensor(i.ref),
       value: i.value,
       time: i.time || Date.now()
     }));
-  }
-
-  // 🔥 QUERY STRING (SEU CASO MAIS COMUM)
-  else if (typeof raw === "object") {
+  } else if (typeof raw === "object") {
     arr = Object.keys(raw).map(k => ({
       ref: normalizarNomeSensor(k),
       value: raw[k],
       time: Date.now()
     }));
   }
-
-  return arr.filter(x => x.ref !== undefined);
+  return arr.filter(x => x.ref!== undefined);
 }
 
 function parseTimestamp(t, fallback) {
   if (!t) return fallback;
-
   let ms;
-  if (t > 1e14) {
-    ms = Math.floor(t / 1000); // nanos -> ms
-  } else if (t > 1e10) {
-    ms = t; // ms
-  } else {
-    ms = t * 1000; // sec -> ms
-  }
-
+  if (t > 1e14) ms = Math.floor(t / 1000); // nanos -> ms
+  else if (t > 1e10) ms = t; // ms
+  else ms = t * 1000; // sec -> ms
   const date = new Date(ms);
-  if (isNaN(date.getTime())) return fallback; // só valida se é data válida
-  
+  if (isNaN(date.getTime())) return fallback;
   return date.toISOString();
 }
 
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
-  const novo = { ...ultimo };
+  const novo = {...ultimo };
   const timestampNow = new Date().toISOString();
 
   for (const item of dataArray) {
     const ref = item.ref;
     let rawVal = item.value;
-
-    // Converte string para número se necessário
-    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
+    if (typeof rawVal === "string" && rawVal.trim()!== "" &&!isNaN(Number(rawVal))) {
       rawVal = Number(rawVal);
     }
 
     const sensor = SENSORES[ref];
 
-    // ================= SENSOR DESCONHECIDO =================
     if (!sensor) {
       novo[ref] = rawVal;
       novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
-      continue; 
+      continue;
     }
 
-    // ================= PRESSÃO =================
     if (sensor.tipo === "pressao") {
       if (rawVal == null || rawVal === "") {
         novo[ref] = null;
@@ -362,172 +321,97 @@ function convertAndMerge(dataArray) {
         convertido = Math.max(0, Math.min(20, convertido));
         novo[ref] = Number(convertido.toFixed(2));
       }
-    }
-
-    // ================= BOMBA =================
-    else if (sensor.tipo === "bomba") {
-      novo[ref] = Number(rawVal) === 1 ? 1 : 0;
-    }
-
-    // ================= CICLO =================
-    else if (sensor.tipo === "ciclo") {
+    } else if (sensor.tipo === "bomba") {
+      novo[ref] = Number(rawVal) === 1? 1 : 0;
+    } else if (sensor.tipo === "ciclo") {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
-    }
-
-    // ================= RESERVATÓRIO =================
-    else if (sensor.capacidade) {
-      const leitura = Number(rawVal) || 0;
-      const span = sensor.leituraCheio - sensor.leituraVazio;
-      let percentual = span > 0 ? (leitura - sensor.leituraVazio) / span : 0;
-      percentual = Math.max(0, Math.min(1, percentual));
-      
-      if (percentual < 0.02) percentual = 0;
-      
-      const litros = percentual * sensor.capacidade;
-      novo[ref] = Math.round(litros);
-    }
-
-    // ================= DEFAULT =================
-    else {
+    } else if (sensor.capacidade) {
+      const { litros } = calcularNivel(ref, Number(rawVal) || 0);
+      novo[ref] = litros;
+    } else {
       novo[ref] = rawVal;
     }
 
-    // Timestamp individual por sensor
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
 
-  // Finalização e Persistência
   novo.timestamp = timestampNow;
   novo.version = Date.now();
-  
   safeWriteJson(DATA_FILE, novo);
-
   return novo;
 }
 
-// ================= TIMESTAMP =================
 function registrarHistorico(dadosConvertidos) {
   const hoje = new Date().toISOString().split("T")[0];
   const historico = safeReadJson(HIST_FILE, {});
-
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dadosConvertidos).forEach(([ref, valor]) => {
-    if (
-      ref.endsWith("_timestamp") ||
-      ref === "timestamp" ||
-      ref === "version"
-    ) return;
-
+    if (ref.endsWith("_timestamp") || ref === "timestamp" || ref === "version") return;
     const sensor = SENSORES[ref];
-    if (!sensor || !sensor.capacidade) return;
+    if (!sensor ||!sensor.capacidade) return;
 
     if (!historico[hoje][ref]) {
-      historico[hoje][ref] = {
-        min: valor,
-        max: valor,
-        pontos: []
-      };
+      historico[hoje][ref] = { min: valor, max: valor, pontos: [] };
     }
-
     const reg = historico[hoje][ref];
-
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
     const variacao = Math.max(1, sensor.capacidade * 0.02);
     const ultimo = reg.pontos.at(-1);
-
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
       reg.pontos.push({
-        hora: new Date().toLocaleTimeString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" }),
         valor
       });
     }
   });
-
-  // ✅ AGORA SIM no lugar certo
   safeWriteJson(HIST_FILE, historico);
 }
+
 function aplicarFailSafeBombas(dados) {
   const agora = Date.now();
-
-  const bombas = [
-    "Bomba_01_binary",
-    "Bomba_02_binary",
-    "Bomba_Osmose_binary"
-  ];
-
+  const bombas = ["Bomba_01_binary", "Bomba_02_binary", "Bomba_Osmose_binary"];
   bombas.forEach(ref => {
     const tsKey = `${ref}_timestamp`;
-    const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : 0;
-
-    const stale = !ts || agora - ts > DATA_TIMEOUT_MS;
-
-    // 🧠 marca estado (novo campo)
+    const ts = dados[tsKey]? new Date(dados[tsKey]).getTime() : 0;
+    const stale =!ts || agora - ts > DATA_TIMEOUT_MS;
     dados[`${ref}_stale`] = stale;
-
-    // 🔴 aplica fail-safe
-    if (stale) {
-      dados[ref] = 0;
-    }
+    if (stale) dados[ref] = 0;
   });
-
-  return dados; // 👈 IMPORTANTE (boa prática)
+  return dados;
 }
 
-
-// ================= CONSUMO OSMOSE =================
 function calcularConsumoOsmose(nivelAtual) {
   const anterior = safeReadJson(CONSUMO_FILE, {
     ultimoNivel: nivelAtual,
     media_por_minuto: 0,
     historico: []
   });
-
   const agora = Date.now();
-
-  let consumoMin = 0;
-
-  if (anterior.ultimoNivel > nivelAtual) {
-    consumoMin = anterior.ultimoNivel - nivelAtual;
-  }
-
+  let consumoMin = anterior.ultimoNivel > nivelAtual? anterior.ultimoNivel - nivelAtual : 0;
   const historico = anterior.historico || [];
-
-  historico.push({
-    t: agora,
-    v: consumoMin
-  });
-
-  // mantém últimos 60 pontos (~1h se 1/min)
+  historico.push({ t: agora, v: consumoMin });
   if (historico.length > 60) historico.shift();
-
-  const media =
-    historico.reduce((s, i) => s + i.v, 0) / (historico.length || 1);
-
+  const media = historico.reduce((s, i) => s + i.v, 0) / (historico.length || 1);
   const novo = {
     ultimoNivel: nivelAtual,
     media_por_minuto: Number(media.toFixed(4)),
     historico
   };
-
   safeWriteJson(CONSUMO_FILE, novo);
-
   return novo;
 }
 
-// ================= ALERTA =================
 function detectarConsumoAnormal(consumoAtual, media) {
   if (!media || media <= 0) return false;
-
   return consumoAtual > media * ALERTA_FATOR;
 }
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 app.use(["/atualizar", "/iot"], async (req, res) => {
   try {
-    // ignorar chamadas vazias
     if (req.method === "GET" && Object.keys(req.query).length === 0) {
       return res.status(200).send("OK");
     }
@@ -535,51 +419,37 @@ app.use(["/atualizar", "/iot"], async (req, res) => {
     console.log("🔥 CHEGOU DADO DO GATEWAY");
     console.log("📥 BODY:", req.body);
 
-    // extrai payload
     let parsed = extractAnyPayload(req);
-
-    // fallback GET
-    if (Object.keys(parsed).length === 0) {
-      parsed = req.query;
-    }
-
-    // validação
+    if (Object.keys(parsed).length === 0) parsed = req.query;
     if (!parsed || Object.keys(parsed).length === 0) {
       console.warn("⚠️ Payload vazio");
       return res.status(400).json({ erro: "Payload inválido ou vazio" });
     }
 
-    // normaliza
     const arr = normalizePacket(parsed);
-
     if (!arr.length) {
       return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
     }
 
-    // ================= PROCESSAMENTO =================
     const novo = convertAndMerge(arr);
-
     aplicarFailSafeBombas(novo);
 
     // auto desligamento osmose
-    const CAPACIDADE_OSMOSE = 200;
     const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
-    const percentualOsmose = (nivelAtualOsmose / CAPACIDADE_OSMOSE) * 100;
-
+    const percentualOsmose = (nivelAtualOsmose / SENSORES["Reservatorio_Osmose_current"].capacidade) * 100;
     if (percentualOsmose >= 99) {
       novo["Bomba_Osmose_binary"] = 0;
       novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
     }
-   // 🧠 consumo osmose
-const consumoData = calcularConsumoOsmose(nivelAtualOsmose);
 
-const consumoAtualMin = consumoData.historico.at(-1)?.v || 0;
-const mediaMin = consumoData.media_por_minuto;
+    // consumo osmose
+    const consumoData = calcularConsumoOsmose(nivelAtualOsmose);
+    const consumoAtualMin = consumoData.historico.at(-1)?.v || 0;
+    const mediaMin = consumoData.media_por_minuto;
 
-// 🚨 alerta
-const alertas = safeReadJson(ALERTA_FILE, {});
-
-if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
+    // alerta
+    const alertas = safeReadJson(ALERTA_FILE, {});
+    if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
       if (!alertas.ativo) {
         alertas.ativo = true;
         alertas.tipo = "CONSUMO_ANORMAL";
@@ -592,22 +462,15 @@ if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
       alertas.mensagem = null;
       alertas.desde = null;
     }
-
     safeWriteJson(ALERTA_FILE, alertas);
 
-    // histórico
     registrarHistorico(novo);
-
-    // websocket
     wsBroadcast({ type: "update", dados: novo });
-
     return res.json({ ok: true });
 
   } catch (err) {
     console.error("Erro processar /atualizar:", err);
-    return res.status(500).json({
-      erro: err?.message || "erro interno"
-    });
+    return res.status(500).json({ erro: err?.message || "erro interno" });
   }
 });
 
@@ -616,7 +479,6 @@ app.get("/dados", (req, res) => {
   return res.json(safeReadJson(DATA_FILE, {}));
 });
 
-// Mapa fixo dos reservatórios
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
   osmose: "Reservatorio_Osmose_current",
@@ -625,146 +487,92 @@ const MAPA_RESERVATORIOS = {
   lavanderia: "Reservatorio_lavanderia_current"
 };
 
-// ------------------------- HISTÓRICO SIMPLIFICADO -------------------------
 app.get("/historico", (req, res) => {
   const historico = safeReadJson(HIST_FILE, {});
   const saida = [];
-
   for (const [data, sensores] of Object.entries(historico)) {
     for (const [ref, dados] of Object.entries(sensores || {})) {
-      const nome = Object.keys(MAPA_RESERVATORIOS)
-        .find(key => MAPA_RESERVATORIOS[key] === ref);
-
-      if (!nome || !dados) continue;
-
-      // ponto mínimo do dia
+      const nome = Object.keys(MAPA_RESERVATORIOS).find(key => MAPA_RESERVATORIOS[key] === ref);
+      if (!nome ||!dados) continue;
       if (typeof dados.min === "number") {
-        saida.push({
-          reservatorio: nome,
-          timestamp: new Date(data).getTime(),
-          valor: dados.min
-        });
+        saida.push({ reservatorio: nome, timestamp: new Date(data).getTime(), valor: dados.min });
       }
-
-      // pontos relevantes
       for (const p of dados.pontos || []) {
-        const ts = new Date(`${data} ${p.hora}`).getTime();
-        if (!isNaN(ts)) {
-          saida.push({
-            reservatorio: nome,
-            timestamp: ts,
-            valor: p.valor
-          });
-        }
+        const ts = new Date(`${data}T${p.hora}-03:00`).getTime();
+        if (!isNaN(ts)) saida.push({ reservatorio: nome, timestamp: ts, valor: p.valor });
       }
     }
   }
-
   saida.sort((a, b) => a.timestamp - b.timestamp);
   return res.json(saida);
 });
 
-// ------------------------- HISTÓRICO 24H -------------------------
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
-
-  if (!ref) {
-    return res.status(400).json({ erro: "Reservatório inválido" });
-  }
-
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
   const historico = safeReadJson(HIST_FILE, {});
   const agora = Date.now();
   const saida = [];
-
   for (const [data, sensores] of Object.entries(historico)) {
     const pontos = sensores?.[ref]?.pontos || [];
-
     for (const p of pontos) {
-      const ts = new Date(`${data} ${p.hora}`).getTime();
+      const ts = new Date(`${data}T${p.hora}-03:00`).getTime();
       if (!isNaN(ts) && (agora - ts <= 24 * 60 * 60 * 1000)) {
-        saida.push({
-          reservatorio: nome,
-          timestamp: ts,
-          valor: p.valor
-        });
+        saida.push({ reservatorio: nome, timestamp: ts, valor: p.valor });
       }
     }
   }
-
   saida.sort((a, b) => a.timestamp - b.timestamp);
   return res.json(saida);
 });
 
-// ------------------------- CONSUMO 5 DIAS -------------------------
 app.get("/consumo/5dias/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
-
   const mapa = {
     elevador: "Reservatorio_Elevador_current",
     osmose: "Reservatorio_Osmose_current",
     lavanderia: "Reservatorio_lavanderia_current"
   };
-
   const ref = mapa[nome];
-  if (!ref) {
-    return res.status(400).json({ erro: "Reservatório inválido" });
-  }
-
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
   const historico = safeReadJson(HIST_FILE, {});
   const datas = Object.keys(historico).sort().slice(-5);
-
   const resposta = datas.map(dia => {
     const reg = historico[dia]?.[ref];
     if (!reg) return { dia, consumo: 0 };
-
     const valores = [];
     if (typeof reg.min === "number") valores.push(reg.min);
     if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
-
     if (valores.length < 2) return { dia, consumo: 0 };
-
     let consumo = 0;
     for (let i = 1; i < valores.length; i++) {
-      if (valores[i] < valores[i - 1]) {
-        consumo += valores[i - 1] - valores[i];
-      }
+      if (valores[i] < valores[i - 1]) consumo += valores[i - 1] - valores[i];
     }
-
     return { dia, consumo: Number(consumo.toFixed(2)) };
   });
-
   return res.json(resposta);
 });
 
-// ------------------------- CONSUMO DIÁRIO (API) -------------------------
 app.get("/api/consumo_diario", (req, res) => {
   const diasReq = Number(req.query.dias || 5);
   const historico = safeReadJson(HIST_FILE, {});
   const dias = Object.keys(historico).sort().slice(-diasReq);
-
   function consumo(ref) {
     return dias.map(data => {
       const reg = historico[data]?.[ref];
       if (!reg) return 0;
-
       const valores = [];
       if (typeof reg.min === "number") valores.push(reg.min);
       if (Array.isArray(reg.pontos)) reg.pontos.forEach(p => valores.push(p.valor));
-
       if (valores.length < 2) return 0;
-
       let total = 0;
       for (let i = 1; i < valores.length; i++) {
-        if (valores[i] < valores[i - 1]) {
-          total += valores[i - 1] - valores[i];
-        }
+        if (valores[i] < valores[i - 1]) total += valores[i - 1] - valores[i];
       }
-
       return Number(total.toFixed(2));
     });
   }
-
   return res.json({
     dias,
     elevador: consumo("Reservatorio_Elevador_current"),
@@ -772,17 +580,9 @@ app.get("/api/consumo_diario", (req, res) => {
     lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
-// --- FUNÇÃO AUXILIAR DE CALIBRAÇÃO (Coloque antes das rotas) ---
-// Transforma a corrente (ex: 0.007) em percentual (0 a 1)
-function calcularNivel(leitura, vazio, cheio) {
-  if (!leitura || leitura < vazio) return 0;
-  if (leitura > cheio) return 1;
-  return (leitura - vazio) / (cheio - vazio);
-}
 
 // ------------------------- DASHBOARD CORRIGIDO -------------------------
 app.get("/api/dashboard", (req, res) => {
-  // Headers anti-cache para garantir dados sempre novos
   res.setHeader("Cache-Control", "no-store, must-revalidate, max-age=0, private");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
@@ -790,8 +590,6 @@ app.get("/api/dashboard", (req, res) => {
   res.setHeader("CDN-Cache-Control", "no-store");
 
   const dados = safeReadJson(DATA_FILE, {});
-  
-  // Se não houver dados, retorna estrutura vazia
   if (!dados || Object.keys(dados).length === 0) {
     return res.json({
       lastUpdate: "-",
@@ -800,74 +598,37 @@ app.get("/api/dashboard", (req, res) => {
     });
   }
 
-  // Definição dos Reservatórios com calibração individual
-  const reservatorios = [
-    { 
-      nome: "Reservatório Elevador", 
-      setor: "elevador", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Elevador_current"]), 0.005250, 0.008742) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Elevador_current"]), 0.005250, 0.008742) * 20000),
-      capacidade: 20000 
-    },
-    { 
-      nome: "Reservatório Osmose", 
-      setor: "osmose", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.00505, 0.008450) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.00505, 0.008450) * 200),
-      capacidade: 200 
-    },
-    { 
-      nome: "Reservatório CME", 
-      setor: "cme", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.004088, 0.008320) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.004088, 0.008320) * 1000),
-      capacidade: 1000 
-    },
-    { 
-      nome: "Água Abrandada", 
-      setor: "abrandada", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.004048, 0.008125) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.004048, 0.008125) * 9000),
-      capacidade: 9000 
-    },
-    { 
-      nome: "Lavanderia", 
-      setor: "lavanderia", 
-      percent: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.006012, 0.008100) * 100),
-      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.006012, 0.008100) * 10000),
-      capacidade: 10000 
-    }
-  ];
+  const reservatorios = Object.keys(MAPA_RESERVATORIOS).map(setor => {
+    const ref = MAPA_RESERVATORIOS[setor];
+    const sensor = SENSORES[ref];
+    const leitura = Number(dados[ref] || 0);
+    const { percentual, litros, altura } = calcularNivel(ref, leitura);
+    return {
+      nome: setor.charAt(0).toUpperCase() + setor.slice(1),
+      setor,
+      percent: Math.round(percentual * 100),
+      current_liters: litros,
+      altura_cm: altura,
+      capacidade: sensor.capacidade
+    };
+  });
 
   const pressoes = [
-    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null },
-    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null },
-    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null }
+    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"]?? null },
+    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"]?? null },
+    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"]?? null }
   ];
 
   const bombas = [
-    { 
-      nome: "Bomba 01", 
-      estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", 
-      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 
-    },
-    { 
-      nome: "Bomba 02", 
-      estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", 
-      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 
-    },
-    { 
-      nome: "Bomba Osmose", 
-      estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", 
-      ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 
-    }
+    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
+    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
+    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
   ];
 
   const bombasLigadas = bombas.filter(b => b.estado === "ligada").map(b => b.nome);
 
-  // Resposta final consolidada
   res.json({
-    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR"),
+    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
     reservatorios,
     pressoes,
     bombas,
@@ -881,7 +642,7 @@ app.get("/api/dashboard", (req, res) => {
 app.get("/manutencao", (req, res) => res.json(getManutencao()));
 app.post("/manutencao", (req, res) => {
   const { ativo } = req.body;
-  if (typeof ativo !== "boolean") return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
+  if (typeof ativo!== "boolean") return res.status(400).json({ erro: "Campo 'ativo' deve ser true/false" });
   setManutencao(ativo);
   res.json({ status: "ok", ativo });
 });
@@ -895,23 +656,18 @@ app.get("/login", (_, res) => res.sendFile(path.join(__dirname, "public", "login
 
 // ------------------------- PING / KEEP ALIVE -------------------------
 app.get("/api/ping", (req, res) => res.json({ ok: true, timestamp: Date.now() }));
-
-// Keep-alive opcional para evitar spin-down em providers free (tente evitar loops infinitos)
 setInterval(() => {
   try {
     if (typeof fetch === "function") {
       const host = process.env.RENDER_INTERNAL_HOSTNAME || process.env.HOSTNAME || "localhost";
       const port = process.env.PORT || 3000;
-      // não await para não bloquear
       fetch(`http://${host}:${port}/api/ping`).catch(() => {});
     }
   } catch (e) {}
 }, 60 * 1000);
 
-
 // ------------------------- START SERVER -------------------------
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log(chalk.green(`🚀 Servidor rodando na porta ${PORT}`));
 });
