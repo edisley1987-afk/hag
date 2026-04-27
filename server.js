@@ -751,78 +751,107 @@ app.get("/api/consumo_diario", (req, res) => {
     lavanderia: consumo("Reservatorio_lavanderia_current")
   });
 });
-// ------------------------- DASHBOARD SIMPLIFICADO -------------------------
-// Reforçamos headers anti-cache específicos desta rota também.
+// --- FUNÇÃO AUXILIAR DE CALIBRAÇÃO (Coloque antes das rotas) ---
+// Transforma a corrente (ex: 0.007) em percentual (0 a 1)
+function calcularNivel(leitura, vazio, cheio) {
+  if (!leitura || leitura < vazio) return 0;
+  if (leitura > cheio) return 1;
+  return (leitura - vazio) / (cheio - vazio);
+}
+
+// ------------------------- DASHBOARD CORRIGIDO -------------------------
 app.get("/api/dashboard", (req, res) => {
+  // Headers anti-cache para garantir dados sempre novos
   res.setHeader("Cache-Control", "no-store, must-revalidate, max-age=0, private");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
-  // cabeçalhos extras que ajudam CDNs/Proxies (Akamai/Render)
   res.setHeader("Surrogate-Control", "no-store");
   res.setHeader("CDN-Cache-Control", "no-store");
-  res.setHeader("Vary", "Accept-Encoding");
 
   const dados = safeReadJson(DATA_FILE, {});
+  
+  // Se não houver dados, retorna estrutura vazia
   if (!dados || Object.keys(dados).length === 0) {
     return res.json({
       lastUpdate: "-",
       reservatorios: [],
-      pressoes: [],
-      bombas: [],
-      manutencao: getManutencao().ativo,
-      previsao_esvaziamento: null,
-      alerta_consumo: safeReadJson(ALERTA_FILE, {})
+      manutencao: getManutencao().ativo
     });
   }
 
+  // Definição dos Reservatórios com calibração individual
   const reservatorios = [
-    { nome: "Reservatório Elevador", setor: "elevador", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Elevador_current"] || 0) / 20000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Elevador_current"] || 0), capacidade: 20000, manutencao: getManutencao().ativo },
-    { nome: "Reservatório Osmose", setor: "osmose", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Osmose_current"] || 0) / 200) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Osmose_current"] || 0), capacidade: 200, manutencao: getManutencao().ativo },
-    { nome: "Reservatório CME", setor: "cme", percent: Math.min(100, Math.round((Number(dados["Reservatorio_CME_current"] || 0) / 1000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_CME_current"] || 0), capacidade: 1000, manutencao: getManutencao().ativo },
-    { nome: "Água Abrandada", setor: "abrandada", percent: Math.min(100, Math.round((Number(dados["Reservatorio_Agua_Abrandada_current"] || 0) / 9000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_Agua_Abrandada_current"] || 0), capacidade: 9000, manutencao: getManutencao().ativo },
-    { nome: "Lavanderia", setor: "lavanderia", percent: Math.min(100, Math.round((Number(dados["Reservatorio_lavanderia_current"] || 0) / 10000) * 100) + 3)
-, current_liters: Number(dados["Reservatorio_lavanderia_current"] || 0), capacidade: 10000, manutencao: getManutencao().ativo }
+    { 
+      nome: "Reservatório Elevador", 
+      setor: "elevador", 
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Elevador_current"]), 0.005250, 0.008742) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Elevador_current"]), 0.005250, 0.008742) * 20000),
+      capacidade: 20000 
+    },
+    { 
+      nome: "Reservatório Osmose", 
+      setor: "osmose", 
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.005240, 0.008450) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Osmose_current"]), 0.005240, 0.008450) * 200),
+      capacidade: 200 
+    },
+    { 
+      nome: "Reservatório CME", 
+      setor: "cme", 
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.005240, 0.008320) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_CME_current"]), 0.005240, 0.008320) * 1000),
+      capacidade: 1000 
+    },
+    { 
+      nome: "Água Abrandada", 
+      setor: "abrandada", 
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.005240, 0.008125) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_Agua_Abrandada_current"]), 0.005240, 0.008125) * 9000),
+      capacidade: 9000 
+    },
+    { 
+      nome: "Lavanderia", 
+      setor: "lavanderia", 
+      percent: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.005240, 0.008100) * 100),
+      current_liters: Math.round(calcularNivel(Number(dados["Reservatorio_lavanderia_current"]), 0.005240, 0.008100) * 10000),
+      capacidade: 10000 
+    }
   ];
 
   const pressoes = [
-    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null, manutencao: getManutencao().ativo },
-    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null, manutencao: getManutencao().ativo }
+    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null },
+    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null },
+    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"] ?? null }
   ];
 
   const bombas = [
-    { nome: "Bomba 01", estado_num: Number(dados["Bomba_01_binary"]) || 0, estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0, manutencao: getManutencao().ativo },
-    { nome: "Bomba 02", estado_num: Number(dados["Bomba_02_binary"]) || 0, estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0, manutencao: getManutencao().ativo },
-    { nome: "Bomba Osmose", estado_num: Number(dados["Bomba_Osmose_binary"]) || 0, estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0, manutencao: getManutencao().ativo }
+    { 
+      nome: "Bomba 01", 
+      estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", 
+      ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 
+    },
+    { 
+      nome: "Bomba 02", 
+      estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", 
+      ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 
+    },
+    { 
+      nome: "Bomba Osmose", 
+      estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", 
+      ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 
+    }
   ];
 
-  const bombasLigadas = bombas
-    .filter(b => b.estado === "ligada")
-    .map(b => b.nome);
+  const bombasLigadas = bombas.filter(b => b.estado === "ligada").map(b => b.nome);
 
-  // 🧠 consumo + previsão
-  const consumo = safeReadJson(CONSUMO_FILE, {});
-  const previsao = preverEsvaziamento(
-    Number(dados["Reservatorio_Osmose_current"] || 0),
-    consumo.media_por_minuto
-  );
-
-  return res.json({
-    lastUpdate: dados.timestamp,
+  // Resposta final consolidada
+  res.json({
+    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR"),
     reservatorios,
     pressoes,
     bombas,
-    manutencao: getManutencao().ativo,
     bombasLigadas,
-
-    // 🧠 previsão de esvaziamento
-    previsao_esvaziamento: previsao,
-
-    // 🚨 alerta de consumo anormal
+    manutencao: getManutencao().ativo,
     alerta_consumo: safeReadJson(ALERTA_FILE, {})
   });
 });
