@@ -248,33 +248,61 @@ function extractAnyPayload(req) {
 
   return {};
 }
+function normalizarNomeSensor(ref) {
+  const mapa = {
+    // ===== RESERVATÓRIOS =====
+    "Reservatorio_Elevador": "Reservatorio_Elevador_current",
+    "Reservatorio_Osmose": "Reservatorio_Osmose_current",
+    "Reservatorio_CME": "Reservatorio_CME_current",
+    "Reservatorio_Agua_Abrandada": "Reservatorio_Agua_Abrandada_current",
+    "Reservatorio_lavanderia": "Reservatorio_lavanderia_current",
 
+    // ===== PRESSÕES =====
+    "Pressao_Saida_Osmose": "Pressao_Saida_Osmose_current",
+    "Pressao_Retorno_Osmose": "Pressao_Retorno_Osmose_current",
+    "Pressao_Saida_CME": "Pressao_Saida_CME_current",
+
+    // ===== BOMBAS =====
+    "Bomba_01": "Bomba_01_binary",
+    "Bomba_02": "Bomba_02_binary",
+    "Bomba_Osmose": "Bomba_Osmose_binary",
+
+    // ===== CICLOS =====
+    "Ciclos_Bomba_01": "Ciclos_Bomba_01_counter",
+    "Ciclos_Bomba_02": "Ciclos_Bomba_02_counter",
+    "Ciclos_Bomba_Osmose": "Ciclos_Bomba_Osmose_counter"
+  };
+
+  return mapa[ref] || ref;
+}
 // Substitua a função normalizePacket atual por esta:
 function normalizePacket(raw) {
   let arr = [];
   if (!raw) return arr;
 
-  // Se o dado vier dentro de "data" (Padrão Khomp ITG 200)
+  // 🔥 FORMATO KHOMP (data[])
   if (raw.data && Array.isArray(raw.data)) {
     arr = raw.data.map(i => ({
-      ref: i.ref || i.name || i.key,
+      ref: normalizarNomeSensor(i.ref || i.name || i.key),
       value: i.value !== undefined ? i.value : i.v,
-      dev_id: i.dev_id || raw.dev_id, // usa o ID do pacote se o item não tiver
+      dev_id: i.dev_id || raw.dev_id,
       time: i.time || Date.now()
     }));
   } 
-  // Se vier como um Array direto
+
+  // 🔥 ARRAY DIRETO
   else if (Array.isArray(raw)) {
     arr = raw.map(i => ({
-      ref: i.ref,
+      ref: normalizarNomeSensor(i.ref),
       value: i.value,
       time: i.time || Date.now()
     }));
   }
-  // Se vier como pares de chave=valor (Query String)
+
+  // 🔥 QUERY STRING (SEU CASO MAIS COMUM)
   else if (typeof raw === "object") {
     arr = Object.keys(raw).map(k => ({
-      ref: k,
+      ref: normalizarNomeSensor(k),
       value: raw[k],
       time: Date.now()
     }));
