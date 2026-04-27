@@ -252,13 +252,36 @@ function extractAnyPayload(req) {
 function normalizePacket(raw) {
   let arr = [];
   if (!raw) return arr;
+
+  // ✅ ARRAY direto
   if (Array.isArray(raw)) {
-    arr = raw.map(i => ({ ref: i.ref ?? i.name ?? i.key, value: i.value ?? i.v ?? i.val ?? i, dev_id: i.dev_id ?? i.devId ?? i.device, time: i.time }));
-  } else if (raw.data && Array.isArray(raw.data)) {
-    arr = raw.data.map(i => ({ ref: i.ref ?? i.name ?? i.key, value: i.value ?? i.v ?? i.val ?? i, dev_id: i.dev_id ?? i.devId ?? i.device, time: i.time }));
-  } else if (typeof raw === "object") {
-    arr = Object.keys(raw).map(k => ({ ref: k, value: raw[k] }));
+    arr = raw.map(i => ({
+      ref: i.ref ?? i.name ?? i.key,
+      value: i.value ?? i.v ?? i.val ?? i,
+      dev_id: i.dev_id ?? i.devId ?? i.device,
+      time: i.time
+    }));
   }
+
+  // ✅ FORMATO { data: [...] }
+  else if (raw.data && Array.isArray(raw.data)) {
+    arr = raw.data.map(i => ({
+      ref: i.ref ?? i.name ?? i.key,
+      value: i.value ?? i.v ?? i.val ?? i,
+      dev_id: i.dev_id ?? i.devId ?? i.device,
+      time: i.time
+    }));
+  }
+
+  // 🔥 QUERY STRING (SEU CASO)
+  else if (typeof raw === "object") {
+    arr = Object.keys(raw).map(k => ({
+      ref: k,
+      value: raw[k],
+      time: Date.now() // 👈 ESSENCIAL
+    }));
+  }
+
   return arr.filter(x => x.ref !== undefined);
 }
 
@@ -515,92 +538,75 @@ if (!parsed || Object.keys(parsed).length === 0) {
       return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
     }
 
-    // converter e mesclar
-    const novo = convertAndMerge(arr);
-    aplicarFailSafeBombas(novo);
-    safeWriteJson(DATA_FILE, novo);
+   // converter e mesclar
+const novo = convertAndMerge(arr);
 
-wsBroadcast({ type: "update", dados: novo });
+aplicarFailSafeBombas(novo);
 
-return res.json({ ok: true });
+// ============================================================
+// 🔴 AUTO DESLIGAMENTO – BOMBA OSMOSE
+// ============================================================
+const CAPACIDADE_OSMOSE = 200;
+const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
+const percentualOsmose = (nivelAtualOsmose / CAPACIDADE_OSMOSE) * 100;
 
-    // ============================================================
-    // 🔴 AUTO DESLIGAMENTO – BOMBA OSMOSE
-    // ============================================================
-    const CAPACIDADE_OSMOSE = 200; // litros
-    const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
-    const percentualOsmose = (nivelAtualOsmose / CAPACIDADE_OSMOSE) * 100;
+if (percentualOsmose >= 99) {
+  novo["Bomba_Osmose_binary"] = 0;
+  novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
+}
 
-    // 🚫 Desliga bomba ao atingir 99%
-    if (percentualOsmose >= 99) {
-      novo["Bomba_Osmose_binary"] = 0;
-      novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
-    }
+// ============================================================
+// 💾 SALVA
+// ============================================================
+safeWriteJson(DATA_FILE, novo);
 
-    // (Histerese futura – religar só abaixo de 95%)
-    if (percentualOsmose <= 95) {
-      // reservado para automação futura
-    }
-
-    // ============================================================
-    // 💾 SALVA ESTADO FINAL
-    // ============================================================
-    safeWriteJson(DATA_FILE, novo);
-
-    // ============================================================
-    // 📉 CONSUMO OSMOSE
-    // ============================================================
-    const consumoAnterior = safeReadJson(CONSUMO_FILE, {});
+// ============================================================
+// 📉 CONSUMO
+// ============================================================
+const consumoAnterior = safeReadJson(CONSUMO_FILE, {});
 const consumoAtualMin =
   consumoAnterior.ultimoNivel > nivelAtualOsmose
     ? consumoAnterior.ultimoNivel - nivelAtualOsmose
     : 0;
 
-// agora sim atualiza consumo
 const consumo = calcularConsumoOsmose(nivelAtualOsmose);
 const mediaMin = consumo.media_por_minuto || 0;
 
+// ============================================================
+// 🚨 ALERTA
+// ============================================================
+const alertas = safeReadJson(ALERTA_FILE, {});
 
-    // ============================================================
-    // 🚨 ALERTA DE CONSUMO ANORMAL
-    // ============================================================
-    const alertas = safeReadJson(ALERTA_FILE, {});
+if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
+  if (!alertas.ativo) {
+    alertas.ativo = true;
+    alertas.tipo = "CONSUMO_ANORMAL";
+    alertas.mensagem = "Consumo acima do padrão";
+    alertas.desde = new Date().toISOString();
+  }
+} else {
+  alertas.ativo = false;
+  alertas.tipo = null;
+  alertas.mensagem = null;
+  alertas.desde = null;
+}
 
-    if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
-      if (!alertas.ativo) {
-        alertas.ativo = true;
-        alertas.tipo = "CONSUMO_ANORMAL";
-        alertas.mensagem = "Consumo acima do padrão (possível vazamento)";
-        alertas.desde = new Date().toISOString();
-      }
-    } else {
-      alertas.ativo = false;
-      alertas.tipo = null;
-      alertas.mensagem = null;
-      alertas.desde = null;
-    }
+safeWriteJson(ALERTA_FILE, alertas);
 
-    // salva alerta (uma única vez)
-    safeWriteJson(ALERTA_FILE, alertas);
+// ============================================================
+// 📊 HISTÓRICO
+// ============================================================
+registrarHistorico(novo);
 
-    // ============================================================
-    // 📊 HISTÓRICO + WEBSOCKET
-    // ============================================================
-    try {
-      registrarHistorico(novo);
-    } catch (e) {
-      console.error("Erro historico:", e);
-    }
+// ============================================================
+// 📡 WEBSOCKET
+// ============================================================
+wsBroadcast({ type: "update", dados: novo });
 
-    wsBroadcast({ type: "update", dados: novo, recebido: arr.length });
-
-    console.log(
-      chalk.green(
-        `➡️ Pacote processado: itens=${arr.length} | timestamp=${novo.timestamp}`
-      )
-    );
-
-    return res.json({ status: "ok", dados: novo, recebido: arr.length });
+// ============================================================
+// ✅ RESPOSTA FINAL (AGORA SIM)
+// ============================================================
+return res.json({ ok: true });
   } catch (err) {
     console.error("Erro processar /atualizar:", err);
     return res.status(500).json({
