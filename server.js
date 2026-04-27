@@ -194,6 +194,18 @@ function normalizePacket(raw) {
 }
 
 // converte valores segundo SENSORES e mescla com ultimo estado (patch)
+function parseTimestamp(t, fallback) {
+  if (!t) return fallback;
+
+  // microsegundos (seu gateway)
+  if (t > 1e14) return new Date(Math.floor(t / 1000)).toISOString();
+
+  // milissegundos
+  if (t > 1e10) return new Date(t).toISOString();
+
+  return fallback;
+}
+
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
   const novo = { ...ultimo };
@@ -203,15 +215,17 @@ function convertAndMerge(dataArray) {
     const ref = item.ref;
     let rawVal = item.value;
 
+    // 🔧 converte string numérica
     if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
       rawVal = Number(rawVal);
     }
 
     const sensor = SENSORES[ref];
 
+    // ================= SENSOR DESCONHECIDO =================
     if (!sensor) {
       novo[ref] = rawVal;
-      novo[`${ref}_timestamp`] = item.time ? new Date(item.time).toISOString() : timestampNow;
+      novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
       continue;
     }
 
@@ -221,9 +235,10 @@ function convertAndMerge(dataArray) {
         novo[ref] = null;
       } else {
         let valorNum = Number(rawVal);
-        let convertido = ((valorNum - 0.004) / 0.016) * 20;
 
+        let convertido = ((valorNum - 0.004) / 0.016) * 20;
         convertido = Math.max(0, Math.min(20, convertido));
+
         novo[ref] = Number(convertido.toFixed(2));
       }
     }
@@ -242,61 +257,80 @@ function convertAndMerge(dataArray) {
     else if (sensor.capacidade) {
       const leitura = Number(rawVal) || 0;
 
-      let percentual =
-        (leitura - sensor.leituraVazio) /
-        (sensor.leituraCheio - sensor.leituraVazio);
+      const span = sensor.leituraCheio - sensor.leituraVazio;
 
-      // 🔒 proteção contra ruído
+      let percentual = span > 0
+        ? (leitura - sensor.leituraVazio) / span
+        : 0;
+
       percentual = Math.max(0, Math.min(1, percentual));
 
-      // 🔒 zona morta (evita falso nível baixo)
       if (percentual < 0.02) percentual = 0;
 
-      let litros = percentual * sensor.capacidade;
+      const litros = percentual * sensor.capacidade;
 
       novo[ref] = Math.round(litros);
     }
 
+    // ================= DEFAULT =================
     else {
       novo[ref] = rawVal;
     }
 
-    novo[`${ref}_timestamp`] = item.time
-      ? new Date(item.time).toISOString()
-      : timestampNow;
+    // ✅ TIMESTAMP POR SENSOR (OBRIGATÓRIO)
+    novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
 
-  // timestamp estável + versão incremental
-  novo.timestamp = new Date().toISOString();
+  // ✅ TIMESTAMP GLOBAL
+  novo.timestamp = timestampNow;
   novo.version = Date.now();
 
   return novo;
 }
 
 
-// registra histórico diário (min/max + pontos relevantes)
+// ================= TIMESTAMP =================
 function registrarHistorico(dadosConvertidos) {
   const hoje = new Date().toISOString().split("T")[0];
   const historico = safeReadJson(HIST_FILE, {});
+
   if (!historico[hoje]) historico[hoje] = {};
 
   Object.entries(dadosConvertidos).forEach(([ref, valor]) => {
-    if (ref.endsWith("_timestamp") || ref === "timestamp") return;
+    if (
+      ref.endsWith("_timestamp") ||
+      ref === "timestamp" ||
+      ref === "version"
+    ) return;
+
     const sensor = SENSORES[ref];
     if (!sensor || !sensor.capacidade) return;
 
-    if (!historico[hoje][ref]) historico[hoje][ref] = { min: valor, max: valor, pontos: [] };
+    if (!historico[hoje][ref]) {
+      historico[hoje][ref] = {
+        min: valor,
+        max: valor,
+        pontos: []
+      };
+    }
+
     const reg = historico[hoje][ref];
+
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
     const variacao = Math.max(1, sensor.capacidade * 0.02);
     const ultimo = reg.pontos.at(-1);
+
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
-      reg.pontos.push({ hora: new Date().toLocaleTimeString("pt-BR"), valor });
+      reg.pontos.push({
+        hora: new Date().toLocaleTimeString("pt-BR"),
+        valor
+      });
     }
   });
 
+  // ✅ AGORA SIM no lugar certo
   safeWriteJson(HIST_FILE, historico);
 }
 function aplicarFailSafeBombas(dados) {
@@ -312,97 +346,21 @@ function aplicarFailSafeBombas(dados) {
     const tsKey = `${ref}_timestamp`;
     const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : 0;
 
-    if (!ts || agora - ts > DATA_TIMEOUT_MS) {
+    const stale = !ts || agora - ts > DATA_TIMEOUT_MS;
+
+    // 🧠 marca estado (novo campo)
+    dados[`${ref}_stale`] = stale;
+
+    // 🔴 aplica fail-safe
+    if (stale) {
       dados[ref] = 0;
-      dados[tsKey] = new Date().toISOString();
     }
   });
 
-  return dados;
-}
-// ------------------------- CONSUMO / ALERTAS -------------------------
-if (!fs.existsSync(CONSUMO_FILE)) {
-  safeWriteJson(CONSUMO_FILE, {
-    ultimoNivel: 0,
-    totalConsumido: 0,
-    media_por_minuto: 0,
-    timestamp: null
-  });
+  return dados; // 👈 IMPORTANTE (boa prática)
 }
 
-if (!fs.existsSync(ALERTA_FILE)) {
-  safeWriteJson(ALERTA_FILE, {
-    ativo: false,
-    tipo: null,
-    mensagem: null,
-    desde: null
-  });
-}
 
-function calcularConsumoOsmose(nivelAtual) {
-  const consumo = safeReadJson(CONSUMO_FILE, {});
-  let consumido = 0;
-
-  if (consumo.ultimoNivel > 0 && nivelAtual < consumo.ultimoNivel) {
-    consumido = consumo.ultimoNivel - nivelAtual;
-    consumo.totalConsumido += consumido;
-  }
-
-  const agora = Date.now();
-  if (consumo.timestamp) {
-    const minutos = (agora - new Date(consumo.timestamp).getTime()) / 60000;
-    if (minutos > 0) {
-      consumo.media_por_minuto =
-        Number(((consumido / minutos) || consumo.media_por_minuto).toFixed(3));
-    }
-  }
-
-  consumo.ultimoNivel = nivelAtual;
-  consumo.timestamp = new Date().toISOString();
-  safeWriteJson(CONSUMO_FILE, consumo);
-
-  return consumo;
-}
-
-function detectarConsumoAnormal(consumoAtual, media) {
-  if (!media || media <= 0) return false;
-  return consumoAtual > media * ALERTA_FATOR;
-}
-
-function preverEsvaziamento(litros, consumoPorMinuto) {
-  if (!consumoPorMinuto || consumoPorMinuto <= 0) return null;
-
-  const minutos = litros / consumoPorMinuto;
-  return {
-    minutos: Math.round(minutos),
-    horas: Number((minutos / 60).toFixed(2)),
-    previsao: new Date(Date.now() + minutos * 60000).toISOString()
-  };
-}
-
-// ------------------------- WEBSOCKET (tempo real) -------------------------
-const server = app.listen(process.env.PORT || 3000, () => {
-  console.log(chalk.green(`Servidor HAG otimizado ativo na porta ${process.env.PORT || 3000}`));
-});
-
-// WebSocket server ligado ao mesmo HTTP server
-const wss = new WebSocketServer({ server });
-function wsBroadcast(obj) {
-  const msg = JSON.stringify(obj);
-  let count = 0;
-  wss.clients.forEach(c => {
-    if (c.readyState === c.OPEN) {
-      try { c.send(msg); count++; } catch (e) { /* ignore */ }
-    }
-  });
-  if (count) console.log(chalk.cyan(`WS broadcast → ${count} clients`));
-}
-wss.on("connection", ws => {
-  console.log(chalk.cyan("WS client connected"));
-  // enviar estado atual assim que conectar
-  const dados = safeReadJson(DATA_FILE, {});
-  try { ws.send(JSON.stringify({ type: "init", dados })); } catch (e) {}
-});
 
 // ------------------------- ROTEAMENTO PRINCIPAL -------------------------
 // Aceita POST/PUT em /atualizar e /iot (compatibilidade com Gateway)
