@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão FINAL CORRIGIDA (usa backend corretamente)
+ * Versão FINAL ESTÁVEL (com suporte a estado desconhecido das bombas)
  */
 
 const API = "/api/dashboard";
@@ -16,12 +16,15 @@ let renderPending = false;
 init();
 
 function init() {
+    // 🚀 carrega imediatamente
+    fallbackHTTP();
+
     conectarWS();
 
-    // fallback HTTP se WS cair
+    // fallback a cada 8s
     setInterval(fallbackHTTP, 8000);
 
-    // status de comunicação
+    // monitor de comunicação
     setInterval(() => {
         if (Date.now() - ultimoDado > 15000) {
             setStatus("🟡 Aguardando sinal do Gateway...");
@@ -36,14 +39,14 @@ function init() {
 function processarPayload(payload) {
     if (!payload) return;
 
-    // trata pacote do websocket
+    // trata websocket
     if (payload.type === "update" && payload.dados) {
         payload = payload.dados;
     }
 
     ultimoDado = Date.now();
 
-    // 🔥 NÃO recalcula nada — usa backend direto
+    // usa backend direto
     scheduleRender(payload);
 }
 
@@ -65,9 +68,8 @@ function scheduleRender(data) {
 function atualizarUI(data) {
     if (!data) return;
 
-    // hora
     const elHora = document.getElementById("hora");
-    if (elHora) elHora.innerText = data.lastUpdate;
+    if (elHora) elHora.innerText = data.lastUpdate || "-";
 
     renderReservatorios(data.reservatorios || []);
     renderBombas(data.bombas || []);
@@ -76,7 +78,7 @@ function atualizarUI(data) {
 }
 
 // =======================
-// RESERVATÓRIOS (SEM FLICKER)
+// RESERVATÓRIOS
 // =======================
 
 function renderReservatorios(lista) {
@@ -111,12 +113,11 @@ function renderReservatorios(lista) {
             area.appendChild(el);
         }
 
-        // atualização suave
         const agua = el.querySelector(".agua");
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
 
-        agua.style.height = `${r.percent}%`;
+        agua.style.height = `${Math.min(100, Math.max(0, r.percent))}%`;
         agua.style.background = `linear-gradient(180deg, ${cor1}, ${cor2})`;
 
         valor.innerText = `${r.percent}%`;
@@ -125,7 +126,7 @@ function renderReservatorios(lista) {
 }
 
 // =======================
-// BOMBAS
+// BOMBAS (COM FAIL-SAFE VISUAL)
 // =======================
 
 function renderBombas(lista) {
@@ -137,6 +138,7 @@ function renderBombas(lista) {
         let el = document.getElementById(id);
 
         const ligada = b.estado === "ligada";
+        const desconhecido = b.estado === "desconhecido";
 
         if (!el) {
             el = document.createElement("div");
@@ -150,11 +152,18 @@ function renderBombas(lista) {
             area.appendChild(el);
         }
 
-        el.className = `card bomba ${ligada ? "ligada" : "desligada"}`;
+        el.className = `card bomba ${
+            desconhecido ? "stale" : ligada ? "ligada" : "desligada"
+        }`;
 
         el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".status-icon").innerText = ligada ? "🟢" : "🔴";
-        el.querySelector(".valor").innerText = ligada ? "EM OPERAÇÃO" : "INATIVA";
+
+        el.querySelector(".status-icon").innerText =
+            desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
+
+        el.querySelector(".valor").innerText =
+            desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
+
         el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
     });
 }
@@ -175,15 +184,18 @@ function renderPressoes(lista) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card";
+
             el.innerHTML = `
                 <h2></h2>
                 <div class="valor-pressao"></div>
             `;
+
             area.appendChild(el);
         }
 
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
+        el.querySelector(".valor-pressao").innerText =
+            `${Number(p.pressao || 0).toFixed(2)} bar`;
     });
 }
 
@@ -218,14 +230,17 @@ function conectarWS() {
 // =======================
 
 async function fallbackHTTP() {
-    if (ws && ws.readyState === 1) return;
-
     try {
         const res = await fetch(API + "?t=" + Date.now());
+
+        if (!res.ok) throw new Error("Erro HTTP");
+
         const data = await res.json();
         processarPayload(data);
-    } catch {
-        setStatus("🔴 Erro de comunicação");
+    } catch (err) {
+        if (!ws || ws.readyState !== 1) {
+            setStatus("🔴 Erro de comunicação");
+        }
     }
 }
 
@@ -253,10 +268,12 @@ function atualizarKPIs(data) {
     const elAtivas = document.getElementById("bombasAtivas");
 
     if (elCritico) {
-        elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
+        elCritico.innerText =
+            (data.reservatorios || []).filter(r => r.percent < 30).length;
     }
 
     if (elAtivas) {
-        elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
+        elAtivas.innerText =
+            (data.bombas || []).filter(b => b.estado === "ligada").length;
     }
 }
