@@ -67,9 +67,16 @@ let lastBroadcast = 0;
 function wsBroadcast(data) {
   const now = Date.now();
 
-  // limita atualização a 1x por segundo
-  if (now - lastBroadcast < 1000) return;
-  lastBroadcast = now;
+ // throttle por tipo (GLOBAL, fora da função)
+const lastPerType = {};
+
+function wsBroadcast(data) {
+  const key = data.type || "default";
+  const now = Date.now();
+
+  // limite de 300ms por tipo
+  if (now - (lastPerType[key] || 0) < 300) return;
+  lastPerType[key] = now;
 
   const msg = JSON.stringify(data);
 
@@ -79,11 +86,11 @@ function wsBroadcast(data) {
         client.send(msg);
       } catch (e) {
         console.error("Erro ao enviar WS:", e);
+        clients.delete(client);
       }
     }
   }
 }
-
 // ------------------------- ARQUIVOS E CONSTANTES -------------------------
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
@@ -211,44 +218,61 @@ function getManutencao() {
 function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2)); }
 
 // ================= CALIBRAÇÃO UNIFICADA =================
+// ================= CALIBRAÇÃO ESTÁVEL (SCADA GRADE) =================
+const MEMORIA_NIVEL = {}; // memória isolada por sensor
+
 function calcularNivel(ref, leitura) {
   const sensor = SENSORES[ref];
+
   if (!sensor || !sensor.capacidade) {
     return { percentual: 0, litros: 0, altura: 0 };
   }
 
-  const span = sensor.leituraCheio - sensor.leituraVazio;
+  const span = (sensor.leituraCheio - sensor.leituraVazio) || 1;
 
-  let percentual = span > 0
-    ? (leitura - sensor.leituraVazio) / span
-    : 0;
+  // cálculo bruto
+  let percentualBruto = (leitura - sensor.leituraVazio) / span;
 
-  // 🔥 init memória
-  if (sensor._ultimoPercentual === undefined) {
-    sensor._ultimoPercentual = percentual;
+  // proteção contra erro físico ou leitura inválida
+  if (!isFinite(percentualBruto)) percentualBruto = 0;
+
+  // limites físicos
+  percentualBruto = Math.max(0, Math.min(1, percentualBruto));
+
+  const key = ref;
+
+  // inicializa memória
+  if (MEMORIA_NIVEL[key] === undefined) {
+    MEMORIA_NIVEL[key] = percentualBruto;
   }
 
-  // 🔥 estabilidade (anti flicker real)
-  const variacaoMinima = 0.02; // 2%
-  const diff = percentual - sensor._ultimoPercentual;
+  const anterior = MEMORIA_NIVEL[key];
 
-  if (Math.abs(diff) < variacaoMinima) {
-    percentual = sensor._ultimoPercentual;
-  } else {
-    // suavização progressiva (não salto seco)
-    percentual = sensor._ultimoPercentual + diff * 0.3;
-    sensor._ultimoPercentual = percentual;
+  // 🔥 FILTRO PRINCIPAL (suavização forte estilo SCADA)
+  let filtrado = (anterior * 0.85) + (percentualBruto * 0.15);
+
+  // 🔥 HISTERESIS (evita flicker por ruído pequeno)
+  const delta = Math.abs(filtrado - anterior);
+  const LIMIAR = 0.01; // 1%
+
+  if (delta < LIMIAR) {
+    filtrado = anterior;
   }
 
-  // limites finais
-  percentual = Math.max(0, Math.min(1, percentual));
+  // trava anti-ruído extremo
+  filtrado = Math.max(0, Math.min(1, filtrado));
 
-  if (percentual < 0.02) percentual = 0;
+  // salva memória
+  MEMORIA_NIVEL[key] = filtrado;
 
-  const litros = Math.round(percentual * sensor.capacidade);
-  const alturaCm = Math.round(percentual * sensor.altura * 100);
+  const litros = Math.round(filtrado * sensor.capacidade);
+  const alturaCm = Math.round(filtrado * sensor.altura * 100);
 
-  return { percentual, litros, altura: alturaCm };
+  return {
+    percentual: filtrado,
+    litros,
+    altura: alturaCm
+  };
 }
 
 // ================= PREVISÃO DE ESVAZIAMENTO =================
