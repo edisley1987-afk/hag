@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão Sincronizada com Server.js
+ * Versão Final Sincronizada com Server.js
  */
 
 const API = "/api/dashboard";
@@ -20,15 +20,17 @@ init();
 function init() {
   conectarWS();
 
+  // Fallback para garantir que a tela não fique vazia se o WS falhar
   setInterval(fallbackHTTP, 8000);
 
+  // Monitor de inatividade do Gateway
   setInterval(() => {
     if (Date.now() - ultimoDado > 15000) {
-      setStatus("🟡 Aguardando Gateway...");
+      setStatus("🟡 Aguardando sinal do Gateway Khomp...");
     }
   }, 5000);
 
-  // Limpeza de cache para cálculo de consumo
+  // Limpeza periódica do cache de cálculo de consumo
   setInterval(() => {
     historicoNivel = {};
   }, 10 * 60 * 1000);
@@ -48,7 +50,7 @@ function conectarWS() {
 
   ws.onopen = () => {
     console.log("WS conectado");
-    setStatus("🟢 Tempo real conectado");
+    setStatus("🟢 Monitoramento em tempo real");
     reconnectDelay = 3000;
   };
 
@@ -58,13 +60,13 @@ function conectarWS() {
       ultimoDado = Date.now();
       processarPayload(payload);
     } catch (e) {
-      console.log("JSON inválido WS");
+      console.log("Erro ao processar mensagem do servidor");
     }
   };
 
   ws.onclose = () => {
     console.log("WS desconectado");
-    setStatus("🔴 Reconectando...");
+    setStatus("🔴 Reconectando ao servidor...");
     setTimeout(conectarWS, reconnectDelay);
     reconnectDelay = Math.min(reconnectDelay * 1.5, 30000);
   };
@@ -84,35 +86,38 @@ async function fallbackHTTP() {
     const data = await res.json();
     processarPayload(data);
   } catch (e) {
-    setStatus("🔴 Sem conexão com servidor");
+    setStatus("🔴 Erro de comunicação");
   }
 }
 
 // =======================
-// PROCESSADOR ÚNICO
+// PROCESSADOR ÚNICO (ADICIONADO O IF UPDATE)
 // =======================
 function processarPayload(payload) {
   if (!payload) return;
 
-  // Se o dado vier do WebSocket (em formato 'dados') ou direto da API
-  if (payload.type === "update" || payload.reservatorios) {
-    const estrutura = montarEstrutura(payload.dados || payload);
-    scheduleRender(estrutura);
+  if (payload.type === "update" && payload.dados) {
+    scheduleRender(montarEstrutura(payload.dados));
+    return;
+  }
+
+  if (payload?.reservatorios?.length && payload?.bombas?.length) {
+    scheduleRender(payload);
   }
 }
 
 // =======================
-// MONTA ESTRUTURA (CORRIGIDO)
+// MONTA ESTRUTURA
 // =======================
 function montarEstrutura(dados) {
   if (!dados) return null;
 
-  // Sincroniza os nomes e campos com o que o server.js envia no /api/dashboard
+  // Sincronizado com o objeto retornado por buildDashboard() no server.js
   return {
     reservatorios: dados.reservatorios || [],
     bombas: dados.bombas || [],
     pressoes: dados.pressoes || [],
-    lastUpdate: dados.lastUpdate || new Date().toLocaleString()
+    lastUpdate: dados.lastUpdate || dados.timestamp || new Date().toLocaleTimeString("pt-BR")
   };
 }
 
@@ -142,7 +147,7 @@ function atualizarTela(data) {
   renderPressoes(data.pressoes);
 
   atualizarBombasAtivas(data.bombas);
-  atualizarKPIs(data.reservatorios, data.bombas);
+  atualizarKPIs(data.reservatorios);
 }
 
 function setStatus(txt) {
@@ -152,17 +157,17 @@ function setStatus(txt) {
 
 function atualizarBombasAtivas(lista) {
   const el = document.getElementById("bombasAtivas");
-  if (el) el.innerText = lista.filter(b => b.estado === "ligada").length;
+  if (el) el.innerText = (lista || []).filter(b => b.estado === "ligada").length;
 }
 
 function corNivel(percent) {
-  if (percent >= 70) return ["#00ff88", "#00c853"];
-  if (percent >= 40) return ["#ffd600", "#ff8f00"];
-  return ["#ff1744", "#b71c1c"];
+  if (percent >= 70) return ["#00ff88", "#00c853"]; // Verde
+  if (percent >= 40) return ["#ffd600", "#ff8f00"]; // Amarelo
+  return ["#ff1744", "#b71c1c"]; // Vermelho
 }
 
 // =======================
-// RENDERERS
+// RENDERIZADORES DE COMPONENTES
 // =======================
 function renderReservatorios(lista) {
   const area = document.getElementById("areaReservatorios");
@@ -181,7 +186,7 @@ function renderReservatorios(lista) {
         <div class="escala">
           <span></span><span></span><span></span><span></span><span></span>
         </div>
-        <div class="agua" style="height:${percent}%; background:linear-gradient(180deg, ${cor1}, ${cor2}); box-shadow:0 0 15px ${cor1}88;"></div>
+        <div class="agua" style="height:${percent}%; background:linear-gradient(180deg, ${cor1}, ${cor2}); box-shadow:0 0 15px ${cor1}66;"></div>
       </div>
       <div class="info">
         <div class="valor">${percent}%</div>
@@ -204,7 +209,7 @@ function renderBombas(lista) {
     el.innerHTML = `
       <h2>${b.nome}</h2>
       <div class="status-icon">${ligada ? "🟢" : "🔴"}</div>
-      <div class="valor">${ligada ? "LIGADA" : "DESLIGADA"}</div>
+      <div class="valor">${ligada ? "EM OPERAÇÃO" : "INATIVA"}</div>
       <div class="ciclos">${b.ciclo || 0} ciclos</div>
     `;
     area.appendChild(el);
@@ -221,7 +226,9 @@ function renderPressoes(lista) {
     el.className = "card";
     el.innerHTML = `
       <h2>${p.nome}</h2>
-      <div class="valor-pressao">${p.pressao ? p.pressao.toFixed(2) + " bar" : "--"}</div>
+     <div class="valor-pressao">
+  ${typeof p.pressao === "number" ? p.pressao.toFixed(2) + " bar" : "0.00 bar"}
+</div>
     `;
     area.appendChild(el);
   });
@@ -231,9 +238,9 @@ function formatar(n) {
   return Number(n || 0).toLocaleString("pt-BR");
 }
 
-function atualizarKPIs(reservatorios, bombas) {
+function atualizarKPIs(reservatorios) {
   const elCritico = document.getElementById("kpiCritico");
   if (elCritico) {
-    elCritico.innerText = reservatorios.filter(r => r.percent < 30).length;
+   elCritico.innerText = (reservatorios || []).filter(r => r.percent < 30).length;
   }
 }
