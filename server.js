@@ -126,53 +126,56 @@ app.use((req, res, next) => {
 });
 
 // ================= SENSORES / CALIBRAÇÃO =================
-const SENSORES = {
-  "Reservatorio_Elevador_current": {
-    leituraVazio: 0.005250,
-    leituraCheio: 0.009018,
-    capacidade: 20000,
-    altura: 1.45
-  },
+const SENSORES = safeReadJson(
+  path.join(DATA_DIR, "sensores.json"),
+  {
+    "Reservatorio_Elevador_current": {
+      leituraVazio: 0.005250,
+      leituraCheio: 0.009018,
+      capacidade: 20000,
+      altura: 1.45
+    },
 
-  "Reservatorio_Osmose_current": {
-    leituraVazio: 0.00505,
-    leituraCheio: 0.006853,
-    capacidade: 200,
-    altura: 1.0
-  },
+    "Reservatorio_Osmose_current": {
+      leituraVazio: 0.00505,
+      leituraCheio: 0.006853,
+      capacidade: 200,
+      altura: 1.0
+    },
 
-  "Reservatorio_CME_current": {
-    leituraVazio: 0.004088,
-    leituraCheio: 0.00537,
-    capacidade: 1000,
-    altura: 0.45
-  },
+    "Reservatorio_CME_current": {
+      leituraVazio: 0.004088,
+      leituraCheio: 0.00537,
+      capacidade: 1000,
+      altura: 0.45
+    },
 
-  "Reservatorio_Agua_Abrandada_current": {
-    leituraVazio: 0.004048,
-    leituraCheio: 0.004929,
-    capacidade: 9000,
-    altura: 0.6
-  },
+    "Reservatorio_Agua_Abrandada_current": {
+      leituraVazio: 0.004048,
+      leituraCheio: 0.004929,
+      capacidade: 9000,
+      altura: 0.6
+    },
 
-  "Reservatorio_lavanderia_current": {
-    leituraVazio: 0.006012,
-    leituraCheio: 0.011623,
-    capacidade: 10000,
-    altura: 1.45
-  },
+    "Reservatorio_lavanderia_current": {
+      leituraVazio: 0.006012,
+      leituraCheio: 0.011623,
+      capacidade: 10000,
+      altura: 1.45
+    },
 
-  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
-  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
-  "Pressao_Saida_CME_current": { tipo: "pressao" },
+    "Pressao_Saida_Osmose_current": { tipo: "pressao" },
+    "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
+    "Pressao_Saida_CME_current": { tipo: "pressao" },
 
-  "Bomba_01_binary": { tipo: "bomba" },
-  "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
-  "Bomba_02_binary": { tipo: "bomba" },
-  "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
-  "Bomba_Osmose_binary": { tipo: "bomba" },
-  "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
-};
+    "Bomba_01_binary": { tipo: "bomba" },
+    "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
+    "Bomba_02_binary": { tipo: "bomba" },
+    "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
+    "Bomba_Osmose_binary": { tipo: "bomba" },
+    "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
+  }
+);
 
 // ------------------------- HELPERS IO -------------------------
 function safeReadJson(filePath, fallback) {
