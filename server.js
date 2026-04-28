@@ -417,9 +417,12 @@ if (tsAtual < tsAnterior) {
 }
 
 function registrarHistorico(dadosConvertidos) {
-  const hoje = new Date().toISOString().split("T")[0];
+  // Força a data local de Minas Gerais (GMT-3)
+  const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }).split('/').reverse().join('-'); 
+  
   const historico = safeReadJson(HIST_FILE, {});
   if (!historico[hoje]) historico[hoje] = {};
+  // ... resto da função permanece igual
 
   Object.entries(dadosConvertidos).forEach(([ref, valor]) => {
     if (ref.endsWith("_timestamp") || ref === "timestamp" || ref === "version") return;
