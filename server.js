@@ -204,8 +204,15 @@ function calcularNivel(ref, leitura) {
   if (!sensor ||!sensor.capacidade) return { percentual: 0, litros: 0, altura: 0 };
 
   const span = sensor.leituraCheio - sensor.leituraVazio;
-  let percentual = span > 0? (leitura - sensor.leituraVazio) / span : 0;
-  percentual = Math.max(0, Math.min(1, percentual));
+ let percentual = span > 0 ? (leitura - sensor.leituraVazio) / span : 0;
+
+// SUAVIZAÇÃO (anti-piscada)
+const ultimo = sensor._ultimoPercentual ?? percentual;
+percentual = (ultimo * 0.7) + (percentual * 0.3);
+sensor._ultimoPercentual = percentual;
+
+// Limite final
+percentual = Math.max(0, Math.min(1, percentual));
 
   if (percentual < 0.02) percentual = 0; // corte de ruído
 
@@ -337,10 +344,11 @@ function convertAndMerge(dataArray) {
     } else if (sensor.tipo === "bomba") {
       novo[ref] = Number(rawVal) === 1? 1 : 0;
     } else if (sensor.tipo === "ciclo") {
-      novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
-    } else if (sensor.capacidade) {
-      const { litros } = calcularNivel(ref, Number(rawVal) || 0);
-      novo[ref] = litros;
+  novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
+} else if (sensor.capacidade) {
+  // SALVA A LEITURA BRUTA (corrente)
+  novo[ref] = Number(rawVal) || 0;
+}
     } else {
       novo[ref] = rawVal;
     }
@@ -600,7 +608,10 @@ app.use(["/atualizar", "/iot"], async (req, res) => {
     safeWriteJson(ALERTA_FILE, alertas);
 
     registrarHistorico(novo);
-    wsBroadcast({ type: "update", dados: novo });
+    wsBroadcast({
+  type: "update",
+  dados: buildDashboard(novo)
+});
     return res.json({ ok: true });
 
   } catch (err) {
