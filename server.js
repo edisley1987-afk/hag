@@ -403,7 +403,10 @@ function aplicarFailSafeBombas(dados) {
     const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : null;
 const stale = !ts || (agora - ts > DATA_TIMEOUT_MS);
     dados[`${ref}_stale`] = stale;
-    if (stale) dados[ref] = 0;
+   if (stale) {
+  dados[`${ref}_stale`] = true;
+  // NÃO altera o estado da bomba
+}
   });
   return dados;
 }
