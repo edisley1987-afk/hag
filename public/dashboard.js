@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão Final Otimizada - Sem "Pisca-Pisca" e com Conversão de Dados
+ * Versão Final Otimizada: Sem flicker e com conversão de dados precisa
  */
 
 const API = "/api/dashboard";
@@ -10,7 +10,7 @@ let reconnectDelay = 3000;
 let ultimoDado = Date.now();
 let renderPending = false;
 
-// Configurações de Capacidade (Baseadas na sua Planilha)
+// 📊 1. Configurações de Capacidade (Baseadas na sua planilha de controle)
 const CAPACIDADES = {
     elevador: 20000,
     osmose: 200,
@@ -26,33 +26,65 @@ init();
 
 function init() {
     conectarWS();
+    
+    // Fallback caso o WebSocket falhe
     setInterval(fallbackHTTP, 8000);
 
-    // Monitor de inatividade do Gateway
+    // Monitor de sinal do Gateway Khomp
     setInterval(() => {
         if (Date.now() - ultimoDado > 15000) {
-            setStatus("🟡 Aguardando sinal do Gateway Khomp...");
+            setStatus("🟡 Aguardando sinal do Gateway...");
         }
     }, 5000);
 }
 
 // =======================
-// PROCESSAMENTO DE DADOS (CONVERSÃO)
+// PROCESSAMENTO & CONVERSÃO
 // =======================
-function converterDadosBrutos(payload) {
-    // Se o payload já vier mastigado do server.js (formato dashboard), retorna ele
-    if (payload.reservatorios && payload.bombas) return payload;
 
-    // Se vier o JSON bruto do Gateway (como o que você enviou)
+/**
+ * Esta função traduz o JSON bruto do Gateway para o formato que o Dashboard entende,
+ * aplicando as fórmulas de porcentagem da sua planilha.
+ */
+function converterDadosBrutos(payload) {
+    if (payload.type === "update" && payload.dados) {
+        payload = payload.dados;
+    }
+
     const calcPct = (atual, max) => Math.min(100, Math.max(0, Math.round((atual / max) * 100)));
 
     return {
         reservatorios: [
-            { nome: "Elevador", setor: "elevador", current_liters: payload.Reservatorio_Elevador_current || 0, percent: calcPct(payload.Reservatorio_Elevador_current, CAPACIDADES.elevador) },
-            { nome: "Osmose", setor: "osmose", current_liters: payload.Reservatorio_Osmose_current || 0, percent: calcPct(payload.Reservatorio_Osmose_current, CAPACIDADES.osmose) },
-            { nome: "Cme", setor: "cme", current_liters: payload.Reservatorio_CME_current || 0, percent: calcPct(payload.Reservatorio_CME_current, CAPACIDADES.cme) },
-            { nome: "Abrandada", setor: "abrandada", current_liters: payload.Agua_Abrandada_current || payload.Reservatorio_Agua_Abrandada_current || 0, percent: calcPct(payload.Agua_Abrandada_current || payload.Reservatorio_Agua_Abrandada_current, CAPACIDADES.abrandada) },
-            { nome: "Lavanderia", setor: "lavanderia", current_liters: payload.Reservatorio_lavanderia_current || 0, percent: calcPct(payload.Reservatorio_lavanderia_current, CAPACIDADES.lavanderia) }
+            { 
+                nome: "Elevador", 
+                setor: "elevador", 
+                current_liters: payload.Reservatorio_Elevador_current || 0, 
+                percent: calcPct(payload.Reservatorio_Elevador_current, CAPACIDADES.elevador) 
+            },
+            { 
+                nome: "Osmose", 
+                setor: "osmose", 
+                current_liters: payload.Reservatorio_Osmose_current || 0, 
+                percent: calcPct(payload.Reservatorio_Osmose_current, CAPACIDADES.osmose) 
+            },
+            { 
+                nome: "Cme", 
+                setor: "cme", 
+                current_liters: payload.Reservatorio_CME_current || 0, 
+                percent: calcPct(payload.Reservatorio_CME_current, CAPACIDADES.cme) 
+            },
+            { 
+                nome: "Abrandada", 
+                setor: "abrandada", 
+                current_liters: payload.Agua_Abrandada_current || payload.Reservatorio_Agua_Abrandada_current || 0, 
+                percent: calcPct(payload.Agua_Abrandada_current || payload.Reservatorio_Agua_Abrandada_current, CAPACIDADES.abrandada) 
+            },
+            { 
+                nome: "Lavanderia", 
+                setor: "lavanderia", 
+                current_liters: payload.Reservatorio_lavanderia_current || 0, 
+                percent: calcPct(payload.Reservatorio_lavanderia_current, CAPACIDADES.lavanderia) 
+            }
         ],
         bombas: [
             { nome: "Bomba 01", estado: payload.Bomba_01_binary === 1 ? "ligada" : "desligada", ciclo: payload.Ciclos_Bomba_01_counter || 0 },
@@ -71,57 +103,24 @@ function converterDadosBrutos(payload) {
 function processarPayload(payload) {
     if (!payload) return;
     ultimoDado = Date.now();
-
-    let dadosProcessados;
-    if (payload.type === "update" && payload.dados) {
-        dadosProcessados = converterDadosBrutos(payload.dados);
-    } else {
-        dadosProcessados = converterDadosBrutos(payload);
-    }
-
+    const dadosProcessados = converterDadosBrutos(payload);
     scheduleRender(dadosProcessados);
 }
 
 // =======================
-// WEBSOCKET & HTTP
+// RENDERIZAÇÃO OTIMIZADA
 // =======================
-function conectarWS() {
-    if (ws) ws.close();
-    const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
-    ws = new WebSocket(`${protocolo}//${location.host}`);
 
-    ws.onopen = () => setStatus("🟢 Monitoramento em tempo real");
-    ws.onmessage = (msg) => {
-        try { processarPayload(JSON.parse(msg.data)); } catch (e) { console.error("Erro no parse WS"); }
-    };
-    ws.onclose = () => {
-        setStatus("🔴 Reconectando...");
-        setTimeout(conectarWS, reconnectDelay);
-    };
-}
-
-async function fallbackHTTP() {
-    if (ws && ws.readyState === 1) return;
-    try {
-        const res = await fetch(API + "?ts=" + Date.now());
-        const data = await res.json();
-        processarPayload(data);
-    } catch (e) { setStatus("🔴 Erro de comunicação"); }
-}
-
-// =======================
-// RENDERIZAÇÃO (SEM REESCREVER O DOM)
-// =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
     requestAnimationFrame(() => {
-        atualizarTela(data);
+        atualizarUI(data);
         renderPending = false;
     });
 }
 
-function atualizarTela(data) {
+function atualizarUI(data) {
     const elHora = document.getElementById("hora");
     if (elHora) elHora.innerText = data.lastUpdate;
 
@@ -131,35 +130,51 @@ function atualizarTela(data) {
     atualizarKPIs(data);
 }
 
+/**
+ * 💧 Atualiza Reservatórios sem recriar o HTML
+ */
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
 
     lista.forEach(r => {
-        const id = `res-${r.setor || r.nome.toLowerCase()}`;
+        const id = `res-${r.setor}`;
         let el = document.getElementById(id);
-        const percent = r.percent;
-        const [cor1, cor2] = corNivel(percent);
+        const [cor1, cor2] = corNivel(r.percent);
 
+        // Se o card não existe, cria a estrutura inicial
         if (!el) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card reservatorio";
-            el.innerHTML = `<h2>${r.nome}</h2><div class="tanque"><div class="escala"><span></span><span></span><span></span><span></span><span></span></div><div class="agua"></div></div><div class="info"><div class="valor"></div><div class="litros"></div></div>`;
+            el.innerHTML = `
+                <h2>${r.nome}</h2>
+                <div class="tanque">
+                    <div class="escala"><span></span><span></span><span></span><span></span><span></span></div>
+                    <div class="agua"></div>
+                </div>
+                <div class="info">
+                    <div class="valor"></div>
+                    <div class="litros"></div>
+                </div>`;
             area.appendChild(el);
         }
 
+        // Atualização Cirúrgica (Evita o pisca-pisca)
         const divAgua = el.querySelector(".agua");
         const divValor = el.querySelector(".valor");
         const divLitros = el.querySelector(".litros");
 
-        divAgua.style.height = `${percent}%`;
+        divAgua.style.height = `${r.percent}%`;
         divAgua.style.background = `linear-gradient(180deg, ${cor1}, ${cor2})`;
-        divValor.innerText = `${percent}%`;
+        divValor.innerText = `${r.percent}%`;
         divLitros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
+/**
+ * ⚙️ Atualiza Bombas
+ */
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -184,6 +199,9 @@ function renderBombas(lista) {
     });
 }
 
+/**
+ * 📈 Atualiza Pressões
+ */
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -204,8 +222,33 @@ function renderPressoes(lista) {
 }
 
 // =======================
-// AUXILIARES
+// AUXILIARES & COMUNICAÇÃO
 // =======================
+
+function conectarWS() {
+    if (ws) ws.close();
+    const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${protocolo}//${location.host}`);
+
+    ws.onopen = () => setStatus("🟢 Monitoramento em tempo real");
+    ws.onmessage = (msg) => {
+        try { processarPayload(JSON.parse(msg.data)); } catch (e) { console.error("Erro no parse do WebSocket"); }
+    };
+    ws.onclose = () => {
+        setStatus("🔴 Reconectando...");
+        setTimeout(conectarWS, reconnectDelay);
+    };
+}
+
+async function fallbackHTTP() {
+    if (ws && ws.readyState === 1) return;
+    try {
+        const res = await fetch(API + "?ts=" + Date.now());
+        const data = await res.json();
+        processarPayload(data);
+    } catch (e) { setStatus("🔴 Erro de comunicação"); }
+}
+
 function setStatus(txt) {
     const el = document.getElementById("statusSistema");
     if (el) el.innerText = txt;
@@ -216,9 +259,9 @@ function formatar(n) {
 }
 
 function corNivel(p) {
-    if (p >= 70) return ["#00ff88", "#00c853"];
-    if (p >= 40) return ["#ffd600", "#ff8f00"];
-    return ["#ff1744", "#b71c1c"];
+    if (p >= 70) return ["#00ff88", "#00c853"]; // Verde
+    if (p >= 40) return ["#ffd600", "#ff8f00"]; // Amarelo
+    return ["#ff1744", "#b71c1c"]; // Vermelho
 }
 
 function atualizarKPIs(data) {
