@@ -379,45 +379,33 @@ if (tsAtual < tsAnterior) {
         convertido = Math.max(0, Math.min(20, convertido));
         novo[ref] = Number(convertido.toFixed(2));
       }
- } else if (sensor.tipo === "bomba") {
-  const valorAtual = Number(rawVal) === 1 ? 1 : 0;
+    } else if (sensor.tipo === "bomba") {
+      const valorAtual = Number(rawVal) === 1 ? 1 : 0;
+      const anterior = novo[ref] !== undefined ? novo[ref] : valorAtual;
+      const tsAnterior = novo[`${ref}_timestamp`] ? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
+      const agora = Date.now();
 
-  const anterior = novo[ref] !== undefined ? novo[ref] : valorAtual;
-  const tsAnterior = novo[`${ref}_timestamp`]
-    ? new Date(novo[`${ref}_timestamp`]).getTime()
-    : 0;
+      const TEMPO_LIGAR = 3000;
+      const TEMPO_DESLIGAR = 5000;
 
-  const agora = Date.now();
-
-  const TEMPO_LIGAR = 3000;     // responde mais rápido pra ligar
-  const TEMPO_DESLIGAR = 5000;  // mais difícil desligar (evita piscar)
-
-  if (valorAtual !== anterior) {
-    const tempoNecessario = valorAtual === 1
-      ? TEMPO_LIGAR
-      : TEMPO_DESLIGAR;
-
-    if (agora - tsAnterior > tempoNecessario) {
-      novo[ref] = valorAtual;
-    }
-  }
-}
+      if (valorAtual !== anterior) {
+        const tempoNecessario = valorAtual === 1 ? TEMPO_LIGAR : TEMPO_DESLIGAR;
+        if (agora - tsAnterior > tempoNecessario) {
+          novo[ref] = valorAtual;
+        }
+      } else {
+        novo[ref] = valorAtual; // Mantém o estado se não houver mudança
+      }
     } else if (sensor.tipo === "ciclo") {
-  novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
-} else if (sensor.capacidade) {
-  // SALVA A LEITURA BRUTA (corrente)
- const valorAtual = Number(rawVal) || 0;
-const anterior = Number(novo[ref]) || valorAtual;
-
-// suavização REAL (anti ruído)
-const suavizado = (anterior * 0.8) + (valorAtual * 0.2);
-
-novo[ref] = Number(suavizado.toFixed(6));
-
-} else {
-  // fallback
-  novo[ref] = rawVal;
-}
+      novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
+    } else if (sensor.capacidade) {
+      const valorAtual = Number(rawVal) || 0;
+      const anterior = Number(novo[ref]) || valorAtual;
+      const suavizado = (anterior * 0.8) + (valorAtual * 0.2);
+      novo[ref] = Number(suavizado.toFixed(6));
+    } else {
+      novo[ref] = rawVal;
+    }
 
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
