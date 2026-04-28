@@ -2,23 +2,21 @@
 <html lang="pt-BR">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Monitoramento HAG</title>
+<title>Monitoramento HAG</title> 
 
 <link rel="stylesheet" href="style.css">
-
 </head>
 
- 
 <body>
 
 <header>
 
-<!-- TOPO -->
-
+<!-- =========================
+TOPO
+========================= -->
 <div class="cabecalho">
 
 <h1>💧 Monitoramento HAG</h1>
@@ -29,7 +27,7 @@ Sistema de Monitoramento de Reservatórios
 
 <div class="status">
 <span class="status-dot"></span>
-Tempo real conectado • <span id="dataHora"></span>
+Tempo real conectado • <span id="hora">--:--</span>
 </div>
 
 <a href="historico.html" class="btn-historico">
@@ -38,30 +36,27 @@ Tempo real conectado • <span id="dataHora"></span>
 
 </div>
 
-<!-- STATUS -->
-
+<!-- =========================
+STATUS SISTEMA
+========================= -->
 <div id="statusSistema">
 🟢 Tempo real conectado
 </div>
 
-
-<!-- DATA E HORA -->
-
+<!-- =========================
+DATA
+========================= -->
 <div class="header-info">
 
 <div>
-📅 <span id="dataSistema"></span>
-</div>
-
-<div>
-⏰ <span id="hora">--:--</span>
+📅 <span id="dataSistema">--/--/----</span>
 </div>
 
 </div>
 
-
-<!-- KPIs -->
-
+<!-- =========================
+KPIs
+========================= -->
 <div class="kpis">
 
 <div class="kpi">
@@ -99,12 +94,9 @@ Reservatórios Críticos
 <!-- =========================
 RESERVATÓRIOS
 ========================= -->
-
 <section>
 
-<h2 class="titulo-area">
-Reservatórios
-</h2>
+<h2 class="titulo-area">Reservatórios</h2>
 
 <div id="areaReservatorios" class="grid-reservatorios">
 <!-- JS PREENCHE -->
@@ -113,16 +105,12 @@ Reservatórios
 </section>
 
 
-
 <!-- =========================
 BOMBAS
 ========================= -->
-
 <section>
 
-<h2 class="titulo-area">
-Bombas
-</h2>
+<h2 class="titulo-area">Bombas</h2>
 
 <div id="areaBombas" class="grid-bombas">
 <!-- JS PREENCHE -->
@@ -131,16 +119,12 @@ Bombas
 </section>
 
 
-
 <!-- =========================
 PRESSÕES
 ========================= -->
-
 <section>
 
-<h2 class="titulo-area">
-Pressões
-</h2>
+<h2 class="titulo-area">Pressões</h2>
 
 <div id="areaPressoes" class="grid-pressoes">
 <!-- JS PREENCHE -->
@@ -151,55 +135,19 @@ Pressões
 </main>
 
 
-
 <footer>
 Sistema Profissional - HAG
 </footer>
 
 
-
 <!-- =========================
-⏰ RELÓGIO + DATA
+📡 DASHBOARD JS
 ========================= -->
-
-<script>
-
-document.addEventListener("DOMContentLoaded", () => {
-
-function atualizarHora(){
-
-const agora = new Date()
-
-const hora = document.getElementById("hora")
-const data = document.getElementById("dataSistema")
-
-if(hora){
-hora.innerText = agora.toLocaleTimeString("pt-BR")
-}
-
-if(data){
-data.innerText = agora.toLocaleDateString("pt-BR")
-}
-
-}
-
-atualizarHora()
-setInterval(atualizarHora,1000)
-
-})
-
-</script>
-
-
-
-<!-- =========================
-📡 DASHBOARD
-========================= -->
-
 <script src="/dashboard.js"></script>
 
 <script>
-  console.log("🔥 JS CARREGOU");
+console.log("🔥 Dashboard carregado");
 </script>
+
 </body>
 </html>
