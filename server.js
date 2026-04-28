@@ -350,7 +350,13 @@ function convertAndMerge(dataArray) {
   novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
 } else if (sensor.capacidade) {
   // SALVA A LEITURA BRUTA (corrente)
-  novo[ref] = Number(rawVal) || 0;
+ const valorAtual = Number(rawVal) || 0;
+const anterior = Number(novo[ref]) || valorAtual;
+
+// suavização REAL (anti ruído)
+const suavizado = (anterior * 0.8) + (valorAtual * 0.2);
+
+novo[ref] = Number(suavizado.toFixed(6));
 
 } else {
   // fallback
