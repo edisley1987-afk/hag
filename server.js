@@ -48,33 +48,26 @@ const server = http.createServer(app);
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
 const clients = new Set();
+const lastPerType = {}; // GLOBAL (correto)
 
 wss.on("connection", (ws) => {
-  console.log(chalk.blue("🔌 Cliente WebSocket conectado"));
+  console.log("🔌 Cliente WebSocket conectado");
   clients.add(ws);
+
   ws.on("close", () => {
-    console.log(chalk.red("❌ Cliente desconectado"));
     clients.delete(ws);
   });
-  ws.on("error", (err) => {
-    console.error("WebSocket erro:", err);
+
+  ws.on("error", () => {
     clients.delete(ws);
   });
 });
-
-let lastBroadcast = 0;
-
-function wsBroadcast(data) {
-  const now = Date.now();
-
- // throttle por tipo (GLOBAL, fora da função)
-const lastPerType = {};
 
 function wsBroadcast(data) {
   const key = data.type || "default";
   const now = Date.now();
 
-  // limite de 300ms por tipo
+  // throttle correto
   if (now - (lastPerType[key] || 0) < 300) return;
   lastPerType[key] = now;
 
@@ -82,12 +75,7 @@ function wsBroadcast(data) {
 
   for (const client of clients) {
     if (client.readyState === 1) {
-      try {
-        client.send(msg);
-      } catch (e) {
-        console.error("Erro ao enviar WS:", e);
-        clients.delete(client);
-      }
+      client.send(msg);
     }
   }
 }
