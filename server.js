@@ -62,8 +62,17 @@ wss.on("connection", (ws) => {
   });
 });
 
+let lastBroadcast = 0;
+
 function wsBroadcast(data) {
+  const now = Date.now();
+
+  // limita atualização a 1x por segundo
+  if (now - lastBroadcast < 1000) return;
+  lastBroadcast = now;
+
   const msg = JSON.stringify(data);
+
   for (const client of clients) {
     if (client.readyState === 1) {
       try {
@@ -204,20 +213,37 @@ function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ at
 // ================= CALIBRAÇÃO UNIFICADA =================
 function calcularNivel(ref, leitura) {
   const sensor = SENSORES[ref];
-  if (!sensor ||!sensor.capacidade) return { percentual: 0, litros: 0, altura: 0 };
+  if (!sensor || !sensor.capacidade) {
+    return { percentual: 0, litros: 0, altura: 0 };
+  }
 
   const span = sensor.leituraCheio - sensor.leituraVazio;
- let percentual = span > 0 ? (leitura - sensor.leituraVazio) / span : 0;
 
-// SUAVIZAÇÃO (anti-piscada)
-const ultimo = sensor._ultimoPercentual ?? percentual;
-percentual = (ultimo * 0.7) + (percentual * 0.3);
-sensor._ultimoPercentual = percentual;
+  let percentual = span > 0
+    ? (leitura - sensor.leituraVazio) / span
+    : 0;
 
-// Limite final
-percentual = Math.max(0, Math.min(1, percentual));
+  // 🔥 init memória
+  if (sensor._ultimoPercentual === undefined) {
+    sensor._ultimoPercentual = percentual;
+  }
 
-  if (percentual < 0.02) percentual = 0; // corte de ruído
+  // 🔥 estabilidade (anti flicker real)
+  const variacaoMinima = 0.02; // 2%
+  const diff = percentual - sensor._ultimoPercentual;
+
+  if (Math.abs(diff) < variacaoMinima) {
+    percentual = sensor._ultimoPercentual;
+  } else {
+    // suavização progressiva (não salto seco)
+    percentual = sensor._ultimoPercentual + diff * 0.3;
+    sensor._ultimoPercentual = percentual;
+  }
+
+  // limites finais
+  percentual = Math.max(0, Math.min(1, percentual));
+
+  if (percentual < 0.02) percentual = 0;
 
   const litros = Math.round(percentual * sensor.capacidade);
   const alturaCm = Math.round(percentual * sensor.altura * 100);
@@ -322,7 +348,16 @@ function convertAndMerge(dataArray) {
 
   for (const item of dataArray) {
     const ref = item.ref;
-    let rawVal = item.value;
+    let rawVal = item.value; 
+    const tsAtual = new Date(parseTimestamp(item.time, timestampNow)).getTime();
+const tsAnterior = novo[`${ref}_timestamp`]
+  ? new Date(novo[`${ref}_timestamp`]).getTime()
+  : 0;
+
+// IGNORA dado mais antigo
+if (tsAtual < tsAnterior) {
+  continue;
+}
     if (typeof rawVal === "string" && rawVal.trim()!== "" &&!isNaN(Number(rawVal))) {
       rawVal = Number(rawVal);
     }
@@ -344,8 +379,29 @@ function convertAndMerge(dataArray) {
         convertido = Math.max(0, Math.min(20, convertido));
         novo[ref] = Number(convertido.toFixed(2));
       }
-    } else if (sensor.tipo === "bomba") {
-      novo[ref] = Number(rawVal) === 1? 1 : 0;
+ } else if (sensor.tipo === "bomba") {
+  const valorAtual = Number(rawVal) === 1 ? 1 : 0;
+
+  const anterior = novo[ref] !== undefined ? novo[ref] : valorAtual;
+  const tsAnterior = novo[`${ref}_timestamp`]
+    ? new Date(novo[`${ref}_timestamp`]).getTime()
+    : 0;
+
+  const agora = Date.now();
+
+  const TEMPO_LIGAR = 3000;     // responde mais rápido pra ligar
+  const TEMPO_DESLIGAR = 5000;  // mais difícil desligar (evita piscar)
+
+  if (valorAtual !== anterior) {
+    const tempoNecessario = valorAtual === 1
+      ? TEMPO_LIGAR
+      : TEMPO_DESLIGAR;
+
+    if (agora - tsAnterior > tempoNecessario) {
+      novo[ref] = valorAtual;
+    }
+  }
+}
     } else if (sensor.tipo === "ciclo") {
   novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
 } else if (sensor.capacidade) {
