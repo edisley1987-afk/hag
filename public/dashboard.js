@@ -169,42 +169,60 @@ function corNivel(percent) {
 // =======================
 // RENDERIZADORES DE COMPONENTES
 // =======================
+// =======================
+// RENDERIZADORES OTIMIZADOS (SEM PISCAR)
+// =======================
+
 function renderReservatorios(lista) {
   const area = document.getElementById("areaReservatorios");
   if (!area) return;
-  area.innerHTML = "";
 
   lista.forEach(r => {
+    const id = `res-${r.setor || r.nome.toLowerCase()}`;
+    let el = document.getElementById(id);
     const percent = Math.max(0, Math.min(100, r.percent || 0));
     const [cor1, cor2] = corNivel(percent);
 
-    const el = document.createElement("div");
-    el.className = "card reservatorio";
+    // Se o card não existe, cria ele uma única vez
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      el.className = "card reservatorio";
+      area.appendChild(el);
+    }
+
+    // Atualiza apenas o conteúdo interno (o browser é inteligente e não faz piscar)
     el.innerHTML = `
       <h2>${r.nome}</h2>
       <div class="tanque">
         <div class="escala">
           <span></span><span></span><span></span><span></span><span></span>
         </div>
-        <div class="agua" style="height:${percent}%; background:linear-gradient(180deg, ${cor1}, ${cor2}); box-shadow:0 0 15px ${cor1}66;"></div>
+        <div class="agua" style="height:${percent}%; background:linear-gradient(180deg, ${cor1}, ${cor2});"></div>
       </div>
       <div class="info">
         <div class="valor">${percent}%</div>
         <div class="litros">${formatar(r.current_liters)} L</div>
       </div>
     `;
-    area.appendChild(el);
   });
 }
 
 function renderBombas(lista) {
   const area = document.getElementById("areaBombas");
   if (!area) return;
-  area.innerHTML = "";
 
-  lista.forEach(b => {
+  lista.forEach((b, index) => {
+    const id = `bomba-${index}`;
+    let el = document.getElementById(id);
     const ligada = b.estado === "ligada";
-    const el = document.createElement("div");
+
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      area.appendChild(el);
+    }
+
     el.className = `card bomba ${ligada ? "ligada" : "desligada"}`;
     el.innerHTML = `
       <h2>${b.nome}</h2>
@@ -212,25 +230,28 @@ function renderBombas(lista) {
       <div class="valor">${ligada ? "EM OPERAÇÃO" : "INATIVA"}</div>
       <div class="ciclos">${b.ciclo || 0} ciclos</div>
     `;
-    area.appendChild(el);
   });
 }
 
 function renderPressoes(lista) {
   const area = document.getElementById("areaPressoes");
   if (!area) return;
-  area.innerHTML = "";
 
-  lista.forEach(p => {
-    const el = document.createElement("div");
-    el.className = "card";
+  lista.forEach((p, index) => {
+    const id = `pressao-${index}`;
+    let el = document.getElementById(id);
+
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      el.className = "card";
+      area.appendChild(el);
+    }
+
     el.innerHTML = `
       <h2>${p.nome}</h2>
-     <div class="valor-pressao">
-  ${typeof p.pressao === "number" ? p.pressao.toFixed(2) + " bar" : "0.00 bar"}
-</div>
+      <div class="valor-pressao">${p.pressao ? p.pressao.toFixed(2) + " bar" : "0.00 bar"}</div>
     `;
-    area.appendChild(el);
   });
 }
 
