@@ -146,7 +146,7 @@ const SENSORES = safeReadJson(
     },
 
     "Reservatorio_Osmose_current": {
-      leituraVazio: 0.00505,
+      leituraVazio: 0.005050,
       leituraCheio: 0.006853,
       capacidade: 200,
       altura: 1.0
@@ -154,7 +154,7 @@ const SENSORES = safeReadJson(
 
     "Reservatorio_CME_current": {
       leituraVazio: 0.004088,
-      leituraCheio: 0.00537,
+      leituraCheio: 0.005370,
       capacidade: 1000,
       altura: 0.45
     },
