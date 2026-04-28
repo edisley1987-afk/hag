@@ -422,7 +422,74 @@ function detectarConsumoAnormal(consumoAtual, media) {
   return consumoAtual > media * ALERTA_FATOR;
 }
 
-// ------------------------- ROTEAMENTO PRINCIPAL -------------------------
+// ------------------------- ROTEAMENTO PRINCIPAL ITG 200 -------------------------
+app.use(["/atualizar/api/v1_2/json/itg/data", "/atualizar/api/v1_2/json/itg/connection_status"], async (req, res) => {
+  try {
+    console.log("🔥 CHEGOU DADO DO GATEWAY ITG");
+    console.log("📥 BODY:", req.body);
+
+    let parsed = extractAnyPayload(req);
+    
+    // Se for só status de conexão, ignora
+    if (parsed.seq && parsed.interface !== undefined && !parsed.data) {
+      console.log("📡 Status de conexão ITG - ignorando");
+      return res.status(200).json({ ok: true });
+    }
+
+    if (!parsed || Object.keys(parsed).length === 0) {
+      console.warn("⚠️ Payload vazio");
+      return res.status(400).json({ erro: "Payload inválido ou vazio" });
+    }
+
+    const arr = normalizePacket(parsed);
+    if (!arr.length) {
+      return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
+    }
+
+    const novo = convertAndMerge(arr);
+    aplicarFailSafeBombas(novo);
+
+    // auto desligamento osmose
+    const nivelAtualOsmose = Number(novo["Reservatorio_Osmose_current"] || 0);
+    const percentualOsmose = (nivelAtualOsmose / SENSORES["Reservatorio_Osmose_current"].capacidade) * 100;
+    if (percentualOsmose >= 99) {
+      novo["Bomba_Osmose_binary"] = 0;
+      novo["Bomba_Osmose_binary_timestamp"] = new Date().toISOString();
+    }
+
+    // consumo osmose
+    const consumoData = calcularConsumoOsmose(nivelAtualOsmose);
+    const consumoAtualMin = consumoData.historico.at(-1)?.v || 0;
+    const mediaMin = consumoData.media_por_minuto;
+
+    // alerta
+    const alertas = safeReadJson(ALERTA_FILE, {});
+    if (detectarConsumoAnormal(consumoAtualMin, mediaMin)) {
+      if (!alertas.ativo) {
+        alertas.ativo = true;
+        alertas.tipo = "CONSUMO_ANORMAL";
+        alertas.mensagem = "Consumo acima do padrão";
+        alertas.desde = new Date().toISOString();
+      }
+    } else {
+      alertas.ativo = false;
+      alertas.tipo = null;
+      alertas.mensagem = null;
+      alertas.desde = null;
+    }
+    safeWriteJson(ALERTA_FILE, alertas);
+
+    registrarHistorico(novo);
+    wsBroadcast({ type: "update", dados: novo });
+    return res.json({ ok: true });
+
+  } catch (err) {
+    console.error("Erro processar /atualizar/itg:", err);
+    return res.status(500).json({ erro: err?.message || "erro interno" });
+  }
+});
+
+// ------------------------- ROTEAMENTO PRINCIPAL LEGADO -------------------------
 app.use(["/atualizar", "/iot"], async (req, res) => {
   try {
     if (req.method === "GET" && Object.keys(req.query).length === 0) {
@@ -438,7 +505,6 @@ app.use(["/atualizar", "/iot"], async (req, res) => {
       console.warn("⚠️ Payload vazio");
       return res.status(400).json({ erro: "Payload inválido ou vazio" });
     }
-
     const arr = normalizePacket(parsed);
     if (!arr.length) {
       return res.status(400).json({ erro: "Nenhum dado encontrado no payload" });
