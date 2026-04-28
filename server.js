@@ -388,38 +388,91 @@ function aplicarFailSafeBombas(dados) {
   const bombas = ["Bomba_01_binary", "Bomba_02_binary", "Bomba_Osmose_binary"];
   bombas.forEach(ref => {
     const tsKey = `${ref}_timestamp`;
-    const ts = dados[tsKey]? new Date(dados[tsKey]).getTime() : 0;
-    const stale =!ts || agora - ts > DATA_TIMEOUT_MS;
+    const ts = dados[tsKey] ? new Date(dados[tsKey]).getTime() : null;
+const stale = !ts || (agora - ts > DATA_TIMEOUT_MS);
     dados[`${ref}_stale`] = stale;
     if (stale) dados[ref] = 0;
   });
   return dados;
 }
 
+// =========================================================
+// MONTAGEM DO DASHBOARD (Sincronizado com Frontend)
+// =========================================================
+function buildDashboard(dados) {
+  const reservatorios = Object.keys(MAPA_RESERVATORIOS).map(setor => {
+    const ref = MAPA_RESERVATORIOS[setor];
+    const sensor = SENSORES[ref];
+    const leitura = Number(dados[ref] || 0);
+
+    // Aqui acontece a mágica: transforma a corrente em % e Litros
+    const { percentual, litros, altura } = calcularNivel(ref, leitura);
+
+    return {
+      nome: setor.charAt(0).toUpperCase() + setor.slice(1),
+      setor,
+      percent: Math.round(percentual * 100),
+      current_liters: litros,
+      altura_cm: altura,
+      capacidade: sensor.capacidade
+    };
+  });
+
+  const pressoes = [
+    { nome: "Pressão Saída Osmose", pressao: dados["Pressao_Saida_Osmose_current"] ?? null },
+    { nome: "Pressão Retorno Osmose", pressao: dados["Pressao_Retorno_Osmose_current"] ?? null },
+    { nome: "Pressão Saída CME", pressao: dados["Pressao_Saida_CME_current"] ?? null }
+  ];
+
+  const bombas = [
+    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
+    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
+    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
+  ];
+
+  return {
+    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR"),
+    reservatorios,
+    pressoes,
+    bombas
+  };
+}
+
+// =========================================================
+// CÁLCULO DE CONSUMO E ALERTAS
+// =========================================================
 function calcularConsumoOsmose(nivelAtual) {
   const anterior = safeReadJson(CONSUMO_FILE, {
     ultimoNivel: nivelAtual,
     media_por_minuto: 0,
     historico: []
   });
+
   const agora = Date.now();
-  let consumoMin = anterior.ultimoNivel > nivelAtual? anterior.ultimoNivel - nivelAtual : 0;
+  // Só conta consumo se o nível baixou (evita contar enchimento como consumo)
+  let consumoMin = anterior.ultimoNivel > nivelAtual ? anterior.ultimoNivel - nivelAtual : 0;
+  
   const historico = anterior.historico || [];
   historico.push({ t: agora, v: consumoMin });
-  if (historico.length > 60) historico.shift();
+
+  if (historico.length > 60) historico.shift(); // Mantém última hora
+
   const media = historico.reduce((s, i) => s + i.v, 0) / (historico.length || 1);
+  
   const novo = {
     ultimoNivel: nivelAtual,
     media_por_minuto: Number(media.toFixed(4)),
     historico
   };
+
   safeWriteJson(CONSUMO_FILE, novo);
   return novo;
 }
 
 function detectarConsumoAnormal(consumoAtual, media) {
   if (!media || media <= 0) return false;
-  return consumoAtual > media * ALERTA_FATOR;
+  // ALERTA_FATOR geralmente é 2.5 (250% acima da média)
+  return consumoAtual > media * (typeof ALERTA_FATOR !== 'undefined' ? ALERTA_FATOR : 2.5);
 }
 
 // ------------------------- ROTEAMENTO PRINCIPAL ITG 200 -------------------------
@@ -480,7 +533,10 @@ app.use(["/atualizar/api/v1_2/json/itg/data", "/atualizar/api/v1_2/json/itg/conn
     safeWriteJson(ALERTA_FILE, alertas);
 
     registrarHistorico(novo);
-    wsBroadcast({ type: "update", dados: novo });
+   wsBroadcast({
+  type: "update",
+  dados: buildDashboard(novo)
+});
     return res.json({ ok: true });
 
   } catch (err) {
