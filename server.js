@@ -348,10 +348,11 @@ function convertAndMerge(dataArray) {
 } else if (sensor.capacidade) {
   // SALVA A LEITURA BRUTA (corrente)
   novo[ref] = Number(rawVal) || 0;
+
+} else {
+  // fallback
+  novo[ref] = rawVal;
 }
-    } else {
-      novo[ref] = rawVal;
-    }
 
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
