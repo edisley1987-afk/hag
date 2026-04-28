@@ -437,11 +437,28 @@ function buildDashboard(dados) {
   ];
 
   const bombas = [
-    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
-    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
-    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1 ? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
-  ];
-
+  {
+    nome: "Bomba 01",
+    estado: Number(dados["Bomba_01_binary"] ?? dados["Bomba_01_current"]) === 1 
+      ? "ligada" 
+      : "desligada",
+    ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0
+  },
+  {
+    nome: "Bomba 02",
+    estado: Number(dados["Bomba_02_binary"] ?? dados["Bomba_02_current"]) === 1 
+      ? "ligada" 
+      : "desligada",
+    ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0
+  },
+  {
+    nome: "Bomba Osmose",
+    estado: Number(dados["Bomba_Osmose_binary"] ?? dados["Bomba_Osmose_current"]) === 1 
+      ? "ligada" 
+      : "desligada",
+    ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0
+  }
+];
   return {
     lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR"),
     reservatorios,
