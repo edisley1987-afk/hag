@@ -1,65 +1,141 @@
-<header class="top-header">
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-  <!-- 🔷 LINHA 1: TITULO + BOTÃO -->
-  <div class="header-top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <div class="title-box">
-      <h1>💧 Monitoramento HAG</h1>
-      <div class="subtitulo">
-        Sistema de Monitoramento de Reservatórios
-      </div>
+<title>HAG SCADA</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- =========================
+TOPO SCADA
+========================= -->
+<header class="topbar">
+
+  <!-- ESQUERDA -->
+  <div class="top-left">
+    <div class="logo">💧</div>
+    <div>
+      <div class="titulo">HAG SCADA</div>
+      <div class="subtitulo">Monitoramento de Reservatórios</div>
     </div>
-
-    <a href="historico.html" class="btn-historico">
-      📊 Histórico
-    </a>
-
   </div>
 
-
-  <!-- 🔷 LINHA 2: STATUS -->
-  <div class="status-bar">
-    <span class="status-dot"></span>
-    <span id="statusSistema">Tempo real conectado</span>
-    •
-    <span id="hora">--:--</span>
+  <!-- CENTRO -->
+  <div class="top-center">
+    <div class="status">
+      <span class="dot"></span>
+      <span id="statusTexto">ONLINE</span>
+    </div>
+    <div class="hora" id="hora">--:--</div>
   </div>
 
-
-  <!-- 🔷 LINHA 3: DATA -->
-  <div class="header-info">
-    📅 <span id="dataSistema">--/--/----</span>
-  </div>
-
-
-  <!-- 🔷 LINHA 4: KPIs -->
-  <div class="kpis">
-
-    <div class="kpi">
-      Elevador Hoje
-      <span id="kpiElevador">0 L</span>
-    </div>
-
-    <div class="kpi">
-      Lavanderia Hoje
-      <span id="kpiLavanderia">0 L</span>
-    </div>
-
-    <div class="kpi">
-      Osmose Hoje
-      <span id="kpiOsmose">0 L</span>
-    </div>
-
-    <div class="kpi">
-      Bombas Ativas
-      <span id="bombasAtivas">0</span>
-    </div>
-
-    <div class="kpi">
-      Reservatórios Críticos
-      <span id="kpiCritico">0</span>
-    </div>
-
+  <!-- DIREITA -->
+  <div class="top-right">
+    <a href="historico.html" class="btn">📊 Histórico</a>
   </div>
 
 </header>
+
+<!-- =========================
+PAINEL KPI
+========================= -->
+<section class="painel-kpi">
+
+  <div class="kpi-box">
+    <div class="kpi-titulo">Elevador</div>
+    <div class="kpi-valor" id="kpiElevador">0 L</div>
+  </div>
+
+  <div class="kpi-box">
+    <div class="kpi-titulo">Lavanderia</div>
+    <div class="kpi-valor" id="kpiLavanderia">0 L</div>
+  </div>
+
+  <div class="kpi-box">
+    <div class="kpi-titulo">Osmose</div>
+    <div class="kpi-valor" id="kpiOsmose">0 L</div>
+  </div>
+
+  <div class="kpi-box alerta">
+    <div class="kpi-titulo">Bombas Ativas</div>
+    <div class="kpi-valor" id="bombasAtivas">0</div>
+  </div>
+
+  <div class="kpi-box alerta">
+    <div class="kpi-titulo">Críticos</div>
+    <div class="kpi-valor" id="kpiCritico">0</div>
+  </div>
+
+</section>
+
+<!-- =========================
+MAIN
+========================= -->
+<main>
+
+<!-- =========================
+RESERVATÓRIOS
+========================= -->
+<section>
+<h2 class="titulo-area">Reservatórios</h2>
+
+<div id="areaReservatorios" class="grid-reservatorios">
+<!-- JS PREENCHE -->
+</div>
+</section>
+
+<!-- =========================
+BOMBAS
+========================= -->
+<section>
+<h2 class="titulo-area">Bombas</h2>
+
+<div id="areaBombas" class="grid-bombas">
+<!-- JS PREENCHE -->
+</div>
+</section>
+
+<!-- =========================
+PRESSÕES
+========================= -->
+<section>
+<h2 class="titulo-area">Pressões</h2>
+
+<div id="areaPressoes" class="grid-pressoes">
+<!-- JS PREENCHE -->
+</div>
+</section>
+
+</main>
+
+<!-- =========================
+FOOTER
+========================= -->
+<footer>
+Sistema Profissional - HAG
+</footer>
+
+<!-- =========================
+JS
+========================= -->
+<script src="/dashboard.js"></script>
+
+<script>
+// relógio simples
+setInterval(() => {
+  const agora = new Date();
+  document.getElementById("hora").innerText =
+    agora.toLocaleTimeString("pt-BR");
+}, 1000);
+</script>
+
+</body>
+</html>
+```
