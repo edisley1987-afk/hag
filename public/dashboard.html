@@ -1,153 +1,65 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<header class="top-header">
 
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 🔷 LINHA 1: TITULO + BOTÃO -->
+  <div class="header-top">
 
-<title>Monitoramento HAG</title> 
+    <div class="title-box">
+      <h1>💧 Monitoramento HAG</h1>
+      <div class="subtitulo">
+        Sistema de Monitoramento de Reservatórios
+      </div>
+    </div>
 
-<link rel="stylesheet" href="style.css">
-</head>
+    <a href="historico.html" class="btn-historico">
+      📊 Histórico
+    </a>
 
-<body>
+  </div>
 
-<header>
 
-<!-- =========================
-TOPO
-========================= -->
-<div class="cabecalho">
+  <!-- 🔷 LINHA 2: STATUS -->
+  <div class="status-bar">
+    <span class="status-dot"></span>
+    <span id="statusSistema">Tempo real conectado</span>
+    •
+    <span id="hora">--:--</span>
+  </div>
 
-<h1>💧 Monitoramento HAG</h1>
 
-<div class="subtitulo">
-Sistema de Monitoramento de Reservatórios
-</div>
+  <!-- 🔷 LINHA 3: DATA -->
+  <div class="header-info">
+    📅 <span id="dataSistema">--/--/----</span>
+  </div>
 
-<div class="status">
-<span class="status-dot"></span>
-Tempo real conectado • <span id="hora">--:--</span>
-</div>
 
-<a href="historico.html" class="btn-historico">
-📊 Histórico
-</a>
+  <!-- 🔷 LINHA 4: KPIs -->
+  <div class="kpis">
 
-</div>
+    <div class="kpi">
+      Elevador Hoje
+      <span id="kpiElevador">0 L</span>
+    </div>
 
-<!-- =========================
-STATUS SISTEMA
-========================= -->
-<div id="statusSistema">
-🟢 Tempo real conectado
-</div>
+    <div class="kpi">
+      Lavanderia Hoje
+      <span id="kpiLavanderia">0 L</span>
+    </div>
 
-<!-- =========================
-DATA
-========================= -->
-<div class="header-info">
+    <div class="kpi">
+      Osmose Hoje
+      <span id="kpiOsmose">0 L</span>
+    </div>
 
-<div>
-📅 <span id="dataSistema">--/--/----</span>
-</div>
+    <div class="kpi">
+      Bombas Ativas
+      <span id="bombasAtivas">0</span>
+    </div>
 
-</div>
+    <div class="kpi">
+      Reservatórios Críticos
+      <span id="kpiCritico">0</span>
+    </div>
 
-<!-- =========================
-KPIs
-========================= -->
-<div class="kpis">
-
-<div class="kpi">
-Elevador Hoje
-<span id="kpiElevador">0 L</span>
-</div>
-
-<div class="kpi">
-Lavanderia Hoje
-<span id="kpiLavanderia">0 L</span>
-</div>
-
-<div class="kpi">
-Osmose Hoje
-<span id="kpiOsmose">0 L</span>
-</div>
-
-<div class="kpi">
-Bombas Ativas
-<span id="bombasAtivas">0</span>
-</div>
-
-<div class="kpi">
-Reservatórios Críticos
-<span id="kpiCritico">0</span>
-</div>
-
-</div>
+  </div>
 
 </header>
-
-
-<main>
-
-<!-- =========================
-RESERVATÓRIOS
-========================= -->
-<section>
-
-<h2 class="titulo-area">Reservatórios</h2>
-
-<div id="areaReservatorios" class="grid-reservatorios">
-<!-- JS PREENCHE -->
-</div>
-
-</section>
-
-
-<!-- =========================
-BOMBAS
-========================= -->
-<section>
-
-<h2 class="titulo-area">Bombas</h2>
-
-<div id="areaBombas" class="grid-bombas">
-<!-- JS PREENCHE -->
-</div>
-
-</section>
-
-
-<!-- =========================
-PRESSÕES
-========================= -->
-<section>
-
-<h2 class="titulo-area">Pressões</h2>
-
-<div id="areaPressoes" class="grid-pressoes">
-<!-- JS PREENCHE -->
-</div>
-
-</section>
-
-</main>
-
-
-<footer>
-Sistema Profissional - HAG
-</footer>
-
-
-<!-- =========================
-📡 DASHBOARD JS
-========================= -->
-<script src="/dashboard.js"></script>
-
-<script>
-console.log("🔥 Dashboard carregado");
-</script>
-
-</body>
-</html>
