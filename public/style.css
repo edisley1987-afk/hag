@@ -399,3 +399,146 @@ flex-direction:column;
 }
 
 }
+/* =========================
+SCADA TOPBAR
+========================= */
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px 20px;
+background:#012a22;
+border-bottom:2px solid #00ff88;
+box-shadow:0 4px 20px rgba(0,0,0,0.7);
+}
+
+/* LEFT */
+.top-left{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.logo{
+font-size:26px;
+}
+
+.titulo{
+font-size:18px;
+font-weight:bold;
+letter-spacing:1px;
+}
+
+.subtitulo{
+font-size:11px;
+opacity:0.7;
+}
+
+/* CENTER */
+.top-center{
+text-align:center;
+}
+
+.status{
+display:flex;
+align-items:center;
+justify-content:center;
+gap:6px;
+font-size:13px;
+}
+
+.dot{
+width:10px;
+height:10px;
+border-radius:50%;
+background:#00ff88;
+animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:1}
+50%{opacity:0.3}
+100%{opacity:1}
+}
+
+.hora{
+font-size:12px;
+opacity:0.7;
+margin-top:3px;
+}
+
+/* RIGHT */
+.top-right .btn{
+background:#00ff88;
+color:#003b2a;
+padding:8px 12px;
+border-radius:6px;
+text-decoration:none;
+font-weight:bold;
+box-shadow:0 0 10px #00ff88;
+transition:0.3s;
+}
+
+.top-right .btn:hover{
+transform:scale(1.05);
+}
+
+/* =========================
+PAINEL KPI
+========================= */
+
+.painel-kpi{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:12px;
+padding:15px 20px;
+background:rgba(0,0,0,0.2);
+border-bottom:1px solid rgba(0,255,120,0.2);
+}
+
+.kpi-box{
+background:#01352b;
+padding:12px;
+border-radius:10px;
+box-shadow:0 0 15px rgba(0,255,120,0.1);
+text-align:center;
+transition:0.3s;
+}
+
+.kpi-box:hover{
+transform:translateY(-3px);
+box-shadow:0 0 25px rgba(0,255,120,0.3);
+}
+
+.kpi-titulo{
+font-size:12px;
+opacity:0.7;
+}
+
+.kpi-valor{
+font-size:18px;
+font-weight:bold;
+color:#00ff88;
+margin-top:4px;
+}
+
+/* ALERTA KPI */
+.kpi-box.alerta{
+border:1px solid #ff3d00;
+color:#ff3d00;
+}
+
+.kpi-box.alerta .kpi-valor{
+color:#ff3d00;
+}
+
+/* =========================
+FUNDO SCADA
+========================= */
+
+body{
+background:
+radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
+linear-gradient(135deg,#001f1a,#00352d);
+}
