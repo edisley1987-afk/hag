@@ -485,7 +485,7 @@ transform:scale(1.05);
 }
 
 /* =========================
-PAINEL KPI
+KPIs SCADA LIMPO
 ========================= */
 
 .painel-kpi{
@@ -493,76 +493,58 @@ display:grid;
 grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
 gap:12px;
 padding:15px 20px;
-background:rgba(0,0,0,0.2);
+background:rgba(0,0,0,0.25);
 border-bottom:1px solid rgba(0,255,120,0.2);
 }
 
+/* CARD BASE */
 .kpi-box{
-background:#01352b;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+
 padding:12px;
 border-radius:10px;
-box-shadow:0 0 15px rgba(0,255,120,0.1);
-text-align:center;
+
+background:#121212;
+border:1px solid #222;
+
 transition:0.3s;
 }
 
 .kpi-box:hover{
-transform:translateY(-3px);
-box-shadow:0 0 25px rgba(0,255,120,0.3);
+transform:translateY(-2px);
+box-shadow:0 0 20px rgba(0,255,120,0.2);
 }
 
+/* TITULO */
 .kpi-titulo{
-font-size:12px;
-opacity:0.7;
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:1px;
+color:#888;
 }
 
+/* VALOR */
 .kpi-valor{
-font-size:18px;
+font-size:20px;
 font-weight:bold;
 color:#00ff88;
-margin-top:4px;
-}
-
-/* ALERTA KPI */
-.kpi-box.alerta{
-border:1px solid #ff3d00;
-color:#ff3d00;
-}
-
-.kpi-box.alerta .kpi-valor{
-color:#ff3d00;
 }
 
 /* =========================
-FUNDO SCADA
+ESTADOS
 ========================= */
 
-body{
-background:
-radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
-linear-gradient(135deg,#001f1a,#00352d);
-}
-/* =========================
-KPIs ALERTA (SCADA REAL)
-========================= */
-
-/* estado normal */
-.kpi-box.alerta{
-background:#01352b;
-border:1px solid rgba(0,255,120,0.2);
-color:white;
+/* NORMAL */
+.kpi-box.normal{
+border-color:#00ff88;
 }
 
-/* valor normal */
-.kpi-box.alerta .kpi-valor{
-color:#00ff88;
-}
-
-/* =========================
-ESTADO ATENÇÃO (amarelo)
-========================= */
+/* ATENÇÃO */
 .kpi-box.warning{
-background:#3a2a00;
+background:#2a1e0a;
 border:1px solid #ffcc00;
 }
 
@@ -570,29 +552,100 @@ border:1px solid #ffcc00;
 color:#ffcc00;
 }
 
-/* =========================
-ESTADO CRÍTICO (vermelho)
-========================= */
+/* CRÍTICO */
 .kpi-box.critico{
-background:#4a0000;
+background:#2a0000;
 border:1px solid #ff3d00;
-box-shadow:0 0 15px rgba(255,60,0,0.4);
+box-shadow:0 0 15px rgba(255,60,0,0.3);
 }
 
 .kpi-box.critico .kpi-valor{
 color:#ff3d00;
-font-weight:bold;
 }
 
-/* =========================
-PISCAR SOMENTE QUANDO CRÍTICO
-========================= */
+/* PISCAR SOMENTE CRÍTICO */
 .kpi-box.critico.piscando{
 animation:piscaCritico 1s infinite;
 }
 
 @keyframes piscaCritico{
 0%{opacity:1}
-50%{opacity:0.5}
+50%{opacity:0.4}
 100%{opacity:1}
+}
+/* Efeito de brilho para bomba ativa */
+.grid-bombas .card-bomba.ativa {
+    border-left: 5px solid #2ecc71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+    background: linear-gradient(145deg, #1a2e23, #121212);
+}
+
+/* Melhorar a leitura das pressões */
+.grid-pressoes div {
+    background: #1a1a1a;
+    border-radius: 4px;
+    border-bottom: 2px solid #3498db; /* Uma linha azul para indicar fluxo/pressão */
+}
+/* ==========================================================
+   MELHORIAS DE LAYOUT - HAG SCADA
+   ========================================================== */
+
+/* 1. Ajuste nos KPIs do Topo (Letras e Espaçamento) */
+.kpi-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    padding: 12px;
+    min-width: 140px;
+    background: #121212; /* Fundo levemente diferente do resto */
+    border: 1px solid #222;
+}
+
+.kpi-titulo {
+    font-size: 0.75rem !important; /* Letras menores para o rótulo */
+    font-weight: 700;
+    color: #888; /* Cor discreta para o título */
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 4px;
+}
+
+.kpi-valor {
+    font-size: 1.6rem !important; /* Valor em destaque */
+    font-weight: 800;
+    color: #ffffff;
+}
+
+/* 2. Destaque para Bombas Ativas e Críticos */
+.kpi-box.alerta {
+    border: 1.5px solid #ffa500; /* Borda laranja para destaque */
+    background: linear-gradient(145deg, #1a1a1a, #2a1e0a);
+}
+
+.kpi-box.alerta .kpi-titulo {
+    color: #ffa500; /* Título laranja */
+}
+
+/* 3. Melhoria nas Pressões (Mais legível) */
+.grid-pressoes > div {
+    background: #111;
+    border-left: 4px solid #3498db; /* Barra azul lateral para indicar pressão */
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* 4. Ajuste no Título do Hospital (Header) */
+.top-left .titulo {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: #fff;
+}
+
+.top-left .subtitulo {
+    font-size: 0.8rem;
+    color: #00ff88; /* Verde neon sutil */
+    font-weight: 500;
 }
