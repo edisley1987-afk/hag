@@ -1,10 +1,14 @@
 /* =========================
-BASE
+RESET / BASE
 ========================= */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
 html, body{
 height:100%;
-margin:0;
 }
 
 body{
@@ -20,35 +24,88 @@ HEADER
 ========================= */
 
 header{
-text-align:center;
 padding:20px;
 background:#064e3b;
 box-shadow:0 4px 10px rgba(0,0,0,0.4);
 flex-shrink:0;
-position:relative;
 }
 
-header h1{
-margin:0;
-font-size:28px;
+/* TOPO ORGANIZADO */
+.cabecalho{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+flex-wrap:wrap;
+gap:10px;
 }
 
+/* BLOCO ESQUERDO */
+.cabecalho > div{
+display:flex;
+flex-direction:column;
+}
+
+.cabecalho h1{
+font-size:26px;
+}
+
+/* SUBTITULO */
+.subtitulo{
+font-size:13px;
+opacity:0.8;
+margin-top:2px;
+}
+
+/* STATUS */
+.status{
+font-size:13px;
+display:flex;
+align-items:center;
+gap:6px;
+margin-top:4px;
+}
+
+.status-dot{
+width:10px;
+height:10px;
+border-radius:50%;
+background:#00ff88;
+box-shadow:0 0 8px #00ff88;
+}
+
+/* BOTÃO */
+.btn-historico{
+padding:10px 14px;
+background:linear-gradient(90deg,#00ff88,#00c853);
+border:none;
+border-radius:8px;
+color:#003b2a;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 0 10px rgba(0,255,120,0.6);
+transition:0.3s;
+white-space:nowrap;
+}
+
+.btn-historico:hover{
+transform:scale(1.05);
+box-shadow:0 0 18px rgba(0,255,120,0.9);
+}
+
+/* STATUS SISTEMA */
 #statusSistema{
-margin-top:6px;
+margin-top:10px;
 color:#00ff88;
 font-weight:bold;
+font-size:14px;
 }
 
-/* =========================
-HEADER INFO
-========================= */
-
+/* HEADER INFO */
 .header-info{
 display:flex;
-justify-content:center;
 gap:20px;
 margin-top:6px;
-font-size:14px;
+font-size:13px;
 opacity:0.9;
 flex-wrap:wrap;
 }
@@ -59,8 +116,7 @@ KPIs
 
 .kpis{
 display:flex;
-justify-content:center;
-gap:15px;
+gap:12px;
 margin-top:12px;
 flex-wrap:wrap;
 }
@@ -71,11 +127,14 @@ padding:8px 14px;
 border-radius:8px;
 font-size:13px;
 box-shadow:0 0 8px rgba(0,0,0,0.4);
+min-width:140px;
 }
 
 .kpi span{
 color:#00ff88;
 font-weight:bold;
+display:block;
+margin-top:4px;
 }
 
 /* =========================
@@ -91,14 +150,13 @@ gap:20px;
 }
 
 /* =========================
-GRIDS RESPONSIVOS
+GRIDS
 ========================= */
 
 .grid-reservatorios{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
 gap:18px;
-flex:1;
 }
 
 .grid-bombas{
@@ -123,7 +181,6 @@ border-radius:14px;
 padding:16px;
 box-shadow:0 8px 18px rgba(0,0,0,0.6);
 transition:0.3s;
-position:relative;
 }
 
 .card:hover{
@@ -131,7 +188,7 @@ transform:translateY(-3px);
 }
 
 .card h2{
-margin:0 0 10px;
+margin-bottom:10px;
 font-size:14px;
 }
 
@@ -164,9 +221,7 @@ align-items:center;
 height:250px;
 }
 
-/* =========================
-TANQUE
-========================= */
+/* TANQUE */
 
 .tanque{
 position:relative;
@@ -177,49 +232,26 @@ border-left:2px solid rgba(255,255,255,0.4);
 border-right:2px solid rgba(255,255,255,0.4);
 border-bottom:2px solid rgba(255,255,255,0.4);
 border-radius:0 0 18px 18px;
-
-background:linear-gradient(
-180deg,
-rgba(255,255,255,0.08),
-rgba(0,0,0,0.2)
-);
-
+background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.2));
 overflow:hidden;
-
-box-shadow:
-inset 0 0 25px rgba(0,255,120,0.2),
-0 0 12px rgba(0,255,120,0.2);
+box-shadow:inset 0 0 25px rgba(0,255,120,0.2),0 0 12px rgba(0,255,120,0.2);
 }
-
-/* =========================
-TOPO OVAL
-========================= */
 
 .tanque:before{
 content:"";
 position:absolute;
 top:-12px;
-left:0;
 width:100%;
 height:22px;
 border-radius:50%;
 border:2px solid rgba(255,255,255,0.5);
-background:linear-gradient(
-180deg,
-rgba(255,255,255,0.35),
-rgba(255,255,255,0.05)
-);
+background:linear-gradient(180deg,rgba(255,255,255,0.35),rgba(255,255,255,0.05));
 }
-
-/* =========================
-FUNDO OVAL
-========================= */
 
 .tanque:after{
 content:"";
 position:absolute;
 bottom:-12px;
-left:0;
 width:100%;
 height:22px;
 border-radius:50%;
@@ -227,40 +259,24 @@ border:2px solid rgba(255,255,255,0.3);
 background:rgba(0,0,0,0.3);
 }
 
-/* =========================
-AGUA
-========================= */
+/* AGUA */
 
 .agua{
 position:absolute;
 bottom:0;
 width:100%;
-transition:height 1s;
-z-index:2;
+transition:height 0.8s ease;
 }
 
 /* níveis */
 
-.nivel-alto{
-background:linear-gradient(180deg,#00ff88,#00c853);
-box-shadow:0 0 15px rgba(0,255,120,0.8);
-}
-
-.nivel-medio{
-background:linear-gradient(180deg,#00cfff,#008cff);
-}
-
-.nivel-baixo{
-background:linear-gradient(180deg,#ffcc33,#ff7b00);
-}
-
+.nivel-alto{ background:linear-gradient(180deg,#00ff88,#00c853);}
+.nivel-medio{ background:linear-gradient(180deg,#00cfff,#008cff);}
+.nivel-baixo{ background:linear-gradient(180deg,#ffcc33,#ff7b00);}
 .nivel-critico{
 background:linear-gradient(180deg,#ff3d00,#b00020);
 animation:piscar 1s infinite;
 }
-
-/* cheio */
-
 .nivel-cheio{
 background:linear-gradient(180deg,#00d4ff,#006eff);
 box-shadow:0 0 18px #00d4ff;
@@ -272,22 +288,14 @@ box-shadow:0 0 18px #00d4ff;
 100%{opacity:1}
 }
 
-/* =========================
-ONDA
-========================= */
+/* ONDA */
 
 .onda{
 position:absolute;
 top:-5px;
 width:200%;
 height:10px;
-
-background:radial-gradient(
-ellipse at center,
-rgba(255,255,255,0.7),
-rgba(255,255,255,0.1)
-);
-
+background:radial-gradient(ellipse at center,rgba(255,255,255,0.7),rgba(255,255,255,0.1));
 animation:onda 4s linear infinite;
 }
 
@@ -296,9 +304,7 @@ animation:onda 4s linear infinite;
 100%{transform:translateX(-50%);}
 }
 
-/* =========================
-ESCALA
-========================= */
+/* ESCALA */
 
 .escala{
 position:absolute;
@@ -308,20 +314,15 @@ height:80%;
 display:flex;
 flex-direction:column;
 justify-content:space-between;
-z-index:5;
 }
 
 .escala span{
 background:#00ff88;
 height:2px;
 width:18px;
-box-shadow:0 0 6px #00ff88;
-opacity:0.9;
 }
 
-/* =========================
-INFO
-========================= */
+/* INFO */
 
 .info{
 text-align:center;
@@ -329,30 +330,13 @@ margin-top:10px;
 }
 
 .valor{
-font-size:28px;
+font-size:26px;
 font-weight:bold;
 }
 
 .litros{
 opacity:0.8;
 font-size:14px;
-}
-
-/* =========================
-TENDENCIA
-========================= */
-
-.tendencia{
-font-size:14px;
-margin-left:6px;
-}
-
-.subindo{
-color:#00ff88;
-}
-
-.descendo{
-color:#ffcc00;
 }
 
 /* =========================
@@ -399,96 +383,19 @@ background:#ff2e2e;
 box-shadow:0 0 8px #ff2e2e;
 }
 
-.ciclos{
-font-size:13px;
-opacity:0.8;
-}
-
-/* =========================
-PRESSAO
-========================= */
-
-.card.pressao .valor{
-font-size:26px;
-}
-
 /* =========================
 RESPONSIVO
 ========================= */
 
-@media (max-width:1200px){
-
-.grid-reservatorios{
-grid-template-columns:repeat(3,1fr);
-}
-
-}
-
 @media (max-width:800px){
 
-.grid-reservatorios{
-grid-template-columns:repeat(2,1fr);
+.cabecalho{
+flex-direction:column;
+align-items:flex-start;
 }
 
-.grid-bombas{
-grid-template-columns:1fr;
+.kpis{
+flex-direction:column;
 }
 
-}
-
-@media (max-width:500px){
-
-.grid-reservatorios{
-grid-template-columns:1fr;
-}
-
-header h1{
-font-size:20px;
-}
-
-.valor{
-font-size:22px;
-}
-
-}
-
-/* =========================
-BOTÃO HISTÓRICO
-========================= */
-
-.btn-historico{
-position:absolute;
-right:20px;
-top:20px;
-padding:10px 14px;
-background:linear-gradient(90deg,#00ff88,#00c853);
-border:none;
-border-radius:8px;
-color:#003b2a;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 0 10px rgba(0,255,120,0.6);
-transition:0.3s;
-z-index:1000;
-}
-
-.btn-historico:hover{
-transform:scale(1.05);
-box-shadow:0 0 18px rgba(0,255,120,0.9);
-}
-
-/* =========================
-FOOTER
-========================= */
-
-footer{
-text-align:center;
-padding:12px;
-opacity:0.7;
-font-size:13px;
-}
-.titulo-area{
-margin:10px 0 12px;
-font-size:16px;
-opacity:0.85;
 }
