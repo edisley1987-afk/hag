@@ -10,6 +10,7 @@
  * Servidor Node.js responsável pelo processamento
  * de dados IoT, histórico, consumo, alertas e dashboard
  * em tempo real (WebSocket).
+ 
  *
  * Tecnologias:
  * - Node.js (ESModules)
@@ -134,8 +135,8 @@ const SENSORES = safeReadJson(
   path.join(DATA_DIR, "sensores.json"),
   {
     "Reservatorio_Elevador_current": {
-      leituraVazio: 0.005250,
-      leituraCheio: 0.009060,
+      leituraVazio: 0.005170,
+      leituraCheio: 0.010247,
       capacidade: 20000,
       altura: 1.45
     },
