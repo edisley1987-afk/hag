@@ -414,7 +414,8 @@ if (tsAtual < tsAnterior) {
     } else if (sensor.capacidade) {
       const valorAtual = Number(rawVal) || 0;
       const anterior = Number(novo[ref]) || valorAtual;
-      
+      const suavizado = (anterior * 0.8) + (valorAtual * 0.2);
+      novo[ref] = Number(suavizado.toFixed(6));
     } else {
       novo[ref] = rawVal;
     }
