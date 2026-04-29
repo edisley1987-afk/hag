@@ -1,141 +1,92 @@
-HAG
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>HOSPITAL ARNALDO GAVAZZA</title>
-
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOSPITAL ARNALDO GAVAZZA</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- =========================
-TOPO SCADA
-========================= -->
-<header class="topbar">
+    <header class="topbar">
 
-  <!-- ESQUERDA -->
-  <div class="top-left">
-    <div class="logo">💧</div>
-    <div>
-      <div class="titulo">HOSPITAL ARNALDO GAVAZZA</div>
-      <div class="subtitulo">Monitoramento de Reservatórios</div>
-    </div>
-  </div>
+        <div class="top-left">
+            <div class="status">
+                <span class="dot"></span>
+                <span id="statusTexto">ONLINE</span>
+            </div>
+            <div id="statusSistema" style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Sincronizado</div>
+        </div>
 
-  <!-- CENTRO -->
-  <div class="top-center">
-    <div class="status">
-      <span class="dot"></span>
-      <span id="statusTexto">ONLINE</span>
-    </div>
-    <div class="hora" id="hora">--:--</div>
-  </div>
+        <div class="top-center">
+            <div class="titulo">HOSPITAL ARNALDO GAVAZZA</div>
+            <div class="subtitulo">Monitoramento de Reservatórios</div>
+            <div class="hora" id="hora" style="font-weight: bold; margin-top: 5px;">--:--:--</div>
+        </div>
 
-  <!-- DIREITA -->
-  <div class="top-right">
-    <a href="historico.html" class="btn">📊 Histórico</a>
-  </div>
+        <div class="top-right">
+            <a href="historico.html" class="btn">📊 Histórico</a>
+        </div>
 
-</header>
+    </header>
 
-<!-- =========================
-PAINEL KPI
-========================= -->
-<section class="painel-kpi">
+    <section class="painel-kpi">
+        <div class="kpi-box">
+            <div class="kpi-titulo">Elevador</div>
+            <div class="kpi-valor" id="kpiElevador">0 L</div>
+        </div>
 
-  <div class="kpi-box">
-    <div class="kpi-titulo">Elevador</div>
-    <div class="kpi-valor" id="kpiElevador">0 L</div>
-  </div>
+        <div class="kpi-box">
+            <div class="kpi-titulo">Lavanderia</div>
+            <div class="kpi-valor" id="kpiLavanderia">0 L</div>
+        </div>
 
-  <div class="kpi-box">
-    <div class="kpi-titulo">Lavanderia</div>
-    <div class="kpi-valor" id="kpiLavanderia">0 L</div>
-  </div>
+        <div class="kpi-box">
+            <div class="kpi-titulo">Osmose</div>
+            <div class="kpi-valor" id="kpiOsmose">0 L</div>
+        </div>
 
-  <div class="kpi-box">
-    <div class="kpi-titulo">Osmose</div>
-    <div class="kpi-valor" id="kpiOsmose">0 L</div>
-  </div>
+        <div class="kpi-box alerta">
+            <div class="kpi-titulo">Bombas Ativas</div>
+            <div class="kpi-valor" id="bombasAtivas">0</div>
+        </div>
 
-  <div class="kpi-box alerta">
-    <div class="kpi-titulo">Bombas Ativas</div>
-    <div class="kpi-valor" id="bombasAtivas">0</div>
-  </div>
+        <div class="kpi-box alerta">
+            <div class="kpi-titulo">Críticos</div>
+            <div class="kpi-valor" id="kpiCritico">0</div>
+        </div>
+    </section>
 
-  <div class="kpi-box alerta">
-    <div class="kpi-titulo">Críticos</div>
-    <div class="kpi-valor" id="kpiCritico">0</div>
-  </div>
+    <main>
+        <section>
+            <h2 class="titulo-area">Reservatórios</h2>
+            <div id="areaReservatorios" class="grid-reservatorios"></div>
+        </section>
 
-</section>
+        <section>
+            <h2 class="titulo-area">Bombas</h2>
+            <div id="areaBombas" class="grid-bombas"></div>
+        </section>
 
-<!-- =========================
-MAIN
-========================= -->
-<main>
+        <section>
+            <h2 class="titulo-area">Pressões</h2>
+            <div id="areaPressoes" class="grid-pressoes"></div>
+        </section>
+    </main>
 
-<!-- =========================
-RESERVATÓRIOS
-========================= -->
-<section>
-<h2 class="titulo-area">Reservatórios</h2>
+    <footer>
+        Sistema Profissional - HAG
+    </footer>
 
-<div id="areaReservatorios" class="grid-reservatorios">
-<!-- JS PREENCHE -->
-</div>
-</section>
-
-<!-- =========================
-BOMBAS
-========================= -->
-<section>
-<h2 class="titulo-area">Bombas</h2>
-
-<div id="areaBombas" class="grid-bombas">
-<!-- JS PREENCHE -->
-</div>
-</section>
-
-<!-- =========================
-PRESSÕES
-========================= -->
-<section>
-<h2 class="titulo-area">Pressões</h2>
-
-<div id="areaPressoes" class="grid-pressoes">
-<!-- JS PREENCHE -->
-</div>
-</section>
-
-</main>
-
-<!-- =========================
-FOOTER
-========================= -->
-<footer>
-Sistema Profissional - HAG
-</footer>
-
-<!-- =========================
-JS
-========================= -->
-<script src="/dashboard.js"></script>
-
-<script>
-// relógio simples
-setInterval(() => {
-  const agora = new Date();
-  document.getElementById("hora").innerText =
-    agora.toLocaleTimeString("pt-BR");
-}, 1000);
-</script>
+    <script src="/dashboard.js"></script>
+    <script>
+        setInterval(() => {
+            const agora = new Date();
+            document.getElementById("hora").innerText = agora.toLocaleTimeString("pt-BR");
+        }, 1000);
+    </script>
 
 </body>
 </html>
-```
