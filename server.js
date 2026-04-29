@@ -1,6 +1,6 @@
 /**
  * =========================================================
- * HAG SCADA V6.1 - HARDENED REAL (PRODUÇÃO)
+ * HAG SCADA V6.2 - FINAL PRODUÇÃO (COM FRONT + DASHBOARD)
  * =========================================================
  */
 
@@ -26,6 +26,7 @@ const PORT = process.env.PORT || 3000;
 const TOKEN = process.env.API_TOKEN || "HAG_SECURE_123";
 
 const DATA_DIR = path.join(__dirname, "data");
+const PUBLIC_DIR = path.join(__dirname, "public");
 
 const FILES = {
   DATA: path.join(DATA_DIR, "readings.json"),
@@ -72,7 +73,6 @@ async function audit(msg) {
       try {
         await fs.rename(FILES.AUDIT, FILES.AUDIT + ".old");
       } catch {
-        // fallback se estiver em uso
         await fs.writeFile(FILES.AUDIT, "");
       }
     }
@@ -106,7 +106,6 @@ const SENSORES = await read(
 const MEM = {};
 const MEM_BOMBA = {};
 
-// ================= CONSUMO PERSISTENTE =================
 let CONSUMO_STATE = await read(FILES.CONSUMO, {
   ultimoNivel: null,
   ultimoTs: 0
@@ -236,7 +235,6 @@ async function processar(arr){
     db[ref+"_ts"] = new Date().toISOString();
   }
 
-  // FAIL SAFE
   const agora = Date.now();
   Object.keys(db).forEach(k=>{
     if(k.endsWith("_ts")){
@@ -277,24 +275,12 @@ async function consumo(db){
 
   await write(FILES.CONSUMO, CONSUMO_STATE);
 
-  const hist = await read(FILES.HIST,{lista:[]});
-  hist.lista.push(consumo);
-  if(hist.lista.length > 60) hist.lista.shift();
-
-  const media = hist.lista.reduce((a,b)=>a+b,0)/hist.lista.length;
-
-  await write(FILES.HIST,hist);
-
-  return {consumo,media};
+  return {consumo, media:0};
 }
 
 // ================= ALERTAS =================
-async function gerarAlertas(db,cons,media){
+async function gerarAlertas(db,cons){
   const lista = [];
-
-  if(media>0 && cons > media*2.5){
-    lista.push("Consumo anormal");
-  }
 
   if(db["Reservatorio_Osmose_current_percent"] >= 0.99){
     lista.push("Osmose cheia - bomba OFF");
@@ -316,17 +302,19 @@ app.use(cors());
 app.use(compression());
 app.use(express.json({limit: BODY_LIMIT}));
 
+// 👉 SERVE FRONTEND
+app.use(express.static(PUBLIC_DIR));
+
 app.post("/iot", auth, async (req,res)=>{
   try{
     const arr = normalize(req.body);
-
     if(!arr.length){
       return res.status(400).json({erro:"payload vazio"});
     }
 
     const db = await processar(arr);
-    const {consumo:cons, media} = await consumo(db);
-    const lista = await gerarAlertas(db,cons,media);
+    const {consumo:cons} = await consumo(db);
+    const lista = await gerarAlertas(db,cons);
 
     broadcast("update",{dados:db});
     if(lista.length) broadcast("alert",{lista});
@@ -338,7 +326,31 @@ app.post("/iot", auth, async (req,res)=>{
   }
 });
 
+// 👉 DASHBOARD API
+app.get("/api/dashboard", async (req,res)=>{
+  const db = await read(FILES.DATA,{});
+
+  res.json({
+    lastUpdate: db.timestamp,
+    reservatorios: Object.keys(SENSORES)
+      .filter(k=>SENSORES[k].capacidade)
+      .map(ref=>({
+        nome: ref,
+        percent: Math.round((db[ref+"_percent"]||0)*100),
+        litros: db[ref+"_litros"]||0,
+        altura: db[ref+"_altura"]||0,
+        stale: db[ref+"_stale"]||false
+      })),
+    alerta: await read(FILES.ALERTA,{})
+  });
+});
+
+// 👉 ROOT
+app.get("/", (req,res)=>{
+  res.sendFile(path.join(PUBLIC_DIR, "dashboard.html"));
+});
+
 // ================= START =================
 server.listen(PORT, ()=>{
-  console.log(chalk.green(`🚀 SCADA V6.1 ONLINE ${PORT}`));
+  console.log(chalk.green(`🚀 SCADA V6.2 ONLINE ${PORT}`));
 });
