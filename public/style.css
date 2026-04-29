@@ -542,3 +542,57 @@ background:
 radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
 linear-gradient(135deg,#001f1a,#00352d);
 }
+/* =========================
+KPIs ALERTA (SCADA REAL)
+========================= */
+
+/* estado normal */
+.kpi-box.alerta{
+background:#01352b;
+border:1px solid rgba(0,255,120,0.2);
+color:white;
+}
+
+/* valor normal */
+.kpi-box.alerta .kpi-valor{
+color:#00ff88;
+}
+
+/* =========================
+ESTADO ATENÇÃO (amarelo)
+========================= */
+.kpi-box.warning{
+background:#3a2a00;
+border:1px solid #ffcc00;
+}
+
+.kpi-box.warning .kpi-valor{
+color:#ffcc00;
+}
+
+/* =========================
+ESTADO CRÍTICO (vermelho)
+========================= */
+.kpi-box.critico{
+background:#4a0000;
+border:1px solid #ff3d00;
+box-shadow:0 0 15px rgba(255,60,0,0.4);
+}
+
+.kpi-box.critico .kpi-valor{
+color:#ff3d00;
+font-weight:bold;
+}
+
+/* =========================
+PISCAR SOMENTE QUANDO CRÍTICO
+========================= */
+.kpi-box.critico.piscando{
+animation:piscaCritico 1s infinite;
+}
+
+@keyframes piscaCritico{
+0%{opacity:1}
+50%{opacity:0.5}
+100%{opacity:1}
+}
