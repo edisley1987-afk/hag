@@ -135,7 +135,7 @@ const SENSORES = safeReadJson(
   {
     "Reservatorio_Elevador_current": {
       leituraVazio: 0.005250,
-      leituraCheio: 0.009018,
+      leituraCheio: 0.009060,
       capacidade: 20000,
       altura: 1.45
     },
