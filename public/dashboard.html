@@ -2,93 +2,152 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💧 HOSPITAL ARNALDO GAVAZZA</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Monitoramento HAG</title> 
+
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <header class="topbar">
+<header>
 
-        <div class="top-left">
-            <div class="status">
-                <span class="dot"></span>
-                <span id="statusTexto">ONLINE</span>
-            </div>
-            <div id="statusSistema" style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Sincronizado</div>
-        </div>
+<!-- =========================
+TOPO
+========================= -->
+<div class="cabecalho">
 
-        <div class="top-center">
-            <div class="titulo">💧HOSPITAL ARNALDO GAVAZZA</div>
-            <div class="subtitulo">Monitoramento de Reservatórios</div>
-            <div class="hora" id="hora" style="font-weight: bold; margin-top: 5px;">--:--:--</div>
-        </div>
+<h1>💧 Monitoramento HAG</h1>
 
-        <div class="top-right">
-            <a href="historico.html" class="btn">📊 Histórico</a>
-        </div>
+<div class="subtitulo">
+Sistema de Monitoramento de Reservatórios
+</div>
 
-    </header>
+<div class="status">
+<span class="status-dot"></span>
+Tempo real conectado • <span id="hora">--:--</span>
+</div>
 
-    <section class="painel-kpi">
-        <div class="kpi-box">
-            <div class="kpi-titulo">Elevador</div>
-            <div class="kpi-valor" id="kpiElevador">0 L</div>
-        </div>
+<a href="historico.html" class="btn-historico">
+📊 Histórico
+</a>
 
-        <div class="kpi-box">
-            <div class="kpi-titulo">Lavanderia</div>
-            <div class="kpi-valor" id="kpiLavanderia">0 L</div>
-        </div>
+</div>
 
-        <div class="kpi-box">
-            <div class="kpi-titulo">Osmose</div>
-            <div class="kpi-valor" id="kpiOsmose">0 L</div>
-        </div>
+<!-- =========================
+STATUS SISTEMA
+========================= -->
+<div id="statusSistema">
+🟢 Tempo real conectado
+</div>
 
-        <div class="kpi-box alerta">
-            <div class="kpi-titulo">Bombas Ativas</div>
-            <div class="kpi-valor" id="bombasAtivas">0</div>
-        </div>
+<!-- =========================
+DATA
+========================= -->
+<div class="header-info">
 
-        <div class="kpi-box alerta">
-            <div class="kpi-titulo">Reservatórios Críticos</div>
-            <div class="kpi-valor" id="kpiCritico">0</div>
-        </div>
-    </section>
+<div>
+📅 <span id="dataSistema">--/--/----</span>
+</div>
 
-    <main>
-        <section>
-            <h2 class="titulo-area">Reservatórios</h2>
-            <div id="areaReservatorios" class="grid-reservatorios"></div>
-        </section>
+</div>
 
-        <section>
-            <h2 class="titulo-area">Bombas</h2>
-            <div id="areaBombas" class="grid-bombas"></div>
-        </section>
+<!-- =========================
+KPIs
+========================= -->
+<div class="kpis">
 
-        <section>
-            <h2 class="titulo-area">Pressões</h2>
-            <div id="areaPressoes" class="grid-pressoes"></div>
-        </section>
-    </main>
+<div class="kpi">
+Elevador Hoje
+<span id="kpiElevador">0 L</span>
+</div>
 
-    <footer>
-        Sistema Profissional - HAG
-    </footer>
+<div class="kpi">
+Lavanderia Hoje
+<span id="kpiLavanderia">0 L</span>
+</div>
 
-    <script src="/dashboard.js"></script>
-    <script>
-        setInterval(() => {
-            const agora = new Date();
-            document.getElementById("hora").innerText = agora.toLocaleTimeString("pt-BR");
-        }, 1000);
-    </script>
-<audio id="alarmeSom" preload="auto" loop>
-  <source src="/alarme.mp3" type="audio/mpeg">
-</audio>
+<div class="kpi">
+Osmose Hoje
+<span id="kpiOsmose">0 L</span>
+</div>
+
+<div class="kpi">
+Bombas Ativas
+<span id="bombasAtivas">0</span>
+</div>
+
+<div class="kpi">
+Reservatórios Críticos
+<span id="kpiCritico">0</span>
+</div>
+
+</div>
+
+</header>
+
+
+<main>
+
+<!-- =========================
+RESERVATÓRIOS
+========================= -->
+<section>
+
+<h2 class="titulo-area">Reservatórios</h2>
+
+<div id="areaReservatorios" class="grid-reservatorios">
+<!-- JS PREENCHE -->
+</div>
+
+</section>
+
+
+<!-- =========================
+BOMBAS
+========================= -->
+<section>
+
+<h2 class="titulo-area">Bombas</h2>
+
+<div id="areaBombas" class="grid-bombas">
+<!-- JS PREENCHE -->
+</div>
+
+</section>
+
+
+<!-- =========================
+PRESSÕES
+========================= -->
+<section>
+
+<h2 class="titulo-area">Pressões</h2>
+
+<div id="areaPressoes" class="grid-pressoes">
+<!-- JS PREENCHE -->
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+Sistema Profissional - HAG
+</footer>
+
+
+<!-- =========================
+📡 DASHBOARD JS
+========================= -->
+<script src="/dashboard.js"></script>
+
+<script>
+console.log("🔥 Dashboard carregado");
+</script>
+
 </body>
 </html>
