@@ -1,153 +1,99 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Monitoramento HAG</title> 
-
+<title>Monitoramento HAG</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header>
+<!-- ========================= HEADER ========================= -->
+<header class="header">
 
-<!-- =========================
-TOPO
-========================= -->
-<div class="cabecalho">
+  <div class="header-left">
+    <h1>💧 Monitoramento HAG</h1>
+    <span class="subtitulo">Sistema de Reservatórios</span>
+  </div>
 
-<h1>💧 Monitoramento HAG</h1>
+  <div class="header-center">
+    <span class="status-online">🟢 Online</span>
+    <span id="hora">--:--</span>
+  </div>
 
-<div class="subtitulo">
-Sistema de Monitoramento de Reservatórios
-</div>
-
-<div class="status">
-<span class="status-dot"></span>
-Tempo real conectado • <span id="hora">--:--</span>
-</div>
-
-<a href="historico.html" class="btn-historico">
-📊 Histórico
-</a>
-
-</div>
-
-<!-- =========================
-STATUS SISTEMA
-========================= -->
-<div id="statusSistema">
-🟢 Tempo real conectado
-</div>
-
-<!-- =========================
-DATA
-========================= -->
-<div class="header-info">
-
-<div>
-📅 <span id="dataSistema">--/--/----</span>
-</div>
-
-</div>
-
-<!-- =========================
-KPIs
-========================= -->
-<div class="kpis">
-
-<div class="kpi">
-Elevador Hoje
-<span id="kpiElevador">0 L</span>
-</div>
-
-<div class="kpi">
-Lavanderia Hoje
-<span id="kpiLavanderia">0 L</span>
-</div>
-
-<div class="kpi">
-Osmose Hoje
-<span id="kpiOsmose">0 L</span>
-</div>
-
-<div class="kpi">
-Bombas Ativas
-<span id="bombasAtivas">0</span>
-</div>
-
-<div class="kpi">
-Reservatórios Críticos
-<span id="kpiCritico">0</span>
-</div>
-
-</div>
+  <div class="header-right">
+    <span>⚙️ Bombas: <b id="bombasAtivas">0</b></span>
+    <span>🚨 Críticos: <b id="kpiCritico">0</b></span>
+    <a href="historico.html" class="btn-historico">📊</a>
+  </div>
 
 </header>
 
+<!-- ========================= KPIs ========================= -->
+<section class="kpis">
+
+  <div class="kpi">
+    Elevador Hoje
+    <span id="kpiElevador">0 L</span>
+  </div>
+
+  <div class="kpi">
+    Lavanderia Hoje
+    <span id="kpiLavanderia">0 L</span>
+  </div>
+
+  <div class="kpi">
+    Osmose Hoje
+    <span id="kpiOsmose">0 L</span>
+  </div>
+
+</section>
 
 <main>
 
-<!-- =========================
-RESERVATÓRIOS
-========================= -->
+<!-- ========================= RESERVATÓRIOS ========================= -->
 <section>
+  <h2 class="titulo-area">Reservatórios</h2>
 
-<h2 class="titulo-area">Reservatórios</h2>
+  <div id="areaReservatorios" class="grid-reservatorios">
+    <!-- JS monta assim: -->
+    <!--
+    <div class="tank-card">
+      <div class="tank">
+        <div class="water" style="--level: 75%"></div>
 
-<div id="areaReservatorios" class="grid-reservatorios">
-<!-- JS PREENCHE -->
-</div>
-
+        <div class="tank-label">
+          <h3>Elevador</h3>
+          <span>75%</span>
+          <small>15.000 L</small>
+        </div>
+      </div>
+    </div>
+    -->
+  </div>
 </section>
 
-
-<!-- =========================
-BOMBAS
-========================= -->
+<!-- ========================= BOMBAS ========================= -->
 <section>
-
-<h2 class="titulo-area">Bombas</h2>
-
-<div id="areaBombas" class="grid-bombas">
-<!-- JS PREENCHE -->
-</div>
-
+  <h2 class="titulo-area">Bombas</h2>
+  <div id="areaBombas" class="grid-bombas"></div>
 </section>
 
-
-<!-- =========================
-PRESSÕES
-========================= -->
+<!-- ========================= PRESSÕES ========================= -->
 <section>
-
-<h2 class="titulo-area">Pressões</h2>
-
-<div id="areaPressoes" class="grid-pressoes">
-<!-- JS PREENCHE -->
-</div>
-
+  <h2 class="titulo-area">Pressões</h2>
+  <div id="areaPressoes" class="grid-pressoes"></div>
 </section>
 
 </main>
-
 
 <footer>
 Sistema Profissional - HAG
 </footer>
 
-
-<!-- =========================
-📡 DASHBOARD JS
-========================= -->
 <script src="/dashboard.js"></script>
 
-<script>
-console.log("🔥 Dashboard carregado");
-</script>
-
 </body>
-</html> enviar css robusto  e html robusto e completos
+</html>
