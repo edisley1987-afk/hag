@@ -1,257 +1,127 @@
 /* =========================
-RESET
-========================= */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
-html, body{
-height:100%;
-}
-
-body{
-display:flex;
-flex-direction:column;
-font-family:Segoe UI,Arial,sans-serif;
-
-background:
-radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
-linear-gradient(135deg,#001f1a,#00352d);
-
-color:white;
-}
-
-/* =========================
-HEADER
-========================= */
-header{
-padding:15px 20px;
-background:#012a22;
-border-bottom:2px solid #00ff88;
-box-shadow:0 4px 20px rgba(0,0,0,0.7);
-}
-
-.cabecalho{
-display:flex;
-justify-content:space-between;
-align-items:center;
-flex-wrap:wrap;
-gap:10px;
-}
-
-.cabecalho h1{
-font-size:22px;
-font-weight:900;
-}
-
-.subtitulo{
-font-size:12px;
-color:#00ff88;
-opacity:0.8;
-}
-
-/* STATUS */
-.status{
-display:flex;
-align-items:center;
-gap:6px;
-font-size:12px;
-}
-
-.status-dot{
-width:10px;
-height:10px;
-border-radius:50%;
-background:#00ff88;
-box-shadow:0 0 8px #00ff88;
-animation:pulse 1.5s infinite;
-}
-
-@keyframes pulse{
-0%{opacity:1}
-50%{opacity:0.3}
-100%{opacity:1}
-}
-
-/* BOTÃO */
-.btn-historico{
-padding:8px 12px;
-background:#00ff88;
-color:#003b2a;
-border-radius:6px;
-font-weight:bold;
-text-decoration:none;
-box-shadow:0 0 10px #00ff88;
-transition:0.3s;
-}
-
-.btn-historico:hover{
-transform:scale(1.05);
-}
-
-/* =========================
-KPIs
-========================= */
-.kpis{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:12px;
-margin-top:12px;
-}
-
-.kpi-box{
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-
-padding:12px;
-border-radius:10px;
-
-background:#121212;
-border:1px solid #222;
-transition:0.3s;
-}
-
-.kpi-box:hover{
-transform:translateY(-2px);
-box-shadow:0 0 20px rgba(0,255,120,0.2);
-}
-
-.kpi-titulo{
-font-size:12px;
-font-weight:800;
-color:#888;
-}
-
-.kpi-valor{
-font-size:26px;
-font-weight:900;
-margin-top:4px;
-}
-
-/* =========================
-MAIN
-========================= */
-main{
-flex:1;
-padding:20px;
-display:flex;
-flex-direction:column;
-gap:20px;
-}
-
-/* =========================
-GRIDS
-========================= */
-.grid-reservatorios{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
-}
-
-.grid-bombas{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:18px;
-}
-
-.grid-pressoes{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:18px;
-}
-
-/* =========================
-CARD BASE
-========================= */
-.card{
-background:#111;
-border-radius:14px;
-padding:16px;
-box-shadow:0 8px 18px rgba(0,0,0,0.6);
-transition:0.3s;
-}
-
-.card:hover{
-transform:translateY(-3px);
-}
-
-/* =========================
-RESERVATÓRIO (DESTAQUE)
+CARD RESERVATORIO
 ========================= */
 .card.reservatorio{
+position:relative;
+height:260px;
+padding:0;
+
 display:flex;
 flex-direction:column;
 align-items:center;
-justify-content:center;
+justify-content:flex-end;
 
-height:280px;
-
-background:linear-gradient(180deg,#0a2235,#06141f);
-border-radius:20px;
-
-box-shadow:
-inset 0 8px 15px rgba(255,255,255,0.05),
-0 12px 28px rgba(0,0,0,0.9);
+background:transparent;
 }
 
-/* TANQUE */
-.tanque{
-position:relative;
-width:160px;
-height:160px;
+/* =========================
+TOPO DO TANQUE
+========================= */
+.tanque-topo{
+position:absolute;
+top:0;
 
-border-radius:80px 80px 25px 25px;
+width:100%;
+height:60px;
 
-background:linear-gradient(180deg,#123b5c,#081f33);
+border-radius:50%;
+
+background:radial-gradient(circle at center,#2d6fa3,#123b5c);
 
 box-shadow:
-inset 0 10px 20px rgba(255,255,255,0.08),
-inset 0 -10px 20px rgba(0,0,0,0.6),
-0 10px 20px rgba(0,0,0,0.7);
+inset 0 8px 12px rgba(255,255,255,0.15),
+0 5px 10px rgba(0,0,0,0.6);
+
+z-index:3;
+}
+
+/* TAMPA CENTRAL */
+.tanque-topo::after{
+content:"";
+position:absolute;
+
+top:18px;
+left:50%;
+transform:translateX(-50%);
+
+width:40px;
+height:12px;
+
+border-radius:50%;
+
+background:linear-gradient(#5fa8ff,#2c6db2);
+}
+
+/* =========================
+CORPO DO TANQUE
+========================= */
+.tanque-corpo{
+position:absolute;
+top:25px;
+
+width:100%;
+height:200px;
+
+border-radius:0 0 40px 40px;
+
+background:linear-gradient(180deg,#0f3a66,#08233d);
+
+box-shadow:
+inset 0 10px 25px rgba(255,255,255,0.08),
+inset 0 -20px 30px rgba(0,0,0,0.8),
+0 10px 25px rgba(0,0,0,0.8);
 
 overflow:hidden;
 }
 
-/* TAMPA */
-.tanque::before{
-content:"";
-position:absolute;
-top:-12px;
-left:50%;
-transform:translateX(-50%);
-
-width:80%;
-height:28px;
-
-border-radius:50%;
-background:radial-gradient(circle,#3a6ea5,#1c3f66);
-}
-
-/* ÁGUA */
+/* =========================
+ÁGUA REALISTA
+========================= */
 .agua{
 position:absolute;
 bottom:0;
 width:100%;
-transition:height 0.8s ease;
-border-radius:0 0 25px 25px;
 
-box-shadow:inset 0 5px 10px rgba(255,255,255,0.2);
+transition:height 0.8s ease;
+
+/* COR PADRÃO (AZUL) */
+background:linear-gradient(
+to top,
+#0a5bd3,
+#2da6ff
+);
+
+box-shadow:
+inset 0 10px 20px rgba(255,255,255,0.25);
 }
 
-/* ONDA */
+/* LINHA DA ÁGUA */
 .agua::before{
 content:"";
 position:absolute;
+top:-6px;
+
+width:100%;
+height:12px;
+
+border-radius:50%;
+
+background:rgba(255,255,255,0.6);
+}
+
+/* ONDA */
+.agua::after{
+content:"";
+position:absolute;
 top:-10px;
+
 width:200%;
 height:20px;
-background:rgba(255,255,255,0.25);
+
+background:rgba(255,255,255,0.2);
 border-radius:50%;
-animation:wave 3s linear infinite;
+
+animation:wave 4s linear infinite;
 }
 
 @keyframes wave{
@@ -259,128 +129,79 @@ from{transform:translateX(0);}
 to{transform:translateX(-50%);}
 }
 
-/* CORES */
-.nivel-alto{
-background:linear-gradient(#00ffa6,#00c97a);
+/* =========================
+VARIAÇÃO DE COR POR NÍVEL
+========================= */
+
+/* ALTO (AZUL) */
+.nivel-alto .agua{
+background:linear-gradient(#0a5bd3,#2da6ff);
 }
 
-.nivel-medio{
-background:linear-gradient(#00cfff,#0090cc);
+/* MÉDIO (VERDE) */
+.nivel-medio .agua{
+background:linear-gradient(#0fa36b,#1ed49b);
 }
 
-.nivel-baixo{
-background:linear-gradient(#ffd93b,#ffb300);
+/* BAIXO (AMARELO) */
+.nivel-baixo .agua{
+background:linear-gradient(#f1c40f,#f9e79f);
 }
 
-.nivel-critico{
+/* CRÍTICO (VERMELHO) */
+.nivel-critico .agua{
 background:linear-gradient(#ff3d00,#b30000);
 animation:piscar 1s infinite;
 }
 
 @keyframes piscar{
 0%{opacity:1}
-50%{opacity:0.5}
+50%{opacity:0.6}
 100%{opacity:1}
 }
 
-/* INFO */
+/* =========================
+EFEITO VIDRO
+========================= */
+.tanque-corpo::after{
+content:"";
+position:absolute;
+top:0;
+left:10%;
+
+width:30%;
+height:100%;
+
+background:linear-gradient(
+to right,
+rgba(255,255,255,0.15),
+transparent
+);
+
+border-radius:40px;
+}
+
+/* =========================
+TEXTO
+========================= */
 .info{
+position:absolute;
+bottom:20px;
 text-align:center;
-margin-top:10px;
+z-index:5;
+}
+
+.info h3{
+font-size:16px;
+margin-bottom:5px;
 }
 
 .valor{
-font-size:26px;
+font-size:22px;
 font-weight:bold;
 }
 
 .litros{
+font-size:13px;
 opacity:0.8;
-font-size:14px;
-}
-
-/* =========================
-BOMBAS (MENOS DESTAQUE)
-========================= */
-.card.bomba{
-display:flex;
-flex-direction:column;
-gap:6px;
-
-border-radius:14px;
-padding:16px;
-
-box-shadow:0 5px 12px rgba(0,0,0,0.5);
-}
-
-.grid-bombas .card.bomba.ativa{
-border-left:4px solid #00ff88;
-box-shadow:0 0 10px rgba(0,255,120,0.15);
-}
-
-.ligada{
-background:linear-gradient(90deg,#013d26,#046b38);
-}
-
-.desligada{
-background:linear-gradient(90deg,#2a0000,#520000);
-}
-
-/* =========================
-PRESSÃO
-========================= */
-.grid-pressoes .card{
-background:#111;
-border-left:4px solid #3498db;
-}
-
-/* =========================
-TÍTULOS
-========================= */
-.titulo-area{
-margin-bottom:10px;
-font-size:14px;
-opacity:0.8;
-}
-
-/* =========================
-FOOTER
-========================= */
-footer{
-text-align:center;
-padding:10px;
-font-size:12px;
-opacity:0.6;
-}
-
-/* =========================
-MODO CRÍTICO
-========================= */
-body.modo-critico{
-background:
-radial-gradient(circle at center, rgba(255,0,0,0.25), #1a0000 70%),
-linear-gradient(#220000,#000);
-animation:alertaFundo 0.8s infinite;
-}
-
-@keyframes alertaFundo{
-0%{filter:brightness(1);}
-50%{filter:brightness(1.5);}
-100%{filter:brightness(1);}
-}
-
-/* =========================
-RESPONSIVO
-========================= */
-@media (max-width:800px){
-
-.cabecalho{
-flex-direction:column;
-align-items:flex-start;
-}
-
-.kpis{
-grid-template-columns:1fr;
-}
-
 }
