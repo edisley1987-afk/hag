@@ -161,7 +161,7 @@ const SENSORES = safeReadJson(
 
     "Reservatorio_Agua_Abrandada_current": {
       leituraVazio: 0.004048,
-      leituraCheio: 0.004929,
+      leituraCheio: 0.004970,
       capacidade: 9000,
       altura: 0.6
     },
