@@ -282,36 +282,36 @@ function atualizarKPIs(data) {
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="style.css"> </head>
+    <title>Dashboard HAG</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
 <body>
-
-    <div class="card reservatorio">...</div>
-    <div class="card reservatorio">...</div>
+    
+    <div id="areaReservatorios"></div>
 
     <script>
+        // Todo o seu código JS (dashboard.js) vem aqui dentro
+        // Sem tags HTML no meio!
+        
+        function atualizarKPIs(data) {
+             // ... seu código original ...
+        }
+
+        // Função de bordas que você queria adicionar:
         function atualizarBordas() {
             const cards = document.querySelectorAll('.card.reservatorio');
-            
             cards.forEach(card => {
                 const valorTexto = card.querySelector('.valor').innerText;
                 const porcentagem = parseInt(valorTexto);
 
                 card.classList.remove('border-alto', 'border-medio', 'border-baixo', 'border-critico');
 
-                if (porcentagem >= 70) {
-                    card.classList.add('border-alto');
-                } else if (porcentagem >= 40) {
-                    card.classList.add('border-medio');
-                } else if (porcentagem >= 20) {
-                    card.classList.add('border-baixo');
-                } else {
-                    card.classList.add('border-critico');
-                }
+                if (porcentagem >= 70) card.classList.add('border-alto');
+                else if (porcentagem >= 40) card.classList.add('border-medio');
+                else if (porcentagem >= 20) card.classList.add('border-baixo');
+                else card.classList.add('border-critico');
             });
         }
-
-        window.onload = atualizarBordas;
     </script>
 </body>
 </html>
