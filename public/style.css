@@ -1,425 +1,169 @@
 /* =========================
-RESET / BASE
+   RESET / BASE
 ========================= */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-html, body{
-height:100%;
-}
-
-body{
-display:flex;
-flex-direction:column;
-font-family:Segoe UI,Arial,sans-serif;
-background:
-radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
-linear-gradient(135deg,#001f1a,#00352d);
-color:white;
+html, body {
+    height: 100%;
+    background: radial-gradient(circle at top, rgba(0, 255, 120, 0.05), transparent 70%), #001f1a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: white;
 }
 
 /* =========================
-HEADER SCADA
+   LAYOUT E HEADER
 ========================= */
-
-header{
-padding:15px 20px;
-background:#012a22;
-border-bottom:2px solid #00ff88;
-box-shadow:0 4px 20px rgba(0,0,0,0.7);
+header {
+    padding: 20px;
+    background: rgba(1, 42, 34, 0.8);
+    border-bottom: 2px solid #00ff88;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* TOPO */
-.cabecalho{
-display:flex;
-justify-content:space-between;
-align-items:center;
-flex-wrap:wrap;
-gap:10px;
+.cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.cabecalho > div{
-display:flex;
-flex-direction:column;
-}
+.cabecalho h1 { font-size: 20px; letter-spacing: 1px; }
+.subtitulo { font-size: 12px; color: #00ff88; }
 
-/* TITULO */
-.cabecalho h1{
-font-size:22px;
-font-weight:900;
-letter-spacing:1px;
-}
-
-/* SUB */
-.subtitulo{
-font-size:12px;
-color:#00ff88;
-opacity:0.8;
-}
-
-/* STATUS */
-.status{
-display:flex;
-align-items:center;
-gap:6px;
-font-size:12px;
-margin-top:3px;
-}
-
-.status-dot{
-width:10px;
-height:10px;
-border-radius:50%;
-background:#00ff88;
-box-shadow:0 0 8px #00ff88;
-animation:pulse 1.5s infinite;
-}
-
-@keyframes pulse{
-0%{opacity:1}
-50%{opacity:0.3}
-100%{opacity:1}
-}
-
-/* BOTÃO */
-.btn-historico{
-padding:8px 12px;
-background:#00ff88;
-color:#003b2a;
-border-radius:6px;
-font-weight:bold;
-text-decoration:none;
-box-shadow:0 0 10px #00ff88;
-transition:0.3s;
-}
-
-.btn-historico:hover{
-transform:scale(1.05);
-}
-
-/* STATUS SISTEMA */
-#statusSistema{
-margin-top:6px;
-font-size:13px;
-color:#00ff88;
-font-weight:bold;
-}
-
-/* DATA */
-.header-info{
-margin-top:5px;
-font-size:12px;
-opacity:0.8;
+main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
 }
 
 /* =========================
-KPIs SCADA
+   COMPONENTE CARD (PADRÃO)
 ========================= */
-
-.kpis{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:12px;
-margin-top:12px;
+.card {
+    background: #161616;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, border-color 0.2s;
 }
 
-/* CARD KPI */
-.kpi-box{
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-
-padding:12px;
-border-radius:10px;
-
-background:#121212;
-border:1px solid #222;
-
-transition:0.3s;
-}
-
-/* HOVER */
-.kpi-box:hover{
-transform:translateY(-2px);
-box-shadow:0 0 20px rgba(0,255,120,0.2);
-}
-
-/* TITULO */
-.kpi-titulo{
-font-size:12px;
-font-weight:800;
-letter-spacing:1.5px;
-color:#888;
-text-transform:uppercase;
-}
-
-/* VALOR (MELHOR LEITURA) */
-.kpi-valor{
-font-size:28px;
-font-weight:900;
-letter-spacing:1px;
-margin-top:4px;
-color:#ffffff;
+.card:hover {
+    transform: translateY(-2px);
+    border-color: #555;
 }
 
 /* =========================
-ESTADOS KPI
+   KPIs
 ========================= */
-
-/* NORMAL */
-.kpi-box.normal{
-border-color:#00ff88;
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
 }
 
-/* ATENÇÃO */
-.kpi-box.warning{
-background:#2a1e0a;
-border:1px solid #ffcc00;
+.kpi-box {
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+    background: #111;
+    border: 1px solid #222;
 }
 
-.kpi-box.warning .kpi-valor{
-color:#ffcc00;
+.kpi-titulo { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+.kpi-valor { font-size: 24px; font-weight: bold; margin-top: 5px; }
+
+/* =========================
+   RESERVATÓRIOS E NÍVEIS
+========================= */
+.grid-reservatorios, .grid-bombas, .grid-pressoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
 }
 
-/* CRÍTICO */
-.kpi-box.critico{
-background:#1a0000;
-border:2px solid #ff3d00;
-box-shadow:
-0 0 10px rgba(255,60,0,0.4),
-inset 0 0 8px rgba(255,0,0,0.3);
-
-transform:scale(1.08);
-z-index:5;
+.tanque {
+    position: relative;
+    width: 120px;
+    height: 100px;
+    margin: 15px auto;
+    border: 2px solid #333;
+    border-radius: 0 0 15px 15px;
+    overflow: hidden;
 }
 
-.kpi-box.critico .kpi-valor{
-color:#ff3d00;
-text-shadow:0 0 10px #ff3d00;
+.agua { 
+    position: absolute; 
+    bottom: 0; 
+    width: 100%; 
+    transition: height 0.8s ease; 
 }
 
-/* PISCAR SOMENTE CRÍTICO */
-.kpi-box.critico.piscando{
-animation:piscaCritico 1s infinite;
-}
-
-@keyframes piscaCritico{
-0%{opacity:1}
-50%{opacity:0.4}
-100%{opacity:1}
-}
-
-/* KPIs ESPECÍFICOS */
-#bombasAtivas{
-color:#00ff88;
-text-shadow:0 0 8px #00ff88;
-}
-
-#kpiCritico{
-color:#ff3d00;
-text-shadow:0 0 10px #ff3d00;
+/* Cores de Nível Reintegradas */
+.nivel-alto    { background: #00ff88; }
+.nivel-medio   { background: #00cfff; }
+.nivel-baixo   { background: #ffcc00; }
+.nivel-critico { 
+    background: #ff3d00; 
+    animation: piscar 1s infinite; 
 }
 
 /* =========================
-MAIN
+   BOMBAS (ESTADOS)
 ========================= */
+.card.bomba {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-main{
-flex:1;
-padding:20px;
-display:flex;
-flex-direction:column;
-gap:20px;
+.card.bomba.ativa { border-left: 6px solid #00ff88; }
+.card.bomba.inativa { border-left: 6px solid #ff3d00; }
+
+.status-bola {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+.ativa .status-bola { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.inativa .status-bola { background: #ff3d00; }
+
+/* =========================
+   PRESSÃO
+========================= */
+.grid-pressoes .card {
+    border-left: 4px solid #3498db;
 }
 
 /* =========================
-GRIDS
+   ANIMAÇÕES E UTILITÁRIOS
 ========================= */
-
-.grid-reservatorios{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:18px;
+@keyframes piscar {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
-.grid-bombas{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:18px;
+body.modo-critico {
+    background: radial-gradient(circle at center, rgba(255, 0, 0, 0.15), #000 70%);
 }
 
-.grid-pressoes{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:18px;
+footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    opacity: 0.5;
 }
 
-/* =========================
-CARD PADRÃO
-========================= */
-
-.card{
-background:#111;
-border-radius:14px;
-padding:16px;
-box-shadow:0 8px 18px rgba(0,0,0,0.6);
-transition:0.3s;
-}
-
-.card:hover{
-transform:translateY(-3px);
-}
-
-/* =========================
-RESERVATORIO
-========================= */
-
-.card.reservatorio{
-display:flex;
-flex-direction:column;
-align-items:center;
-height:250px;
-}
-
-.tanque{
-position:relative;
-width:140px;
-height:120px;
-margin:auto;
-border:2px solid rgba(255,255,255,0.2);
-border-radius:0 0 18px 18px;
-overflow:hidden;
-}
-
-/* AGUA */
-.agua{
-position:absolute;
-bottom:0;
-width:100%;
-transition:height 0.8s ease;
-}
-
-/* NÍVEIS */
-.nivel-alto{ background:#00ff88;}
-.nivel-medio{ background:#00cfff;}
-.nivel-baixo{ background:#ffcc00;}
-.nivel-critico{
-background:#ff3d00;
-animation:piscar 1s infinite;
-}
-
-@keyframes piscar{
-0%{opacity:1}
-50%{opacity:0.5}
-100%{opacity:1}
-}
-
-/* INFO */
-.info{
-text-align:center;
-margin-top:10px;
-}
-
-.valor{
-font-size:26px;
-font-weight:bold;
-}
-
-.litros{
-opacity:0.8;
-font-size:14px;
-}
-
-/* =========================
-BOMBAS
-========================= */
-
-.card.bomba{
-display:flex;
-flex-direction:column;
-gap:6px;
-}
-
-/* ATIVA */
-.grid-bombas .card.bomba.ativa{
-border-left:5px solid #00ff88;
-box-shadow:0 0 20px rgba(0,255,120,0.3);
-}
-
-/* LIGADA */
-.ligada{
-background:linear-gradient(90deg,#014d2c,#087f3e);
-}
-
-/* DESLIGADA */
-.desligada{
-background:linear-gradient(90deg,#4a0000,#7a0000);
-}
-
-/* =========================
-PRESSÃO
-========================= */
-
-.grid-pressoes .card{
-background:#111;
-border-left:4px solid #3498db;
-}
-
-/* =========================
-TÍTULOS
-========================= */
-
-.titulo-area{
-margin-bottom:10px;
-font-size:14px;
-opacity:0.8;
-}
-
-/* =========================
-FOOTER
-========================= */
-
-footer{
-text-align:center;
-padding:10px;
-font-size:12px;
-opacity:0.6;
-}
-
-/* =========================
-MODO CRÍTICO (TELA VERMELHA)
-========================= */
-
-body.modo-critico{
-background:
-radial-gradient(circle at center, rgba(255,0,0,0.25), #1a0000 70%),
-linear-gradient(#220000,#000);
-animation:alertaFundo 0.8s infinite;
-}
-
-@keyframes alertaFundo{
-0%{filter:brightness(1);}
-50%{filter:brightness(1.5);}
-100%{filter:brightness(1);}
-}
-
-/* =========================
-RESPONSIVO
-========================= */
-
-@media (max-width:800px){
-
-.cabecalho{
-flex-direction:column;
-align-items:flex-start;
-}
-
-.kpis{
-grid-template-columns:1fr;
-}
-
+/* RESPONSIVO */
+@media (max-width: 600px) {
+    .cabecalho { flex-direction: column; text-align: center; }
 }
