@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão FINAL ESTÁVEL (com suporte a estado desconhecido das bombas)
+ * Versão FINAL ESTÁVEL - Correção de redundância e proteção de UI
  */
 
 const API = "/api/dashboard";
@@ -13,18 +13,15 @@ let renderPending = false;
 // =======================
 // INIT
 // =======================
-init();
+// Chamamos o init após o carregamento da página para garantir que os elementos existam
+window.addEventListener('DOMContentLoaded', init);
 
 function init() {
-    // 🚀 carrega imediatamente
     fallbackHTTP();
-
     conectarWS();
 
-    // fallback a cada 8s
     setInterval(fallbackHTTP, 8000);
 
-    // monitor de comunicação
     setInterval(() => {
         if (Date.now() - ultimoDado > 15000) {
             setStatus("🟡 Aguardando sinal do Gateway...");
@@ -39,15 +36,15 @@ function init() {
 function processarPayload(payload) {
     if (!payload) return;
 
-    // trata websocket
+    // Se o payload for um array direto (do HTTP), transformamos no formato esperado
+    // Caso contrário, mantemos o tratamento de WS
+    let dadosProcessados = payload;
     if (payload.type === "update" && payload.dados) {
-        payload = payload.dados;
+        dadosProcessados = payload.dados;
     }
 
     ultimoDado = Date.now();
-
-    // usa backend direto
-    scheduleRender(payload);
+    scheduleRender(dadosProcessados);
 }
 
 // =======================
@@ -56,7 +53,6 @@ function processarPayload(payload) {
 
 function scheduleRender(data) {
     if (renderPending) return;
-
     renderPending = true;
 
     requestAnimationFrame(() => {
@@ -66,14 +62,17 @@ function scheduleRender(data) {
 }
 
 function atualizarUI(data) {
-    if (!data) return;
+    // Proteção: Garante que 'data' seja um objeto válido antes de acessar propriedades
+    if (!data || typeof data !== 'object') return;
 
     const elHora = document.getElementById("hora");
     if (elHora) elHora.innerText = data.lastUpdate || "-";
 
-    renderReservatorios(data.reservatorios || []);
-    renderBombas(data.bombas || []);
-    renderPressoes(data.pressoes || []);
+    // Executa as funções apenas se os dados existirem para evitar erros de leitura
+    if (data.reservatorios) renderReservatorios(data.reservatorios);
+    if (data.bombas) renderBombas(data.bombas);
+    if (data.pressoes) renderPressoes(data.pressoes);
+    
     atualizarKPIs(data);
 }
 
@@ -82,6 +81,7 @@ function atualizarUI(data) {
 // =======================
 
 function renderReservatorios(lista) {
+    if (!Array.isArray(lista)) return;
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
 
@@ -95,7 +95,6 @@ function renderReservatorios(lista) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card reservatorio";
-
             el.innerHTML = `
                 <h2>${r.nome}</h2>
                 <div class="tanque">
@@ -109,7 +108,6 @@ function renderReservatorios(lista) {
                     <div class="litros"></div>
                 </div>
             `;
-
             area.appendChild(el);
         }
 
@@ -117,19 +115,19 @@ function renderReservatorios(lista) {
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
 
-        agua.style.height = `${Math.min(100, Math.max(0, r.percent))}%`;
-        agua.style.background = `linear-gradient(180deg, ${cor1}, ${cor2})`;
-
-        valor.innerText = `${r.percent}%`;
-        litros.innerText = `${formatar(r.current_liters)} L`;
+        if(agua) agua.style.height = `${Math.min(100, Math.max(0, r.percent))}%`;
+        if(agua) agua.style.background = `linear-gradient(180deg, ${cor1}, ${cor2})`;
+        if(valor) valor.innerText = `${r.percent}%`;
+        if(litros) litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
 // =======================
-// BOMBAS (COM FAIL-SAFE VISUAL)
+// BOMBAS
 // =======================
 
 function renderBombas(lista) {
+    if (!Array.isArray(lista)) return;
     const area = document.getElementById("areaBombas");
     if (!area) return;
 
@@ -152,18 +150,10 @@ function renderBombas(lista) {
             area.appendChild(el);
         }
 
-        el.className = `card bomba ${
-            desconhecido ? "stale" : ligada ? "ligada" : "desligada"
-        }`;
-
-        el.querySelector("h2").innerText = b.nome;
-
-        el.querySelector(".status-icon").innerText =
-            desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
-
-        el.querySelector(".valor").innerText =
-            desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
-
+        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
+        el.querySelector("h2").innerText = b.nome || "Bomba";
+        el.querySelector(".status-icon").innerText = desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
+        el.querySelector(".valor").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
         el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
     });
 }
@@ -173,6 +163,7 @@ function renderBombas(lista) {
 // =======================
 
 function renderPressoes(lista) {
+    if (!Array.isArray(lista)) return;
     const area = document.getElementById("areaPressoes");
     if (!area) return;
 
@@ -184,18 +175,15 @@ function renderPressoes(lista) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card";
-
             el.innerHTML = `
                 <h2></h2>
                 <div class="valor-pressao"></div>
             `;
-
             area.appendChild(el);
         }
 
-        el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText =
-            `${Number(p.pressao || 0).toFixed(2)} bar`;
+        el.querySelector("h2").innerText = p.nome || "Pressão";
+        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
     });
 }
 
@@ -231,10 +219,8 @@ function conectarWS() {
 
 async function fallbackHTTP() {
     try {
-        const res = await fetch(API + "?t=" + Date.now());
-
+        const res = await fetch(`${API}?t=${Date.now()}`);
         if (!res.ok) throw new Error("Erro HTTP");
-
         const data = await res.json();
         processarPayload(data);
     } catch (err) {
@@ -258,8 +244,9 @@ function formatar(n) {
 }
 
 function corNivel(p) {
-    if (p >= 70) return ["#00ff88", "#00c853"];
-    if (p >= 40) return ["#ffd600", "#ff8f00"];
+    const percent = Number(p) || 0;
+    if (percent >= 70) return ["#00ff88", "#00c853"];
+    if (percent >= 40) return ["#ffd600", "#ff8f00"];
     return ["#ff1744", "#b71c1c"];
 }
 
@@ -268,12 +255,10 @@ function atualizarKPIs(data) {
     const elAtivas = document.getElementById("bombasAtivas");
 
     if (elCritico) {
-        elCritico.innerText =
-            (data.reservatorios || []).filter(r => r.percent < 30).length;
+        elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
     }
 
     if (elAtivas) {
-        elAtivas.innerText =
-            (data.bombas || []).filter(b => b.estado === "ligada").length;
+        elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
     }
 }
