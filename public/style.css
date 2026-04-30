@@ -15,54 +15,58 @@ body{
 display:flex;
 flex-direction:column;
 font-family:Segoe UI,Arial,sans-serif;
-background:linear-gradient(135deg,#022c22,#014737);
+background:
+radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
+linear-gradient(135deg,#001f1a,#00352d);
 color:white;
 }
 
 /* =========================
-HEADER
+HEADER SCADA
 ========================= */
 
 header{
-padding:20px;
-background:#064e3b;
-box-shadow:0 4px 10px rgba(0,0,0,0.4);
-flex-shrink:0;
+padding:15px 20px;
+background:#012a22;
+border-bottom:2px solid #00ff88;
+box-shadow:0 4px 20px rgba(0,0,0,0.7);
 }
 
-/* TOPO ORGANIZADO */
+/* TOPO */
 .cabecalho{
 display:flex;
 justify-content:space-between;
-align-items:flex-start;
+align-items:center;
 flex-wrap:wrap;
 gap:10px;
 }
 
-/* BLOCO ESQUERDO */
 .cabecalho > div{
 display:flex;
 flex-direction:column;
 }
 
+/* TITULO */
 .cabecalho h1{
-font-size:26px;
+font-size:22px;
+font-weight:900;
+letter-spacing:1px;
 }
 
-/* SUBTITULO */
+/* SUB */
 .subtitulo{
-font-size:13px;
+font-size:12px;
+color:#00ff88;
 opacity:0.8;
-margin-top:2px;
 }
 
 /* STATUS */
 .status{
-font-size:13px;
 display:flex;
 align-items:center;
 gap:6px;
-margin-top:4px;
+font-size:12px;
+margin-top:3px;
 }
 
 .status-dot{
@@ -71,70 +75,153 @@ height:10px;
 border-radius:50%;
 background:#00ff88;
 box-shadow:0 0 8px #00ff88;
+animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:1}
+50%{opacity:0.3}
+100%{opacity:1}
 }
 
 /* BOTÃO */
 .btn-historico{
-padding:10px 14px;
-background:linear-gradient(90deg,#00ff88,#00c853);
-border:none;
-border-radius:8px;
+padding:8px 12px;
+background:#00ff88;
 color:#003b2a;
+border-radius:6px;
 font-weight:bold;
-cursor:pointer;
-box-shadow:0 0 10px rgba(0,255,120,0.6);
+text-decoration:none;
+box-shadow:0 0 10px #00ff88;
 transition:0.3s;
-white-space:nowrap;
 }
 
 .btn-historico:hover{
 transform:scale(1.05);
-box-shadow:0 0 18px rgba(0,255,120,0.9);
 }
 
 /* STATUS SISTEMA */
 #statusSistema{
-margin-top:10px;
-color:#00ff88;
-font-weight:bold;
-font-size:14px;
-}
-
-/* HEADER INFO */
-.header-info{
-display:flex;
-gap:20px;
 margin-top:6px;
 font-size:13px;
-opacity:0.9;
-flex-wrap:wrap;
+color:#00ff88;
+font-weight:bold;
+}
+
+/* DATA */
+.header-info{
+margin-top:5px;
+font-size:12px;
+opacity:0.8;
 }
 
 /* =========================
-KPIs
+KPIs SCADA
 ========================= */
 
 .kpis{
-display:flex;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
 gap:12px;
 margin-top:12px;
-flex-wrap:wrap;
 }
 
-.kpi{
-background:rgba(0,0,0,0.35);
-padding:8px 14px;
-border-radius:8px;
-font-size:13px;
-box-shadow:0 0 8px rgba(0,0,0,0.4);
-min-width:140px;
+/* CARD KPI */
+.kpi-box{
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+
+padding:12px;
+border-radius:10px;
+
+background:#121212;
+border:1px solid #222;
+
+transition:0.3s;
 }
 
-.kpi span{
-color:#00ff88;
-font-weight:bold;
-display:block;
+/* HOVER */
+.kpi-box:hover{
+transform:translateY(-2px);
+box-shadow:0 0 20px rgba(0,255,120,0.2);
+}
+
+/* TITULO */
+.kpi-titulo{
+font-size:12px;
+font-weight:800;
+letter-spacing:1.5px;
+color:#888;
+text-transform:uppercase;
+}
+
+/* VALOR (MELHOR LEITURA) */
+.kpi-valor{
+font-size:28px;
+font-weight:900;
+letter-spacing:1px;
 margin-top:4px;
+color:#ffffff;
+}
+
+/* =========================
+ESTADOS KPI
+========================= */
+
+/* NORMAL */
+.kpi-box.normal{
+border-color:#00ff88;
+}
+
+/* ATENÇÃO */
+.kpi-box.warning{
+background:#2a1e0a;
+border:1px solid #ffcc00;
+}
+
+.kpi-box.warning .kpi-valor{
+color:#ffcc00;
+}
+
+/* CRÍTICO */
+.kpi-box.critico{
+background:#1a0000;
+border:2px solid #ff3d00;
+box-shadow:
+0 0 10px rgba(255,60,0,0.4),
+inset 0 0 8px rgba(255,0,0,0.3);
+
+transform:scale(1.08);
+z-index:5;
+}
+
+.kpi-box.critico .kpi-valor{
+color:#ff3d00;
+text-shadow:0 0 10px #ff3d00;
+}
+
+/* PISCAR SOMENTE CRÍTICO */
+.kpi-box.critico.piscando{
+animation:piscaCritico 1s infinite;
+}
+
+@keyframes piscaCritico{
+0%{opacity:1}
+50%{opacity:0.4}
+100%{opacity:1}
+}
+
+/* KPIs ESPECÍFICOS */
+#bombasAtivas{
+color:#00ff88;
+text-shadow:0 0 8px #00ff88;
+}
+
+#kpiCritico{
+color:#ff3d00;
+text-shadow:0 0 10px #ff3d00;
 }
 
 /* =========================
@@ -172,11 +259,11 @@ gap:18px;
 }
 
 /* =========================
-CARD
+CARD PADRÃO
 ========================= */
 
 .card{
-background:rgba(0,0,0,0.35);
+background:#111;
 border-radius:14px;
 padding:16px;
 box-shadow:0 8px 18px rgba(0,0,0,0.6);
@@ -185,29 +272,6 @@ transition:0.3s;
 
 .card:hover{
 transform:translateY(-3px);
-}
-
-.card h2{
-margin-bottom:10px;
-font-size:14px;
-}
-
-/* =========================
-ALERTA
-========================= */
-
-.alerta{
-border:2px solid #ff3d00;
-box-shadow:
-0 0 15px rgba(255,60,0,0.8),
-inset 0 0 10px rgba(255,60,0,0.6);
-animation:alertaPulse 1.5s infinite;
-}
-
-@keyframes alertaPulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.02)}
-100%{transform:scale(1)}
 }
 
 /* =========================
@@ -221,46 +285,17 @@ align-items:center;
 height:250px;
 }
 
-/* TANQUE */
-
 .tanque{
 position:relative;
 width:140px;
 height:120px;
 margin:auto;
-border-left:2px solid rgba(255,255,255,0.4);
-border-right:2px solid rgba(255,255,255,0.4);
-border-bottom:2px solid rgba(255,255,255,0.4);
+border:2px solid rgba(255,255,255,0.2);
 border-radius:0 0 18px 18px;
-background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.2));
 overflow:hidden;
-box-shadow:inset 0 0 25px rgba(0,255,120,0.2),0 0 12px rgba(0,255,120,0.2);
-}
-
-.tanque:before{
-content:"";
-position:absolute;
-top:-12px;
-width:100%;
-height:22px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,0.5);
-background:linear-gradient(180deg,rgba(255,255,255,0.35),rgba(255,255,255,0.05));
-}
-
-.tanque:after{
-content:"";
-position:absolute;
-bottom:-12px;
-width:100%;
-height:22px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,0.3);
-background:rgba(0,0,0,0.3);
 }
 
 /* AGUA */
-
 .agua{
 position:absolute;
 bottom:0;
@@ -268,18 +303,13 @@ width:100%;
 transition:height 0.8s ease;
 }
 
-/* níveis */
-
-.nivel-alto{ background:linear-gradient(180deg,#00ff88,#00c853);}
-.nivel-medio{ background:linear-gradient(180deg,#00cfff,#008cff);}
-.nivel-baixo{ background:linear-gradient(180deg,#ffcc33,#ff7b00);}
+/* NÍVEIS */
+.nivel-alto{ background:#00ff88;}
+.nivel-medio{ background:#00cfff;}
+.nivel-baixo{ background:#ffcc00;}
 .nivel-critico{
-background:linear-gradient(180deg,#ff3d00,#b00020);
+background:#ff3d00;
 animation:piscar 1s infinite;
-}
-.nivel-cheio{
-background:linear-gradient(180deg,#00d4ff,#006eff);
-box-shadow:0 0 18px #00d4ff;
 }
 
 @keyframes piscar{
@@ -288,42 +318,7 @@ box-shadow:0 0 18px #00d4ff;
 100%{opacity:1}
 }
 
-/* ONDA */
-
-.onda{
-position:absolute;
-top:-5px;
-width:200%;
-height:10px;
-background:radial-gradient(ellipse at center,rgba(255,255,255,0.7),rgba(255,255,255,0.1));
-animation:onda 4s linear infinite;
-}
-
-@keyframes onda{
-0%{transform:translateX(0);}
-100%{transform:translateX(-50%);}
-}
-
-/* ESCALA */
-
-.escala{
-position:absolute;
-right:6px;
-top:18px;
-height:80%;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-}
-
-.escala span{
-background:#00ff88;
-height:2px;
-width:18px;
-}
-
 /* INFO */
-
 .info{
 text-align:center;
 margin-top:10px;
@@ -349,38 +344,67 @@ flex-direction:column;
 gap:6px;
 }
 
-.status-bomba{
-display:flex;
-align-items:center;
-gap:8px;
-font-size:18px;
-font-weight:bold;
+/* ATIVA */
+.grid-bombas .card.bomba.ativa{
+border-left:5px solid #00ff88;
+box-shadow:0 0 20px rgba(0,255,120,0.3);
 }
 
-.status-led{
-width:14px;
-height:14px;
-border-radius:50%;
-}
-
+/* LIGADA */
 .ligada{
 background:linear-gradient(90deg,#014d2c,#087f3e);
-border-left:6px solid #00ff88;
 }
 
-.ligada .status-led{
-background:#00ff88;
-box-shadow:0 0 8px #00ff88;
-}
-
+/* DESLIGADA */
 .desligada{
 background:linear-gradient(90deg,#4a0000,#7a0000);
-border-left:6px solid #ff2e2e;
 }
 
-.desligada .status-led{
-background:#ff2e2e;
-box-shadow:0 0 8px #ff2e2e;
+/* =========================
+PRESSÃO
+========================= */
+
+.grid-pressoes .card{
+background:#111;
+border-left:4px solid #3498db;
+}
+
+/* =========================
+TÍTULOS
+========================= */
+
+.titulo-area{
+margin-bottom:10px;
+font-size:14px;
+opacity:0.8;
+}
+
+/* =========================
+FOOTER
+========================= */
+
+footer{
+text-align:center;
+padding:10px;
+font-size:12px;
+opacity:0.6;
+}
+
+/* =========================
+MODO CRÍTICO (TELA VERMELHA)
+========================= */
+
+body.modo-critico{
+background:
+radial-gradient(circle at center, rgba(255,0,0,0.25), #1a0000 70%),
+linear-gradient(#220000,#000);
+animation:alertaFundo 0.8s infinite;
+}
+
+@keyframes alertaFundo{
+0%{filter:brightness(1);}
+50%{filter:brightness(1.5);}
+100%{filter:brightness(1);}
 }
 
 /* =========================
@@ -395,267 +419,7 @@ align-items:flex-start;
 }
 
 .kpis{
-flex-direction:column;
+grid-template-columns:1fr;
 }
 
-}
-/* =========================
-SCADA TOPBAR
-========================= */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:12px 20px;
-background:#012a22;
-border-bottom:2px solid #00ff88;
-box-shadow:0 4px 20px rgba(0,0,0,0.7);
-}
-
-/* LEFT */
-.top-left{
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.logo{
-font-size:26px;
-}
-
-.titulo{
-font-size:18px;
-font-weight:bold;
-letter-spacing:1px;
-}
-
-.subtitulo{
-font-size:11px;
-opacity:0.7;
-}
-
-/* CENTER */
-.top-center{
-text-align:center;
-}
-
-.status{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:6px;
-font-size:13px;
-}
-
-.dot{
-width:10px;
-height:10px;
-border-radius:50%;
-background:#00ff88;
-animation:pulse 1.5s infinite;
-}
-
-@keyframes pulse{
-0%{opacity:1}
-50%{opacity:0.3}
-100%{opacity:1}
-}
-
-.hora{
-font-size:12px;
-opacity:0.7;
-margin-top:3px;
-}
-
-/* RIGHT */
-.top-right .btn{
-background:#00ff88;
-color:#003b2a;
-padding:8px 12px;
-border-radius:6px;
-text-decoration:none;
-font-weight:bold;
-box-shadow:0 0 10px #00ff88;
-transition:0.3s;
-}
-
-.top-right .btn:hover{
-transform:scale(1.05);
-}
-
-/* =========================
-KPIs SCADA LIMPO
-========================= */
-
-.painel-kpi{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:12px;
-padding:15px 20px;
-background:rgba(0,0,0,0.25);
-border-bottom:1px solid rgba(0,255,120,0.2);
-}
-
-/* CARD BASE */
-.kpi-box{
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-
-padding:12px;
-border-radius:10px;
-
-background:#121212;
-border:1px solid #222;
-
-transition:0.3s;
-}
-
-.kpi-box:hover{
-transform:translateY(-2px);
-box-shadow:0 0 20px rgba(0,255,120,0.2);
-}
-
-/* TITULO */
-.kpi-titulo{
-font-size:11px;
-text-transform:uppercase;
-letter-spacing:1px;
-color:#888;
-}
-
-/* VALOR */
-.kpi-valor{
-font-size:20px;
-font-weight:bold;
-color:#00ff88;
-}
-
-/* =========================
-ESTADOS
-========================= */
-
-/* NORMAL */
-.kpi-box.normal{
-border-color:#00ff88;
-}
-
-/* ATENÇÃO */
-.kpi-box.warning{
-background:#2a1e0a;
-border:1px solid #ffcc00;
-}
-
-.kpi-box.warning .kpi-valor{
-color:#ffcc00;
-}
-
-/* CRÍTICO */
-.kpi-box.critico{
-background:#2a0000;
-border:1px solid #ff3d00;
-box-shadow:0 0 15px rgba(255,60,0,0.3);
-}
-
-.kpi-box.critico .kpi-valor{
-color:#ff3d00;
-}
-
-/* PISCAR SOMENTE CRÍTICO */
-.kpi-box.critico.piscando{
-animation:piscaCritico 1s infinite;
-}
-
-@keyframes piscaCritico{
-0%{opacity:1}
-50%{opacity:0.4}
-100%{opacity:1}
-}
-/* Efeito de brilho para bomba ativa */
-.grid-bombas .card-bomba.ativa {
-    border-left: 5px solid #2ecc71;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
-    background: linear-gradient(145deg, #1a2e23, #121212);
-}
-
-/* Melhorar a leitura das pressões */
-.grid-pressoes div {
-    background: #1a1a1a;
-    border-radius: 4px;
-    border-bottom: 2px solid #3498db; /* Uma linha azul para indicar fluxo/pressão */
-}
-/* ==========================================================
-   MELHORIAS DE LAYOUT - HAG SCADA
-   ========================================================== */
-
-/* 1. Ajuste nos KPIs do Topo (Letras e Espaçamento) */
-.kpi-box {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    padding: 12px;
-    min-width: 140px;
-    background: #121212; /* Fundo levemente diferente do resto */
-    border: 1px solid #222;
-}
-
-.kpi-titulo {
-    font-size: 0.75rem !important; /* Letras menores para o rótulo */
-    font-weight: 700;
-    color: #888; /* Cor discreta para o título */
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    margin-bottom: 4px;
-}
-
-.kpi-valor {
-    font-size: 1.6rem !important; /* Valor em destaque */
-    font-weight: 800;
-    color: #ffffff;
-}
-
-/* 2. Destaque para Bombas Ativas e Críticos */
-.kpi-box.alerta {
-    border: 1.5px solid #ffa500; /* Borda laranja para destaque */
-    background: linear-gradient(145deg, #1a1a1a, #2a1e0a);
-}
-
-.kpi-box.alerta .kpi-titulo {
-    color: #ffa500; /* Título laranja */
-}
-
-/* 3. Melhoria nas Pressões (Mais legível) */
-.grid-pressoes > div {
-    background: #111;
-    border-left: 4px solid #3498db; /* Barra azul lateral para indicar pressão */
-    padding: 10px;
-    border-radius: 4px;
-}
-
-/* 4. Ajuste no Título do Hospital (Header) */
-.top-left .titulo {
-    font-size: 1.4rem;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    color: #fff;
-}
-
-.top-left .subtitulo {
-    font-size: 0.8rem;
-    color: #00ff88; /* Verde neon sutil */
-    font-weight: 500;
-}
-body.modo-critico{
-background: radial-gradient(circle, rgba(255,0,0,0.2), #2a0000);
-animation: alertaFundo 1s infinite;
-}
-
-@keyframes alertaFundo{
-0%{filter:brightness(1);}
-50%{filter:brightness(1.3);}
-100%{filter:brightness(1);}
 }
