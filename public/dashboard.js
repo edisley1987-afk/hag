@@ -80,7 +80,6 @@ function atualizarUI(data) {
 // =======================
 // RESERVATÓRIOS
 // =======================
-
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -88,31 +87,33 @@ function renderReservatorios(lista) {
     lista.forEach(r => {
         const id = `res-${r.setor}`;
         let el = document.getElementById(id);
-
-        const [cor1, cor2] = corNivel(r.percent);
+        
+        // --- LÓGICA DE CLASSE ---
+        // Determina a classe com base na porcentagem
+        let classeBorda = '';
+        if (r.percent >= 70) classeBorda = 'border-alto';
+        else if (r.percent >= 40) classeBorda = 'border-medio';
+        else if (r.percent >= 20) classeBorda = 'border-baixo';
+        else classeBorda = 'border-critico';
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card reservatorio";
+            el.className = "card reservatorio"; // A classe será aplicada aqui
 
             el.innerHTML = `
                 <h2>${r.nome}</h2>
-                <div class="tanque">
-                    <div class="escala">
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="agua"></div>
-                </div>
-                <div class="info">
-                    <div class="valor"></div>
-                    <div class="litros"></div>
-                </div>
+                <div class="tanque">...</div>
+                <div class="info">...</div>
             `;
-
             area.appendChild(el);
         }
 
+        // --- ATUALIZAÇÃO ---
+        // Atualiza as classes do elemento (remove as antigas e adiciona a nova)
+        el.className = `card reservatorio ${classeBorda}`;
+
+        // Restante do seu código de renderização...
         const agua = el.querySelector(".agua");
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
@@ -277,3 +278,40 @@ function atualizarKPIs(data) {
             (data.bombas || []).filter(b => b.estado === "ligada").length;
     }
 }
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+
+    <div class="card reservatorio">...</div>
+    <div class="card reservatorio">...</div>
+
+    <script>
+        function atualizarBordas() {
+            const cards = document.querySelectorAll('.card.reservatorio');
+            
+            cards.forEach(card => {
+                const valorTexto = card.querySelector('.valor').innerText;
+                const porcentagem = parseInt(valorTexto);
+
+                card.classList.remove('border-alto', 'border-medio', 'border-baixo', 'border-critico');
+
+                if (porcentagem >= 70) {
+                    card.classList.add('border-alto');
+                } else if (porcentagem >= 40) {
+                    card.classList.add('border-medio');
+                } else if (porcentagem >= 20) {
+                    card.classList.add('border-baixo');
+                } else {
+                    card.classList.add('border-critico');
+                }
+            });
+        }
+
+        window.onload = atualizarBordas;
+    </script>
+</body>
+</html>
