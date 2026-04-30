@@ -492,3 +492,14 @@ margin:10px 0 12px;
 font-size:16px;
 opacity:0.85;
 }
+/* Borda padrão (transparente ou cinza escuro) */
+.card.reservatorio {
+    border-left: 6px solid #333; 
+    transition: border-left-color 0.5s ease; /* Transição suave na mudança de cor */
+}
+
+/* Classes de Estado */
+.border-alto { border-left-color: #00ff88; }     /* Verde */
+.border-medio { border-left-color: #008cff; }    /* Azul */
+.border-baixo { border-left-color: #ff7b00; }    /* Laranja */
+.border-critico { border-left-color: #b00020; }  /* Vermelho */
