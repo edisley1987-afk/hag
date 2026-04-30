@@ -722,6 +722,24 @@ app.use((req, res, next) => {
   next();
 });
 // ------------------------- ENDPOINTS DE LEITURA -------------------------
+// Adicione isto perto das outras rotas app.get(...)
+app.get("/api/debug-calculo", (req, res) => {
+    const dados = safeReadJson(DATA_FILE, {});
+    const debug = {};
+    
+    Object.keys(MAPA_RESERVATORIOS).forEach(setor => {
+        const ref = MAPA_RESERVATORIOS[setor];
+        const leitura = Number(dados[ref] || 0);
+        debug[setor] = {
+            ref,
+            leitura_bruta: leitura,
+            config: SENSORES[ref],
+            resultado: calcularNivel(ref, leitura)
+        };
+    });
+    
+    res.json(debug);
+});
 app.get("/dados", (req, res) => {
   return res.json(safeReadJson(DATA_FILE, {}));
 });
