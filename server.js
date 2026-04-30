@@ -42,10 +42,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-import http from "http";
+// DEBUG - COLE ESTE BLOCO NO TOPO DO SEU SERVER.JS
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Recebido: ${req.method} ${req.originalUrl}`);
+    console.log(`[DEBUG] Headers:`, JSON.stringify(req.headers));
+    next();
+});import http from "http";
 
 const server = http.createServer(app);
-
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
 const clients = new Set();
