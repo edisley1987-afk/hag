@@ -1,169 +1,142 @@
-/* =========================
-   RESET / BASE
-========================= */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* =========================================================
+   SISTEMA DE MONITORAMENTO HAG - DASHBOARD CSS
+   ========================================================= */
 
-html, body {
-    height: 100%;
-    background: radial-gradient(circle at top, rgba(0, 255, 120, 0.05), transparent 70%), #001f1a;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    height: 100vh;
     font-family: 'Segoe UI', Arial, sans-serif;
-    color: white;
+    background: radial-gradient(circle at top, rgba(0, 255, 120, 0.05), transparent 70%), #000b09;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
 }
 
-/* =========================
-   LAYOUT E HEADER
-========================= */
+/* ========================= HEADER ========================= */
 header {
-    padding: 20px;
-    background: rgba(1, 42, 34, 0.8);
-    border-bottom: 2px solid #00ff88;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-}
-
-.cabecalho {
+    padding: 20px 30px;
+    background: #001511;
+    border-bottom: 1px solid #00ff88;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
 }
 
-.cabecalho h1 { font-size: 20px; letter-spacing: 1px; }
-.subtitulo { font-size: 12px; color: #00ff88; }
+.titulo-main h1 { font-size: 22px; letter-spacing: 1px; color: #fff; }
+.subtitulo { font-size: 12px; color: #00ff88; opacity: 0.8; }
 
+/* ========================= GRID PRINCIPAL ========================= */
 main {
-    padding: 20px;
+    padding: 30px;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 40px;
 }
 
-/* =========================
-   COMPONENTE CARD (PADRÃO)
-========================= */
-.card {
-    background: #161616;
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s, border-color 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    border-color: #555;
-}
-
-/* =========================
-   KPIs
-========================= */
-.kpis {
+.secao-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-}
-
-.kpi-box {
-    text-align: center;
-    padding: 15px;
-    border-radius: 10px;
-    background: #111;
-    border: 1px solid #222;
-}
-
-.kpi-titulo { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-.kpi-valor { font-size: 24px; font-weight: bold; margin-top: 5px; }
-
-/* =========================
-   RESERVATÓRIOS E NÍVEIS
-========================= */
-.grid-reservatorios, .grid-bombas, .grid-pressoes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
 }
 
-.tanque {
-    position: relative;
-    width: 120px;
-    height: 100px;
-    margin: 15px auto;
+/* ========================= CARD PADRÃO ========================= */
+.card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card:hover {
+    border-color: #333;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.card-titulo {
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+/* ========================= RESERVATÓRIOS ========================= */
+.tanque-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.tanque-gfx {
+    width: 60px;
+    height: 80px;
     border: 2px solid #333;
-    border-radius: 0 0 15px 15px;
+    border-radius: 0 0 10px 10px;
+    position: relative;
     overflow: hidden;
 }
 
-.agua { 
-    position: absolute; 
-    bottom: 0; 
-    width: 100%; 
-    transition: height 0.8s ease; 
-}
+.agua { position: absolute; bottom: 0; width: 100%; transition: height 0.8s ease; }
 
-/* Cores de Nível Reintegradas */
-.nivel-alto    { background: #00ff88; }
-.nivel-medio   { background: #00cfff; }
-.nivel-baixo   { background: #ffcc00; }
-.nivel-critico { 
-    background: #ff3d00; 
-    animation: piscar 1s infinite; 
-}
+/* Cores Reservatório */
+.nivel-alto { background: #00ff88; }
+.nivel-medio { background: #00cfff; }
+.nivel-baixo { background: #ffcc00; }
+.nivel-critico { background: #ff3d00; animation: piscar 1s infinite; }
 
-/* =========================
-   BOMBAS (ESTADOS)
-========================= */
+.info-valor { font-size: 24px; font-weight: 800; }
+.info-litros { font-size: 12px; color: #666; }
+
+/* ========================= BOMBAS (Cards Estilizados) ========================= */
 .card.bomba {
+    border-left: 5px solid #333;
+}
+
+.card.bomba.ativa { border-left-color: #00ff88; }
+.card.bomba.inativa { border-left-color: #ff3d00; }
+
+.bomba-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 15px;
 }
 
-.card.bomba.ativa { border-left: 6px solid #00ff88; }
-.card.bomba.inativa { border-left: 6px solid #ff3d00; }
-
-.status-bola {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
-}
-.ativa .status-bola { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
-.inativa .status-bola { background: #ff3d00; }
-
-/* =========================
-   PRESSÃO
-========================= */
-.grid-pressoes .card {
-    border-left: 4px solid #3498db;
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
-/* =========================
-   ANIMAÇÕES E UTILITÁRIOS
-========================= */
+.ativa .status-badge { background: rgba(0,255,136,0.15); color: #00ff88; }
+.inativa .status-badge { background: rgba(255,61,0,0.15); color: #ff3d00; }
+
+/* ========================= PRESSÕES ========================= */
+.card.pressao { border-top: 3px solid #3498db; }
+.pressao-valor { font-size: 28px; font-family: monospace; }
+
+/* ========================= ANIMAÇÕES ========================= */
 @keyframes piscar {
     0% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.4; }
     100% { opacity: 1; }
 }
 
 body.modo-critico {
-    background: radial-gradient(circle at center, rgba(255, 0, 0, 0.15), #000 70%);
+    background: radial-gradient(circle at center, rgba(255, 0, 0, 0.1), #000 70%);
 }
 
-footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 11px;
-    opacity: 0.5;
-}
-
-/* RESPONSIVO */
+/* ========================= RESPONSIVIDADE ========================= */
 @media (max-width: 600px) {
-    .cabecalho { flex-direction: column; text-align: center; }
+    main { padding: 15px; }
+    .secao-grid { grid-template-columns: 1fr; }
 }
