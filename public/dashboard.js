@@ -96,18 +96,19 @@ function renderReservatorios(lista) {
             el.id = id;
             el.className = "card reservatorio";
             el.innerHTML = `
-                <h2>${r.nome}</h2>
-                <div class="tanque">
-                    <div class="escala">
-                        <span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="agua"></div>
-                </div>
-                <div class="info">
-                    <div class="valor"></div>
-                    <div class="litros"></div>
-                </div>
-            `;
+    <div class="tanque-topo"></div>
+
+    <div class="tanque-corpo">
+        <div class="agua"></div>
+    </div>
+
+    <div class="info">
+        <h3>${r.nome}</h3>
+        <div class="valor"></div>
+        <div class="litros"></div>
+    </div>
+`;
+
             area.appendChild(el);
         }
 
