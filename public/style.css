@@ -1,5 +1,5 @@
-os cards das bombas esta mais em destaque do que o de reservatorios /* =========================
-RESET / BASE
+/* =========================
+RESET
 ========================= */
 *{
 margin:0;
@@ -15,16 +15,17 @@ body{
 display:flex;
 flex-direction:column;
 font-family:Segoe UI,Arial,sans-serif;
+
 background:
 radial-gradient(circle at top, rgba(0,255,120,0.08), transparent 70%),
 linear-gradient(135deg,#001f1a,#00352d);
+
 color:white;
 }
 
 /* =========================
-HEADER SCADA
+HEADER
 ========================= */
-
 header{
 padding:15px 20px;
 background:#012a22;
@@ -32,7 +33,6 @@ border-bottom:2px solid #00ff88;
 box-shadow:0 4px 20px rgba(0,0,0,0.7);
 }
 
-/* TOPO */
 .cabecalho{
 display:flex;
 justify-content:space-between;
@@ -41,19 +41,11 @@ flex-wrap:wrap;
 gap:10px;
 }
 
-.cabecalho > div{
-display:flex;
-flex-direction:column;
-}
-
-/* TITULO */
 .cabecalho h1{
 font-size:22px;
 font-weight:900;
-letter-spacing:1px;
 }
 
-/* SUB */
 .subtitulo{
 font-size:12px;
 color:#00ff88;
@@ -66,7 +58,6 @@ display:flex;
 align-items:center;
 gap:6px;
 font-size:12px;
-margin-top:3px;
 }
 
 .status-dot{
@@ -100,25 +91,9 @@ transition:0.3s;
 transform:scale(1.05);
 }
 
-/* STATUS SISTEMA */
-#statusSistema{
-margin-top:6px;
-font-size:13px;
-color:#00ff88;
-font-weight:bold;
-}
-
-/* DATA */
-.header-info{
-margin-top:5px;
-font-size:12px;
-opacity:0.8;
-}
-
 /* =========================
-KPIs SCADA
+KPIs
 ========================= */
-
 .kpis{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
@@ -126,7 +101,6 @@ gap:12px;
 margin-top:12px;
 }
 
-/* CARD KPI */
 .kpi-box{
 display:flex;
 flex-direction:column;
@@ -138,96 +112,29 @@ border-radius:10px;
 
 background:#121212;
 border:1px solid #222;
-
 transition:0.3s;
 }
 
-/* HOVER */
 .kpi-box:hover{
 transform:translateY(-2px);
 box-shadow:0 0 20px rgba(0,255,120,0.2);
 }
 
-/* TITULO */
 .kpi-titulo{
 font-size:12px;
 font-weight:800;
-letter-spacing:1.5px;
 color:#888;
-text-transform:uppercase;
 }
 
-/* VALOR (MELHOR LEITURA) */
 .kpi-valor{
-font-size:28px;
+font-size:26px;
 font-weight:900;
-letter-spacing:1px;
 margin-top:4px;
-color:#ffffff;
-}
-
-/* =========================
-ESTADOS KPI
-========================= */
-
-/* NORMAL */
-.kpi-box.normal{
-border-color:#00ff88;
-}
-
-/* ATENÇÃO */
-.kpi-box.warning{
-background:#2a1e0a;
-border:1px solid #ffcc00;
-}
-
-.kpi-box.warning .kpi-valor{
-color:#ffcc00;
-}
-
-/* CRÍTICO */
-.kpi-box.critico{
-background:#1a0000;
-border:2px solid #ff3d00;
-box-shadow:
-0 0 10px rgba(255,60,0,0.4),
-inset 0 0 8px rgba(255,0,0,0.3);
-
-transform:scale(1.08);
-z-index:5;
-}
-
-.kpi-box.critico .kpi-valor{
-color:#ff3d00;
-text-shadow:0 0 10px #ff3d00;
-}
-
-/* PISCAR SOMENTE CRÍTICO */
-.kpi-box.critico.piscando{
-animation:piscaCritico 1s infinite;
-}
-
-@keyframes piscaCritico{
-0%{opacity:1}
-50%{opacity:0.4}
-100%{opacity:1}
-}
-
-/* KPIs ESPECÍFICOS */
-#bombasAtivas{
-color:#00ff88;
-text-shadow:0 0 8px #00ff88;
-}
-
-#kpiCritico{
-color:#ff3d00;
-text-shadow:0 0 10px #ff3d00;
 }
 
 /* =========================
 MAIN
 ========================= */
-
 main{
 flex:1;
 padding:20px;
@@ -239,29 +146,27 @@ gap:20px;
 /* =========================
 GRIDS
 ========================= */
-
 .grid-reservatorios{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:18px;
+gap:20px;
 }
 
 .grid-bombas{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 gap:18px;
 }
 
 .grid-pressoes{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 gap:18px;
 }
 
 /* =========================
-CARD PADRÃO
+CARD BASE
 ========================= */
-
 .card{
 background:#111;
 border-radius:14px;
@@ -275,40 +180,100 @@ transform:translateY(-3px);
 }
 
 /* =========================
-RESERVATORIO
+RESERVATÓRIO (DESTAQUE)
 ========================= */
-
 .card.reservatorio{
 display:flex;
 flex-direction:column;
 align-items:center;
-height:250px;
+justify-content:center;
+
+height:280px;
+
+background:linear-gradient(180deg,#0a2235,#06141f);
+border-radius:20px;
+
+box-shadow:
+inset 0 8px 15px rgba(255,255,255,0.05),
+0 12px 28px rgba(0,0,0,0.9);
 }
 
+/* TANQUE */
 .tanque{
 position:relative;
-width:140px;
-height:120px;
-margin:auto;
-border:2px solid rgba(255,255,255,0.2);
-border-radius:0 0 18px 18px;
+width:160px;
+height:160px;
+
+border-radius:80px 80px 25px 25px;
+
+background:linear-gradient(180deg,#123b5c,#081f33);
+
+box-shadow:
+inset 0 10px 20px rgba(255,255,255,0.08),
+inset 0 -10px 20px rgba(0,0,0,0.6),
+0 10px 20px rgba(0,0,0,0.7);
+
 overflow:hidden;
 }
 
-/* AGUA */
+/* TAMPA */
+.tanque::before{
+content:"";
+position:absolute;
+top:-12px;
+left:50%;
+transform:translateX(-50%);
+
+width:80%;
+height:28px;
+
+border-radius:50%;
+background:radial-gradient(circle,#3a6ea5,#1c3f66);
+}
+
+/* ÁGUA */
 .agua{
 position:absolute;
 bottom:0;
 width:100%;
 transition:height 0.8s ease;
+border-radius:0 0 25px 25px;
+
+box-shadow:inset 0 5px 10px rgba(255,255,255,0.2);
 }
 
-/* NÍVEIS */
-.nivel-alto{ background:#00ff88;}
-.nivel-medio{ background:#00cfff;}
-.nivel-baixo{ background:#ffcc00;}
+/* ONDA */
+.agua::before{
+content:"";
+position:absolute;
+top:-10px;
+width:200%;
+height:20px;
+background:rgba(255,255,255,0.25);
+border-radius:50%;
+animation:wave 3s linear infinite;
+}
+
+@keyframes wave{
+from{transform:translateX(0);}
+to{transform:translateX(-50%);}
+}
+
+/* CORES */
+.nivel-alto{
+background:linear-gradient(#00ffa6,#00c97a);
+}
+
+.nivel-medio{
+background:linear-gradient(#00cfff,#0090cc);
+}
+
+.nivel-baixo{
+background:linear-gradient(#ffd93b,#ffb300);
+}
+
 .nivel-critico{
-background:#ff3d00;
+background:linear-gradient(#ff3d00,#b30000);
 animation:piscar 1s infinite;
 }
 
@@ -335,35 +300,35 @@ font-size:14px;
 }
 
 /* =========================
-BOMBAS
+BOMBAS (MENOS DESTAQUE)
 ========================= */
-
 .card.bomba{
 display:flex;
 flex-direction:column;
 gap:6px;
+
+border-radius:14px;
+padding:16px;
+
+box-shadow:0 5px 12px rgba(0,0,0,0.5);
 }
 
-/* ATIVA */
 .grid-bombas .card.bomba.ativa{
-border-left:5px solid #00ff88;
-box-shadow:0 0 20px rgba(0,255,120,0.3);
+border-left:4px solid #00ff88;
+box-shadow:0 0 10px rgba(0,255,120,0.15);
 }
 
-/* LIGADA */
 .ligada{
-background:linear-gradient(90deg,#014d2c,#087f3e);
+background:linear-gradient(90deg,#013d26,#046b38);
 }
 
-/* DESLIGADA */
 .desligada{
-background:linear-gradient(90deg,#4a0000,#7a0000);
+background:linear-gradient(90deg,#2a0000,#520000);
 }
 
 /* =========================
 PRESSÃO
 ========================= */
-
 .grid-pressoes .card{
 background:#111;
 border-left:4px solid #3498db;
@@ -372,7 +337,6 @@ border-left:4px solid #3498db;
 /* =========================
 TÍTULOS
 ========================= */
-
 .titulo-area{
 margin-bottom:10px;
 font-size:14px;
@@ -382,7 +346,6 @@ opacity:0.8;
 /* =========================
 FOOTER
 ========================= */
-
 footer{
 text-align:center;
 padding:10px;
@@ -391,9 +354,8 @@ opacity:0.6;
 }
 
 /* =========================
-MODO CRÍTICO (TELA VERMELHA)
+MODO CRÍTICO
 ========================= */
-
 body.modo-critico{
 background:
 radial-gradient(circle at center, rgba(255,0,0,0.25), #1a0000 70%),
@@ -410,7 +372,6 @@ animation:alertaFundo 0.8s infinite;
 /* =========================
 RESPONSIVO
 ========================= */
-
 @media (max-width:800px){
 
 .cabecalho{
