@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Histórico — Monitoramento HAG</title>
+
+<link rel="stylesheet" href="style-historico.css" />
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ✅ ADAPTER DE DATA (OBRIGATÓRIO para eixo time) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="topo">
+
+<div class="topo-esquerda">
+<h1>📊 Histórico de Monitoramento</h1>
+<span class="subtitulo">Reservatórios e Pressões</span>
+</div>
+
+<div class="topo-direita">
+
+<div id="statusHistorico" class="status">
+🟢 Sistema ativo<br>
+Atualizado: <span id="horaHistorico">--:--</span>
+</div>
+
+<a href="dashboard.html" class="voltar-btn">⬅ Painel</a>
+
+</div>
+
+</header>
+
+
+<!-- ================= CONSUMO ================= -->
+<section class="kpis-historico">
+
+<div class="kpi">
+Elevador Hoje
+<span id="consumoElevador">0 L</span>
+</div>
+
+<div class="kpi">
+Lavanderia Hoje
+<span id="consumoLavanderia">0 L</span>
+</div>
+
+<div class="kpi">
+Osmose Hoje
+<span id="consumoOsmose">0 L</span>
+</div>
+
+<div class="kpi">
+Consumo Total
+<span id="consumoTotal">0 L</span>
+</div>
+
+</section>
+
+
+<!-- ================= MAIN ================= -->
+<main class="historico-main">
+
+<!-- ===== GRÁFICO ===== -->
+<section class="card grafico-card">
+
+<h2>📈 Evolução dos Níveis</h2>
+
+<div class="grafico-container">
+<canvas id="graficoHistorico"></canvas>
+</div>
+
+</section>
+
+
+<!-- ===== TABELA ===== -->
+<section class="card tabela-card">
+
+<h2>📋 Histórico Detalhado</h2>
+
+<div id="historico"></div>
+
+</section>
+
+</main>
+
+
+<!-- ================= FOOTER ================= -->
+<footer>
+Sistema Profissional — Hospital Arnaldo Gavazza
+</footer>
+
+
+<!-- ================= RELÓGIO ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+function atualizarHora(){
+  const el = document.getElementById("horaHistorico");
+  if(el){
+    el.innerText = new Date().toLocaleTimeString("pt-BR");
+  }
+}
+
+setInterval(atualizarHora,1000)
+
+})
+</script>
+
+<!-- ================= JS ================= -->
+<script src="historico.js"></script>
+
+</body>
+</html>
