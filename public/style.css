@@ -1,333 +1,104 @@
-/* =========================
-RESET
-========================= */
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
+/* =========================================
+   VARIÁVEIS DE COR (Para o visual da referência)
+========================================= */
+:root {
+  --bg-main: #06111a;          /* Fundo azul petróleo escuro */
+  --bg-card: #0a1620;          /* Fundo dos cards */
+  --accent-blue: #0088ff;      /* Azul da água */
+  --accent-cyan: #00d4ff;      /* Ciano de brilho */
+  --text-main: #e0e6ed;        /* Texto claro */
+  --text-muted: #8899aa;       /* Texto acinzentado */
+  --border-color: rgba(255, 255, 255, 0.08);
 }
 
-body{
-font-family:Segoe UI,Arial,sans-serif;
-background:radial-gradient(circle at top,#012a22,#001a16);
-color:#e6fff7;
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  padding: 20px;
 }
 
-/* =========================
-HEADER
-========================= */
-header{
-padding:25px;
-background:linear-gradient(180deg,#01352b,#001a16);
-border-bottom:1px solid rgba(0,255,180,0.2);
-box-shadow:0 10px 30px rgba(0,0,0,0.6);
-position:relative;
+/* =========================================
+   HEADER (Limpo e profissional)
+========================================= */
+header {
+  padding: 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
 }
 
-.cabecalho{
-text-align:center;
+h1 { font-size: 22px; color: #fff; }
+.subtitulo { color: var(--text-muted); font-size: 13px; }
+
+/* =========================================
+   CARDS E GRID
+========================================= */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-h1{
-font-size:28px;
-letter-spacing:1px;
+/* =========================================
+   TANQUE 3D (Estilo elegante, sem excessos)
+========================================= */
+.tanque {
+  position: relative;
+  width: 130px;
+  height: 170px;
+  margin: 15px auto;
+  background: #0f1c26; /* Fundo interno */
+  border-radius: 10px 10px 25px 25px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
-.subtitulo{
-opacity:0.7;
-font-size:14px;
-margin-top:4px;
+/* ÁGUA REALISTA */
+.agua {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  transition: height 0.8s ease;
+  background: linear-gradient(to top, var(--accent-blue), var(--accent-cyan));
+  opacity: 0.9;
 }
 
-.status{
-margin-top:10px;
-font-size:14px;
-opacity:0.9;
+/* =========================================
+   BOMBAS (Estilo industrial)
+========================================= */
+.grid-bombas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-.status-dot{
-display:inline-block;
-width:10px;
-height:10px;
-border-radius:50%;
-background:#00ff88;
-box-shadow:0 0 10px #00ff88;
-margin-right:6px;
+.card.bomba {
+  border-left: 5px solid transparent;
 }
 
-.btn-historico{
-position:absolute;
-right:20px;
-top:20px;
-padding:10px 16px;
-border-radius:10px;
-background:linear-gradient(90deg,#00ff88,#00c853);
-color:#003b2a;
-font-weight:bold;
-text-decoration:none;
-box-shadow:0 0 12px rgba(0,255,150,0.6);
-transition:0.3s;
+.ligada { border-left-color: #00ff88; }
+.desligada { border-left-color: #ff3333; }
+
+/* =========================================
+   PRESSÕES
+========================================= */
+.grid-pressoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
 }
 
-.btn-historico:hover{
-transform:scale(1.05);
-}
-
-/* =========================
-KPIs
-========================= */
-.kpis-container{
-margin-top:20px;
-padding:15px;
-border-radius:16px;
-background:rgba(0,255,150,0.05);
-backdrop-filter:blur(10px);
-border:1px solid rgba(0,255,150,0.1);
-}
-
-.kpis{
-display:flex;
-justify-content:space-between;
-gap:10px;
-flex-wrap:wrap;
-}
-
-.kpi{
-flex:1;
-min-width:160px;
-padding:12px;
-border-radius:12px;
-background:rgba(0,0,0,0.4);
-text-align:center;
-box-shadow:inset 0 0 10px rgba(0,255,150,0.1);
-}
-
-.kpi span{
-font-size:12px;
-opacity:0.7;
-display:block;
-}
-
-.kpi strong{
-font-size:18px;
-color:#00ff88;
-}
-
-/* =========================
-MAIN
-========================= */
-main{
-padding:20px;
-display:flex;
-flex-direction:column;
-gap:30px;
-}
-
-/* =========================
-TITULO
-========================= */
-.titulo-area{
-font-size:16px;
-margin-bottom:10px;
-opacity:0.8;
-}
-
-/* =========================
-GRID
-========================= */
-.grid-reservatorios{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:20px;
-}
-
-/* =========================
-CARD
-========================= */
-.card{
-background:rgba(0,0,0,0.4);
-border-radius:18px;
-padding:18px;
-box-shadow:
-0 10px 25px rgba(0,0,0,0.6),
-inset 0 0 20px rgba(0,255,150,0.05);
-transition:0.3s;
-}
-
-.card:hover{
-transform:translateY(-5px);
-}
-
-/* =========================
-TANQUE 3D
-========================= */
-/* =========================
-TANQUE 3D REAL
-========================= */
-.tanque{
-position:relative;
-width:160px;
-height:200px;
-margin:auto;
-border-radius:20px;
-overflow:hidden;
-
-/* corpo escuro */
-background:linear-gradient(180deg,#0a2f4d,#051c2e);
-
-box-shadow:
-inset 0 10px 20px rgba(255,255,255,0.1),
-inset 0 -20px 30px rgba(0,0,0,0.6),
-0 10px 25px rgba(0,0,0,0.8);
-}
-
-/* TAMPA SUPERIOR (ESSENCIAL) */
-.tanque:before{
-content:"";
-position:absolute;
-top:-18px;
-left:0;
-width:100%;
-height:36px;
-border-radius:50%;
-
-/* efeito metálico */
-background:radial-gradient(circle at 50% 40%,
-#1e5f8c,
-#0a2f4d 70%
-);
-
-box-shadow:
-0 5px 10px rgba(0,0,0,0.6),
-inset 0 5px 10px rgba(255,255,255,0.2);
-z-index:3;
-}
-
-/* FUNDO CURVO */
-.tanque:after{
-content:"";
-position:absolute;
-bottom:-18px;
-left:0;
-width:100%;
-height:36px;
-border-radius:50%;
-
-background:radial-gradient(circle at 50% 60%,
-#02121f,
-#000
-);
-
-z-index:1;
-}
-
-/* =========================
-ÁGUA REALISTA
-========================= */
-.agua{
-position:absolute;
-bottom:0;
-width:100%;
-transition:height 0.6s ease;
-overflow:hidden;
-
-/* azul profundo */
-background:linear-gradient(180deg,#2fd0ff,#005eff);
-
-box-shadow:
-inset 0 10px 20px rgba(255,255,255,0.2),
-inset 0 -10px 20px rgba(0,0,0,0.4);
-}
-
-/* SUPERFÍCIE DA ÁGUA */
-.agua:before{
-content:"";
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:18px;
-border-radius:50%;
-
-/* brilho */
-background:radial-gradient(
-ellipse at center,
-rgba(255,255,255,0.7),
-rgba(255,255,255,0.05)
-);
-
-opacity:0.6;
-}
-
-/* BORDA INTERNA DO TANQUE */
-.tanque .agua{
-border-top:1px solid rgba(255,255,255,0.4);
-}
-
-/* =========================
-INFO
-========================= */
-.info{
-text-align:center;
-margin-top:10px;
-}
-
-.valor{
-font-size:24px;
-font-weight:bold;
-}
-
-.litros{
-font-size:13px;
-opacity:0.7;
-}
-
-/* =========================
-BOMBAS
-========================= */
-.grid-bombas{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:20px;
-}
-
-.card.bomba{
-padding:20px;
-border-radius:16px;
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.ligada{
-background:linear-gradient(90deg,#014d2c,#087f3e);
-box-shadow:0 0 20px rgba(0,255,150,0.3);
-}
-
-.desligada{
-background:linear-gradient(90deg,#4a0000,#7a0000);
-box-shadow:0 0 20px rgba(255,0,0,0.3);
-}
-
-/* =========================
-PRESSÕES
-========================= */
-.grid-pressoes{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:20px;
-}
-
-.valor-pressao{
-font-size:22px;
-color:#00cfff;
-}
-
-/* =========================
-FOOTER
-========================= */
-footer{
-text-align:center;
-padding:15px;
-opacity:0.5;
+.valor-pressao {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--accent-cyan);
 }
