@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitoramento HAG</title> 
+<title>Monitoramento HAG - 3D</title> 
 <link rel="stylesheet" href="style.css">
 </head>
 
@@ -11,7 +11,7 @@
 <header>
 <div class="cabecalho">
 <h1>💧 Monitoramento HAG</h1>
-<div class="subtitulo">Sistema de Monitoramento de Reservatórios</div>
+<div class="subtitulo">Sistema de Monitoramento 3D - Reservatórios Industriais</div>
 <div class="status" id="statusTempoReal">
     <span class="status-dot"></span>
     <span id="statusTexto">Tempo real conectado</span> • 
@@ -28,33 +28,18 @@
 
 <div class="kpis-container">
 <div class="kpis">
-<div class="kpi">
-<span>Elevador Hoje</span>
-<strong id="kpiElevador">0 L</strong>
-</div>
-<div class="kpi">
-<span>Lavanderia Hoje</span>
-<strong id="kpiLavanderia">0 L</strong>
-</div>
-<div class="kpi">
-<span>Osmose Hoje</span>
-<strong id="kpiOsmose">0 L</strong>
-</div>
-<div class="kpi">
-<span>Bombas Ativas</span>
-<strong id="bombasAtivas">0</strong>
-</div>
-<div class="kpi">
-<span>Reservatórios Críticos</span>
-<strong id="kpiCritico">0</strong>
-</div>
+<div class="kpi"><span>Elevador Hoje</span><strong id="kpiElevador">0 L</strong></div>
+<div class="kpi"><span>Lavanderia Hoje</span><strong id="kpiLavanderia">0 L</strong></div>
+<div class="kpi"><span>Osmose Hoje</span><strong id="kpiOsmose">0 L</strong></div>
+<div class="kpi"><span>Bombas Ativas</span><strong id="bombasAtivas">0</strong></div>
+<div class="kpi"><span>Reservatórios Críticos</span><strong id="kpiCritico">0</strong></div>
 </div>
 </div>
 </header>
 
 <main>
 <section>
-<h2 class="titulo-area">Reservatórios</h2>
+<h2 class="titulo-area">Reservatórios 3D</h2>
 <div id="areaReservatorios" class="grid-reservatorios"></div>
 </section>
 
@@ -69,26 +54,22 @@
 </section>
 </main>
 
-<footer>Sistema Profissional - HAG</footer>
+<footer>Sistema Profissional 3D - HAG © 2026</footer>
 
 <script src="/dashboard.js"></script>
 <script>
-console.log("🔥 Dashboard carregado");
+console.log("🔥 Dashboard 3D carregado");
 
 function atualizarData() {
     const el = document.getElementById("dataSistema");
-    if (!el) return;
-    const agora = new Date();
-    el.innerText = agora.toLocaleDateString("pt-BR");
+    if (el) el.innerText = new Date().toLocaleDateString("pt-BR");
 }
 setInterval(atualizarData, 1000);
 atualizarData();
 
 function atualizarHoraLocal() {
     const el = document.getElementById("hora");
-    if (!el) return;
-    const agora = new Date();
-    el.innerText = agora.toLocaleTimeString("pt-BR");
+    if (el) el.innerText = new Date().toLocaleTimeString("pt-BR");
 }
 setInterval(atualizarHoraLocal, 1000);
 
@@ -97,9 +78,7 @@ function atualizarStatusVisual(texto) {
     const dot = document.querySelector(".status-dot");
     if (!el || !dot) return;
     el.innerText = texto;
-    if (texto.includes("Tempo real")) dot.style.background = "#00ff88";
-    else if (texto.includes("Reconectando")) dot.style.background = "#ffd600";
-    else dot.style.background = "#ff3d00";
+    dot.style.background = texto.includes("Tempo real") ? "#00ff88" : texto.includes("Reconectando") ? "#ffd600" : "#ff3d00";
 }
 </script>
 </body>
