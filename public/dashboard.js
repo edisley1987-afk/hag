@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão FINAL ESTÁVEL (com suporte a estado desconhecido das bombas)
+ * Versão FINAL ESTÁVEL (melhorada - visual + performance)
  */
 
 const API = "/api/dashboard";
@@ -16,18 +16,17 @@ let renderPending = false;
 init();
 
 function init() {
-    // 🚀 carrega imediatamente
     fallbackHTTP();
-
     conectarWS();
 
-    // fallback a cada 8s
     setInterval(fallbackHTTP, 8000);
 
-    // monitor de comunicação
     setInterval(() => {
         if (Date.now() - ultimoDado > 15000) {
             setStatus("🟡 Aguardando sinal do Gateway...");
+            document.body.classList.add("sem-sinal");
+        } else {
+            document.body.classList.remove("sem-sinal");
         }
     }, 5000);
 }
@@ -39,14 +38,11 @@ function init() {
 function processarPayload(payload) {
     if (!payload) return;
 
-    // trata websocket
     if (payload.type === "update" && payload.dados) {
         payload = payload.dados;
     }
 
     ultimoDado = Date.now();
-
-    // usa backend direto
     scheduleRender(payload);
 }
 
@@ -89,31 +85,29 @@ function renderReservatorios(lista) {
         const id = `res-${r.setor}`;
         let el = document.getElementById(id);
 
-        const [cor1, cor2] = corNivel(r.percent);
-
         if (!el) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card reservatorio";
 
-           el.innerHTML = `
-    <h2>${r.nome}</h2>
+            el.innerHTML = `
+                <h2>${r.nome}</h2>
 
-    <div class="tanque">
-        <div class="escala">
-            <span></span><span></span><span></span><span></span><span></span>
-        </div>
+                <div class="tanque">
+                    <div class="escala">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
 
-        <div class="agua">
-            <div class="onda"></div>
-        </div>
-    </div>
+                    <div class="agua">
+                        <div class="onda"></div>
+                    </div>
+                </div>
 
-    <div class="info">
-        <div class="valor"></div>
-        <div class="litros"></div>
-    </div>
-`;
+                <div class="info">
+                    <div class="valor"></div>
+                    <div class="litros"></div>
+                </div>
+            `;
             area.appendChild(el);
         }
 
@@ -121,16 +115,60 @@ function renderReservatorios(lista) {
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
 
-        agua.style.height = `${Math.min(100, Math.max(0, r.percent))}%`;
-        agua.style.background = `linear-gradient(180deg, ${cor1}, ${cor2})`;
+        // =========================
+        // NIVEL (com proteção)
+        // =========================
+        const nivel = Math.min(100, Math.max(0, r.percent));
+        const nivelSuavizado = Math.round(nivel);
 
-        valor.innerText = `${r.percent}%`;
+        // evita render desnecessário
+        if (agua.dataset.nivel != nivelSuavizado) {
+            agua.style.height = `${nivelSuavizado}%`;
+            agua.dataset.nivel = nivelSuavizado;
+        }
+
+        // =========================
+        // CLASSES DE ESTADO
+        // =========================
+        agua.classList.remove(
+            "nivel-alto",
+            "nivel-medio",
+            "nivel-baixo",
+            "nivel-critico",
+            "nivel-cheio"
+        );
+
+        if (nivel >= 95) {
+            agua.classList.add("nivel-cheio");
+        } else if (nivel >= 70) {
+            agua.classList.add("nivel-alto");
+        } else if (nivel >= 40) {
+            agua.classList.add("nivel-medio");
+        } else if (nivel >= 20) {
+            agua.classList.add("nivel-baixo");
+        } else {
+            agua.classList.add("nivel-critico");
+        }
+
+        // =========================
+        // ALERTA VISUAL NO CARD
+        // =========================
+        if (nivel < 20) {
+            el.classList.add("alerta");
+        } else {
+            el.classList.remove("alerta");
+        }
+
+        // =========================
+        // TEXTO
+        // =========================
+        valor.innerText = `${nivelSuavizado}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
 // =======================
-// BOMBAS (COM FAIL-SAFE VISUAL)
+// BOMBAS
 // =======================
 
 function renderBombas(lista) {
@@ -259,12 +297,6 @@ function setStatus(txt) {
 
 function formatar(n) {
     return Number(n || 0).toLocaleString("pt-BR");
-}
-
-function corNivel(p) {
-    if (p >= 70) return ["#00ff88", "#00c853"];
-    if (p >= 40) return ["#ffd600", "#ff8f00"];
-    return ["#ff1744", "#b71c1c"];
 }
 
 function atualizarKPIs(data) {
