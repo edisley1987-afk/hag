@@ -1,33 +1,45 @@
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 1.0.2 - Com efeito de água animado
+ * Versão 2.0 - Profissional SCADA
+ * Autor: Sistema HAG
  */
 
 const API = "/api/dashboard";
 let ws = null;
 let reconnectDelay = 3000;
+let maxReconnectDelay = 30000;
 let ultimoDado = Date.now();
 let renderPending = false;
+let cacheDados = new Map();
 
 // =======================
 // INIT
 // =======================
-init();
+document.addEventListener("DOMContentLoaded", init);
 
 function init() {
+    console.log("%c HAG Dashboard v2.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
     fallbackHTTP();
     conectarWS();
     setInterval(fallbackHTTP, 8000);
+    iniciarMonitoramentoSinal();
+}
 
-    // Timeout de sinal
+// =======================
+// MONITORAMENTO DE SINAL
+// =======================
+function iniciarMonitoramentoSinal() {
     setInterval(() => {
-        if (Date.now() - ultimoDado > 15000) {
-            setStatus("🟡 Aguardando sinal do Gateway...");
+        const tempoSemSinal = Date.now() - ultimoDado;
+        if (tempoSemSinal > 15000) {
+            setStatus("🟡 Aguardando sinal do Gateway...", "warning");
             document.body.classList.add("sem-sinal");
             atualizarStatusVisual("Sem sinal");
         } else {
             document.body.classList.remove("sem-sinal");
-            atualizarStatusVisual("Tempo real conectado");
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                atualizarStatusVisual("Tempo real conectado");
+            }
         }
     }, 5000);
 }
@@ -45,7 +57,7 @@ function processarPayload(payload) {
 }
 
 // =======================
-// RENDER OTIMIZADO
+// RENDER OTIMIZADO COM RAF
 // =======================
 function scheduleRender(data) {
     if (renderPending) return;
@@ -77,9 +89,9 @@ function renderReservatorios(lista) {
 
     lista.forEach(r => {
         const id = `res-${r.setor}`;
-        let el = document.getElementById(id);
+        let el = cacheDados.get(id);
 
-        // Cria o card se não existir
+        // Cria elemento se não existir
         if (!el) {
             el = document.createElement("div");
             el.id = id;
@@ -100,27 +112,30 @@ function renderReservatorios(lista) {
                 </div>
             `;
             area.appendChild(el);
+            cacheDados.set(id, el);
         }
 
         const agua = el.querySelector(".agua");
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
 
-        const nivel = Math.min(100, Math.max(0, r.percent));
-        const nivelSuavizado = Math.round(nivel);
+        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
+        const nivelSuavizado = Math.round(nivel * 10) / 10; // 1 casa decimal
         const nivelAnterior = Number(agua.dataset.nivel || 0);
 
-        // Balanço quando nível muda mais de 1%
-        if (Math.abs(nivelSuavizado - nivelAnterior) >= 1) {
+        // Animação de balanço quando há mudança significativa
+        if (Math.abs(nivelSuavizado - nivelAnterior) >= 0.5) {
             agua.classList.add("balancando");
-            setTimeout(() => agua.classList.remove("balancando"), 1200);
+            setTimeout(() => agua.classList.remove("balancando"), 1300);
         }
 
-        // Atualiza altura da água
-        agua.style.height = `${nivelSuavizado}%`;
+        // Atualiza altura com transição suave
+        if (agua.style.height !== `${nivelSuavizado}%`) {
+            agua.style.height = `${nivelSuavizado}%`;
+        }
         agua.dataset.nivel = nivelSuavizado;
 
-        // Aplica cor baseada no nível - SEM sobrescrever a classe base
+        // Aplica classe de cor por nível
         agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
         if (nivel >= 95) {
             agua.classList.add("nivel-cheio");
@@ -134,11 +149,11 @@ function renderReservatorios(lista) {
             agua.classList.add("nivel-critico");
         }
 
-        // Alerta visual no card quando crítico
+        // Alerta visual no card quando nível crítico
         el.classList.toggle("alerta", nivel < 20);
 
-        // Atualiza valores
-        valor.innerText = `${nivelSuavizado}%`;
+        // Atualiza textos com formatação
+        valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
@@ -152,9 +167,9 @@ function renderBombas(lista) {
 
     lista.forEach((b, i) => {
         const id = `bomba-${i}`;
-        let el = document.getElementById(id);
+        let el = cacheDados.get(id);
         const ligada = b.estado === "ligada";
-        const desconhecido = b.estado === "desconhecido";
+        const desconhecido = b.estado === "desconhecido" || b.estado === undefined;
 
         if (!el) {
             el = document.createElement("div");
@@ -167,13 +182,14 @@ function renderBombas(lista) {
                 <div class="ciclos"></div>
             `;
             area.appendChild(el);
+            cacheDados.set(id, el);
         }
 
         el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
         el.querySelector("h2").innerText = b.nome;
         el.querySelector(".status-icon").innerText = desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
         el.querySelector(".valor").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
+        el.querySelector(".ciclos").innerText = `${formatar(b.ciclo || 0)} ciclos`;
     });
 }
 
@@ -186,7 +202,7 @@ function renderPressoes(lista) {
 
     lista.forEach((p, i) => {
         const id = `pressao-${i}`;
-        let el = document.getElementById(id);
+        let el = cacheDados.get(id);
 
         if (!el) {
             el = document.createElement("div");
@@ -194,15 +210,36 @@ function renderPressoes(lista) {
             el.className = "card";
             el.innerHTML = `<h2></h2><div class="valor-pressao"></div>`;
             area.appendChild(el);
+            cacheDados.set(id, el);
         }
 
+        const pressao = Number(p.pressao || 0).toFixed(2);
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
+        el.querySelector(".valor-pressao").innerText = `${pressao} bar`;
     });
 }
 
 // =======================
-// WEBSOCKET
+// KPIs
+// =======================
+function atualizarKPIs(data) {
+    const kpis = data.kpis || {};
+    const elementos = {
+        kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
+        bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
+        kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
+        kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
+        kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
+    };
+
+    Object.entries(elementos).forEach(([id, valor]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = valor;
+    });
+}
+
+// =======================
+// WEBSOCKET COM RECONEXÃO EXPONENCIAL
 // =======================
 function conectarWS() {
     if (ws) ws.close();
@@ -211,23 +248,26 @@ function conectarWS() {
     ws = new WebSocket(`${protocolo}//${location.host}`);
     
     ws.onopen = () => {
-        console.log("🟢 WebSocket conectado");
-        setStatus("🟢 Tempo real conectado");
+        console.log("%c🟢 WebSocket conectado", "color: #00ff88; font-weight: bold;");
+        setStatus("🟢 Tempo real conectado", "success");
+        atualizarStatusVisual("Tempo real conectado");
+        reconnectDelay = 3000; // Reset delay
     };
 
     ws.onmessage = (msg) => { 
         try { 
             processarPayload(JSON.parse(msg.data)); 
         } catch (e) { 
-            console.error("Erro WS:", e); 
+            console.error("Erro ao processar mensagem WS:", e); 
         } 
     };
 
     ws.onclose = () => { 
-        console.log("🔴 WebSocket desconectado");
-        setStatus("🔴 Reconectando..."); 
+        console.log("%c🔴 WebSocket desconectado", "color: #ff3d00; font-weight: bold;");
+        setStatus("🔴 Reconectando...", "error"); 
         atualizarStatusVisual("Reconectando...");
         setTimeout(conectarWS, reconnectDelay); 
+        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay); // Backoff exponencial
     };
 
     ws.onerror = (err) => {
@@ -240,17 +280,23 @@ function conectarWS() {
 // =======================
 async function fallbackHTTP() {
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const res = await fetch(API + "?t=" + Date.now(), {
             cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
+            signal: controller.signal,
+            headers: { "Cache-Control": "no-cache, no-store, must-revalidate" }
         });
+        
+        clearTimeout(timeoutId);
         
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         processarPayload(data);
     } catch (err) {
-        if (!ws || ws.readyState !== 1) {
-            setStatus("🔴 Erro de comunicação");
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            setStatus("🔴 Erro de comunicação", "error");
             atualizarStatusVisual("Desconectado");
         }
     }
@@ -259,9 +305,12 @@ async function fallbackHTTP() {
 // =======================
 // HELPERS
 // =======================
-function setStatus(txt) {
+function setStatus(txt, tipo = "info") {
     const el = document.getElementById("statusSistema");
-    if (el) el.innerText = txt;
+    if (!el) return;
+    
+    el.innerText = txt;
+    el.className = `status-${tipo}`;
 }
 
 function atualizarStatusVisual(texto) {
@@ -270,39 +319,33 @@ function atualizarStatusVisual(texto) {
     if (!el || !dot) return;
     
     el.innerText = texto;
+    
     if (texto.includes("Tempo real")) {
         dot.style.background = "#00ff88";
+        dot.style.boxShadow = "0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.4)";
     } else if (texto.includes("Reconectando")) {
         dot.style.background = "#ffd600";
+        dot.style.boxShadow = "0 0 12px #ffd600, 0 0 24px rgba(255,214,0,0.4)";
     } else {
         dot.style.background = "#ff3d00";
+        dot.style.boxShadow = "0 0 12px #ff3d00, 0 0 24px rgba(255,61,0,0.4)";
     }
 }
 
 function formatar(n) { 
-    return Number(n || 0).toLocaleString("pt-BR"); 
+    return Number(n || 0).toLocaleString("pt-BR", { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0 
+    }); 
 }
 
-function atualizarKPIs(data) {
-    const elCritico = document.getElementById("kpiCritico");
-    const elAtivas = document.getElementById("bombasAtivas");
-    const elElevador = document.getElementById("kpiElevador");
-    const elLavanderia = document.getElementById("kpiLavanderia");
-    const elOsmose = document.getElementById("kpiOsmose");
-    
-    if (elCritico) {
-        elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
-    }
-    if (elAtivas) {
-        elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
-    }
-    if (elElevador) {
-        elElevador.innerText = `${formatar(data.kpis?.elevador_hoje || 0)} L`;
-    }
-    if (elLavanderia) {
-        elLavanderia.innerText = `${formatar(data.kpis?.lavanderia_hoje || 0)} L`;
-    }
-    if (elOsmose) {
-        elOsmose.innerText = `${formatar(data.kpis?.osmose_hoje || 0)} L`;
-    }
-}
+// =======================
+// TRATAMENTO DE ERRO GLOBAL
+// =======================
+window.addEventListener("error", (e) => {
+    console.error("Erro não tratado:", e.error);
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+    console.error("Promise rejeitada:", e.reason);
+});
