@@ -26,9 +26,9 @@ Sistema de Monitoramento de Reservatórios
 </div>
 
 <div class="status" id="statusTempoReal">
-<span class="status-dot"></span>
-<span id="statusTexto">Tempo real conectado</span> • 
-<span id="hora">--:--</span>
+    <span class="status-dot"></span>
+    <span id="statusTexto">Tempo real conectado</span> • 
+    <span id="hora">--:--</span>
 </div>
 
 <a href="historico.html" class="btn-historico">
@@ -48,43 +48,43 @@ STATUS SISTEMA (JS CONTROLA)
 DATA
 ========================= -->
 <div class="header-info">
-
-<div>
-📅 <span id="dataSistema">--/--/----</span>
-</div>
-
+    <div>
+        📅 <span id="dataSistema">--/--/----</span>
+    </div>
 </div>
 
 <!-- =========================
-KPIs
+KPIs (AGORA COM CONTAINER VISUAL)
 ========================= -->
+<div class="kpis-container">
 <div class="kpis">
 
 <div class="kpi">
-Elevador Hoje
-<span id="kpiElevador">0 L</span>
+<span>Elevador Hoje</span>
+<strong id="kpiElevador">0 L</strong>
 </div>
 
 <div class="kpi">
-Lavanderia Hoje
-<span id="kpiLavanderia">0 L</span>
+<span>Lavanderia Hoje</span>
+<strong id="kpiLavanderia">0 L</strong>
 </div>
 
 <div class="kpi">
-Osmose Hoje
-<span id="kpiOsmose">0 L</span>
+<span>Osmose Hoje</span>
+<strong id="kpiOsmose">0 L</strong>
 </div>
 
 <div class="kpi">
-Bombas Ativas
-<span id="bombasAtivas">0</span>
+<span>Bombas Ativas</span>
+<strong id="bombasAtivas">0</strong>
 </div>
 
 <div class="kpi">
-Reservatórios Críticos
-<span id="kpiCritico">0</span>
+<span>Reservatórios Críticos</span>
+<strong id="kpiCritico">0</strong>
 </div>
 
+</div>
 </div>
 
 </header>
@@ -147,21 +147,23 @@ Sistema Profissional - HAG
 <script src="/dashboard.js"></script>
 
 <!-- =========================
-🧠 SCRIPTS AUXILIARES (LEVE)
+🧠 SCRIPTS AUXILIARES
 ========================= -->
 <script>
-// log inicial
+
+// =======================
+// LOG
+// =======================
 console.log("🔥 Dashboard carregado");
 
 // =======================
-// DATA ATUAL
+// DATA
 // =======================
 function atualizarData() {
     const el = document.getElementById("dataSistema");
     if (!el) return;
 
     const agora = new Date();
-
     el.innerText = agora.toLocaleDateString("pt-BR");
 }
 
@@ -169,7 +171,7 @@ setInterval(atualizarData, 1000);
 atualizarData();
 
 // =======================
-// HORA LOCAL (fallback)
+// HORA LOCAL
 // =======================
 function atualizarHoraLocal() {
     const el = document.getElementById("hora");
@@ -179,11 +181,10 @@ function atualizarHoraLocal() {
     el.innerText = agora.toLocaleTimeString("pt-BR");
 }
 
-// só usa se backend não atualizar
 setInterval(atualizarHoraLocal, 1000);
 
 // =======================
-// STATUS VISUAL (LED)
+// STATUS VISUAL
 // =======================
 function atualizarStatusVisual(texto) {
     const el = document.getElementById("statusTexto");
@@ -201,9 +202,6 @@ function atualizarStatusVisual(texto) {
         dot.style.background = "#ff3d00";
     }
 }
-
-// OBS: seu JS principal já controla #statusSistema,
-// aqui é só visual do topo se quiser integrar depois
 
 </script>
 
