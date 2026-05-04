@@ -204,10 +204,21 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
 /* Tanque 3D */
 .tanque {
   position: relative;
-  width: 180px;
-  height: 240px;
+  width: 160px;
+  height: 220px;
   margin: 25px auto;
-  transform-style: preserve-3d;
+  background: linear-gradient(90deg, 
+      #051525 0%, 
+      #123d66 45%, 
+      #1b5a99 50%, 
+      #123d66 55%, 
+      #051525 100%);
+  border-radius: 0 0 55px 55px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+  overflow: hidden; /* <<< ESSENCIAL pra água ficar dentro */
+  z-index: 0;
+}
 }
 
 /* Corpo do cilindro */
@@ -286,6 +297,7 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
 }
 
 /* ================== ÁGUA COM EFEITO ================== */
+/* ================== ÁGUA DENTRO DO TANQUE ================== */
 .agua {
   position: absolute;
   bottom: 0;
@@ -294,13 +306,13 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
   height: 0%;
   border-radius: 0 0 50px 50px;
   transition: height 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 1;
+  z-index: 1; /* Água no fundo do tanque */
   overflow: hidden;
   background: linear-gradient(to top, #0077ff 0%, #00ddff 60%, #64ffff 100%);
   box-shadow: inset 0 -15px 30px rgba(0,60,120,0.5);
 }
 
-/* Superfície brilhante */
+/* Superfície brilhante da água */
 .agua::after {
   content: "";
   position: absolute;
@@ -315,9 +327,10 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
   border-radius: 50%;
   transform: translateY(-50%);
   filter: blur(1px);
+  z-index: 2; /* Brilho na frente da água */
 }
 
-/* Onda animada */
+/* Onda animada na superfície */
 .onda {
   position: absolute;
   top: -8px;
@@ -329,6 +342,7 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
     transparent 60%);
   animation: onda 3s ease-in-out infinite;
   filter: blur(1px);
+  z-index: 3; /* Onda na frente de tudo dentro do tanque */
 }
 
 @keyframes onda {
@@ -342,76 +356,37 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
 }
 
 @keyframes balanco {
- 0%, 100% { transform: skewX(0deg); }
- 30% { transform: skewX(2deg); }
- 70% { transform: skewX(-1.5deg); }
+ 0%, 100% { transform: skewX(0deg) scaleX(1); }
+ 30% { transform: skewX(2deg) scaleX(1.01); }
+ 70% { transform: skewX(-1.5deg) scaleX(0.99); }
 }
 
-/* Cores por nível */
+/* ================== CORES POR NÍVEL ================== */
 .agua.nivel-cheio { 
   background: linear-gradient(to top, #00c853 0%, #00e676 60%, #69f0ae 100%); 
-  box-shadow: inset 0 -15px 30px rgba(0,120,60,0.4);
+  box-shadow: inset 0 -15px 30px rgba(0,120,60,0.4), 0 0 25px rgba(0,230,118,0.25);
 }
 .agua.nivel-alto { 
   background: linear-gradient(to top, #00b0ff 0%, #40c4ff 60%, #80d8ff 100%); 
+  box-shadow: inset 0 -15px 30px rgba(0,80,160,0.4), 0 0 20px rgba(64,196,255,0.2);
 }
 .agua.nivel-medio { 
   background: linear-gradient(to top, #0077ff 0%, #00ddff 60%, #64ffff 100%); 
+  box-shadow: inset 0 -15px 30px rgba(0,60,120,0.4), 0 0 20px rgba(0,221,255,0.2);
 }
 .agua.nivel-baixo { 
   background: linear-gradient(to top, #ff9800 0%, #ffc107 60%, #ffd54f 100%); 
+  box-shadow: inset 0 -15px 30px rgba(200,120,0,0.4), 0 0 20px rgba(255,193,7,0.2);
 }
 .agua.nivel-critico { 
   background: linear-gradient(to top, #d50000 0%, #ff3d00 60%, #ff6e40 100%); 
-  box-shadow: inset 0 -15px 30px rgba(150,0,0,0.4);
-  animation: pulsar-critico 1.5s infinite;
-}
-@keyframes onda3d {
- 0%, 100% { transform: translateX(0) scaleY(1) rotateX(15deg) skewX(0deg); }
- 25% { transform: translateX(20%) scaleY(1.2) rotateX(-8deg) skewX(3deg); }
- 50% { transform: translateX(40%) scaleY(1.4) rotateX(5deg) skewX(-2deg); }
- 75% { transform: translateX(60%) scaleY(1.1) rotateX(-3deg) skewX(1deg); }
-}
-
-/* Balanço quando nível muda */
-.agua.balancando {
-  animation: balanco 1.5s ease-in-out;
-}
-
-@keyframes balanco {
- 0%, 100% { transform: skewX(0deg) scaleX(1); }
- 20% { transform: skewX(3deg) scaleX(1.02); }
- 40% { transform: skewX(-2deg) scaleX(0.98); }
- 60% { transform: skewX(1deg) scaleX(1.01); }
- 80% { transform: skewX(-1deg) scaleX(0.99); }
-}
-
-/* Cores por nível com glow */
-.agua.nivel-cheio { 
-  background: linear-gradient(to top, #00c853 0%, #00e676 40%, #69f0ae 80%, #b9f6ca 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,120,60,0.9), inset 0 8px 25px rgba(255,255,255,0.4), 0 0 40px rgba(0,230,118,0.5);
-}
-.agua.nivel-alto { 
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,80,160,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 35px rgba(64,196,255,0.4);
-}
-.agua.nivel-medio { 
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,60,120,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 30px rgba(0,221,255,0.4);
-}
-.agua.nivel-baixo { 
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
-  box-shadow: inset 0 -20px 40px rgba(200,120,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 30px rgba(255,193,7,0.4);
-}
-.agua.nivel-critico { 
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
-  box-shadow: inset 0 -20px 40px rgba(150,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 40px rgba(255,61,0,0.6);
+  box-shadow: inset 0 -15px 30px rgba(150,0,0,0.4), 0 0 25px rgba(255,61,0,0.3);
   animation: pulsar-critico 1.5s infinite;
 }
 
 @keyframes pulsar-critico {
  0%, 100% { opacity: 1; transform: scale(1); }
- 50% { opacity: 0.75; transform: scale(1.02); }
+ 50% { opacity: 0.8; transform: scale(1.02); }
 }
 
 /* Info 3D */
