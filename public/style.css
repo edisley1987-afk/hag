@@ -1,505 +1,276 @@
 /* =========================
-BASE
+RESET
 ========================= */
-
-html, body{
-height:100%;
+*{
 margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
 body{
-display:flex;
-flex-direction:column;
 font-family:Segoe UI,Arial,sans-serif;
-background:linear-gradient(135deg,#022c22,#014737);
-color:white;
-}
-
-header h1{
-margin:0;
-font-size:28px;
-}
-
-#statusSistema{
-margin-top:6px;
-color:#00ff88;
-font-weight:bold;
+background:radial-gradient(circle at top,#012a22,#001a16);
+color:#e6fff7;
 }
 
 /* =========================
-HEADER INFO
+HEADER
 ========================= */
+header{
+padding:25px;
+background:linear-gradient(180deg,#01352b,#001a16);
+border-bottom:1px solid rgba(0,255,180,0.2);
+box-shadow:0 10px 30px rgba(0,0,0,0.6);
+position:relative;
+}
 
-.header-info{
-display:flex;
-justify-content:center;
-gap:20px;
-margin-top:6px;
+.cabecalho{
+text-align:center;
+}
+
+h1{
+font-size:28px;
+letter-spacing:1px;
+}
+
+.subtitulo{
+opacity:0.7;
+font-size:14px;
+margin-top:4px;
+}
+
+.status{
+margin-top:10px;
 font-size:14px;
 opacity:0.9;
-flex-wrap:wrap;
+}
+
+.status-dot{
+display:inline-block;
+width:10px;
+height:10px;
+border-radius:50%;
+background:#00ff88;
+box-shadow:0 0 10px #00ff88;
+margin-right:6px;
+}
+
+.btn-historico{
+position:absolute;
+right:20px;
+top:20px;
+padding:10px 16px;
+border-radius:10px;
+background:linear-gradient(90deg,#00ff88,#00c853);
+color:#003b2a;
+font-weight:bold;
+text-decoration:none;
+box-shadow:0 0 12px rgba(0,255,150,0.6);
+transition:0.3s;
+}
+
+.btn-historico:hover{
+transform:scale(1.05);
 }
 
 /* =========================
 KPIs
 ========================= */
+.kpis-container{
+margin-top:20px;
+padding:15px;
+border-radius:16px;
+background:rgba(0,255,150,0.05);
+backdrop-filter:blur(10px);
+border:1px solid rgba(0,255,150,0.1);
+}
 
 .kpis{
 display:flex;
-justify-content:center;
-gap:15px;
-margin-top:12px;
+justify-content:space-between;
+gap:10px;
 flex-wrap:wrap;
 }
 
 .kpi{
-background:rgba(0,0,0,0.35);
-padding:8px 14px;
-border-radius:8px;
-font-size:13px;
-box-shadow:0 0 8px rgba(0,0,0,0.4);
+flex:1;
+min-width:160px;
+padding:12px;
+border-radius:12px;
+background:rgba(0,0,0,0.4);
+text-align:center;
+box-shadow:inset 0 0 10px rgba(0,255,150,0.1);
 }
 
 .kpi span{
+font-size:12px;
+opacity:0.7;
+display:block;
+}
+
+.kpi strong{
+font-size:18px;
 color:#00ff88;
-font-weight:bold;
 }
 
 /* =========================
 MAIN
 ========================= */
-
 main{
-flex:1;
 padding:20px;
 display:flex;
 flex-direction:column;
-gap:20px;
+gap:30px;
 }
 
 /* =========================
-GRIDS RESPONSIVOS
+TITULO
 ========================= */
+.titulo-area{
+font-size:16px;
+margin-bottom:10px;
+opacity:0.8;
+}
 
+/* =========================
+GRID
+========================= */
 .grid-reservatorios{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:18px;
-flex:1;
-}
-
-.grid-bombas{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:18px;
-}
-
-.grid-pressoes{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:18px;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:20px;
 }
 
 /* =========================
 CARD
 ========================= */
-
 .card{
-    background:rgba(0,0,0,0.25);
-    backdrop-filter:blur(10px);
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.6);
-    transition:0.3s;
+background:rgba(0,0,0,0.4);
+border-radius:18px;
+padding:18px;
+box-shadow:
+0 10px 25px rgba(0,0,0,0.6),
+inset 0 0 20px rgba(0,255,150,0.05);
+transition:0.3s;
 }
 
 .card:hover{
-    transform:translateY(-4px) scale(1.01);
-}
-.card h2{
-margin:0 0 10px;
-font-size:14px;
+transform:translateY(-5px);
 }
 
 /* =========================
-ALERTA
+TANQUE 3D
 ========================= */
-
-.alerta{
-border:2px solid #ff3d00;
-box-shadow:
-0 0 15px rgba(255,60,0,0.8),
-inset 0 0 10px rgba(255,60,0,0.6);
-animation:alertaPulse 1.5s infinite;
-}
-
-@keyframes alertaPulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.02)}
-100%{transform:scale(1)}
-}
-
-/* =========================
-RESERVATORIO
-========================= */
-
-.card.reservatorio{
-display:flex;
-flex-direction:column;
-align-items:center;
-height:250px;
-}
-
-/* =========================
-TANQUE
-========================= */
-
-/* =========================
-TANQUE 3D PROFISSIONAL
-========================= */
-
 .tanque{
-    position:relative;
-    width:180px;
-    height:220px;
-    margin:auto;
-
-    border-radius:50px 50px 25px 25px;
-
-    background:linear-gradient(
-        180deg,
-        #0a2a4f,
-        #051c33
-    );
-
-    box-shadow:
-        inset 0 0 40px rgba(0,0,0,0.8),
-        0 0 20px rgba(0,150,255,0.2);
-
-    overflow:hidden;
+position:relative;
+width:160px;
+height:180px;
+margin:auto;
+border-radius:20px;
+background:linear-gradient(180deg,#0a3d62,#052c4a);
+overflow:hidden;
+box-shadow:
+inset 0 0 30px rgba(255,255,255,0.1),
+0 0 20px rgba(0,150,255,0.2);
 }
 
-/* TAMPA */
-.topo{
-    position:absolute;
-    top:-18px;
-    left:10%;
-    width:80%;
-    height:35px;
-
-    border-radius:50%;
-
-    background:radial-gradient(
-        ellipse at center,
-        #3fa9ff,
-        #0a2a4f
-    );
-
-    box-shadow:
-        inset 0 3px 10px rgba(255,255,255,0.3),
-        0 0 10px rgba(0,150,255,0.5);
+/* TOPO */
+.tanque:before{
+content:"";
+position:absolute;
+top:-15px;
+left:0;
+width:100%;
+height:30px;
+border-radius:50%;
+background:linear-gradient(180deg,#1b6ca8,#0a3d62);
 }
 
-/* BORDA INTERNA */
-.borda{
-    position:absolute;
-    inset:0;
-    border-radius:50px 50px 25px 25px;
-
-    border:2px solid rgba(120,180,255,0.3);
-    pointer-events:none;
-}
-
-/* ÁGUA */
+/* AGUA */
 .agua{
-    position:absolute;
-    bottom:0;
-    width:100%;
-
-    transition:height 1s ease;
-
-    background:linear-gradient(
-        180deg,
-        #3ec5ff,
-        #0066ff
-    );
-
-    box-shadow:
-        inset 0 0 30px rgba(0,0,0,0.6),
-        inset 0 10px 20px rgba(255,255,255,0.2);
-}
-
-/* LINHA SUPERIOR DA ÁGUA */
-.agua::before{
-    content:"";
-    position:absolute;
-    top:-10px;
-    left:0;
-    width:100%;
-    height:20px;
-
-    border-radius:50%;
-
-    background:radial-gradient(
-        ellipse at center,
-        rgba(255,255,255,0.8),
-        rgba(255,255,255,0.05)
-    );
-}
-
-/* ONDA */
-.onda{
-    position:absolute;
-    top:-8px;
-    width:200%;
-    height:20px;
-
-    background:radial-gradient(
-        ellipse at center,
-        rgba(255,255,255,0.6),
-        rgba(255,255,255,0.05)
-    );
-
-    animation:onda 6s linear infinite;
-}
-
-@keyframes onda{
-    from{transform:translateX(0);}
-    to{transform:translateX(-50%);}
-}
-/* níveis */
-
-function corNivel(p) {
-    if (p >= 80) return ["#3ec5ff", "#0066ff"]; // azul
-    if (p >= 50) return ["#00e0a4", "#008f5a"]; // verde
-    return ["#ff5252", "#b71c1c"]; // vermelho
-}
-/* =========================
-ONDA
-========================= */
-
-.onda{
 position:absolute;
-top:-5px;
-width:200%;
-height:10px;
-
-background:radial-gradient(
-ellipse at center,
-rgba(255,255,255,0.7),
-rgba(255,255,255,0.1)
-);
-
-animation:onda 4s linear infinite;
+bottom:0;
+width:100%;
+transition:height 0.6s ease;
+background:linear-gradient(180deg,#00cfff,#006eff);
 }
 
-@keyframes onda{
-0%{transform:translateX(0);}
-100%{transform:translateX(-50%);}
-}
-
-/* =========================
-ESCALA
-========================= */
-
-.escala{
+/* BRILHO DA ÁGUA */
+.agua:before{
+content:"";
 position:absolute;
-right:6px;
-top:18px;
-height:80%;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-z-index:5;
-}
-
-.escala span{
-background:#00ff88;
-height:2px;
-width:18px;
-box-shadow:0 0 6px #00ff88;
-opacity:0.9;
+top:0;
+left:0;
+width:100%;
+height:20px;
+background:rgba(255,255,255,0.3);
+opacity:0.4;
 }
 
 /* =========================
 INFO
 ========================= */
-
 .info{
 text-align:center;
 margin-top:10px;
 }
 
 .valor{
-font-size:28px;
+font-size:24px;
 font-weight:bold;
 }
 
 .litros{
-opacity:0.8;
-font-size:14px;
-}
-
-/* =========================
-TENDENCIA
-========================= */
-
-.tendencia{
-font-size:14px;
-margin-left:6px;
-}
-
-.subindo{
-color:#00ff88;
-}
-
-.descendo{
-color:#ffcc00;
+font-size:13px;
+opacity:0.7;
 }
 
 /* =========================
 BOMBAS
 ========================= */
+.grid-bombas{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:20px;
+}
 
 .card.bomba{
+padding:20px;
+border-radius:16px;
 display:flex;
 flex-direction:column;
-gap:6px;
-}
-
-.status-bomba{
-display:flex;
-align-items:center;
-gap:8px;
-font-size:18px;
-font-weight:bold;
-}
-
-.status-led{
-width:14px;
-height:14px;
-border-radius:50%;
+gap:10px;
 }
 
 .ligada{
 background:linear-gradient(90deg,#014d2c,#087f3e);
-border-left:6px solid #00ff88;
-}
-
-.ligada .status-led{
-background:#00ff88;
-box-shadow:0 0 8px #00ff88;
+box-shadow:0 0 20px rgba(0,255,150,0.3);
 }
 
 .desligada{
 background:linear-gradient(90deg,#4a0000,#7a0000);
-border-left:6px solid #ff2e2e;
-}
-
-.desligada .status-led{
-background:#ff2e2e;
-box-shadow:0 0 8px #ff2e2e;
-}
-
-.ciclos{
-font-size:13px;
-opacity:0.8;
+box-shadow:0 0 20px rgba(255,0,0,0.3);
 }
 
 /* =========================
-PRESSAO
+PRESSÕES
 ========================= */
-
-.card.pressao .valor{
-font-size:26px;
+.grid-pressoes{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
 }
 
-/* =========================
-RESPONSIVO
-========================= */
-
-@media (max-width:1200px){
-
-.grid-reservatorios{
-grid-template-columns:repeat(3,1fr);
-}
-
-}
-
-@media (max-width:800px){
-
-.grid-reservatorios{
-grid-template-columns:repeat(2,1fr);
-}
-
-.grid-bombas{
-grid-template-columns:1fr;
-}
-
-}
-
-@media (max-width:500px){
-
-.grid-reservatorios{
-grid-template-columns:1fr;
-}
-
-header h1{
-font-size:20px;
-}
-
-.valor{
+.valor-pressao{
 font-size:22px;
-}
-
-}
-
-/* =========================
-BOTÃO HISTÓRICO
-========================= */
-
-.btn-historico{
-position:absolute;
-right:20px;
-top:20px;
-padding:10px 14px;
-background:linear-gradient(90deg,#00ff88,#00c853);
-border:none;
-border-radius:8px;
-color:#003b2a;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 0 10px rgba(0,255,120,0.6);
-transition:0.3s;
-z-index:1000;
-}
-
-.btn-historico:hover{
-transform:scale(1.05);
-box-shadow:0 0 18px rgba(0,255,120,0.9);
+color:#00cfff;
 }
 
 /* =========================
 FOOTER
 ========================= */
-
 footer{
 text-align:center;
-padding:12px;
-opacity:0.7;
-font-size:13px;
+padding:15px;
+opacity:0.5;
 }
-.titulo-area{
-margin:10px 0 12px;
-font-size:16px;
-opacity:0.85;
-}
-header{
-    text-align:center;
-    padding:20px;
-    background:linear-gradient(90deg,#022c22,#014737);
-    border-bottom:1px solid rgba(0,255,150,0.2);
-    box-shadow:0 4px 10px rgba(0,0,0,0.4);
-    flex-shrink:0;
-    position:relative;
-}                                                                                                                   
