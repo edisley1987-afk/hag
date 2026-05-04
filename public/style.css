@@ -1,13 +1,4 @@
-/* ==========================================================
-   CSS OTIMIZADO: TANQUES 3D INDUSTRIAIS HAG
-   ========================================================== */
-
-/* ================== RESET E LAYOUT GERAL ================== */
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: "Segoe UI", Roboto, Arial, sans-serif;
@@ -17,12 +8,8 @@ body {
   overflow-x: hidden;
 }
 
-body.sem-sinal { 
-  opacity: 0.6; 
-  filter: grayscale(0.3); 
-}
+body.sem-sinal { opacity: 0.6; filter: grayscale(0.3); }
 
-/* ================== HEADER ================== */
 header {
   background: rgba(10, 26, 42, 0.8);
   backdrop-filter: blur(10px);
@@ -53,10 +40,7 @@ header {
   font-weight: 800;
 }
 
-.subtitulo { 
-  color: #8aa5c7; 
-  font-size: 14px; 
-}
+.subtitulo { color: #8aa5c7; font-size: 14px; }
 
 .status {
   display: flex;
@@ -116,11 +100,7 @@ header {
   font-size: 14px;
 }
 
-/* ================== KPIs ================== */
-.kpis-container { 
-  max-width: 1600px; 
-  margin: 25px auto 0; 
-}
+.kpis-container { max-width: 1600px; margin: 25px auto 0; }
 
 .kpis {
   display: grid;
@@ -138,10 +118,7 @@ header {
   transition: 0.3s;
 }
 
-.kpi:hover { 
-  transform: translateY(-5px); 
-  border-color: rgba(0,229,255,0.3); 
-}
+.kpi:hover { transform: translateY(-5px); border-color: rgba(0,229,255,0.3); }
 
 .kpi span {
   display: block;
@@ -161,12 +138,7 @@ header {
   font-weight: 800;
 }
 
-/* ================== SEÇÕES ================== */
-main { 
-  max-width: 1600px; 
-  margin: 40px auto; 
-  padding: 0 30px; 
-}
+main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
 
 .titulo-area {
   font-size: 22px;
@@ -177,43 +149,45 @@ main {
   text-shadow: 0 0 20px rgba(0,229,255,0.3);
 }
 
-/* ================== TANQUES 3D INDUSTRIAIS ================== */
+/* ================== 3D RESERVATÓRIOS ================== */
 .grid-reservatorios {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 45px;
+  gap: 50px;
   margin-bottom: 50px;
+  perspective: 1500px;
 }
 
-/* 1. Card Plano - Legibilidade Total */
 .card.reservatorio {
   background: rgba(10, 26, 42, 0.7);
   border-radius: 20px;
   padding: 30px 25px 35px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255,255,255,0.08);
   box-shadow: 
-    0 10px 30px rgba(0,0,0,0.5),
-    0 5px 15px rgba(0,0,0,0.3);
+    0 25px 50px rgba(0,0,0,0.6),
+    0 10px 20px rgba(0,0,0,0.4);
+  transform: rotateX(8deg);
+  transform-style: preserve-3d;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   backdrop-filter: blur(10px);
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .card.reservatorio:hover {
-  transform: translateY(-8px);
+  transform: rotateX(0deg) translateY(-15px) scale(1.02);
   box-shadow: 
-    0 20px 40px rgba(0,0,0,0.6),
-    0 10px 25px rgba(0,229,255,0.2);
+    0 40px 80px rgba(0,0,0,0.7),
+    0 20px 40px rgba(0,229,255,0.2);
   border-color: rgba(0,229,255,0.3);
 }
 
 .card.reservatorio.alerta {
   border: 2px solid #ff3d00;
-  animation: alerta-pulse 2s infinite;
+  animation: alerta-pulse 1.8s infinite;
 }
 
 @keyframes alerta-pulse {
- 0%, 100% { box-shadow: 0 10px 30px rgba(255,61,0,0.4); }
- 50% { box-shadow: 0 20px 40px rgba(255,61,0,0.6); }
+ 0%, 100% { box-shadow: 0 25px 50px rgba(255,61,0,0.4), 0 10px 20px rgba(255,61,0,0.2); }
+ 50% { box-shadow: 0 35px 70px rgba(255,61,0,0.6), 0 15px 30px rgba(255,61,0,0.4); }
 }
 
 .card.reservatorio h2 {
@@ -223,202 +197,240 @@ main {
   text-align: center;
   font-weight: 700;
   letter-spacing: 0.5px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  transform: translateZ(20px);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
 }
 
-/* 2. Tanque Cilindro Metálico 3D */
+/* Tanque 3D */
 .tanque {
   position: relative;
-  width: 150px;
-  height: 200px;
-  margin: 20px auto;
-  /* Gradiente metálico com reflexo de luz no centro */
-  background: linear-gradient(90deg, 
-      #051525 0%, 
-      #123d66 45%, 
-      #1b5a99 50%, 
-      #123d66 55%, 
-      #051525 100%);
-  border-radius: 0 0 50px 50px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    inset 0 0 30px rgba(0,0,0,0.8),
-    inset 2px 0 15px rgba(255,255,255,0.05);
-  overflow: hidden;
+  width: 180px;
+  height: 240px;
+  margin: 25px auto;
+  transform-style: preserve-3d;
 }
 
-/* 3. Tampa Superior Elipse 3D */
+/* Corpo do cilindro */
 .tanque::before {
   content: "";
   position: absolute;
-  top: -12px;
-  left: -2px;
-  width: calc(100% + 4px);
-  height: 25px;
-  background: linear-gradient(to bottom, #2a4a66, #112d47);
-  border-radius: 50%;
-  border: 1px solid #4a7fa8;
+  inset: 0;
+  background: linear-gradient(90deg, 
+      #04101f 0%, 
+      #0f2f4f 30%, 
+      #2d7ac7 50%, 
+      #0f2f4f 70%, 
+      #04101f 100%);
+  border-radius: 0 0 60px 60px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
-    0 -3px 10px rgba(0,0,0,0.8),
-    inset 0 2px 4px rgba(255,255,255,0.15);
-  z-index: 5;
+    inset -20px 0 40px rgba(0,0,0,0.7),
+    inset 20px 0 40px rgba(255,255,255,0.08),
+    inset 0 -30px 50px rgba(0,0,0,0.8);
+  z-index: 2;
 }
 
-/* 4. Brilho da Borda Interna - Reflexo de Vidro */
+/* Tampa 3D */
 .tanque::after {
   content: "";
   position: absolute;
-  top: 0;
+  top: -30px;
   left: 0;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.1) 0%, 
-    transparent 30%, 
-    transparent 70%,
-    rgba(255,255,255,0.05) 100%);
-  pointer-events: none;
-  z-index: 6;
-  border-radius: 0 0 50px 50px;
+  height: 60px;
+  background: radial-gradient(ellipse at center, #4a7fa8 0%, #1e3f5f 70%, #0a1a2a 100%);
+  border-radius: 50%;
+  border: 3px solid #5a8bb8;
+  box-shadow: 
+    0 -8px 20px rgba(0,0,0,0.9),
+    inset 0 3px 12px rgba(255,255,255,0.3);
+  transform: translateZ(15px);
+  z-index: 3;
 }
 
-/* 5. Escala Lateral */
+/* Sombra no chão */
+.tanque .base {
+  position: absolute;
+  bottom: -25px;
+  left: 15%;
+  width: 70%;
+  height: 30px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(12px);
+  z-index: 0;
+  transform: translateZ(-10px);
+}
+
+/* Escala 3D */
 .escala {
   position: absolute;
-  right: -45px;
+  right: -50px;
   top: 15px;
   height: 80%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: #6a9cc8;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-  z-index: 7;
+  z-index: 4;
+  transform: translateZ(25px);
 }
 
 .escala span::before {
   content: "▬";
-  margin-right: 5px;
+  margin-right: 6px;
   color: #4a7fa8;
 }
 
-/* 6. Água com Profundidade */
+/* Água 3D com profundidade */
 .agua {
   position: absolute;
   bottom: 0;
-  left: 5px;
-  width: calc(100% - 10px);
-  border-radius: 0 0 45px 45px;
-  transition: height 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-  z-index: 1;
+  left: 8%;
+  width: 84%;
+  background: linear-gradient(to top, 
+    #002a5a 0%, 
+    #0055aa 25%, 
+    #0088ff 60%, 
+    #40c4ff 85%, 
+    #80e0ff 100%);
+  transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 0 0 55px 55px;
   overflow: hidden;
-  /* Sombra interna para parecer líquido dentro do tanque */
-  box-shadow: inset 0 -20px 40px rgba(0,0,0,0.3);
+  z-index: 1;
+  box-shadow: 
+    inset 0 -20px 40px rgba(0,40,100,0.9),
+    inset 0 8px 25px rgba(255,255,255,0.25),
+    0 0 30px rgba(0,136,255,0.3);
 }
 
-/* Brilho da superfície da água */
+/* Reflexo na parede do tanque */
+.agua::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.2) 0%, 
+    rgba(255,255,255,0.05) 50%,
+    transparent 100%);
+  pointer-events: none;
+}
+
+/* Superfície brilhante */
 .agua::after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 8px;
+  height: 15px;
   background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.3) 0%, 
-    rgba(255,255,255,0.1) 50%, 
+    rgba(255,255,255,0.5) 0%, 
+    rgba(255,255,255,0.15) 50%, 
     transparent 100%);
   border-radius: 50%;
   transform: translateY(-50%);
-  filter: blur(1px);
+  filter: blur(2px);
+  box-shadow: 0 0 20px rgba(255,255,255,0.3);
 }
 
-/* 7. Onda Animada Sutil */
+/* Onda 3D animada */
 .onda {
   position: absolute;
-  top: -10px;
-  left: -100%;
-  width: 300%;
-  height: 20px;
+  top: -20px;
+  left: -120%;
+  width: 340%;
+  height: 40px;
   background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.25) 0%, 
-    transparent 60%);
-  animation: onda 4s ease-in-out infinite;
-  filter: blur(2px);
+    rgba(255,255,255,0.3) 0%, 
+    rgba(255,255,255,0.1) 40%,
+    transparent 70%);
+  animation: onda3d 5s ease-in-out infinite;
+  filter: blur(3px);
+  transform-style: preserve-3d;
 }
 
-@keyframes onda {
- 0%, 100% { transform: translateX(0) scaleY(1); }
- 50% { transform: translateX(35%) scaleY(1.15); }
+@keyframes onda3d {
+ 0%, 100% { transform: translateX(0) scaleY(1) rotateX(15deg) skewX(0deg); }
+ 25% { transform: translateX(20%) scaleY(1.2) rotateX(-8deg) skewX(3deg); }
+ 50% { transform: translateX(40%) scaleY(1.4) rotateX(5deg) skewX(-2deg); }
+ 75% { transform: translateX(60%) scaleY(1.1) rotateX(-3deg) skewX(1deg); }
 }
 
-/* 8. Balanço quando nível muda */
+/* Balanço quando nível muda */
 .agua.balancando {
-  animation: balanco 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: balanco 1.5s ease-in-out;
 }
 
 @keyframes balanco {
  0%, 100% { transform: skewX(0deg) scaleX(1); }
- 30% { transform: skewX(1.2deg) scaleX(1.01); }
- 70% { transform: skewX(-0.8deg) scaleX(0.99); }
+ 20% { transform: skewX(3deg) scaleX(1.02); }
+ 40% { transform: skewX(-2deg) scaleX(0.98); }
+ 60% { transform: skewX(1deg) scaleX(1.01); }
+ 80% { transform: skewX(-1deg) scaleX(0.99); }
 }
 
-/* 9. Cores por Nível com Glow */
+/* Cores por nível com glow */
 .agua.nivel-cheio { 
-  background: linear-gradient(to top, #00c853 0%, #00e676 60%, #69f0ae 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,120,60,0.3), 0 0 20px rgba(0,230,118,0.25);
+  background: linear-gradient(to top, #00c853 0%, #00e676 40%, #69f0ae 80%, #b9f6ca 100%); 
+  box-shadow: inset 0 -20px 40px rgba(0,120,60,0.9), inset 0 8px 25px rgba(255,255,255,0.4), 0 0 40px rgba(0,230,118,0.5);
 }
 .agua.nivel-alto { 
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 60%, #80d8ff 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,80,160,0.3), 0 0 18px rgba(64,196,255,0.2);
+  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
+  box-shadow: inset 0 -20px 40px rgba(0,80,160,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 35px rgba(64,196,255,0.4);
 }
 .agua.nivel-medio { 
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 60%, #64ffff 100%); 
-  box-shadow: inset 0 -20px 40px rgba(0,60,120,0.3), 0 0 18px rgba(0,221,255,0.2);
+  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
+  box-shadow: inset 0 -20px 40px rgba(0,60,120,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 30px rgba(0,221,255,0.4);
 }
 .agua.nivel-baixo { 
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 60%, #ffd54f 100%); 
-  box-shadow: inset 0 -20px 40px rgba(200,120,0,0.3), 0 0 18px rgba(255,193,7,0.2);
+  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
+  box-shadow: inset 0 -20px 40px rgba(200,120,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 30px rgba(255,193,7,0.4);
 }
 .agua.nivel-critico { 
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 60%, #ff6e40 100%); 
-  box-shadow: inset 0 -20px 40px rgba(150,0,0,0.3), 0 0 25px rgba(255,61,0,0.3);
-  animation: pulsar-critico 1.8s infinite;
+  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
+  box-shadow: inset 0 -20px 40px rgba(150,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3), 0 0 40px rgba(255,61,0,0.6);
+  animation: pulsar-critico 1.5s infinite;
 }
 
 @keyframes pulsar-critico {
- 0%, 100% { opacity: 1; }
- 50% { opacity: 0.85; }
+ 0%, 100% { opacity: 1; transform: scale(1); }
+ 50% { opacity: 0.75; transform: scale(1.02); }
 }
 
-/* 10. Info do Reservatório */
+/* Info 3D */
 .info {
   text-align: center;
   margin-top: 25px;
+  transform: translateZ(30px);
 }
 
 .info .valor {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 36px;
+  font-weight: 900;
   background: linear-gradient(135deg, #00e5ff, #40d4ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 3px 15px rgba(0,229,255,0.3);
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.8));
+  text-shadow: 0 4px 20px rgba(0,229,255,0.4);
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.8));
 }
 
 .info .litros {
-  font-size: 14px;
+  font-size: 15px;
   color: #9ab5d7;
   margin-top: 8px;
   font-weight: 600;
-  text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.9);
 }
 
-/* ================== BOMBAS E PRESSÕES ================== */
+/* Bombas e Pressões */
 .grid-bombas, .grid-pressoes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -436,10 +448,7 @@ main {
   transition: 0.3s;
 }
 
-.card:hover { 
-  transform: translateY(-5px); 
-  border-color: rgba(0,229,255,0.3); 
-}
+.card:hover { transform: translateY(-5px); border-color: rgba(0,229,255,0.3); }
 
 .card.bomba h2, .card h2 {
   font-size: 16px;
@@ -452,17 +461,11 @@ main {
   border-color: #00c853; 
   box-shadow: 0 0 25px rgba(0,200,83,0.4), 0 10px 30px rgba(0,0,0,0.5); 
 }
-.card.bomba.desligada { 
-  border-color: #555; 
-  opacity: 0.6; 
-}
-.card.bomba.stale { 
-  opacity: 0.4; 
-  filter: grayscale(0.5); 
-}
+.card.bomba.desligada { border-color: #555; opacity: 0.6; }
+.card.bomba.stale { opacity: 0.4; filter: grayscale(0.5); }
 
 .status-icon {
-  font-size: 38px;
+  font-size: 40px;
   text-align: center;
   margin: 15px 0;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
@@ -484,7 +487,6 @@ main {
   font-weight: 600;
 }
 
-/* ================== FOOTER ================== */
 footer {
   text-align: center;
   padding: 40px;
@@ -496,16 +498,9 @@ footer {
   backdrop-filter: blur(10px);
 }
 
-/* ================== RESPONSIVO ================== */
+/* Responsivo */
 @media (max-width: 768px) {
-  .tanque { 
-    width: 130px; 
-    height: 180px; 
-  }
-  .grid-reservatorios { 
-    gap: 30px; 
-  }
-  .cabecalho h1 {
-    font-size: 20px;
-  }
+  .tanque { width: 140px; height: 190px; }
+  .grid-reservatorios { gap: 30px; perspective: 1000px; }
+  .card.reservatorio { transform: rotateX(5deg); }
 }
