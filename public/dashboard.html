@@ -25,9 +25,10 @@ TOPO
 Sistema de Monitoramento de Reservatórios
 </div>
 
-<div class="status">
+<div class="status" id="statusTempoReal">
 <span class="status-dot"></span>
-Tempo real conectado • <span id="hora">--:--</span>
+<span id="statusTexto">Tempo real conectado</span> • 
+<span id="hora">--:--</span>
 </div>
 
 <a href="historico.html" class="btn-historico">
@@ -37,7 +38,7 @@ Tempo real conectado • <span id="hora">--:--</span>
 </div>
 
 <!-- =========================
-STATUS SISTEMA
+STATUS SISTEMA (JS CONTROLA)
 ========================= -->
 <div id="statusSistema">
 🟢 Tempo real conectado
@@ -145,8 +146,65 @@ Sistema Profissional - HAG
 ========================= -->
 <script src="/dashboard.js"></script>
 
+<!-- =========================
+🧠 SCRIPTS AUXILIARES (LEVE)
+========================= -->
 <script>
+// log inicial
 console.log("🔥 Dashboard carregado");
+
+// =======================
+// DATA ATUAL
+// =======================
+function atualizarData() {
+    const el = document.getElementById("dataSistema");
+    if (!el) return;
+
+    const agora = new Date();
+
+    el.innerText = agora.toLocaleDateString("pt-BR");
+}
+
+setInterval(atualizarData, 1000);
+atualizarData();
+
+// =======================
+// HORA LOCAL (fallback)
+// =======================
+function atualizarHoraLocal() {
+    const el = document.getElementById("hora");
+    if (!el) return;
+
+    const agora = new Date();
+    el.innerText = agora.toLocaleTimeString("pt-BR");
+}
+
+// só usa se backend não atualizar
+setInterval(atualizarHoraLocal, 1000);
+
+// =======================
+// STATUS VISUAL (LED)
+// =======================
+function atualizarStatusVisual(texto) {
+    const el = document.getElementById("statusTexto");
+    const dot = document.querySelector(".status-dot");
+
+    if (!el || !dot) return;
+
+    el.innerText = texto;
+
+    if (texto.includes("Tempo real")) {
+        dot.style.background = "#00ff88";
+    } else if (texto.includes("Reconectando")) {
+        dot.style.background = "#ffd600";
+    } else {
+        dot.style.background = "#ff3d00";
+    }
+}
+
+// OBS: seu JS principal já controla #statusSistema,
+// aqui é só visual do topo se quiser integrar depois
+
 </script>
 
 </body>
