@@ -765,7 +765,29 @@ align-items:flex-start;
 grid-template-columns:1fr;
 
 }
+}
+/* Ajuste no Card para dar profundidade e transparência */
+.card {
+    background: rgba(10, 25, 40, 0.6); /* Cor de fundo com transparência */
+    backdrop-filter: blur(10px);        /* Efeito de vidro */
+    border: 1px solid rgba(255, 255, 255, 0.05); /* Borda sutil */
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
 
+/* Tanque: Ajuste para parecer um recipiente 3D */
+.tanque {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    /* Adicionando um brilho no topo do tanque */
+    box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1);
+}
 
-
+/* Água: Mais brilho e degradê realista */
+.agua {
+    background: linear-gradient(to top, rgba(0, 150, 255, 0.8), rgba(0, 255, 200, 0.6));
+    box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
 }
