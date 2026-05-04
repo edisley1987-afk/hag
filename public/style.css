@@ -285,41 +285,19 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
   color: #4a7fa8;
 }
 
-/* Água 3D com profundidade */
+/* ================== ÁGUA COM EFEITO ================== */
 .agua {
   position: absolute;
   bottom: 0;
-  left: 8%;
-  width: 84%;
-  background: linear-gradient(to top, 
-    #002a5a 0%, 
-    #0055aa 25%, 
-    #0088ff 60%, 
-    #40c4ff 85%, 
-    #80e0ff 100%);
-  transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 0 0 55px 55px;
-  overflow: hidden;
-  z-index: 1;
-  box-shadow: 
-    inset 0 -20px 40px rgba(0,40,100,0.9),
-    inset 0 8px 25px rgba(255,255,255,0.25),
-    0 0 30px rgba(0,136,255,0.3);
-}
-
-/* Reflexo na parede do tanque */
-.agua::before {
-  content: "";
-  position: absolute;
-  top: 0;
   left: 0;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.2) 0%, 
-    rgba(255,255,255,0.05) 50%,
-    transparent 100%);
-  pointer-events: none;
+  width: 100%;
+  height: 0%;
+  border-radius: 0 0 50px 50px;
+  transition: height 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 1;
+  overflow: hidden;
+  background: linear-gradient(to top, #0077ff 0%, #00ddff 60%, #64ffff 100%);
+  box-shadow: inset 0 -15px 30px rgba(0,60,120,0.5);
 }
 
 /* Superfície brilhante */
@@ -329,33 +307,65 @@ main { max-width: 1600px; margin: 40px auto; padding: 0 30px; }
   top: 0;
   left: 0;
   width: 100%;
-  height: 15px;
+  height: 10px;
   background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.5) 0%, 
+    rgba(255,255,255,0.4) 0%, 
     rgba(255,255,255,0.15) 50%, 
     transparent 100%);
   border-radius: 50%;
   transform: translateY(-50%);
-  filter: blur(2px);
-  box-shadow: 0 0 20px rgba(255,255,255,0.3);
+  filter: blur(1px);
 }
 
-/* Onda 3D animada */
+/* Onda animada */
 .onda {
   position: absolute;
-  top: -20px;
-  left: -120%;
-  width: 340%;
-  height: 40px;
+  top: -8px;
+  left: -50%;
+  width: 200%;
+  height: 16px;
   background: radial-gradient(ellipse at center, 
     rgba(255,255,255,0.3) 0%, 
-    rgba(255,255,255,0.1) 40%,
-    transparent 70%);
-  animation: onda3d 5s ease-in-out infinite;
-  filter: blur(3px);
-  transform-style: preserve-3d;
+    transparent 60%);
+  animation: onda 3s ease-in-out infinite;
+  filter: blur(1px);
 }
 
+@keyframes onda {
+ 0%, 100% { transform: translateX(0) scaleY(1); }
+ 50% { transform: translateX(25%) scaleY(1.3); }
+}
+
+/* Balanço quando nível muda */
+.agua.balancando {
+  animation: balanco 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes balanco {
+ 0%, 100% { transform: skewX(0deg); }
+ 30% { transform: skewX(2deg); }
+ 70% { transform: skewX(-1.5deg); }
+}
+
+/* Cores por nível */
+.agua.nivel-cheio { 
+  background: linear-gradient(to top, #00c853 0%, #00e676 60%, #69f0ae 100%); 
+  box-shadow: inset 0 -15px 30px rgba(0,120,60,0.4);
+}
+.agua.nivel-alto { 
+  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 60%, #80d8ff 100%); 
+}
+.agua.nivel-medio { 
+  background: linear-gradient(to top, #0077ff 0%, #00ddff 60%, #64ffff 100%); 
+}
+.agua.nivel-baixo { 
+  background: linear-gradient(to top, #ff9800 0%, #ffc107 60%, #ffd54f 100%); 
+}
+.agua.nivel-critico { 
+  background: linear-gradient(to top, #d50000 0%, #ff3d00 60%, #ff6e40 100%); 
+  box-shadow: inset 0 -15px 30px rgba(150,0,0,0.4);
+  animation: pulsar-critico 1.5s infinite;
+}
 @keyframes onda3d {
  0%, 100% { transform: translateX(0) scaleY(1) rotateX(15deg) skewX(0deg); }
  25% { transform: translateX(20%) scaleY(1.2) rotateX(-8deg) skewX(3deg); }
