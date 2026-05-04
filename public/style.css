@@ -1,106 +1,356 @@
 /* ==========================================================
-   DASHBOARD HAG - CSS COMPLETO E OTIMIZADO
+   LAYOUT GERAL
+   ========================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #061120;
+  color: #e0f7ff;
+  min-height: 100vh;
+}
+
+body.sem-sinal {
+  opacity: 0.7;
+}
+
+header {
+  background: #0a1a2a;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.cabecalho h1 {
+  font-size: 24px;
+  color: #00e5ff;
+}
+
+.subtitulo {
+  color: #8aa5c7;
+  font-size: 14px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8aa5c7;
+  font-size: 14px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+}
+
+.btn-historico {
+  background: #123d66;
+  color: #e0f7ff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  border: 1px solid #1b5a99;
+  transition: 0.2s;
+}
+
+.btn-historico:hover {
+  background: #1b5a99;
+}
+
+#statusSistema {
+  max-width: 1400px;
+  margin: 15px auto 0;
+  padding: 10px 15px;
+  background: #0a1a2a;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #8aa5c7;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.header-info {
+  max-width: 1400px;
+  margin: 10px auto 0;
+  color: #8aa5c7;
+  font-size: 14px;
+}
+
+/* KPIs */
+.kpis-container {
+  max-width: 1400px;
+  margin: 20px auto 0;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+}
+
+.kpi {
+  background: #0a1a2a;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  text-align: center;
+}
+
+.kpi span {
+  display: block;
+  font-size: 12px;
+  color: #8aa5c7;
+  margin-bottom: 8px;
+}
+
+.kpi strong {
+  font-size: 26px;
+  color: #00e5ff;
+}
+
+/* Seções */
+main {
+  max-width: 1400px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.titulo-area {
+  font-size: 20px;
+  color: #00e5ff;
+  margin-bottom: 20px;
+  border-left: 4px solid #00e5ff;
+  padding-left: 12px;
+}
+
+/* ==========================================================
+   VISUAL 3D INDUSTRIAL
    ========================================================== */
 
-/* 1. RESET E BASE */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
-body {
-    background: radial-gradient(circle at top, rgba(0,255,120,0.05), transparent 70%), linear-gradient(135deg,#001f1a,#00352d);
-    color: white;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 2. LAYOUT E GLASSMORPHISM (VIDRO) */
-.card {
-    background: rgba(10, 25, 40, 0.7); /* Fundo vidro escuro */
-    backdrop-filter: blur(12px);         /* Efeito fosco */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-    transition: 0.3s;
-}
-
-.card:hover { transform: translateY(-3px); }
-
-/* 3. TANQUE (ESTILO 3D CILÍNDRICO) */
-.tanque {
-    position: relative;
-    width: 140px;
-    height: 180px;
-    /* Gradiente para curva 3D */
-    background: linear-gradient(90deg, rgba(0,0,0,0.3), rgba(255,255,255,0.05), rgba(0,0,0,0.3));
-    border-radius: 0 0 40px 40px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 2px 15px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.5);
-    overflow: hidden;
-    margin: 15px auto;
-}
-
-/* Tampa 3D superior */
-.tanque::before {
-    content: "";
-    position: absolute;
-    top: -15px;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    background: linear-gradient(90deg, #1a3652, #2a4a66, #1a3652);
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 2;
-}
-
-/* ÁGUA */
-.agua {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    /* Gradiente da água */
-    background: linear-gradient(to top, rgba(0, 115, 255, 0.9), rgba(0, 230, 255, 0.7));
-    transition: height 1s ease-in-out;
-    border-radius: 0 0 38px 38px;
-    box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
-}
-
-/* Reflexo na água */
-.agua::after {
-    content: "";
-    position: absolute;
-    top: 5px;
-    left: 10%;
-    width: 80%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-}
-
-/* 4. GRIDS E ORGANIZAÇÃO */
+/* Grid dos reservatórios */
 .grid-reservatorios {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
 }
 
-.reservatorio-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+/* Card do reservatório */
+.card.reservatorio {
+  background: #0a1a2a;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  transition: border 0.3s;
 }
 
-/* 5. CORES DINÂMICAS (NÍVEIS) */
-.nivel-alto { background: linear-gradient(to top, #008f39, #00ff88); }
-.nivel-medio { background: linear-gradient(to top, #0055ff, #00c6ff); }
-.nivel-critico { background: linear-gradient(to top, #cc0000, #ff3d00); animation: piscar 1s infinite; }
+.card.reservatorio.alerta {
+  border: 2px solid #ff3d00;
+  animation: pulse 1.5s infinite;
+}
 
-@keyframes piscar { 0%{opacity:1} 50%{opacity:0.6} 100%{opacity:1} }
+@keyframes pulse {
+ 0%, 100% { box-shadow: 0 0 0 0 rgba(255,61,0,0.4); }
+ 50% { box-shadow: 0 0 20px 10px rgba(255,61,0,0); }
+}
 
-/* 6. TEXTO E FOOTER */
-.valor { font-size: 24px; font-weight: bold; margin-top: 10px; }
-.litros { font-size: 14px; opacity: 0.8; }
-footer { text-align: center; padding: 20px; opacity: 0.5; }
+.card.reservatorio h2 {
+  color: #e0f7ff;
+  font-size: 16px;
+  margin: 0 0 15px 0;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Corpo do Tanque */
+.tanque {
+  position: relative;
+  width: 140px;
+  height: 190px;
+  background: linear-gradient(90deg, 
+      #051525 0%, 
+      #123d66 45%, 
+      #1b5a99 50%, 
+      #123d66 55%, 
+      #051525 100%);
+  border-radius: 0 0 40px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 15px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5);
+  overflow: hidden;
+  margin: 15px auto;
+}
+
+/* Tampa 3D */
+.tanque::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: radial-gradient(ellipse at center, #2a4a66, #112d47);
+  border-radius: 50%;
+  border: 1px solid #3d6a94;
+  z-index: 2;
+}
+
+/* Escala lateral */
+.escala {
+  position: absolute;
+  right: -35px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #5a8bb8;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 3;
+}
+
+.escala span::before {
+  content: "—";
+  margin-right: 4px;
+}
+
+/* Água */
+.agua {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, #0077ff, #00ddff);
+  transition: height 1s ease-in-out;
+  border-radius: 0 0 38px 38px;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
+  overflow: hidden;
+}
+
+/* Brilho da superfície */
+.agua::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+/* Onda animada */
+.onda {
+  position: absolute;
+  top: -10px;
+  left: -50%;
+  width: 200%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+  animation: onda 3s ease-in-out infinite;
+}
+
+@keyframes onda {
+ 0%, 100% { transform: translateX(0) scaleY(1); }
+ 50% { transform: translateX(25%) scaleY(1.2); }
+}
+
+/* Cores por nível */
+.agua.nivel-cheio { background: linear-gradient(to top, #00c853, #00e676); }
+.agua.nivel-alto { background: linear-gradient(to top, #00b0ff, #40c4ff); }
+.agua.nivel-medio { background: linear-gradient(to top, #0077ff, #00ddff); }
+.agua.nivel-baixo { background: linear-gradient(to top, #ff9800, #ffc107); }
+.agua.nivel-critico { background: linear-gradient(to top, #d50000, #ff3d00); }
+
+/* Info abaixo do tanque */
+.info {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.info .valor {
+  font-size: 28px;
+  font-weight: 700;
+  color: #00e5ff;
+}
+
+.info .litros {
+  font-size: 14px;
+  color: #8aa5c7;
+  margin-top: 4px;
+}
+
+/* Bombas e Pressões */
+.grid-bombas, .grid-pressoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.card {
+  background: #0a1a2a;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.card.bomba h2, .card h2 {
+  font-size: 15px;
+  color: #e0f7ff;
+  margin-bottom: 12px;
+}
+
+.card.bomba.ligada { border-color: #00c853; box-shadow: 0 0 15px rgba(0,200,83,0.3); }
+.card.bomba.desligada { border-color: #555; opacity: 0.7; }
+.card.bomba.stale { opacity: 0.5; }
+
+.status-icon {
+  font-size: 32px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.valor {
+  font-size: 18px;
+  font-weight: 600;
+  color: #00e5ff;
+  text-align: center;
+}
+
+.ciclos, .valor-pressao {
+  font-size: 13px;
+  color: #8aa5c7;
+  text-align: center;
+  margin-top: 5px;
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #5a7a9a;
+  font-size: 13px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: 40px;
+}
