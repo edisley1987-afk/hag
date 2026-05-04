@@ -23,8 +23,10 @@ function init() {
         if (Date.now() - ultimoDado > 15000) {
             setStatus("🟡 Aguardando sinal do Gateway...");
             document.body.classList.add("sem-sinal");
+            atualizarStatusVisual("Sem sinal");
         } else {
             document.body.classList.remove("sem-sinal");
+            atualizarStatusVisual("Tempo real conectado");
         }
     }, 5000);
 }
@@ -47,7 +49,6 @@ function processarPayload(payload) {
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
-
     requestAnimationFrame(() => {
         atualizarUI(data);
         renderPending = false;
@@ -57,7 +58,7 @@ function scheduleRender(data) {
 function atualizarUI(data) {
     if (!data) return;
     const elHora = document.getElementById("hora");
-    if (elHora) elHora.innerText = data.lastUpdate || "-";
+    if (elHora) elHora.innerText = data.lastUpdate || "--:--";
 
     renderReservatorios(data.reservatorios || []);
     renderBombas(data.bombas || []);
@@ -66,7 +67,7 @@ function atualizarUI(data) {
 }
 
 // =======================
-// RESERVATÓRIOS (VERSÃO LIMPA E UNIFICADA)
+// RESERVATÓRIOS 3D
 // =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
@@ -84,7 +85,7 @@ function renderReservatorios(lista) {
                 <h2>${r.nome}</h2>
                 <div class="tanque">
                     <div class="escala">
-                        <span></span><span></span><span></span><span></span><span></span>
+                        <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
                     </div>
                     <div class="agua">
                         <div class="onda"></div>
@@ -102,17 +103,14 @@ function renderReservatorios(lista) {
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
 
-        // Cálculo do nível
         const nivel = Math.min(100, Math.max(0, r.percent));
         const nivelSuavizado = Math.round(nivel);
 
-        // Otimização: Só atualiza o DOM se o valor mudou
         if (agua.dataset.nivel != nivelSuavizado) {
             agua.style.height = `${nivelSuavizado}%`;
             agua.dataset.nivel = nivelSuavizado;
         }
 
-        // Classes de estado (Cores)
         agua.className = "agua"; 
         if (nivel >= 95) agua.classList.add("nivel-cheio");
         else if (nivel >= 70) agua.classList.add("nivel-alto");
@@ -120,18 +118,16 @@ function renderReservatorios(lista) {
         else if (nivel >= 20) agua.classList.add("nivel-baixo");
         else agua.classList.add("nivel-critico");
 
-        // Alerta visual
         if (nivel < 20) el.classList.add("alerta");
         else el.classList.remove("alerta");
 
-        // Texto
         valor.innerText = `${nivelSuavizado}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
 // =======================
-// BOMBAS E OUTROS (MANTIDOS)
+// BOMBAS
 // =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
@@ -144,6 +140,7 @@ function renderBombas(lista) {
         if (!el) {
             el = document.createElement("div");
             el.id = id;
+            el.className = "card bomba";
             el.innerHTML = `<h2></h2><div class="status-icon"></div><div class="valor"></div><div class="ciclos"></div>`;
             area.appendChild(el);
         }
@@ -155,6 +152,9 @@ function renderBombas(lista) {
     });
 }
 
+// =======================
+// PRESSÕES
+// =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -173,15 +173,31 @@ function renderPressoes(lista) {
     });
 }
 
+// =======================
+// WEBSOCKET
+// =======================
 function conectarWS() {
     if (ws) ws.close();
     const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
     ws = new WebSocket(`${protocolo}//${location.host}`);
     ws.onopen = () => setStatus("🟢 Tempo real conectado");
-    ws.onmessage = (msg) => { try { processarPayload(JSON.parse(msg.data)); } catch (e) { console.error("Erro WS:", e); } };
-    ws.onclose = () => { setStatus("🔴 Reconectando..."); setTimeout(conectarWS, reconnectDelay); };
+    ws.onmessage = (msg) => { 
+        try { 
+            processarPayload(JSON.parse(msg.data)); 
+        } catch (e) { 
+            console.error("Erro WS:", e); 
+        } 
+    };
+    ws.onclose = () => { 
+        setStatus("🔴 Reconectando..."); 
+        atualizarStatusVisual("Reconectando...");
+        setTimeout(conectarWS, reconnectDelay); 
+    };
 }
 
+// =======================
+// FALLBACK HTTP
+// =======================
 async function fallbackHTTP() {
     try {
         const res = await fetch(API + "?t=" + Date.now());
@@ -189,7 +205,10 @@ async function fallbackHTTP() {
         const data = await res.json();
         processarPayload(data);
     } catch (err) {
-        if (!ws || ws.readyState !== 1) setStatus("🔴 Erro de comunicação");
+        if (!ws || ws.readyState !== 1) {
+            setStatus("🔴 Erro de comunicação");
+            atualizarStatusVisual("Desconectado");
+        }
     }
 }
 
@@ -198,11 +217,20 @@ function setStatus(txt) {
     if (el) el.innerText = txt;
 }
 
-function formatar(n) { return Number(n || 0).toLocaleString("pt-BR"); }
+function formatar(n) { 
+    return Number(n || 0).toLocaleString("pt-BR"); 
+}
 
 function atualizarKPIs(data) {
     const elCritico = document.getElementById("kpiCritico");
     const elAtivas = document.getElementById("bombasAtivas");
+    const elElevador = document.getElementById("kpiElevador");
+    const elLavanderia = document.getElementById("kpiLavanderia");
+    const elOsmose = document.getElementById("kpiOsmose");
+    
     if (elCritico) elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
     if (elAtivas) elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
+    if (elElevador) elElevador.innerText = `${formatar(data.kpis?.elevador_hoje)} L`;
+    if (elLavanderia) elLavanderia.innerText = `${formatar(data.kpis?.lavanderia_hoje)} L`;
+    if (elOsmose) elOsmose.innerText = `${formatar(data.kpis?.osmose_hoje)} L`;
 }
