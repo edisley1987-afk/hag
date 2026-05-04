@@ -79,6 +79,7 @@ function renderReservatorios(lista) {
         const id = `res-${r.setor}`;
         let el = document.getElementById(id);
 
+        // Cria o card se não existir
         if (!el) {
             el = document.createElement("div");
             el.id = id;
@@ -109,18 +110,18 @@ function renderReservatorios(lista) {
         const nivelSuavizado = Math.round(nivel);
         const nivelAnterior = Number(agua.dataset.nivel || 0);
 
-        // Animação de balanço quando o nível muda mais de 1%
+        // Balanço quando nível muda mais de 1%
         if (Math.abs(nivelSuavizado - nivelAnterior) >= 1) {
             agua.classList.add("balancando");
-            setTimeout(() => agua.classList.remove("balancando"), 1300);
+            setTimeout(() => agua.classList.remove("balancando"), 1200);
         }
 
         // Atualiza altura da água
         agua.style.height = `${nivelSuavizado}%`;
         agua.dataset.nivel = nivelSuavizado;
 
-        // Aplica cor baseada no nível
-        agua.className = "agua"; 
+        // Aplica cor baseada no nível - SEM sobrescrever a classe base
+        agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
         if (nivel >= 95) {
             agua.classList.add("nivel-cheio");
         } else if (nivel >= 70) {
@@ -133,12 +134,8 @@ function renderReservatorios(lista) {
             agua.classList.add("nivel-critico");
         }
 
-        // Alerta visual no card
-        if (nivel < 20) {
-            el.classList.add("alerta");
-        } else {
-            el.classList.remove("alerta");
-        }
+        // Alerta visual no card quando crítico
+        el.classList.toggle("alerta", nivel < 20);
 
         // Atualiza valores
         valor.innerText = `${nivelSuavizado}%`;
