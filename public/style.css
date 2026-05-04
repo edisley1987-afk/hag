@@ -154,76 +154,118 @@ height:250px;
 TANQUE
 ========================= */
 
+/* =========================
+TANQUE 3D PROFISSIONAL
+========================= */
+
 .tanque{
     position:relative;
-    width:160px;
-    height:140px;
+    width:180px;
+    height:220px;
     margin:auto;
 
-    border-left:2px solid rgba(255,255,255,0.3);
-    border-right:2px solid rgba(255,255,255,0.3);
-    border-bottom:2px solid rgba(255,255,255,0.3);
-    border-radius:0 0 22px 22px;
+    border-radius:50px 50px 25px 25px;
 
     background:linear-gradient(
         180deg,
-        rgba(255,255,255,0.08),
-        rgba(0,0,0,0.3)
+        #0a2a4f,
+        #051c33
     );
 
+    box-shadow:
+        inset 0 0 40px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,150,255,0.2);
+
     overflow:hidden;
+}
+
+/* TAMPA */
+.topo{
+    position:absolute;
+    top:-18px;
+    left:10%;
+    width:80%;
+    height:35px;
+
+    border-radius:50%;
+
+    background:radial-gradient(
+        ellipse at center,
+        #3fa9ff,
+        #0a2a4f
+    );
 
     box-shadow:
-        inset 0 0 30px rgba(0,255,150,0.15),
-        0 0 20px rgba(0,255,150,0.15);
-}
-/* =========================
-TOPO OVAL
-========================= */
-
-.tanque:before{
-content:"";
-position:absolute;
-top:-12px;
-left:0;
-width:100%;
-height:22px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,0.5);
-background:linear-gradient(
-180deg,
-rgba(255,255,255,0.35),
-rgba(255,255,255,0.05)
-);
+        inset 0 3px 10px rgba(255,255,255,0.3),
+        0 0 10px rgba(0,150,255,0.5);
 }
 
-/* =========================
-FUNDO OVAL
-========================= */
+/* BORDA INTERNA */
+.borda{
+    position:absolute;
+    inset:0;
+    border-radius:50px 50px 25px 25px;
 
-.tanque:after{
-content:"";
-position:absolute;
-bottom:-12px;
-left:0;
-width:100%;
-height:22px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,0.3);
-background:rgba(0,0,0,0.3);
+    border:2px solid rgba(120,180,255,0.3);
+    pointer-events:none;
 }
 
-/* =========================
-AGUA
-========================= */
+/* ÁGUA */
 .agua{
     position:absolute;
     bottom:0;
     width:100%;
-    transition:height 0.8s ease-in-out;
-    border-radius:0 0 20px 20px;
-    overflow:hidden;
-    box-shadow: inset 0 0 20px rgba(0,255,150,0.25);
+
+    transition:height 1s ease;
+
+    background:linear-gradient(
+        180deg,
+        #3ec5ff,
+        #0066ff
+    );
+
+    box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.6),
+        inset 0 10px 20px rgba(255,255,255,0.2);
+}
+
+/* LINHA SUPERIOR DA ÁGUA */
+.agua::before{
+    content:"";
+    position:absolute;
+    top:-10px;
+    left:0;
+    width:100%;
+    height:20px;
+
+    border-radius:50%;
+
+    background:radial-gradient(
+        ellipse at center,
+        rgba(255,255,255,0.8),
+        rgba(255,255,255,0.05)
+    );
+}
+
+/* ONDA */
+.onda{
+    position:absolute;
+    top:-8px;
+    width:200%;
+    height:20px;
+
+    background:radial-gradient(
+        ellipse at center,
+        rgba(255,255,255,0.6),
+        rgba(255,255,255,0.05)
+    );
+
+    animation:onda 6s linear infinite;
+}
+
+@keyframes onda{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
 }
 /* níveis */
 
