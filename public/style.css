@@ -1,65 +1,54 @@
-/* =========================================
-   ESTILO PROFISSIONAL (Baseado no seu design de referência)
-========================================= */
 :root {
-    --bg-main: #06111a;          /* Fundo azul petróleo escuro */
-    --bg-card: #0a1620;          /* Fundo dos cards */
-    --accent-blue: #0088ff;      /* Azul água */
-    --accent-cyan: #00d4ff;      /* Ciano de brilho */
+    --bg-app: #06111a;          /* Fundo azul petróleo escuro */
+    --bg-card: #0a1620;         /* Fundo dos cards */
+    --accent-blue: #0088ff;     /* Azul da água */
+    --accent-cyan: #00d4ff;     /* Brilho da água */
     --text-main: #e0e6ed;
-    --text-muted: #8899aa;
-    --border-color: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.08);
 }
 
 body {
-    background-color: var(--bg-main);
+    background-color: var(--bg-app);
     color: var(--text-main);
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
     padding: 20px;
 }
 
-/* Containers e Cards */
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-/* Visual 3D do Tanque */
+/* Container do Tanque 3D */
 .tanque {
     position: relative;
-    width: 140px;
-    height: 180px;
-    margin: 15px auto;
-    background: #0f1c26; /* Fundo do recipiente */
-    border-radius: 12px 12px 30px 30px;
+    width: 130px;
+    height: 170px;
+    background: #0f1c26;
+    border-radius: 12px 12px 30px 30px; /* Base arredondada */
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.1);
+    margin: 15px auto;
 }
 
+/* A Água (Dinamizada pelo JS) */
 .agua {
     position: absolute;
     bottom: 0;
     width: 100%;
     /* Gradiente que dá o efeito de profundidade */
     background: linear-gradient(to top, var(--accent-blue), var(--accent-cyan));
-    transition: height 0.8s ease;
-    opacity: 0.9;
+    transition: height 0.8s ease-in-out;
 }
 
-/* Ajuste para Bombas */
-.card.bomba {
+/* Cartões */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Layout das Bombas (Status) */
+.bomba {
     border-left: 5px solid transparent;
 }
-.card.bomba.ligada { border-left-color: #00ff88; }
-.card.bomba.inativa { border-left-color: #ff3333; }
-
-/* Grid de Layout */
-.grid-reservatorios {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
+.bomba.ligada { border-left-color: #00ff88; }
+.bomba.inativa { border-left-color: #ff3333; }
