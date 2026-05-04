@@ -1,209 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Monitoramento HAG</title> 
-
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
 <header>
-
-<!-- =========================
-TOPO
-========================= -->
 <div class="cabecalho">
-
 <h1>💧 Monitoramento HAG</h1>
-
-<div class="subtitulo">
-Sistema de Monitoramento de Reservatórios
-</div>
-
+<div class="subtitulo">Sistema de Monitoramento de Reservatórios</div>
 <div class="status" id="statusTempoReal">
     <span class="status-dot"></span>
     <span id="statusTexto">Tempo real conectado</span> • 
     <span id="hora">--:--</span>
 </div>
-
-<a href="historico.html" class="btn-historico">
-📊 Histórico
-</a>
-
+<a href="historico.html" class="btn-historico">📊 Histórico</a>
 </div>
 
-<!-- =========================
-STATUS SISTEMA (JS CONTROLA)
-========================= -->
-<div id="statusSistema">
-🟢 Tempo real conectado
-</div>
+<div id="statusSistema">🟢 Tempo real conectado</div>
 
-<!-- =========================
-DATA
-========================= -->
 <div class="header-info">
-    <div>
-        📅 <span id="dataSistema">--/--/----</span>
-    </div>
+    <div>📅 <span id="dataSistema">--/--/----</span></div>
 </div>
 
-<!-- =========================
-KPIs (AGORA COM CONTAINER VISUAL)
-========================= -->
 <div class="kpis-container">
 <div class="kpis">
-
 <div class="kpi">
 <span>Elevador Hoje</span>
 <strong id="kpiElevador">0 L</strong>
 </div>
-
 <div class="kpi">
 <span>Lavanderia Hoje</span>
 <strong id="kpiLavanderia">0 L</strong>
 </div>
-
 <div class="kpi">
 <span>Osmose Hoje</span>
 <strong id="kpiOsmose">0 L</strong>
 </div>
-
 <div class="kpi">
 <span>Bombas Ativas</span>
 <strong id="bombasAtivas">0</strong>
 </div>
-
 <div class="kpi">
 <span>Reservatórios Críticos</span>
 <strong id="kpiCritico">0</strong>
 </div>
-
 </div>
 </div>
-
 </header>
 
-
 <main>
-
-<!-- =========================
-RESERVATÓRIOS
-========================= -->
 <section>
-
 <h2 class="titulo-area">Reservatórios</h2>
-
-<div id="areaReservatorios" class="grid-reservatorios">
-<!-- JS PREENCHE -->
-</div>
-
+<div id="areaReservatorios" class="grid-reservatorios"></div>
 </section>
 
-
-<!-- =========================
-BOMBAS
-========================= -->
 <section>
-
 <h2 class="titulo-area">Bombas</h2>
-
-<div id="areaBombas" class="grid-bombas">
-<!-- JS PREENCHE -->
-</div>
-
+<div id="areaBombas" class="grid-bombas"></div>
 </section>
 
-
-<!-- =========================
-PRESSÕES
-========================= -->
 <section>
-
 <h2 class="titulo-area">Pressões</h2>
-
-<div id="areaPressoes" class="grid-pressoes">
-<!-- JS PREENCHE -->
-</div>
-
+<div id="areaPressoes" class="grid-pressoes"></div>
 </section>
-
 </main>
 
+<footer>Sistema Profissional - HAG</footer>
 
-<footer>
-Sistema Profissional - HAG
-</footer>
-
-
-<!-- =========================
-📡 DASHBOARD JS
-========================= -->
 <script src="/dashboard.js"></script>
-
-<!-- =========================
-🧠 SCRIPTS AUXILIARES
-========================= -->
 <script>
-
-// =======================
-// LOG
-// =======================
 console.log("🔥 Dashboard carregado");
 
-// =======================
-// DATA
-// =======================
 function atualizarData() {
     const el = document.getElementById("dataSistema");
     if (!el) return;
-
     const agora = new Date();
     el.innerText = agora.toLocaleDateString("pt-BR");
 }
-
 setInterval(atualizarData, 1000);
 atualizarData();
 
-// =======================
-// HORA LOCAL
-// =======================
 function atualizarHoraLocal() {
     const el = document.getElementById("hora");
     if (!el) return;
-
     const agora = new Date();
     el.innerText = agora.toLocaleTimeString("pt-BR");
 }
-
 setInterval(atualizarHoraLocal, 1000);
 
-// =======================
-// STATUS VISUAL
-// =======================
 function atualizarStatusVisual(texto) {
     const el = document.getElementById("statusTexto");
     const dot = document.querySelector(".status-dot");
-
     if (!el || !dot) return;
-
     el.innerText = texto;
-
-    if (texto.includes("Tempo real")) {
-        dot.style.background = "#00ff88";
-    } else if (texto.includes("Reconectando")) {
-        dot.style.background = "#ffd600";
-    } else {
-        dot.style.background = "#ff3d00";
-    }
+    if (texto.includes("Tempo real")) dot.style.background = "#00ff88";
+    else if (texto.includes("Reconectando")) dot.style.background = "#ffd600";
+    else dot.style.background = "#ff3d00";
 }
-
 </script>
-
 </body>
 </html>
