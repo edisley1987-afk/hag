@@ -269,29 +269,10 @@ TANQUE 3D PROFISSIONAL
 }
 /* níveis */
 
-.nivel-alto{
-background:linear-gradient(180deg,#00ff88,#00c853);
-box-shadow:0 0 15px rgba(0,255,120,0.8);
-}
-
-.nivel-medio{
-background:linear-gradient(180deg,#00cfff,#008cff);
-}
-
-.nivel-baixo{
-background:linear-gradient(180deg,#ffcc33,#ff7b00);
-}
-
-.nivel-critico{
-    background:linear-gradient(180deg,#ff3d00,#b00020);
-    box-shadow:0 0 12px rgba(255,60,0,0.8);
-}
-
-/* cheio */
-
-.nivel-cheio{
-background:linear-gradient(180deg,#00d4ff,#006eff);
-box-shadow:0 0 18px #00d4ff;
+function corNivel(p) {
+    if (p >= 80) return ["#3ec5ff", "#0066ff"]; // azul
+    if (p >= 50) return ["#00e0a4", "#008f5a"]; // verde
+    return ["#ff5252", "#b71c1c"]; // vermelho
 }
 /* =========================
 ONDA
