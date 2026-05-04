@@ -15,19 +15,6 @@ background:linear-gradient(135deg,#022c22,#014737);
 color:white;
 }
 
-/* =========================
-HEADER
-========================= */
-
-header{
-text-align:center;
-padding:20px;
-background:#064e3b;
-box-shadow:0 4px 10px rgba(0,0,0,0.4);
-flex-shrink:0;
-position:relative;
-}
-
 header h1{
 margin:0;
 font-size:28px;
@@ -118,18 +105,17 @@ CARD
 ========================= */
 
 .card{
-background:rgba(0,0,0,0.35);
-border-radius:14px;
-padding:16px;
-box-shadow:0 8px 18px rgba(0,0,0,0.6);
-transition:0.3s;
-position:relative;
+    background:rgba(0,0,0,0.25);
+    backdrop-filter:blur(10px);
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    transition:0.3s;
 }
 
 .card:hover{
-transform:translateY(-3px);
+    transform:translateY(-4px) scale(1.01);
 }
-
 .card h2{
 margin:0 0 10px;
 font-size:14px;
@@ -169,28 +155,28 @@ TANQUE
 ========================= */
 
 .tanque{
-position:relative;
-width:140px;
-height:120px;
-margin:auto;
-border-left:2px solid rgba(255,255,255,0.4);
-border-right:2px solid rgba(255,255,255,0.4);
-border-bottom:2px solid rgba(255,255,255,0.4);
-border-radius:0 0 18px 18px;
+    position:relative;
+    width:160px;
+    height:140px;
+    margin:auto;
 
-background:linear-gradient(
-180deg,
-rgba(255,255,255,0.08),
-rgba(0,0,0,0.2)
-);
+    border-left:2px solid rgba(255,255,255,0.3);
+    border-right:2px solid rgba(255,255,255,0.3);
+    border-bottom:2px solid rgba(255,255,255,0.3);
+    border-radius:0 0 22px 22px;
 
-overflow:hidden;
+    background:linear-gradient(
+        180deg,
+        rgba(255,255,255,0.08),
+        rgba(0,0,0,0.3)
+    );
 
-box-shadow:
-inset 0 0 25px rgba(0,255,120,0.2),
-0 0 12px rgba(0,255,120,0.2);
+    overflow:hidden;
+
+    box-shadow:
+        inset 0 0 30px rgba(0,255,150,0.15),
+        0 0 20px rgba(0,255,150,0.15);
 }
-
 /* =========================
 TOPO OVAL
 ========================= */
@@ -230,15 +216,15 @@ background:rgba(0,0,0,0.3);
 /* =========================
 AGUA
 ========================= */
-
 .agua{
-position:absolute;
-bottom:0;
-width:100%;
-transition:height 1s;
-z-index:2;
+    position:absolute;
+    bottom:0;
+    width:100%;
+    transition:height 0.8s ease-in-out;
+    border-radius:0 0 20px 20px;
+    overflow:hidden;
+    box-shadow: inset 0 0 20px rgba(0,255,150,0.25);
 }
-
 /* níveis */
 
 .nivel-alto{
@@ -255,8 +241,8 @@ background:linear-gradient(180deg,#ffcc33,#ff7b00);
 }
 
 .nivel-critico{
-background:linear-gradient(180deg,#ff3d00,#b00020);
-animation:piscar 1s infinite;
+    background:linear-gradient(180deg,#ff3d00,#b00020);
+    box-shadow:0 0 12px rgba(255,60,0,0.8);
 }
 
 /* cheio */
@@ -265,13 +251,6 @@ animation:piscar 1s infinite;
 background:linear-gradient(180deg,#00d4ff,#006eff);
 box-shadow:0 0 18px #00d4ff;
 }
-
-@keyframes piscar{
-0%{opacity:1}
-50%{opacity:0.5}
-100%{opacity:1}
-}
-
 /* =========================
 ONDA
 ========================= */
@@ -492,3 +471,12 @@ margin:10px 0 12px;
 font-size:16px;
 opacity:0.85;
 }
+header{
+    text-align:center;
+    padding:20px;
+    background:linear-gradient(90deg,#022c22,#014737);
+    border-bottom:1px solid rgba(0,255,150,0.2);
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+    flex-shrink:0;
+    position:relative;
+}                                                                                                                   
