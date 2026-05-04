@@ -1,17 +1,9 @@
-/**
- * Dashboard HAG - Hospital Arnaldo Gavazza
- * Versão FINAL ESTÁVEL - CORRIGIDA
- */
-
 const API = "/api/dashboard";
 let ws = null;
 let reconnectDelay = 3000;
 let ultimoDado = Date.now();
 let renderPending = false;
 
-// =======================
-// INIT
-// =======================
 init();
 
 function init() {
@@ -31,21 +23,13 @@ function init() {
     }, 5000);
 }
 
-// =======================
-// PROCESSAMENTO
-// =======================
 function processarPayload(payload) {
     if (!payload) return;
-    if (payload.type === "update" && payload.dados) {
-        payload = payload.dados;
-    }
+    if (payload.type === "update" && payload.dados) payload = payload.dados;
     ultimoDado = Date.now();
     scheduleRender(payload);
 }
 
-// =======================
-// RENDER OTIMIZADO
-// =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
@@ -66,9 +50,6 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
-// =======================
-// RESERVATÓRIOS 3D
-// =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -84,6 +65,7 @@ function renderReservatorios(lista) {
             el.innerHTML = `
                 <h2>${r.nome}</h2>
                 <div class="tanque">
+                    <div class="base"></div>
                     <div class="escala">
                         <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
                     </div>
@@ -106,7 +88,10 @@ function renderReservatorios(lista) {
         const nivel = Math.min(100, Math.max(0, r.percent));
         const nivelSuavizado = Math.round(nivel);
 
+        // Animação de balanço quando muda o nível
         if (agua.dataset.nivel != nivelSuavizado) {
+            agua.classList.add("balancando");
+            setTimeout(() => agua.classList.remove("balancando"), 1500);
             agua.style.height = `${nivelSuavizado}%`;
             agua.dataset.nivel = nivelSuavizado;
         }
@@ -126,9 +111,6 @@ function renderReservatorios(lista) {
     });
 }
 
-// =======================
-// BOMBAS
-// =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -152,9 +134,6 @@ function renderBombas(lista) {
     });
 }
 
-// =======================
-// PRESSÕES
-// =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -173,20 +152,14 @@ function renderPressoes(lista) {
     });
 }
 
-// =======================
-// WEBSOCKET
-// =======================
 function conectarWS() {
     if (ws) ws.close();
     const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
     ws = new WebSocket(`${protocolo}//${location.host}`);
     ws.onopen = () => setStatus("🟢 Tempo real conectado");
     ws.onmessage = (msg) => { 
-        try { 
-            processarPayload(JSON.parse(msg.data)); 
-        } catch (e) { 
-            console.error("Erro WS:", e); 
-        } 
+        try { processarPayload(JSON.parse(msg.data)); } 
+        catch (e) { console.error("Erro WS:", e); } 
     };
     ws.onclose = () => { 
         setStatus("🔴 Reconectando..."); 
@@ -195,9 +168,6 @@ function conectarWS() {
     };
 }
 
-// =======================
-// FALLBACK HTTP
-// =======================
 async function fallbackHTTP() {
     try {
         const res = await fetch(API + "?t=" + Date.now());
@@ -230,7 +200,7 @@ function atualizarKPIs(data) {
     
     if (elCritico) elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
     if (elAtivas) elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
-    if (elElevador) elElevador.innerText = `${formatar(data.kpis?.elevador_hoje)} L`;
-    if (elLavanderia) elLavanderia.innerText = `${formatar(data.kpis?.lavanderia_hoje)} L`;
-    if (elOsmose) elOsmose.innerText = `${formatar(data.kpis?.osmose_hoje)} L`;
+    if (elElevador) elElevador.innerText = `${formatar(data.kpis?.elevador_hoje || 0)} L`;
+    if (elLavanderia) elLavanderia.innerText = `${formatar(data.kpis?.lavanderia_hoje || 0)} L`;
+    if (elOsmose) elOsmose.innerText = `${formatar(data.kpis?.osmose_hoje || 0)} L`;
 }
