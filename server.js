@@ -40,11 +40,16 @@ import chalk from "chalk";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+const app = express();  // ← cria o app primeiro
 import http from "http";
 
-const server = http.createServer(app);
+// ← AQUI: middleware RAW logo depois de criar o app
+app.use((req, res, next) => {
+  console.log(`[RAW] ${req.method} ${req.originalUrl}`);
+  next();
+});
 
+const server = http.createServer(app);
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
 const clients = new Set();
