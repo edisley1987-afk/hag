@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 3.0 - Canvas Realista Industrial
+ * Versão 4.0 - Canvas Realista + Status Dinâmico
  */
 
 const API = "/api/dashboard";
@@ -23,6 +23,7 @@ class AguaCanvas {
     this.nivelTarget = 0;
     this.ondas = [];
     this.particulas = [];
+    this.condensacao = []; // gotas de condensação
     this.time = 0;
     
     // 3 ondas sobrepostas para movimento orgânico
@@ -51,6 +52,7 @@ class AguaCanvas {
     this.desenharAgua(yAgua);
     this.desenharOnda(yAgua);
     this.desenharParticulas(yAgua);
+    this.desenharCondensacao();
     this.desenharReflexo(yAgua);
     
     requestAnimationFrame(() => this.animate());
@@ -171,6 +173,35 @@ class AguaCanvas {
     });
   }
   
+  desenharCondensacao() {
+    // Gera nova gota quando reservatório está cheio
+    if (this.nivel > 0.65 && Math.random() < 0.3) {
+      this.condensacao.push({
+        x: 15 + Math.random() * 170,
+        y: Math.random() * this.height * 0.4,
+        size: 1 + Math.random() * 2,
+        alpha: 0.3 + Math.random() * 0.3,
+        life: 200
+      });
+    }
+    
+    // Anima e remove gotas
+    this.condensacao = this.condensacao.filter(gota => {
+      gota.life--;
+      gota.alpha = gota.life / 200;
+      gota.y += 0.3; // gota escorrendo
+      
+      if (gota.y < this.height * 0.8) {
+        this.ctx.beginPath();
+        this.ctx.arc(gota.x, gota.y, gota.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(180, 220, 255, ${gota.alpha})`;
+        this.ctx.fill();
+      }
+      
+      return gota.life > 0 && gota.y < this.height * 0.9;
+    });
+  }
+  
   desenharReflexo(yAgua) {
     // Reflexo especular na superfície
     const grad = this.ctx.createLinearGradient(0, yAgua - 10, 0, yAgua + 10);
@@ -186,7 +217,7 @@ class AguaCanvas {
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-    console.log("%c HAG Dashboard v3.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
+    console.log("%c HAG Dashboard v4.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
     fallbackHTTP();
     conectarWS();
     setInterval(fallbackHTTP, 8000);
@@ -240,7 +271,7 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
-// ======================= RESERVATÓRIOS CANVAS =======================
+// ======================= RESERVATÓRIOS CANVAS COM COR DINÂMICA =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -248,22 +279,44 @@ function renderReservatorios(lista) {
     lista.forEach(r => {
         const id = `res-${r.setor}`;
         let el = cacheDados.get(id);
+        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
+        const nivelSuavizado = Math.round(nivel * 10) / 10;
+
+        // Define cor e status baseado no nível
+        let statusClass, statusText;
+        if (nivel >= 70) {
+            statusClass = 'status-ok';
+            statusText = 'Normal';
+        } else if (nivel >= 30) {
+            statusClass = 'status-warning'; 
+            statusText = 'Atenção';
+        } else {
+            statusClass = 'status-danger';
+            statusText = 'Crítico';
+        }
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card reservatorio";
+            el.className = `card reservatorio ${statusClass}`;
             el.innerHTML = `
-                <h2>${r.nome}</h2>
-                <div class="tanque">
-                  <canvas class="canvas-agua"></canvas>
-                  <div class="escala">
-                      <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                  </div>
+                <div class="card-header">
+                  <h2 class="card-title">${r.nome}</h2>
+                  <div class="card-status ${statusClass}">${statusText}</div>
                 </div>
-                <div class="info">
-                    <div class="valor">0%</div>
-                    <div class="litros">0 L</div>
+                <div class="card-content">
+                  <div class="tanque-container">
+                    <div class="tanque">
+                      <canvas class="canvas-agua"></canvas>
+                      <div class="escala">
+                          <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                      </div>
+                    </div>
+                    <div class="nivel-info">
+                        <div class="nivel-valor">${nivelSuavizado.toFixed(1)}%</div>
+                        <div class="nivel-litros">${formatar(r.current_liters)} L</div>
+                    </div>
+                  </div>
                 </div>
             `;
             area.appendChild(el);
@@ -272,32 +325,21 @@ function renderReservatorios(lista) {
             // Inicializa Canvas
             const canvas = el.querySelector('.canvas-agua');
             el.canvasAgua = new AguaCanvas(canvas);
+        } else {
+            // Atualiza classe de status do card
+            el.className = `card reservatorio ${statusClass}`;
+            el.querySelector('.card-status').className = `card-status ${statusClass}`;
+            el.querySelector('.card-status').innerText = statusText;
+            
+            // Atualiza textos
+            el.querySelector(".nivel-valor").innerText = `${nivelSuavizado.toFixed(1)}%`;
+            el.querySelector(".nivel-litros").innerText = `${formatar(r.current_liters)} L`;
+            
+            // Atualiza Canvas
+            if (el.canvasAgua) {
+              el.canvasAgua.setNivel(nivelSuavizado);
+            }
         }
-
-        const valor = el.querySelector(".valor");
-        const litros = el.querySelector(".litros");
-        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
-        const nivelSuavizado = Math.round(nivel * 10) / 10;
-
-        // Atualiza Canvas
-        if (el.canvasAgua) {
-          el.canvasAgua.setNivel(nivelSuavizado);
-        }
-
-        // Alerta visual
-        el.classList.toggle("alerta", nivel < 20);
-        
-        // Classe de nível para borda colorida estilo SCADA
-        el.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
-        if (nivel >= 95) el.classList.add("nivel-cheio");
-        else if (nivel >= 70) el.classList.add("nivel-alto");
-        else if (nivel >= 40) el.classList.add("nivel-medio");
-        else if (nivel >= 20) el.classList.add("nivel-baixo");
-        else el.classList.add("nivel-critico");
-
-        // Atualiza textos
-        valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
-        litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
@@ -311,20 +353,34 @@ function renderBombas(lista) {
         let el = cacheDados.get(id);
         const ligada = b.estado === "ligada";
         const desconhecido = b.estado === "desconhecido" || b.estado === undefined;
+        const statusClass = desconhecido ? "stale" : ligada ? "status-ok" : "status-danger";
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card bomba";
-            el.innerHTML = `<h2></h2><div class="status-icon"></div><div class="valor"></div><div class="ciclos"></div>`;
+            el.className = `card bomba ${statusClass}`;
+            el.innerHTML = `
+              <div class="card-header">
+                <h2 class="card-title"></h2>
+                <div class="card-status ${statusClass}"></div>
+              </div>
+              <div class="card-content">
+                <div class="bomba-stats">
+                  <div class="valor"></div>
+                  <div class="ciclos"></div>
+                </div>
+              </div>
+            `;
             area.appendChild(el);
             cacheDados.set(id, el);
+        } else {
+            el.className = `card bomba ${statusClass}`;
+            el.querySelector(".card-status").className = `card-status ${statusClass}`;
         }
 
-        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
         el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".status-icon").innerText = desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
-        el.querySelector(".valor").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
+        el.querySelector(".card-status").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
+        el.querySelector(".valor").innerText = `Fluxo: ${b.fluxo || 0} L/min`;
         el.querySelector(".ciclos").innerText = `${formatar(b.ciclo || 0)} ciclos`;
     });
 }
@@ -337,28 +393,40 @@ function renderPressoes(lista) {
     lista.forEach((p, i) => {
         const id = `pressao-${i}`;
         let el = cacheDados.get(id);
+        const pressao = Number(p.pressao || 0);
+        const statusClass = pressao >= 2.5 ? 'status-ok' : pressao >= 1.5 ? 'status-warning' : 'status-danger';
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card";
-            el.innerHTML = `<h2></h2><div class="valor-pressao"></div>`;
+            el.className = `card ${statusClass}`;
+            el.innerHTML = `
+              <div class="card-header">
+                <h2 class="card-title"></h2>
+                <div class="card-status ${statusClass}"></div>
+              </div>
+            `;
             area.appendChild(el);
             cacheDados.set(id, el);
+        } else {
+            el.className = `card ${statusClass}`;
+            el.querySelector(".card-status").className = `card-status ${statusClass}`;
         }
 
-        const pressao = Number(p.pressao || 0).toFixed(2);
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${pressao} bar`;
+        el.querySelector(".card-status").innerText = `${pressao.toFixed(2)} bar`;
     });
 }
 
 // ======================= KPIs =======================
 function atualizarKPIs(data) {
     const kpis = data.kpis || {};
+    const criticos = (data.reservatorios || []).filter(r => r.percent < 30).length;
+    const bombasAtivas = (data.bombas || []).filter(b => b.estado === "ligada").length;
+    
     const elementos = {
-        kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
-        bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
+        kpiCritico: criticos,
+        bombasAtivas: bombasAtivas,
         kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
         kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
         kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
@@ -381,7 +449,7 @@ function conectarWS() {
         console.log("%c🟢 WebSocket conectado", "color: #00ff88; font-weight: bold;");
         setStatus("🟢 Tempo real conectado", "success");
         atualizarStatusVisual("Tempo real conectado");
-        reconnectDelay = 3000; // Reset delay
+        reconnectDelay = 3000;
     };
 
     ws.onmessage = (msg) => { 
@@ -397,7 +465,7 @@ function conectarWS() {
         setStatus("🔴 Reconectando...", "error"); 
         atualizarStatusVisual("Reconectando...");
         setTimeout(conectarWS, reconnectDelay); 
-        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay); // Backoff exponencial
+        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
     };
 
     ws.onerror = (err) => {
