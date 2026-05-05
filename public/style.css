@@ -211,6 +211,7 @@ header {
 }
 
 /* ================== MAIN GRID ================== */
+/* ================== MAIN GRID ================== */
 main {
   flex: 1; /* ocupa espaço restante */
   max-width: 1800px;
@@ -220,26 +221,15 @@ main {
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr;
   gap: 1.2vh;
-  overflow: hidden;
+  overflow: hidden; /* só aqui */
   min-height: 0;
 }
 
 .secao {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* mantém aqui pra travar altura da seção */
   min-height: 0;
-}
-
-.titulo-area {
-  font-size: clamp(12px, 1.2vw, 16px);
-  color: #00e5ff;
-  margin-bottom: 0.8vh;
-  border-left: 4px solid #00e5ff;
-  padding-left: 12px;
-  text-shadow: 0 0 15px rgba(0,229,255,0.4);
-  font-weight: 800;
-  flex-shrink: 0;
 }
 
 /* ================== GRIDS HORIZONTAL ================== */
@@ -247,27 +237,26 @@ main {
 .grid-bombas, 
 .grid-pressoes {
   flex: 1;
-  overflow-y: auto;
-  display: flex;           /* flex em vez de grid */
-  flex-direction: row;     /* cards lado a lado */
-  flex-wrap: wrap;         /* quebra linha quando não cabe */
+  overflow-x: auto;     /* scroll horizontal se passar da tela */
+  overflow-y: hidden;   /* sem scroll vertical */
+  display: flex;        
+  flex-direction: row;  /* cards lado a lado */
+  flex-wrap: nowrap;    /* não quebra linha - fica tudo na horizontal */
   gap: 1vh;
-  padding-right: 4px;
-  padding-bottom: 8px;
+  padding-bottom: 8px;  /* espaço pro hover não cortar */
   min-height: 0;
-  align-items: flex-start; /* alinha no topo */
+  align-items: flex-start;
 }
 
 /* Largura fixa dos cards por tipo */
 .grid-reservatorios .card {
-  flex: 0 0 280px; /* 280px fixo para reservatório */
+  flex: 0 0 280px; /* não encolhe, não cresce, largura 280px */
 }
 
 .grid-bombas .card,
 .grid-pressoes .card {
-  flex: 0 0 220px; /* 220px fixo para bomba e pressão */
+  flex: 0 0 220px;
 }
-
 /* ================== CARDS ================== */
 .card {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
