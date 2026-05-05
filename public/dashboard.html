@@ -6,28 +6,31 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>HAG - Sistema de Monitoramento Hídrico 3D Ultra Realista</title>
+  <title>HAG - Sistema de Monitoramento Hídrico 3D</title>
   <style>
 /* ==========================================================
-   CSS PROFISSIONAL - HAG DASHBOARD 3D INDUSTRIAL ULTRA
+   CSS HAG DASHBOARD 1 TELA RESPONSIVO
    ========================================================== */
 
-/* ================== RESET E LAYOUT GERAL ================== */
+/* ================== RESET E LAYOUT 100VH ================== */
 * { 
   box-sizing: border-box; 
   margin: 0; 
   padding: 0; 
 }
 
+html, body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* trava scroll da página */
+}
+
 body {
+  display: flex;
+  flex-direction: column;
   font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
   color: #e0f7ff;
-  min-height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
   letter-spacing: 0.2px;
 }
 
@@ -36,15 +39,14 @@ body.sem-sinal {
   filter: grayscale(0.3); 
 }
 
-/* ================== HEADER ================== */
+/* ================== HEADER COMPACTO ================== */
 header {
   background: rgba(10, 26, 42, 0.85);
   backdrop-filter: blur(15px);
-  padding: 22px 30px;
+  padding: 0.8vh 2vw;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  position: sticky;
-  top: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  flex-shrink: 0;
   z-index: 100;
 }
 
@@ -53,81 +55,77 @@ header {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 1rem;
   max-width: 1800px;
   margin: 0 auto;
 }
 
 .cabecalho h1 {
-  font-size: 28px;
+  font-size: clamp(14px, 1.8vw, 22px);
   background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 900;
   letter-spacing: 1px;
-  text-shadow: 0 4px 20px rgba(0,229,255,0.3);
 }
 
 .subtitulo { 
   color: #8aa5c7; 
-  font-size: 14px; 
+  font-size: clamp(9px, 1vw, 12px); 
   font-weight: 500;
 }
 
 .status {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: #8aa5c7;
-  font-size: 14px;
+  font-size: clamp(10px, 1vw, 13px);
   font-weight: 600;
 }
 
 .status-dot {
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #00ff88;
-  box-shadow: 0 0 15px #00ff88, 0 0 30px rgba(0,255,136,0.5);
+  box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.5);
   animation: pulse-dot 2s infinite;
 }
 
 @keyframes pulse-dot {
- 0%, 100% { box-shadow: 0 0 15px #00ff88, 0 0 30px rgba(0,255,136,0.5); }
- 50% { box-shadow: 0 0 25px #00ff88, 0 0 45px rgba(0,255,136,0.7); }
+ 0%, 100% { opacity: 1; }
+ 50% { opacity: 0.5; }
 }
 
 .btn-historico {
   background: linear-gradient(135deg, #123d66 0%, #1b5a99 100%);
   color: #e0f7ff;
-  padding: 12px 24px;
-  border-radius: 12px;
+  padding: 6px 14px;
+  border-radius: 8px;
   text-decoration: none;
-  font-size: 14px;
+  font-size: clamp(10px, 1vw, 12px);
   font-weight: 600;
   border: 1px solid rgba(255,255,255,0.12);
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: all 0.3s;
 }
 
 .btn-historico:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(27,90,153,0.5);
-  border-color: rgba(0,229,255,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(27,90,153,0.4);
 }
 
 #statusSistema {
   max-width: 1800px;
-  margin: 18px auto 0;
-  padding: 14px 24px;
+  margin: 6px auto 0;
+  padding: 6px 12px;
   background: rgba(10, 26, 42, 0.7);
-  border-radius: 12px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: clamp(9px, 1vw, 11px);
   color: #8aa5c7;
   border: 1px solid rgba(255,255,255,0.06);
   backdrop-filter: blur(8px);
-  font-weight: 500;
 }
 
 #statusSistema.status-success { color: #00ff88; }
@@ -136,42 +134,38 @@ header {
 
 .header-info {
   max-width: 1800px;
-  margin: 12px auto 0;
+  margin: 4px auto 0;
   color: #8aa5c7;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: clamp(9px, 1vw, 11px);
 }
 
-/* ================== KPIs ================== */
+/* ================== KPIs REDUZIDOS ================== */
 .kpis-container { 
   max-width: 1800px; 
-  margin: 20px auto 0; 
-  padding: 0 30px;
+  margin: 0.8vh auto 0; 
+  padding: 0 2vw;
   width: 100%;
+  flex-shrink: 0;
 }
 
-.kpis {
+.kpis-reduzido {
   display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
-  gap: 18px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,229,255,0.3) transparent;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 1vh;
+  max-width: 500px;
 }
 
 .kpi {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 18px 15px;
-  border-radius: 16px;
+  padding: 1vh 1.2vw;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.08);
   text-align: center;
   backdrop-filter: blur(12px);
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  transition: all 0.35s;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   position: relative;
   overflow: hidden;
-  min-width: 140px;
 }
 
 .kpi::before {
@@ -184,229 +178,219 @@ header {
   background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6), transparent);
 }
 
+.kpi-critico {
+  border-left: 3px solid #ff4444;
+}
+
 .kpi:hover { 
-  transform: translateY(-5px); 
+  transform: translateY(-3px); 
   border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 15px 35px rgba(0,229,255,0.25);
 }
 
 .kpi span {
   display: block;
-  font-size: 11px;
+  font-size: clamp(9px, 0.9vw, 11px);
   color: #8aa5c7;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   font-weight: 700;
 }
 
 .kpi strong {
-  font-size: 28px;
+  display: block;
+  font-size: clamp(18px, 2.5vw, 26px);
   background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 900;
-  text-shadow: 0 4px 15px rgba(0,229,255,0.3);
 }
 
-/* ================== SEÇÕES ================== */
+.lista-criticos {
+  margin-top: 4px;
+  font-size: clamp(8px, 0.8vw, 10px);
+  color: #ff9999;
+  line-height: 1.3;
+  max-height: 4vh;
+  overflow-y: auto;
+}
+
+.lista-criticos .critico-item {
+  padding: 1px 0;
+}
+
+/* ================== MAIN GRID ================== */
 main {
-  flex: 1;
+  flex: 1; /* ocupa espaço restante */
   max-width: 1800px;
-  margin: 20px auto 40px;
-  padding: 0 30px;
+  margin: 0.8vh auto 0.5vh;
+  padding: 0 2vw;
   width: 100%;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 1.2vh;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .secao {
-  margin-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .titulo-area {
-  font-size: 24px;
+  font-size: clamp(12px, 1.2vw, 16px);
   color: #00e5ff;
-  margin-bottom: 25px;
-  border-left: 5px solid #00e5ff;
-  padding-left: 18px;
-  text-shadow: 0 0 25px rgba(0,229,255,0.4);
+  margin-bottom: 0.8vh;
+  border-left: 4px solid #00e5ff;
+  padding-left: 12px;
+  text-shadow: 0 0 15px rgba(0,229,255,0.4);
   font-weight: 800;
-  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
-/* ================== GRIDS LADO A LADO ================== */
+/* Grids internos com scroll próprio */
 .grid-reservatorios,
 .grid-bombas, 
 .grid-pressoes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 35px;
-  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  padding-right: 4px;
+  min-height: 0;
 }
 
-/* ================== RESERVATÓRIOS 3D CANVAS ULTRA ================== */
-.card.reservatorio {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
-  border-radius: 20px;
-  padding: 32px 26px 36px;
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  box-shadow: 
-    0 25px 50px rgba(0,0,0,0.65),
-    0 10px 25px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(15px);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+/* ================== CARDS ================== */
+.card {
+  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
+  padding: 1vh 1.2vw;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  transition: all 0.35s;
   position: relative;
   overflow: hidden;
 }
 
-.card.reservatorio:hover {
-  transform: translateY(-12px);
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow: 
-    0 35px 70px rgba(0,0,0,0.75),
-    0 18px 40px rgba(0, 229, 255, 0.3),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+.card:hover { 
+  transform: translateY(-4px); 
+  border-color: rgba(0,229,255,0.35); 
+  box-shadow: 0 12px 30px rgba(0,229,255,0.2);
 }
 
-.card.reservatorio.alerta {
-  border-color: #ff3d00;
-  animation: alerta-pulse 2s infinite;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8vh;
 }
 
-@keyframes alerta-pulse {
- 0%, 100% { box-shadow: 0 25px 50px rgba(255, 61, 0, 0.45), 0 10px 25px rgba(255, 61, 0, 0.25); }
- 50% { box-shadow: 0 35px 70px rgba(255, 61, 0, 0.65), 0 15px 35px rgba(255, 61, 0, 0.45); }
-}
-
-.card.reservatorio.vibra-critico {
-  animation: vibra-critico 0.3s infinite;
-}
-
-@keyframes vibra-critico {
- 0%, 100% { transform: translateX(0); }
- 25% { transform: translateX(-2px); }
- 75% { transform: translateX(2px); }
-}
-
-/* Classes de nível SCADA */
-.card.reservatorio.nivel-cheio { border-color: #00e676; }
-.card.reservatorio.nivel-alto { border-color: #40c4ff; }
-.card.reservatorio.nivel-medio { border-color: #00ddff; }
-.card.reservatorio.nivel-baixo { border-color: #ffc107; }
-.card.reservatorio.nivel-critico { border-color: #ff3d00; }
-
-.card.reservatorio h2 {
+.card-title {
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 700;
   color: #e0f7ff;
-  font-size: 19px;
-  margin: 0 0 25px 0;
-  text-align: center;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-shadow: 0 3px 15px rgba(0,0,0,0.9);
 }
 
-/* ================== TANQUE CILÍNDRICO METÁLICO ESCOVADO ================== */
+.card-status {
+  font-size: clamp(8px, 0.8vw, 10px);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-ok { 
+  border-left: 3px solid #00ff88; 
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88; 
+}
+.status-warning { 
+  border-left: 3px solid #ffaa00; 
+  background: rgba(255, 170, 0, 0.1);
+  color: #ffaa00; 
+}
+.status-danger { 
+  border-left: 3px solid #ff4444; 
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff4444; 
+}
+
+/* ================== TANQUE CANVAS ================== */
+.tanque-container {
+  position: relative;
+  height: 22vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .tanque {
   position: relative;
-  width: 200px;
-  height: 260px;
-  margin: 30px auto;
+  width: 120px;
+  height: 22vh;
   background: 
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      rgba(255,255,255,0.025) 1px,
-      transparent 2px,
-      transparent 4px
-    ), /* efeito aço escovado */
+    repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 4px),
     radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
-    linear-gradient(95deg, 
-      #0a1a2a 0%, 
-      #1a3a5a 15%, 
-      #3a6b9e 35%, 
-      #4a7fb5 50%, 
-      #3a6b9e 65%, 
-      #1a3a5a 85%, 
-      #0a1a2a 100%);
-  border-radius: 0 0 70px 70px;
-  border: 3px solid rgba(160, 200, 240, 0.4);
+    linear-gradient(95deg, #0a1a2a 0%, #1a3a5a 15%, #3a6b9e 35%, #4a7fb5 50%, #3a6b9e 65%, #1a3a5a 85%, #0a1a2a 100%);
+  border-radius: 0 0 60px 60px / 0 0 30px 30px;
+  border: 2px solid rgba(160, 200, 240, 0.4);
   box-shadow: 
-    inset -40px 0 80px rgba(0,0,0,0.9),
-    inset 40px 0 80px rgba(255,255,255,0.08),
-    inset 0 -50px 80px rgba(0,0,0,0.95),
-    0 20px 50px rgba(0,0,0,0.6);
+    inset -30px 0 60px rgba(0,0,0,0.8),
+    inset 30px 0 60px rgba(255,255,255,0.08),
+    inset 0 -40px 60px rgba(0,0,0,0.9),
+    0 15px 35px rgba(0,0,0,0.5);
   overflow: hidden;
-  transform: perspective(800px) rotateX(2deg);
+  transform: perspective(600px) rotateX(2deg);
 }
 
 .tanque::before {
   content: "";
   position: absolute;
-  top: -25px;
-  left: -5px;
-  width: calc(100% + 10px);
-  height: 50px;
+  top: -20px;
+  left: -4px;
+  width: calc(100% + 8px);
+  height: 40px;
   background: radial-gradient(ellipse at center, #8bb8e8 0%, #3a5f85 55%, #1a2f45 100%);
   border-radius: 50%;
-  border: 4px solid #9cc8f0;
-  box-shadow: 
-    0 -12px 30px rgba(0,0,0,0.98),
-    inset 0 8px 15px rgba(255,255,255,0.4),
-    inset 0 -5px 10px rgba(0,0,0,0.7);
+  border: 3px solid #9cc8f0;
+  box-shadow: 0 -8px 20px rgba(0,0,0,0.9), inset 0 6px 12px rgba(255,255,255,0.4);
   z-index: 10;
-  pointer-events: none;
-}
-
-.tanque::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(95deg, 
-    rgba(255,255,255,0.15) 0%, 
-    transparent 25%, 
-    transparent 70%,
-    rgba(255,255,255,0.08) 100%);
-  pointer-events: none;
-  z-index: 6;
-  border-radius: 0 0 70px 70px;
-  mix-blend-mode: screen;
 }
 
 .canvas-agua {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 0 0 68px 68px;
+  width: 120px;
+  height: 22vh;
+  border-radius: 0 0 58px 58px;
   z-index: 1;
 }
 
-/* Escala de nível lateral */
 .escala {
   position: absolute;
-  right: -58px;
-  top: 25px;
-  height: 80%;
+  right: -45px;
+  top: 15px;
+  height: 85%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: #7aa8cc;
-  font-size: 12px;
+  font-size: clamp(7px, 0.7vw, 9px);
   font-weight: 700;
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.95);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
   z-index: 8;
-  letter-spacing: 0.8px;
-  pointer-events: none;
 }
 
 .escala span {
   position: relative;
-  padding-right: 10px;
+  padding-right: 8px;
 }
 
 .escala span::before {
@@ -414,84 +398,55 @@ main {
   position: absolute;
   right: 0;
   top: 50%;
-  width: 18px;
-  height: 2px;
+  width: 14px;
+  height: 1.5px;
   background: linear-gradient(90deg, #4a7fa8, transparent);
   transform: translateY(-50%);
 }
 
-/* ================== INFO DO RESERVATÓRIO ================== */
-.info {
+.nivel-info {
+  position: absolute;
+  bottom: 1vh;
+  left: 0;
+  right: 0;
   text-align: center;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+  pointer-events: none;
 }
 
-.info .valor {
-  font-size: 42px;
+.nivel-valor {
+  font-size: clamp(14px, 1.6vw, 18px);
   font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
+  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 5px 30px rgba(0,229,255,0.55);
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.85));
+  text-shadow: 0 3px 15px rgba(0,229,255,0.5);
   line-height: 1;
 }
 
-.info .litros {
-  font-size: 16px;
+.nivel-litros {
+  font-size: clamp(8px, 0.9vw, 10px);
   color: #a8c8e8;
-  margin-top: 12px;
+  margin-top: 4px;
   font-weight: 600;
-  text-shadow: 1px 1px 6px rgba(0,0,0,0.95);
-  letter-spacing: 0.8px;
 }
 
-/* ================== BOMBAS E PRESSÕES ================== */
-.card {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 26px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.55);
-  backdrop-filter: blur(12px);
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.4), transparent);
-}
-
-.card:hover { 
-  transform: translateY(-8px); 
-  border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 25px 50px rgba(0,229,255,0.25);
-}
-
-.card.bomba h2, .card h2 {
-  font-size: 17px;
-  color: #e0f7ff;
-  margin-bottom: 18px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+/* ================== BOMBAS ================== */
+.bomba-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: clamp(10px, 1vw, 12px);
+  color: #ccc;
 }
 
 .card.bomba.ligada { 
-  border-color: #00c853; 
-  box-shadow: 0 0 35px rgba(0,200,83,0.45), 0 15px 40px rgba(0,0,0,0.55); 
+  border-left: 3px solid #00c853; 
+  box-shadow: 0 0 25px rgba(0,200,83,0.4); 
 }
 .card.bomba.desligada { 
-  border-color: #555; 
+  border-left: 3px solid #555; 
   opacity: 0.65; 
 }
 .card.bomba.stale { 
@@ -500,75 +455,58 @@ main {
 }
 
 .status-icon {
-  font-size: 44px;
+  font-size: clamp(28px, 3vw, 36px);
   text-align: center;
-  margin: 18px 0;
-  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.85));
-}
-
-.valor {
-  font-size: 22px;
-  font-weight: 800;
-  color: #00e5ff;
-  text-align: center;
-  text-shadow: 0 3px 15px rgba(0,229,255,0.4);
-  letter-spacing: 0.5px;
-}
-
-.ciclos, .valor-pressao {
-  font-size: 15px;
-  color: #8aa5c7;
-  text-align: center;
-  margin-top: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  margin: 8px 0;
+  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.8));
 }
 
 /* ================== FOOTER ================== */
 footer {
   text-align: center;
-  padding: 35px 30px;
+  padding: 0.5vh 2vw;
   color: #5a7a9a;
-  font-size: 13px;
+  font-size: clamp(8px, 0.8vw, 10px);
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin-top: auto;
   background: rgba(10, 26, 42, 0.6);
   backdrop-filter: blur(15px);
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ================== SCROLLBAR ================== */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 20, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
 }
 
 /* ================== RESPONSIVO ================== */
 @media (max-width: 1200px) {
-  .kpis {
-    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  main {
+    grid-template-columns: 1fr; /* 1 coluna em telas menores */
+    overflow-y: auto;
+  }
+  html, body {
+    overflow: auto; /* libera scroll geral no mobile */
+  }
+  .tanque-container, .tanque, .canvas-agua {
+    height: 25vh;
   }
 }
 
-@media (max-width: 768px) {
-  .tanque { 
-    width: 160px; 
-    height: 220px; 
-  }
-  .kpis {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    gap: 12px;
+@media (max-height: 700px) {
+  .tanque-container, .tanque, .canvas-agua {
+    height: 18vh;
   }
   .kpi strong {
-    font-size: 22px;
-  }
-  .grid-reservatorios,
-  .grid-bombas,
-  .grid-pressoes { 
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-  .cabecalho h1 {
-    font-size: 22px;
-  }
-  main, .kpis-container, header {
-    padding-left: 20px;
-    padding-right: 20px;
+    font-size: clamp(16px, 2vw, 22px);
   }
 }
   </style>
@@ -577,7 +515,7 @@ footer {
   <header>
     <div class="cabecalho">
       <div>
-        <h1>HAG - Sistema Hídrico 3D Ultra</h1>
+        <h1>HAG - Sistema Hídrico 3D</h1>
         <div class="subtitulo">Hospital Arnaldo Gavazza • Monitoramento em Tempo Real</div>
       </div>
       <div class="status">
@@ -624,13 +562,13 @@ footer {
   </main>
 
   <footer>
-    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento Hídrico 3D v4.0 Ultra Realista
+    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento Hídrico 3D v4.0
   </footer>
 
   <script>
 /**
- * Dashboard HAG 3D Ultra Realista - Hospital Arnaldo Gavazza
- * Versão 4.0 - Física de Fluidos + Inércia + Ripple + Condensação
+ * Dashboard HAG 3D - Hospital Arnaldo Gavazza
+ * Versão 4.0 - Canvas Responsivo 1 Tela
  */
 
 const API = "/api/dashboard";
@@ -641,30 +579,26 @@ let ultimoDado = Date.now();
 let renderPending = false;
 let cacheDados = new Map();
 
-// ======================= CLASSE CANVAS ÁGUA ULTRA REALISTA =======================
+// ======================= CLASSE CANVAS ÁGUA RESPONSIVO =======================
 class AguaCanvas {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.width = canvas.width = 200;
-    this.height = canvas.height = 260;
+    this.width = canvas.width = 120;
+    this.height = canvas.height = Math.floor(window.innerHeight * 0.22);
     
-    // Física da água
-    this.nivel = 0; // 0 a 1 - nível atual renderizado
-    this.nivelTarget = 0; // nível alvo
-    this.velocidade = 0; // inércia da água
-    this.rippleOffset = 0; // amplitude do ripple de impacto
-    
-    // Ondas senoidais
+    this.nivel = 0;
+    this.nivelTarget = 0;
+    this.velocidade = 0;
+    this.rippleOffset = 0;
     this.ondas = [];
     this.particulas = [];
     this.condensacao = [];
     this.time = 0;
     
-    // 4 ondas sobrepostas para movimento orgânico realista
     for (let i = 0; i < 4; i++) {
       this.ondas.push({
-        amplitude: 12 + i * 4,
+        amplitude: 8 + i * 3,
         frequency: 0.018 + i * 0.004,
         phase: i * Math.PI / 3,
         speed: 0.035 + i * 0.008
@@ -672,29 +606,26 @@ class AguaCanvas {
     }
     
     this.animate();
+    window.addEventListener('resize', () => {
+      this.height = canvas.height = Math.floor(window.innerHeight * 0.22);
+    });
   }
   
   setNivel(nivel) {
     const nivelAnterior = this.nivelTarget;
     this.nivelTarget = Math.min(1, Math.max(0, nivel / 100));
-    
-    // Calcula impacto para efeito ripple quando há mudança brusca
     const delta = Math.abs(this.nivelTarget - nivelAnterior);
     if (delta > 0.04) {
-      this.rippleOffset = delta * 20; // intensidade do ripple
+      this.rippleOffset = delta * 15;
     }
   }
   
   animate() {
-    this.time += 0.016; // 60fps
-    
-    // Física: inércia + mola + amortecimento
+    this.time += 0.016;
     const diferenca = this.nivelTarget - this.nivel;
-    this.velocidade += diferenca * 0.12; // aceleração
-    this.velocidade *= 0.88; // amortecimento
-    this.nivel += this.velocidade; // aplicação da velocidade
-    
-    // Decay do ripple
+    this.velocidade += diferenca * 0.12;
+    this.velocidade *= 0.88;
+    this.nivel += this.velocidade;
     this.rippleOffset *= 0.91;
     
     this.ctx.clearRect(0, 0, this.width, this.height);
@@ -703,9 +634,8 @@ class AguaCanvas {
     this.desenharAgua(yAgua);
     this.desenharOnda(yAgua);
     this.desenharParticulas(yAgua);
-    this.desenharReflexo(yAgua);
-    this.desenharRefracao(yAgua);
     this.desenharCondensacao();
+    this.desenharReflexo(yAgua);
     
     requestAnimationFrame(() => this.animate());
   }
@@ -713,30 +643,23 @@ class AguaCanvas {
   desenharAgua(yAgua) {
     const grad = this.ctx.createLinearGradient(0, yAgua, 0, this.height);
     
-    // Gradiente dinâmico conforme nível + profundidade
     if (this.nivel > 0.95) {
       grad.addColorStop(0, 'rgba(0, 220, 120, 0.95)');
-      grad.addColorStop(0.5, 'rgba(0, 160, 80, 0.98)');
       grad.addColorStop(1, 'rgba(0, 100, 50, 1)');
     } else if (this.nivel > 0.7) {
       grad.addColorStop(0, 'rgba(64, 196, 255, 0.95)');
-      grad.addColorStop(0.5, 'rgba(0, 120, 200, 0.98)');
       grad.addColorStop(1, 'rgba(0, 60, 140, 1)');
     } else if (this.nivel > 0.4) {
       grad.addColorStop(0, 'rgba(0, 221, 255, 0.95)');
-      grad.addColorStop(0.5, 'rgba(0, 100, 180, 0.98)');
       grad.addColorStop(1, 'rgba(0, 40, 100, 1)');
     } else if (this.nivel > 0.2) {
       grad.addColorStop(0, 'rgba(255, 193, 7, 0.95)');
-      grad.addColorStop(0.5, 'rgba(220, 140, 0, 0.98)');
       grad.addColorStop(1, 'rgba(160, 80, 0, 1)');
     } else {
       grad.addColorStop(0, 'rgba(255, 61, 0, 0.95)');
-      grad.addColorStop(0.5, 'rgba(200, 30, 0, 0.98)');
       grad.addColorStop(1, 'rgba(120, 0, 0, 1)');
     }
     
-    // Corpo da água com curva inferior do cilindro
     this.ctx.fillStyle = grad;
     this.ctx.beginPath();
     this.ctx.moveTo(0, yAgua);
@@ -747,7 +670,6 @@ class AguaCanvas {
     this.ctx.closePath();
     this.ctx.fill();
     
-    // Sombra interna para profundidade 3D
     this.ctx.fillStyle = 'rgba(0, 40, 100, 0.5)';
     this.ctx.beginPath();
     this.ctx.moveTo(0, yAgua);
@@ -759,133 +681,101 @@ class AguaCanvas {
   }
   
   desenharOnda(yAgua) {
-    // Linha principal da onda com ripple de impacto
     this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    this.ctx.lineWidth = 2.5;
+    this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     
     for (let x = 0; x <= this.width; x += 2) {
       let y = yAgua;
-      
-      // Soma das 4 ondas senoidais
       this.ondas.forEach(onda => {
         y += Math.sin(x * onda.frequency + this.time * onda.speed + onda.phase) * onda.amplitude * this.nivel;
       });
-      
-      // Ripple de impacto quando nível muda
       const rippleWave = Math.sin(x * 0.08 + this.time * 0.4) * this.rippleOffset;
       y += rippleWave;
-      
-      // Menisco nas bordas - curvatura real da água
       const distanciaBorda = Math.min(x, this.width - x);
       const fatorMenisco = Math.max(0, 1 - distanciaBorda / 35);
-      y -= fatorMenisco * 14;
+      y -= fatorMenisco * 12;
       
       if (x === 0) this.ctx.moveTo(x, y);
       else this.ctx.lineTo(x, y);
     }
-    
     this.ctx.stroke();
     
-    // Reflexo da superfície
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-    this.ctx.lineTo(this.width, yAgua + 18);
-    this.ctx.lineTo(0, yAgua + 18);
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    this.ctx.lineTo(this.width, yAgua + 15);
+    this.ctx.lineTo(0, yAgua + 15);
     this.ctx.closePath();
     this.ctx.fill();
   }
   
   desenharParticulas(yAgua) {
-    // Gera bolhas quando nível sobe
-    if (Math.random() < 0.2 && this.nivel > 0.15 && Math.abs(this.velocidade) > 0.01) {
+    if (Math.random() < 0.15 && this.nivel > 0.15 && Math.abs(this.velocidade) > 0.01) {
       this.particulas.push({
-        x: 35 + Math.random() * 130,
+        x: 25 + Math.random() * 70,
         y: this.height,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: -2.5 - Math.random() * 2,
-        size: 2 + Math.random() * 4,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -2 - Math.random() * 1.5,
+        size: 2 + Math.random() * 3,
         alpha: 1,
-        life: 120
+        life: 100
       });
     }
     
-    // Anima e remove bolhas
     this.particulas = this.particulas.filter(p => {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.025; // gravidade
+      p.vy += 0.025;
       p.life--;
-      p.alpha = p.life / 120;
+      p.alpha = p.life / 100;
       
       if (p.y > yAgua && p.y < this.height) {
-        // Bolha principal com gradiente
-        const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-        grad.addColorStop(0, `rgba(255, 255, 255, ${p.alpha})`);
-        grad.addColorStop(1, `rgba(255, 255, 255, 0)`);
-        this.ctx.fillStyle = grad;
         this.ctx.beginPath();
         this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.8})`;
         this.ctx.fill();
-        
-        // Brilho da bolha
         this.ctx.beginPath();
         this.ctx.arc(p.x - p.size/3, p.y - p.size/3, p.size/2, 0, Math.PI * 2);
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.9})`;
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
         this.ctx.fill();
       }
-      
-      return p.life > 0 && p.y < this.height + 25;
+      return p.life > 0 && p.y < this.height + 20;
+    });
+  }
+  
+  desenharCondensacao() {
+    if (this.nivel > 0.65 && Math.random() < 0.3) {
+      this.condensacao.push({
+        x: 10 + Math.random() * 100,
+        y: Math.random() * this.height * 0.4,
+        size: 1 + Math.random() * 2,
+        alpha: 0.3 + Math.random() * 0.3,
+        life: 200
+      });
+    }
+    
+    this.condensacao = this.condensacao.filter(gota => {
+      gota.life--;
+      gota.alpha = gota.life / 200;
+      gota.y += 0.3;
+      if (gota.y < this.height * 0.8) {
+        this.ctx.beginPath();
+        this.ctx.arc(gota.x, gota.y, gota.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(180, 220, 255, ${gota.alpha})`;
+        this.ctx.fill();
+      }
+      return gota.life > 0 && gota.y < this.height * 0.9;
     });
   }
   
   desenharReflexo(yAgua) {
-    // Reflexo especular da tampa do tanque na superfície da água
-    const grad = this.ctx.createLinearGradient(0, yAgua - 15, 0, yAgua + 15);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
-    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
+    const grad = this.ctx.createLinearGradient(0, yAgua - 10, 0, yAgua + 10);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
     grad.addColorStop(1, 'transparent');
     this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, yAgua - 15, this.width, 30);
+    this.ctx.fillRect(0, yAgua - 10, this.width, 20);
   }
-  
-  desenharRefracao(yAgua) {
-    // Efeito de refração - distorce a parede atrás da água
-    this.ctx.save();
-    this.ctx.globalCompositeOperation = 'soft-light';
-    this.ctx.fillStyle = 'rgba(100, 180, 255, 0.12)';
-    this.ctx.fillRect(0, yAgua, this.width * 0.22, this.height - yAgua);
-    this.ctx.globalCompositeOperation = 'source-over';
-    this.ctx.restore();
-  }
- desenharCondensacao() {
-  // Gera nova gota quando reservatório está cheio
-  if (this.nivel > 0.65 && Math.random() < 0.3) {
-    this.condensacao.push({
-      x: 15 + Math.random() * 170,
-      y: Math.random() * this.height * 0.4,
-      size: 1 + Math.random() * 2,
-      alpha: 0.3 + Math.random() * 0.3,
-      life: 200
-    });
-  }
-  
-  // Anima e remove gotas
-  this.condensacao = this.condensacao.filter(gota => {
-    gota.life--;
-    gota.alpha = gota.life / 200;
-    gota.y += 0.3; // gota escorrendo
-    
-    if (gota.y < this.height * 0.8) {
-      this.ctx.beginPath();
-      this.ctx.arc(gota.x, gota.y, gota.size, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(180, 220, 255, ${gota.alpha})`;
-      this.ctx.fill();
-    }
-    
-    return gota.life > 0 && gota.y < this.height * 0.9;
-  });
-} // <- fecha a função
-}   // <- fecha a classe AguaCanvas
+}
 
 // ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", init);
@@ -898,7 +788,6 @@ function init() {
     iniciarMonitoramentoSinal();
 }
 
-// ======================= MONITORAMENTO DE SINAL =======================
 function iniciarMonitoramentoSinal() {
     setInterval(() => {
         const tempoSemSinal = Date.now() - ultimoDado;
@@ -915,7 +804,6 @@ function iniciarMonitoramentoSinal() {
     }, 5000);
 }
 
-// ======================= PROCESSAMENTO DE DADOS =======================
 function processarPayload(payload) {
     if (!payload) return;
     if (payload.type === "update" && payload.dados) {
@@ -925,7 +813,6 @@ function processarPayload(payload) {
     scheduleRender(payload);
 }
 
-// ======================= RENDER OTIMIZADO COM RAF =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
@@ -945,7 +832,6 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
-// ======================= RESERVATÓRIOS CANVAS =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -953,61 +839,62 @@ function renderReservatorios(lista) {
     lista.forEach(r => {
         const id = `res-${r.setor}`;
         let el = cacheDados.get(id);
+        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
+        const nivelSuavizado = Math.round(nivel * 10) / 10;
+
+        let statusClass, statusText;
+        if (nivel >= 70) {
+            statusClass = 'status-ok';
+            statusText = 'Normal';
+        } else if (nivel >= 30) {
+            statusClass = 'status-warning'; 
+            statusText = 'Atenção';
+        } else {
+            statusClass = 'status-danger';
+            statusText = 'Crítico';
+        }
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card reservatorio";
+            el.className = `card reservatorio ${statusClass}`;
             el.innerHTML = `
-                <h2>${r.nome}</h2>
-                <div class="tanque">
-                  <canvas class="canvas-agua"></canvas>
-                  <div class="escala">
-                      <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                  </div>
+                <div class="card-header">
+                  <h2 class="card-title">${r.nome}</h2>
+                  <div class="card-status ${statusClass}">${statusText}</div>
                 </div>
-                <div class="info">
-                    <div class="valor">0%</div>
-                    <div class="litros">0 L</div>
+                <div class="card-content">
+                  <div class="tanque-container">
+                    <div class="tanque">
+                      <canvas class="canvas-agua"></canvas>
+                      <div class="escala">
+                          <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                      </div>
+                    </div>
+                    <div class="nivel-info">
+                        <div class="nivel-valor">${nivelSuavizado.toFixed(1)}%</div>
+                        <div class="nivel-litros">${formatar(r.current_liters)} L</div>
+                    </div>
+                  </div>
                 </div>
             `;
             area.appendChild(el);
             cacheDados.set(id, el);
-            
-            // Inicializa Canvas
             const canvas = el.querySelector('.canvas-agua');
             el.canvasAgua = new AguaCanvas(canvas);
+        } else {
+            el.className = `card reservatorio ${statusClass}`;
+            el.querySelector('.card-status').className = `card-status ${statusClass}`;
+            el.querySelector('.card-status').innerText = statusText;
+            el.querySelector(".nivel-valor").innerText = `${nivelSuavizado.toFixed(1)}%`;
+            el.querySelector(".nivel-litros").innerText = `${formatar(r.current_liters)} L`;
+            if (el.canvasAgua) {
+              el.canvasAgua.setNivel(nivelSuavizado);
+            }
         }
-
-        const valor = el.querySelector(".valor");
-        const litros = el.querySelector(".litros");
-        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
-        const nivelSuavizado = Math.round(nivel * 10) / 10;
-
-        // Atualiza Canvas
-        if (el.canvasAgua) {
-          el.canvasAgua.setNivel(nivelSuavizado);
-        }
-
-        // Alerta visual
-        el.classList.toggle("alerta", nivel < 20);
-        el.classList.toggle("vibra-critico", nivel < 10);
-        
-        // Classe de nível para borda colorida estilo SCADA
-        el.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
-        if (nivel >= 95) el.classList.add("nivel-cheio");
-        else if (nivel >= 70) el.classList.add("nivel-alto");
-        else if (nivel >= 40) el.classList.add("nivel-medio");
-        else if (nivel >= 20) el.classList.add("nivel-baixo");
-        else el.classList.add("nivel-critico");
-
-        // Atualiza textos
-        valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
-        litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
-// ======================= BOMBAS =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -1017,25 +904,38 @@ function renderBombas(lista) {
         let el = cacheDados.get(id);
         const ligada = b.estado === "ligada";
         const desconhecido = b.estado === "desconhecido" || b.estado === undefined;
+        const statusClass = desconhecido ? "stale" : ligada ? "status-ok" : "status-danger";
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card bomba";
-            el.innerHTML = `<h2></h2><div class="status-icon"></div><div class="valor"></div><div class="ciclos"></div>`;
+            el.className = `card bomba ${statusClass}`;
+            el.innerHTML = `
+              <div class="card-header">
+                <h2 class="card-title"></h2>
+                <div class="card-status ${statusClass}"></div>
+              </div>
+              <div class="card-content">
+                <div class="bomba-stats">
+                  <div class="valor"></div>
+                  <div class="ciclos"></div>
+                </div>
+              </div>
+            `;
             area.appendChild(el);
             cacheDados.set(id, el);
+        } else {
+            el.className = `card bomba ${statusClass}`;
+            el.querySelector(".card-status").className = `card-status ${statusClass}`;
         }
 
-        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
         el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".status-icon").innerText = desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
-        el.querySelector(".valor").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
+        el.querySelector(".card-status").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
+        el.querySelector(".valor").innerText = `Fluxo: ${b.fluxo || 0} L/min`;
         el.querySelector(".ciclos").innerText = `${formatar(b.ciclo || 0)} ciclos`;
     });
 }
 
-// ======================= PRESSÕES =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -1043,37 +943,53 @@ function renderPressoes(lista) {
     lista.forEach((p, i) => {
         const id = `pressao-${i}`;
         let el = cacheDados.get(id);
+        const pressao = Number(p.pressao || 0);
+        const statusClass = pressao >= 2.5 ? 'status-ok' : pressao >= 1.5 ? 'status-warning' : 'status-danger';
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = "card";
-            el.innerHTML = `<h2></h2><div class="valor-pressao"></div>`;
+            el.className = `card ${statusClass}`;
+            el.innerHTML = `
+              <div class="card-header">
+                <h2 class="card-title"></h2>
+                <div class="card-status ${statusClass}"></div>
+              </div>
+            `;
             area.appendChild(el);
             cacheDados.set(id, el);
+        } else {
+            el.className = `card ${statusClass}`;
+            el.querySelector(".card-status").className = `card-status ${statusClass}`;
         }
 
-        const pressao = Number(p.pressao || 0).toFixed(2);
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${pressao} bar`;
+        el.querySelector(".card-status").innerText = `${pressao.toFixed(2)} bar`;
     });
 }
 
 // ======================= KPIs =======================
 function atualizarKPIs(data) {
-    const kpis = data.kpis || {};
-    const elementos = {
-        kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
-        bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
-        kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
-        kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
-        kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
-    };
-
-    Object.entries(elementos).forEach(([id, valor]) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = valor;
-    });
+    const reservatorios = data.reservatorios || [];
+    const bombas = data.bombas || [];
+    
+    // Filtra reservatórios críticos < 30%
+    const criticos = reservatorios.filter(r => r.percent < 30);
+    const bombasAtivas = bombas.filter(b => b.estado === "ligada").length;
+    
+    // Atualiza KPI numérico
+    document.getElementById('kpiCritico').textContent = criticos.length;
+    document.getElementById('bombasAtivas').textContent = bombasAtivas;
+    
+    // Monta lista de reservatórios críticos
+    const listaCriticos = document.getElementById('listaCriticos');
+    if (criticos.length > 0) {
+        listaCriticos.innerHTML = criticos.map(r => 
+            `<div class="critico-item">⚠️ ${r.nome} - ${r.percent.toFixed(1)}%</div>`
+        ).join('');
+    } else {
+        listaCriticos.innerHTML = '<div class="critico-item" style="color:#00ff88;">✅ Nenhum reservatório crítico</div>';
+    }
 }
 
 // ======================= WEBSOCKET COM RECONEXÃO EXPONENCIAL =======================
@@ -1087,7 +1003,7 @@ function conectarWS() {
         console.log("%c🟢 WebSocket conectado", "color: #00ff88; font-weight: bold;");
         setStatus("🟢 Tempo real conectado", "success");
         atualizarStatusVisual("Tempo real conectado");
-        reconnectDelay = 3000; // Reset delay
+        reconnectDelay = 3000;
     };
 
     ws.onmessage = (msg) => { 
@@ -1103,7 +1019,7 @@ function conectarWS() {
         setStatus("🔴 Reconectando...", "error"); 
         atualizarStatusVisual("Reconectando...");
         setTimeout(conectarWS, reconnectDelay); 
-        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay); // Backoff exponencial
+        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
     };
 
     ws.onerror = (err) => {
