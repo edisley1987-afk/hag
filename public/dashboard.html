@@ -7,9 +7,10 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>HAG - Sistema de Monitoramento</title>
+  
   <style>
 /* ==========================================================
-   CSS HAG DASHBOARD 1 TELA RESPONSIVO
+   CSS HAG DASHBOARD 1 TELA HORIZONTAL
    ========================================================== */
 
 /* ================== RESET E LAYOUT 100VH ================== */
@@ -222,23 +223,20 @@ header {
 
 /* ================== MAIN GRID ================== */
 main {
-  flex: 1; /* ocupa espaço restante */
-  max-width: 1800px;
-  margin: 0.8vh auto 0.5vh;
-  padding: 0 2vw;
-  width: 100%;
+  flex: 1;
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 1.2vh;
-  overflow: hidden;
+  grid-template-columns: 1.6fr 1fr 1fr; /* 3 colunas: Reservatórios | Bombas | Pressões */
+  gap: 12px;
+  padding: 8px 2vw;
   min-height: 0;
+  overflow: hidden;
 }
 
 .secao {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   min-height: 0;
+  overflow: hidden;
 }
 
 .titulo-area {
@@ -251,23 +249,31 @@ main {
   font-weight: 800;
   flex-shrink: 0;
 }
+
 /* ================== GRID HORIZONTAL REAL ================== */
 .grid-reservatorios,
-.grid-bombas, 
+.grid-bombas,
 .grid-pressoes {
-
   display: flex;
-  flex-direction: row;      /* ✅ horizontal */
-  flex-wrap: nowrap;        /* ✅ não quebra linha */
-
-  overflow-x: auto;         /* ✅ scroll lateral */
-  overflow-y: hidden;       /* ✅ remove scroll vertical */
-
+  flex-direction: row;   /* cards lado a lado */
+  flex-wrap: nowrap;     /* não quebra linha */
+  overflow-x: auto;      /* scroll horizontal */
+  overflow-y: hidden;    /* sem scroll vertical */
   gap: 12px;
   padding-bottom: 10px;
-
-  flex: 0 0 auto;           /* ✅ impede crescer vertical */
+  flex: 1;
+  align-items: stretch;
   min-height: 0;
+}
+
+/* Largura fixa dos cards */
+.grid-reservatorios .card {
+  flex: 0 0 260px; /* 260px fixo */
+}
+
+.grid-bombas .card,
+.grid-pressoes .card {
+  flex: 0 0 220px; /* 220px fixo */
 }
 
 /* ================== CARDS ================== */
@@ -281,6 +287,8 @@ main {
   transition: all 0.35s;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover { 
@@ -294,6 +302,7 @@ main {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.8vh;
+  flex-shrink: 0;
 }
 
 .card-title {
@@ -308,6 +317,14 @@ main {
   border-radius: 4px;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
 }
 
 .status-ok { 
@@ -329,42 +346,43 @@ main {
 /* ================== TANQUE CANVAS ================== */
 .tanque-container {
   position: relative;
-  height: 22vh;
+  height: 18vh; /* reduzido para caber horizontal */
   display: flex;
   justify-content: center;
   align-items: center;
+  flex: 1;
 }
 
 .tanque {
   position: relative;
-  width: 120px;
-  height: 22vh;
+  width: 100px; /* reduzido para 100px */
+  height: 18vh;
   background: 
     repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 4px),
     radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
     linear-gradient(95deg, #0a1a2a 0%, #1a3a5a 15%, #3a6b9e 35%, #4a7fb5 50%, #3a6b9e 65%, #1a3a5a 85%, #0a1a2a 100%);
-  border-radius: 0 0 60px 60px / 0 0 30px 30px;
+  border-radius: 0 0 50px 50px / 0 0 25px 25px;
   border: 2px solid rgba(160, 200, 240, 0.4);
   box-shadow: 
-    inset -30px 0 60px rgba(0,0,0,0.8),
-    inset 30px 0 60px rgba(255,255,255,0.08),
-    inset 0 -40px 60px rgba(0,0,0,0.9),
-    0 15px 35px rgba(0,0,0,0.5);
+    inset -25px 0 50px rgba(0,0,0,0.8),
+    inset 25px 0 50px rgba(255,255,255,0.08),
+    inset 0 -35px 50px rgba(0,0,0,0.9),
+    0 12px 28px rgba(0,0,0,0.5);
   overflow: hidden;
-  transform: perspective(600px) rotateX(2deg);
+  transform: perspective(500px) rotateX(2deg);
 }
 
 .tanque::before {
   content: "";
   position: absolute;
-  top: -20px;
+  top: -18px;
   left: -4px;
   width: calc(100% + 8px);
-  height: 40px;
+  height: 36px;
   background: radial-gradient(ellipse at center, #8bb8e8 0%, #3a5f85 55%, #1a2f45 100%);
   border-radius: 50%;
   border: 3px solid #9cc8f0;
-  box-shadow: 0 -8px 20px rgba(0,0,0,0.9), inset 0 6px 12px rgba(255,255,255,0.4);
+  box-shadow: 0 -6px 15px rgba(0,0,0,0.9), inset 0 5px 10px rgba(255,255,255,0.4);
   z-index: 10;
 }
 
@@ -372,22 +390,22 @@ main {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 120px;
-  height: 22vh;
-  border-radius: 0 0 58px 58px;
+  width: 100px; /* 100px para bater com o tanque */
+  height: 18vh;
+  border-radius: 0 0 48px 48px;
   z-index: 1;
 }
 
 .escala {
   position: absolute;
-  right: -45px;
-  top: 15px;
+  right: -38px;
+  top: 12px;
   height: 85%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: #7aa8cc;
-  font-size: clamp(7px, 0.7vw, 9px);
+  font-size: clamp(6px, 0.6vw, 8px);
   font-weight: 700;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
   z-index: 8;
@@ -395,7 +413,7 @@ main {
 
 .escala span {
   position: relative;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
 .escala span::before {
@@ -403,7 +421,7 @@ main {
   position: absolute;
   right: 0;
   top: 50%;
-  width: 14px;
+  width: 10px;
   height: 1.5px;
   background: linear-gradient(90deg, #4a7fa8, transparent);
   transform: translateY(-50%);
@@ -411,7 +429,7 @@ main {
 
 .nivel-info {
   position: absolute;
-  bottom: 1vh;
+  bottom: 0.8vh;
   left: 0;
   right: 0;
   text-align: center;
@@ -420,20 +438,20 @@ main {
 }
 
 .nivel-valor {
-  font-size: clamp(14px, 1.6vw, 18px);
+  font-size: clamp(12px, 1.4vw, 16px);
   font-weight: 900;
   background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 3px 15px rgba(0,229,255,0.5);
+  text-shadow: 0 3px 12px rgba(0,229,255,0.5);
   line-height: 1;
 }
 
 .nivel-litros {
-  font-size: clamp(8px, 0.9vw, 10px);
+  font-size: clamp(7px, 0.8vw, 9px);
   color: #a8c8e8;
-  margin-top: 4px;
+  margin-top: 3px;
   font-weight: 600;
 }
 
@@ -444,6 +462,8 @@ main {
   gap: 4px;
   font-size: clamp(10px, 1vw, 12px);
   color: #ccc;
+  flex: 1;
+  justify-content: center;
 }
 
 .card.bomba.ligada { 
@@ -460,9 +480,9 @@ main {
 }
 
 .status-icon {
-  font-size: clamp(28px, 3vw, 36px);
+  font-size: clamp(24px, 2.5vw, 32px);
   text-align: center;
-  margin: 8px 0;
+  margin: 6px 0;
   filter: drop-shadow(0 3px 10px rgba(0,0,0,0.8));
 }
 
@@ -480,7 +500,8 @@ footer {
 
 /* ================== SCROLLBAR ================== */
 ::-webkit-scrollbar {
-  width: 3px;
+  height: 4px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -492,14 +513,30 @@ footer {
   border-radius: 2px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
 /* ================== RESPONSIVO ================== */
 @media (max-width: 1200px) {
   main {
-    grid-template-columns: 1fr; /* 1 coluna em telas menores */
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
     overflow-y: auto;
   }
   html, body {
     overflow: auto; /* libera scroll geral no mobile */
+  }
+  .grid-reservatorios,
+  .grid-bombas,
+  .grid-pressoes {
+    flex-direction: column; /* volta pra vertical no mobile */
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .grid-reservatorios .card,
+  .grid-bombas .card,
+  .grid-pressoes .card {
+    flex: 0 0 auto; /* largura 100% no mobile */
   }
   .tanque-container, .tanque, .canvas-agua {
     height: 25vh;
@@ -508,7 +545,7 @@ footer {
 
 @media (max-height: 700px) {
   .tanque-container, .tanque, .canvas-agua {
-    height: 18vh;
+    height: 14vh;
   }
   .kpi strong {
     font-size: clamp(16px, 2vw, 22px);
@@ -573,7 +610,7 @@ footer {
   <script>
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 4.0 - Canvas Responsivo 1 Tela
+ * Versão 4.1 - Horizontal
  */
 
 const API = "/api/dashboard";
@@ -583,14 +620,15 @@ let maxReconnectDelay = 30000;
 let ultimoDado = Date.now();
 let renderPending = false;
 let cacheDados = new Map();
+let lastData = null;
 
 // ======================= CLASSE CANVAS ÁGUA RESPONSIVO =======================
 class AguaCanvas {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.width = canvas.width = 120;
-    this.height = canvas.height = Math.floor(window.innerHeight * 0.22);
+    this.width = canvas.width = 100; // 100px para bater com CSS
+    this.height = canvas.height = Math.floor(window.innerHeight * 0.18); // 18vh para bater com CSS
     
     this.nivel = 0;
     this.nivelTarget = 0;
@@ -603,7 +641,7 @@ class AguaCanvas {
     
     for (let i = 0; i < 4; i++) {
       this.ondas.push({
-        amplitude: 8 + i * 3,
+        amplitude: 5 + i * 2,
         frequency: 0.018 + i * 0.004,
         phase: i * Math.PI / 3,
         speed: 0.035 + i * 0.008
@@ -612,7 +650,7 @@ class AguaCanvas {
     
     this.animate();
     window.addEventListener('resize', () => {
-      this.height = canvas.height = Math.floor(window.innerHeight * 0.22);
+      this.height = canvas.height = Math.floor(window.innerHeight * 0.18);
     });
   }
   
@@ -698,8 +736,8 @@ class AguaCanvas {
       const rippleWave = Math.sin(x * 0.08 + this.time * 0.4) * this.rippleOffset;
       y += rippleWave;
       const distanciaBorda = Math.min(x, this.width - x);
-      const fatorMenisco = Math.max(0, 1 - distanciaBorda / 35);
-      y -= fatorMenisco * 12;
+      const fatorMenisco = Math.max(0, 1 - distanciaBorda / 30);
+      y -= fatorMenisco * 10;
       
       if (x === 0) this.ctx.moveTo(x, y);
       else this.ctx.lineTo(x, y);
@@ -707,8 +745,8 @@ class AguaCanvas {
     this.ctx.stroke();
     
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-    this.ctx.lineTo(this.width, yAgua + 15);
-    this.ctx.lineTo(0, yAgua + 15);
+    this.ctx.lineTo(this.width, yAgua + 12);
+    this.ctx.lineTo(0, yAgua + 12);
     this.ctx.closePath();
     this.ctx.fill();
   }
@@ -716,11 +754,11 @@ class AguaCanvas {
   desenharParticulas(yAgua) {
     if (Math.random() < 0.15 && this.nivel > 0.15 && Math.abs(this.velocidade) > 0.01) {
       this.particulas.push({
-        x: 25 + Math.random() * 70,
+        x: 20 + Math.random() * 60,
         y: this.height,
         vx: (Math.random() - 0.5) * 0.6,
         vy: -2 - Math.random() * 1.5,
-        size: 2 + Math.random() * 3,
+        size: 1.5 + Math.random() * 2.5,
         alpha: 1,
         life: 100
       });
@@ -750,9 +788,9 @@ class AguaCanvas {
   desenharCondensacao() {
     if (this.nivel > 0.65 && Math.random() < 0.3) {
       this.condensacao.push({
-        x: 10 + Math.random() * 100,
+        x: 8 + Math.random() * 84,
         y: Math.random() * this.height * 0.4,
-        size: 1 + Math.random() * 2,
+        size: 1 + Math.random() * 1.5,
         alpha: 0.3 + Math.random() * 0.3,
         life: 200
       });
@@ -773,12 +811,12 @@ class AguaCanvas {
   }
   
   desenharReflexo(yAgua) {
-    const grad = this.ctx.createLinearGradient(0, yAgua - 10, 0, yAgua + 10);
+    const grad = this.ctx.createLinearGradient(0, yAgua - 8, 0, yAgua + 8);
     grad.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
     grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
     grad.addColorStop(1, 'transparent');
     this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, yAgua - 10, this.width, 20);
+    this.ctx.fillRect(0, yAgua - 8, this.width, 16);
   }
 }
 
@@ -786,7 +824,7 @@ class AguaCanvas {
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-    console.log("%c HAG Dashboard v4.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
+    console.log("%c HAG Dashboard v4.1 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
     fallbackHTTP();
     conectarWS();
     setInterval(fallbackHTTP, 8000);
@@ -819,10 +857,14 @@ function processarPayload(payload) {
 }
 
 function scheduleRender(data) {
+    lastData = data;
+
     if (renderPending) return;
+
     renderPending = true;
+
     requestAnimationFrame(() => {
-        atualizarUI(data);
+        atualizarUI(lastData);
         renderPending = false;
     });
 }
@@ -891,10 +933,21 @@ function renderReservatorios(lista) {
             el.className = `card reservatorio ${statusClass}`;
             el.querySelector('.card-status').className = `card-status ${statusClass}`;
             el.querySelector('.card-status').innerText = statusText;
-            el.querySelector(".nivel-valor").innerText = `${nivelSuavizado.toFixed(1)}%`;
+           
+            const valorAtual = el.dataset.nivel ? parseFloat(el.dataset.nivel) : null;
+            if (valorAtual === null || Math.abs(valorAtual - nivelSuavizado) > 0.5) {
+                el.querySelector(".nivel-valor").textContent = `${nivelSuavizado.toFixed(1)}%`;
+                el.dataset.nivel = nivelSuavizado;
+            }
+            
             el.querySelector(".nivel-litros").innerText = `${formatar(r.current_liters)} L`;
+            
             if (el.canvasAgua) {
-              el.canvasAgua.setNivel(nivelSuavizado);
+                const nivelCanvasAtual = el.dataset.nivelCanvas ? parseFloat(el.dataset.nivelCanvas) : null;
+                if (nivelCanvasAtual === null || Math.abs(nivelCanvasAtual - nivelSuavizado) > 1) {
+                    el.canvasAgua.setNivel(nivelSuavizado);
+                    el.dataset.nivelCanvas = nivelSuavizado;
+                }
             }
         }
     });
@@ -904,40 +957,48 @@ function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
 
-    lista.forEach((b, i) => {
-        const id = `bomba-${i}`;
+    lista.forEach(b => {
+        const id = `bomba-${b.id}`;
         let el = cacheDados.get(id);
-        const ligada = b.estado === "ligada";
-        const desconhecido = b.estado === "desconhecido" || b.estado === undefined;
-        const statusClass = desconhecido ? "stale" : ligada ? "status-ok" : "status-danger";
+        const ligada = b.status === 'ligada' || b.status === 'on' || b.status === 1;
+        const stale = b.stale === true;
+
+        let statusClass = ligada ? 'ligada' : 'desligada';
+        if (stale) statusClass += ' stale';
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
             el.className = `card bomba ${statusClass}`;
             el.innerHTML = `
-              <div class="card-header">
-                <h2 class="card-title"></h2>
-                <div class="card-status ${statusClass}"></div>
-              </div>
-              <div class="card-content">
-                <div class="bomba-stats">
-                  <div class="valor"></div>
-                  <div class="ciclos"></div>
+                <div class="card-header">
+                  <h2 class="card-title">${b.nome}</h2>
+                  <div class="card-status ${ligada ? 'status-ok' : 'status-danger'}">
+                    ${ligada ? 'Ligada' : 'Desligada'}
+                  </div>
                 </div>
-              </div>
+                <div class="card-content">
+                  <div class="status-icon">${ligada ? '⚡' : '⏸️'}</div>
+                  <div class="bomba-stats">
+                    <div>Corrente: <strong>${b.corrente ?? '--'} A</strong></div>
+                    <div>Pressão: <strong>${b.pressao ?? '--'} bar</strong></div>
+                    <div>Tempo: <strong>${formatarTempo(b.tempo_ligado)}</strong></div>
+                  </div>
+                </div>
             `;
             area.appendChild(el);
             cacheDados.set(id, el);
         } else {
             el.className = `card bomba ${statusClass}`;
-            el.querySelector(".card-status").className = `card-status ${statusClass}`;
+            el.querySelector('.card-status').className = `card-status ${ligada ? 'status-ok' : 'status-danger'}`;
+            el.querySelector('.card-status').innerText = ligada ? 'Ligada' : 'Desligada';
+            el.querySelector('.status-icon').innerText = ligada ? '⚡' : '⏸️';
+            el.querySelector('.bomba-stats').innerHTML = `
+                <div>Corrente: <strong>${b.corrente ?? '--'} A</strong></div>
+                <div>Pressão: <strong>${b.pressao ?? '--'} bar</strong></div>
+                <div>Tempo: <strong>${formatarTempo(b.tempo_ligado)}</strong></div>
+            `;
         }
-
-        el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".card-status").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".valor").innerText = `Fluxo: ${b.fluxo || 0} L/min`;
-        el.querySelector(".ciclos").innerText = `${formatar(b.ciclo || 0)} ciclos`;
     });
 }
 
@@ -945,160 +1006,147 @@ function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
 
-    lista.forEach((p, i) => {
-        const id = `pressao-${i}`;
+    lista.forEach(p => {
+        const id = `pressao-${p.id}`;
         let el = cacheDados.get(id);
-        const pressao = Number(p.pressao || 0);
-        const statusClass = pressao >= 2.5 ? 'status-ok' : pressao >= 1.5 ? 'status-warning' : 'status-danger';
+        const valor = Number(p.valor) || 0;
+        
+        let statusClass = 'status-ok';
+        let statusText = 'Normal';
+        if (valor > (p.limite_alto ?? 5)) {
+            statusClass = 'status-danger';
+            statusText = 'Alta';
+        } else if (valor < (p.limite_baixo ?? 1.5)) {
+            statusClass = 'status-warning';
+            statusText = 'Baixa';
+        }
 
         if (!el) {
             el = document.createElement("div");
             el.id = id;
-            el.className = `card ${statusClass}`;
+            el.className = `card pressao ${statusClass}`;
             el.innerHTML = `
-              <div class="card-header">
-                <h2 class="card-title"></h2>
-                <div class="card-status ${statusClass}"></div>
-              </div>
+                <div class="card-header">
+                  <h2 class="card-title">${p.nome}</h2>
+                  <div class="card-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="card-content">
+                  <div class="nivel-valor">${valor.toFixed(2)} bar</div>
+                  <div class="nivel-litros">Limite: ${p.limite_baixo ?? 1.5} - ${p.limite_alto ?? 5} bar</div>
+                </div>
             `;
             area.appendChild(el);
             cacheDados.set(id, el);
         } else {
-            el.className = `card ${statusClass}`;
-            el.querySelector(".card-status").className = `card-status ${statusClass}`;
+            el.className = `card pressao ${statusClass}`;
+            el.querySelector('.card-status').className = `card-status ${statusClass}`;
+            el.querySelector('.card-status').innerText = statusText;
+            el.querySelector('.nivel-valor').innerText = `${valor.toFixed(2)} bar`;
         }
-
-        el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".card-status").innerText = `${pressao.toFixed(2)} bar`;
     });
 }
 
-// ======================= KPIs =======================
 function atualizarKPIs(data) {
-    const reservatorios = data.reservatorios || [];
-    const bombas = data.bombas || [];
-    
-    // Filtra reservatórios críticos < 30%
-    const criticos = reservatorios.filter(r => r.percent < 30);
-    const bombasAtivas = bombas.filter(b => b.estado === "ligada").length;
-    
-    // Atualiza KPI numérico
-    document.getElementById('kpiCritico').textContent = criticos.length;
-    document.getElementById('bombasAtivas').textContent = bombasAtivas;
-    
-    // Monta lista de reservatórios críticos
-    const listaCriticos = document.getElementById('listaCriticos');
+    const criticos = (data.reservatorios || []).filter(r => (r.percent || 0) < 30);
+    const bombasAtivas = (data.bombas || []).filter(b => b.status === 'ligada' || b.status === 'on' || b.status === 1).length;
+
+    document.getElementById("kpiCritico").innerText = criticos.length;
+    document.getElementById("bombasAtivas").innerText = bombasAtivas;
+
+    const listaCriticos = document.getElementById("listaCriticos");
     if (criticos.length > 0) {
-        listaCriticos.innerHTML = criticos.map(r => 
-            `<div class="critico-item">⚠️ ${r.nome} - ${r.percent.toFixed(1)}%</div>`
+        listaCriticos.innerHTML = criticos.map(c => 
+            `<div class="critico-item">${c.nome}: ${c.percent.toFixed(1)}%</div>`
         ).join('');
     } else {
-        listaCriticos.innerHTML = '<div class="critico-item" style="color:#00ff88;">✅ Nenhum reservatório crítico</div>';
+        listaCriticos.innerHTML = '';
     }
 }
 
-// ======================= WEBSOCKET COM RECONEXÃO EXPONENCIAL =======================
+// ======================= WEBSOCKET =======================
 function conectarWS() {
-    if (ws) ws.close();
-    
-    const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
-    ws = new WebSocket(`${protocolo}//${location.host}`);
-    
-    ws.onopen = () => {
-        console.log("%c🟢 WebSocket conectado", "color: #00ff88; font-weight: bold;");
-        setStatus("🟢 Tempo real conectado", "success");
-        atualizarStatusVisual("Tempo real conectado");
-        reconnectDelay = 3000;
-    };
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/dashboard`;
 
-    ws.onmessage = (msg) => { 
-        try { 
-            processarPayload(JSON.parse(msg.data)); 
-        } catch (e) { 
-            console.error("Erro ao processar mensagem WS:", e); 
-        } 
-    };
+    try {
+        ws = new WebSocket(wsUrl);
 
-    ws.onclose = () => { 
-        console.log("%c🔴 WebSocket desconectado", "color: #ff3d00; font-weight: bold;");
-        setStatus("🔴 Reconectando...", "error"); 
-        atualizarStatusVisual("Reconectando...");
-        setTimeout(conectarWS, reconnectDelay); 
-        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
-    };
+        ws.onopen = () => {
+            setStatus("🟢 Conectado em tempo real", "success");
+            atualizarStatusVisual("Tempo real conectado");
+            reconnectDelay = 3000; // reset
+        };
 
-    ws.onerror = (err) => {
-        console.error("Erro WebSocket:", err);
-    };
+        ws.onmessage = (event) => {
+            try {
+                const payload = JSON.parse(event.data);
+                processarPayload(payload);
+            } catch (e) {
+                console.error("Erro ao processar mensagem WS:", e);
+            }
+        };
+
+        ws.onclose = () => {
+            setStatus("🔴 Desconectado - Reconectando...", "error");
+            atualizarStatusVisual("Desconectado");
+            setTimeout(conectarWS, reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
+        };
+
+        ws.onerror = (err) => {
+            console.error("Erro WebSocket:", err);
+            ws.close();
+        };
+    } catch (e) {
+        console.error("Falha ao conectar WS:", e);
+        setTimeout(conectarWS, reconnectDelay);
+    }
 }
 
 // ======================= FALLBACK HTTP =======================
 async function fallbackHTTP() {
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const res = await fetch(API + "?t=" + Date.now(), {
-            cache: "no-store",
-            signal: controller.signal,
-            headers: { "Cache-Control": "no-cache, no-store, must-revalidate" }
-        });
-        
-        clearTimeout(timeoutId);
-        
+        const res = await fetch(`${API}?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         processarPayload(data);
-    } catch (err) {
         if (!ws || ws.readyState !== WebSocket.OPEN) {
-            setStatus("🔴 Erro de comunicação", "error");
-            atualizarStatusVisual("Desconectado");
+            setStatus("🟡 Modo HTTP - Tempo real indisponível", "warning");
+            atualizarStatusVisual("HTTP polling");
         }
+    } catch (err) {
+        console.error("Erro fallback HTTP:", err);
+        setStatus("🔴 Erro de conexão com servidor", "error");
     }
 }
 
 // ======================= HELPERS =======================
-function setStatus(txt, tipo = "info") {
+function setStatus(msg, tipo = "info") {
     const el = document.getElementById("statusSistema");
     if (!el) return;
-    el.innerText = txt;
+    el.innerText = msg;
     el.className = `status-${tipo}`;
 }
 
-function atualizarStatusVisual(texto) {
+function atualizarStatusVisual(status) {
     const el = document.getElementById("statusTexto");
-    const dot = document.querySelector(".status-dot");
-    if (!el || !dot) return;
-    
-    el.innerText = texto;
-    
-    if (texto.includes("Tempo real")) {
-        dot.style.background = "#00ff88";
-        dot.style.boxShadow = "0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.4)";
-    } else if (texto.includes("Reconectando")) {
-        dot.style.background = "#ffd600";
-        dot.style.boxShadow = "0 0 12px #ffd600, 0 0 24px rgba(255,214,0,0.4)";
-    } else {
-        dot.style.background = "#ff3d00";
-        dot.style.boxShadow = "0 0 12px #ff3d00, 0 0 24px rgba(255,61,0,0.4)";
-    }
+    if (el) el.innerText = status;
 }
 
-function formatar(n) { 
-    return Number(n || 0).toLocaleString("pt-BR", { 
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0 
-    }); 
+function formatar(valor) {
+    if (valor === null || valor === undefined) return "0";
+    return new Intl.NumberFormat('pt-BR').format(Number(valor));
 }
 
-// ======================= TRATAMENTO DE ERRO GLOBAL =======================
-window.addEventListener("error", (e) => {
-    console.error("Erro não tratado:", e.error);
-});
-
-window.addEventListener("unhandledrejection", (e) => {
-    console.error("Promise rejeitada:", e.reason);
-});
+function formatarTempo(segundos) {
+    if (!segundos || segundos < 60) return `${segundos ?? 0}s`;
+    const h = Math.floor(segundos / 3600);
+    const m = Math.floor((segundos % 3600) / 60);
+    const s = segundos % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+}
   </script>
 </body>
 </html>
