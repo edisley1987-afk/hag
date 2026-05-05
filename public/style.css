@@ -87,6 +87,7 @@
     inset 25px 0 50px rgba(255,255,255,0.06),
     inset 0 -40px 60px rgba(0,0,0,0.85);
   overflow: hidden;
+  transform: perspective(800px) rotateX(2deg); /* Adicionado para 3D */
 }
 
 /* Tampa superior com relevo metálico */
@@ -105,9 +106,10 @@
     inset 0 4px 8px rgba(255,255,255,0.25),
     inset 0 -2px 4px rgba(0,0,0,0.5);
   z-index: 10;
+  pointer-events: none;
 }
 
-/* Reflexo de vidro na parede interna */
+/* Reflexo de vidro na parede interna - Mantido para brilho */
 .tanque::after {
   content: "";
   position: absolute;
@@ -123,6 +125,18 @@
   pointer-events: none;
   z-index: 6;
   border-radius: 0 0 60px 60px;
+  mix-blend-mode: screen;
+}
+
+/* ================== CANVAS DA ÁGUA ================== */
+.canvas-agua {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0 0 55px 55px;
+  z-index: 1;
 }
 
 /* Escala de nível lateral */
@@ -140,6 +154,7 @@
   text-shadow: 2px 2px 5px rgba(0,0,0,0.95);
   z-index: 8;
   letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 .escala span {
@@ -156,137 +171,6 @@
   height: 1px;
   background: linear-gradient(90deg, #4a7fa8, transparent);
   transform: translateY(-50%);
-}
-
-/* ================== ÁGUA COM FÍSICA REAL ================== */
-.agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0%;
-  border-radius: 0 0 55px 55px;
-  transition: height 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 1;
-  overflow: hidden;
-  background: linear-gradient(to top, 
-    #003d7a 0%, 
-    #0066cc 30%, 
-    #0099ff 60%, 
-    #40c4ff 85%, 
-    #80d8ff 100%);
-  box-shadow: 
-    inset 0 -25px 50px rgba(0,40,100,0.7),
-    inset 0 10px 20px rgba(255,255,255,0.2);
-}
-
-/* Menisco - curvatura da superfície da água */
-.agua::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 5%;
-  width: 90%;
-  height: 8px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.5) 0%, 
-    rgba(255,255,255,0.2) 40%, 
-    transparent 70%);
-  border-radius: 50%;
-  transform: translateY(-50%);
-  filter: blur(1.5px);
-  z-index: 3;
-}
-
-/* Reflexo lateral da água na parede */
-.agua::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.18) 0%, 
-    rgba(255,255,255,0.06) 50%,
-    transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Onda suave na superfície */
-.onda {
-  position: absolute;
-  top: -10px;
-  left: -60%;
-  width: 220%;
-  height: 20px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.28) 0%, 
-    rgba(255,255,255,0.1) 45%,
-    transparent 70%);
-  animation: onda 4s ease-in-out infinite;
-  filter: blur(2px);
-  z-index: 4;
-}
-
-@keyframes onda {
- 0%, 100% { transform: translateX(0) scaleY(1); }
- 50% { transform: translateX(30%) scaleY(1.25); }
-}
-
-/* Balanço físico quando nível muda */
-.agua.balancando {
-  animation: balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes balanco {
- 0%, 100% { transform: skewX(0deg) scaleX(1); }
- 25% { transform: skewX(1.8deg) scaleX(1.015); }
- 75% { transform: skewX(-1.2deg) scaleX(0.985); }
-}
-
-/* ================== CORES POR NÍVEL ================== */
-.agua.nivel-cheio { 
-  background: linear-gradient(to top, #00c853 0%, #00e676 50%, #69f0ae 85%, #b9f6ca 100%); 
-  box-shadow: 
-    inset 0 -25px 50px rgba(0,120,60,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.3),
-    0 0 30px rgba(0,230,118,0.3);
-}
-.agua.nivel-alto { 
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
-  box-shadow: 
-    inset 0 -25px 50px rgba(0,80,160,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 25px rgba(64,196,255,0.25);
-}
-.agua.nivel-medio { 
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
-  box-shadow: 
-    inset 0 -25px 50px rgba(0,60,120,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 20px rgba(0,221,255,0.2);
-}
-.agua.nivel-baixo { 
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
-  box-shadow: 
-    inset 0 -25px 50px rgba(200,120,0,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 20px rgba(255,193,7,0.2);
-}
-.agua.nivel-critico { 
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
-  box-shadow: 
-    inset 0 -25px 50px rgba(150,0,0,0.7),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 35px rgba(255,61,0,0.4);
-  animation: pulsar-critico 1.6s infinite;
-}
-
-@keyframes pulsar-critico {
- 0%, 100% { opacity: 1; transform: scale(1); }
- 50% { opacity: 0.85; transform: scale(1.02); }
 }
 
 /* ================== INFO DO RESERVATÓRIO ================== */
@@ -317,6 +201,13 @@
   text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
   letter-spacing: 0.5px;
 }
+
+/* ================== CLASSES DE ALERTA NÍVEL ================== */
+.card.reservatorio.nivel-cheio { border-color: #00e676; }
+.card.reservatorio.nivel-alto { border-color: #40c4ff; }
+.card.reservatorio.nivel-medio { border-color: #00ddff; }
+.card.reservatorio.nivel-baixo { border-color: #ffc107; }
+.card.reservatorio.nivel-critico { border-color: #ff3d00; }
 
 /* Responsivo */
 @media (max-width: 768px) {
