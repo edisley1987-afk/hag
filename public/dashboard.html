@@ -24,9 +24,16 @@ body {
   background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
   color: #e0f7ff;
   min-height: 100vh;
+
   overflow-x: hidden;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
   letter-spacing: 0.2px;
 }
+
+
 
 body.sem-sinal { 
   opacity: 0.6; 
@@ -138,7 +145,7 @@ header {
 /* ================== KPIs ================== */
 .kpis-container { 
   max-width: 1800px; 
-  margin: 30px auto 0; 
+  margin: 10px auto 0; 
   padding: 0 30px;
 }
 
@@ -198,16 +205,24 @@ header {
 }
 
 /* ================== SEÇÕES ================== */
-main { 
-  max-width: 1800px; 
-  margin: 50px auto; 
-  padding: 0 30px; 
+main {
+  flex: 1;
+  max-width: 1800px;
+  margin: 10px auto;
+  padding: 10px 20px;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
+
+
 
 .titulo-area {
   font-size: 24px;
   color: #00e5ff;
-  margin-bottom: 35px;
+  margin-bottom: 10px;
   border-left: 5px solid #00e5ff;
   padding-left: 18px;
   text-shadow: 0 0 25px rgba(0,229,255,0.4);
@@ -818,11 +833,34 @@ function renderReservatorios(lista) {
             setTimeout(() => agua.classList.remove("balancando"), 1300);
         }
 
-        // Atualiza altura com transição suave
-        if (agua.style.height !== `${nivelSuavizado}%`) {
-            agua.style.height = `${nivelSuavizado}%`;
+      // Física com inércia (nível suave estilo industrial)
+function animarNivel(agua, target) {
+    let atual = Number(agua.dataset.render || 0);
+
+    function step() {
+        atual += (target - atual) * 0.08;
+
+        // trava quando estiver bem próximo (evita loop infinito)
+        if (Math.abs(target - atual) < 0.1) {
+            atual = target;
+        } else {
+            requestAnimationFrame(step);
         }
-        agua.dataset.nivel = nivelSuavizado;
+
+        agua.style.height = atual + "%";
+        agua.dataset.render = atual;
+    }
+
+    step();
+}
+
+// chama a animação
+animarNivel(agua, nivelSuavizado);
+
+// salva nível lógico
+agua.dataset.nivel = nivelSuavizado;
+
+
 
         // Aplica classe de cor por nível
         agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
@@ -1012,6 +1050,7 @@ window.addEventListener("error", (e) => {
 window.addEventListener("unhandledrejection", (e) => {
     console.error("Promise rejeitada:", e.reason);
 });
-  </script>
+ 
+</script>
 </body>
 </html>
