@@ -143,18 +143,19 @@ header {
   max-width: 1800px; 
   margin: 20px auto 0; 
   padding: 0 30px;
+  width: 100%;
 }
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(5, 1fr); /* 5 colunas fixas no desktop */
+  gap: 18px;
 }
 
 .kpi {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 22px;
-  border-radius: 18px;
+  padding: 18px 15px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.08);
   text-align: center;
   backdrop-filter: blur(12px);
@@ -175,29 +176,29 @@ header {
 }
 
 .kpi:hover { 
-  transform: translateY(-8px); 
+  transform: translateY(-5px); 
   border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 20px 45px rgba(0,229,255,0.25);
+  box-shadow: 0 15px 35px rgba(0,229,255,0.25);
 }
 
 .kpi span {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   color: #8aa5c7;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   font-weight: 700;
 }
 
 .kpi strong {
-  font-size: 34px;
+  font-size: 28px;
   background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 900;
-  text-shadow: 0 4px 20px rgba(0,229,255,0.3);
+  text-shadow: 0 4px 15px rgba(0,229,255,0.3);
 }
 
 /* ================== SEÇÕES ================== */
@@ -310,7 +311,6 @@ main {
   overflow: hidden;
 }
 
-/* Tampa superior com relevo metálico */
 .tanque::before {
   content: "";
   position: absolute;
@@ -328,7 +328,6 @@ main {
   z-index: 10;
 }
 
-/* Reflexo de vidro na parede interna */
 .tanque::after {
   content: "";
   position: absolute;
@@ -346,7 +345,6 @@ main {
   border-radius: 0 0 65px 65px;
 }
 
-/* Escala de nível lateral */
 .escala {
   position: absolute;
   right: -58px;
@@ -401,7 +399,6 @@ main {
     inset 0 12px 25px rgba(255,255,255,0.25);
 }
 
-/* Menisco - curvatura da superfície da água */
 .agua::before {
   content: "";
   position: absolute;
@@ -419,7 +416,6 @@ main {
   z-index: 3;
 }
 
-/* Reflexo lateral da água na parede */
 .agua::after {
   content: "";
   position: absolute;
@@ -435,7 +431,6 @@ main {
   z-index: 2;
 }
 
-/* Onda suave na superfície */
 .onda {
   position: absolute;
   top: -12px;
@@ -456,7 +451,6 @@ main {
  50% { transform: translateX(30%) scaleY(1.3); }
 }
 
-/* Balanço físico quando nível muda */
 .agua.balancando {
   animation: balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -470,38 +464,23 @@ main {
 /* ================== CORES POR NÍVEL ================== */
 .agua.nivel-cheio { 
   background: linear-gradient(to top, #00c853 0%, #00e676 50%, #69f0ae 85%, #b9f6ca 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,120,60,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.35),
-    0 0 35px rgba(0,230,118,0.35);
+  box-shadow: inset 0 -30px 60px rgba(0,120,60,0.65), inset 0 12px 25px rgba(255,255,255,0.35), 0 0 35px rgba(0,230,118,0.35);
 }
 .agua.nivel-alto { 
   background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,80,160,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 30px rgba(64,196,255,0.3);
+  box-shadow: inset 0 -30px 60px rgba(0,80,160,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 30px rgba(64,196,255,0.3);
 }
 .agua.nivel-medio { 
   background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,60,120,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 25px rgba(0,221,255,0.25);
+  box-shadow: inset 0 -30px 60px rgba(0,60,120,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 25px rgba(0,221,255,0.25);
 }
 .agua.nivel-baixo { 
   background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(200,120,0,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 25px rgba(255,193,7,0.25);
+  box-shadow: inset 0 -30px 60px rgba(200,120,0,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 25px rgba(255,193,7,0.25);
 }
 .agua.nivel-critico { 
   background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(150,0,0,0.75),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 40px rgba(255,61,0,0.45);
+  box-shadow: inset 0 -30px 60px rgba(150,0,0,0.75), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 40px rgba(255,61,0,0.45);
   animation: pulsar-critico 1.6s infinite;
 }
 
@@ -629,10 +608,27 @@ footer {
 }
 
 /* ================== RESPONSIVO ================== */
+@media (max-width: 1200px) {
+  .kpis {
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas em tablet */
+  }
+}
+
 @media (max-width: 768px) {
   .tanque { 
     width: 150px; 
     height: 210px; 
+  }
+  .kpis {
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas no mobile */
+    gap: 12px;
+  }
+  .kpi strong {
+    font-size: 22px;
+  }
+  .kpi span {
+    font-size: 10px;
+    letter-spacing: 0.8px;
   }
   .grid-reservatorios,
   .grid-bombas,
@@ -642,9 +638,6 @@ footer {
   }
   .cabecalho h1 {
     font-size: 22px;
-  }
-  .kpis {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
   </style>
@@ -728,7 +721,6 @@ let ultimoDado = Date.now();
 let renderPending = false;
 let cacheDados = new Map();
 
-// ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
@@ -739,7 +731,6 @@ function init() {
     iniciarMonitoramentoSinal();
 }
 
-// ======================= MONITORAMENTO DE SINAL =======================
 function iniciarMonitoramentoSinal() {
     setInterval(() => {
         const tempoSemSinal = Date.now() - ultimoDado;
@@ -756,7 +747,6 @@ function iniciarMonitoramentoSinal() {
     }, 5000);
 }
 
-// ======================= PROCESSAMENTO DE DADOS =======================
 function processarPayload(payload) {
     if (!payload) return;
     if (payload.type === "update" && payload.dados) {
@@ -766,7 +756,6 @@ function processarPayload(payload) {
     scheduleRender(payload);
 }
 
-// ======================= RENDER OTIMIZADO COM RAF =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
@@ -786,7 +775,6 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
-// ======================= RESERVATÓRIOS 3D COM ÁGUA =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -825,10 +813,8 @@ function renderReservatorios(lista) {
         const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
         const nivelSuavizado = Math.round(nivel * 10) / 10;
 
-        // Física com inércia (nível suave estilo industrial)
         animarNivel(agua, nivelSuavizado);
 
-        // Aplica classe de cor por nível
         agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
         if (nivel >= 95) agua.classList.add("nivel-cheio");
         else if (nivel >= 70) agua.classList.add("nivel-alto");
@@ -836,16 +822,13 @@ function renderReservatorios(lista) {
         else if (nivel >= 20) agua.classList.add("nivel-baixo");
         else agua.classList.add("nivel-critico");
 
-        // Alerta visual no card quando nível crítico
         el.classList.toggle("alerta", nivel < 20);
 
-        // Atualiza textos com formatação
         valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
-// Animação com inércia para o nível da água
 function animarNivel(agua, target) {
     let atual = Number(agua.dataset.render || 0);
 
@@ -866,7 +849,6 @@ function animarNivel(agua, target) {
     agua.dataset.nivel = target;
 }
 
-// ======================= BOMBAS =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -894,7 +876,6 @@ function renderBombas(lista) {
     });
 }
 
-// ======================= PRESSÕES =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -918,15 +899,11 @@ function renderPressoes(lista) {
     });
 }
 
-// ======================= KPIs =======================
 function atualizarKPIs(data) {
     const kpis = data.kpis || {};
     const elementos = {
         kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
         bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
-        kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
-        kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
-        kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
     };
 
     Object.entries(elementos).forEach(([id, valor]) => {
@@ -1041,3 +1018,4 @@ window.addEventListener("unhandledrejection", (e) => {
 </script>
 </body>
 </html>
+        
