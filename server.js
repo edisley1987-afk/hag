@@ -42,10 +42,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-import http from "http";
+// DEBUG - COLE ESTE BLOCO NO TOPO DO SEU SERVER.JS
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Recebido: ${req.method} ${req.originalUrl}`);
+    console.log(`[DEBUG] Headers:`, JSON.stringify(req.headers));
+    next();
+});import http from "http";
 
 const server = http.createServer(app);
-
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
 const clients = new Set();
@@ -157,7 +161,7 @@ const SENSORES = safeReadJson(
 
     "Reservatorio_Agua_Abrandada_current": {
       leituraVazio: 0.004048,
-      leituraCheio: 0.004929,
+      leituraCheio: 0.004970,
       capacidade: 9000,
       altura: 0.6
     },
@@ -718,6 +722,24 @@ app.use((req, res, next) => {
   next();
 });
 // ------------------------- ENDPOINTS DE LEITURA -------------------------
+// Adicione isto perto das outras rotas app.get(...)
+app.get("/api/debug-calculo", (req, res) => {
+    const dados = safeReadJson(DATA_FILE, {});
+    const debug = {};
+    
+    Object.keys(MAPA_RESERVATORIOS).forEach(setor => {
+        const ref = MAPA_RESERVATORIOS[setor];
+        const leitura = Number(dados[ref] || 0);
+        debug[setor] = {
+            ref,
+            leitura_bruta: leitura,
+            config: SENSORES[ref],
+            resultado: calcularNivel(ref, leitura)
+        };
+    });
+    
+    res.json(debug);
+});
 app.get("/dados", (req, res) => {
   return res.json(safeReadJson(DATA_FILE, {}));
 });
