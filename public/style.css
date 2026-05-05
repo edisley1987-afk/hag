@@ -452,3 +452,39 @@ footer {
     font-size: 16px;
   }
 }
+/* =========================================
+   🔥 FORÇA HORIZONTAL (OVERRIDE TOTAL)
+   ========================================= */
+
+.grid-reservatorios {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  gap: 12px !important;
+  padding-bottom: 10px !important;
+}
+
+/* cards lado a lado */
+.grid-reservatorios .card {
+  flex: 0 0 300px !important;
+  max-width: 300px !important;
+}
+
+/* remove altura gigante */
+.grid-reservatorios .card {
+  min-height: 150px !important;
+}
+
+/* impede crescimento vertical da seção */
+.secao {
+  min-height: 0 !important;
+}
+
+/* remove qualquer grid escondido */
+.grid-reservatorios {
+  grid-template-columns: none !important;
+}
