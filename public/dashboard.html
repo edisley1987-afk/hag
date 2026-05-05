@@ -24,16 +24,12 @@ body {
   background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
   color: #e0f7ff;
   min-height: 100vh;
-
   overflow-x: hidden;
   overflow-y: auto;
-
   display: flex;
   flex-direction: column;
   letter-spacing: 0.2px;
 }
-
-
 
 body.sem-sinal { 
   opacity: 0.6; 
@@ -145,7 +141,7 @@ header {
 /* ================== KPIs ================== */
 .kpis-container { 
   max-width: 1800px; 
-  margin: 10px auto 0; 
+  margin: 20px auto 0; 
   padding: 0 30px;
 }
 
@@ -208,21 +204,19 @@ header {
 main {
   flex: 1;
   max-width: 1800px;
-  margin: 10px auto;
-  padding: 10px 20px;
-  overflow-y: auto;
-
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  margin: 20px auto 40px;
+  padding: 0 30px;
+  width: 100%;
 }
 
-
+.secao {
+  margin-bottom: 50px;
+}
 
 .titulo-area {
   font-size: 24px;
   color: #00e5ff;
-  margin-bottom: 10px;
+  margin-bottom: 25px;
   border-left: 5px solid #00e5ff;
   padding-left: 18px;
   text-shadow: 0 0 25px rgba(0,229,255,0.4);
@@ -230,14 +224,17 @@ main {
   letter-spacing: 0.5px;
 }
 
-/* ================== RESERVATÓRIOS 3D PROFISSIONAL ================== */
-.grid-reservatorios {
+/* ================== GRIDS LADO A LADO ================== */
+.grid-reservatorios,
+.grid-bombas, 
+.grid-pressoes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 45px;
-  margin-bottom: 60px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 35px;
+  width: 100%;
 }
 
+/* ================== RESERVATÓRIOS 3D PROFISSIONAL ================== */
 .card.reservatorio {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
   border-radius: 20px;
@@ -390,7 +387,7 @@ main {
   width: 100%;
   height: 0%;
   border-radius: 0 0 60px 60px;
-  transition: height 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: height 0.3s linear;
   z-index: 1;
   overflow: hidden;
   background: linear-gradient(to top, 
@@ -543,13 +540,6 @@ main {
 }
 
 /* ================== BOMBAS E PRESSÕES ================== */
-.grid-bombas, .grid-pressoes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 25px;
-  margin-bottom: 60px;
-}
-
 .card {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
   padding: 26px;
@@ -627,11 +617,11 @@ main {
 /* ================== FOOTER ================== */
 footer {
   text-align: center;
-  padding: 45px 30px;
+  padding: 35px 30px;
   color: #5a7a9a;
   font-size: 13px;
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin-top: 80px;
+  margin-top: auto;
   background: rgba(10, 26, 42, 0.6);
   backdrop-filter: blur(15px);
   font-weight: 500;
@@ -644,8 +634,11 @@ footer {
     width: 150px; 
     height: 210px; 
   }
-  .grid-reservatorios { 
-    gap: 35px; 
+  .grid-reservatorios,
+  .grid-bombas,
+  .grid-pressoes { 
+    grid-template-columns: 1fr;
+    gap: 25px;
   }
   .cabecalho h1 {
     font-size: 22px;
@@ -701,14 +694,20 @@ footer {
   </div>
 
   <main>
-    <h2 class="titulo-area">Reservatórios</h2>
-    <div class="grid-reservatorios" id="areaReservatorios"></div>
+    <section class="secao">
+      <h2 class="titulo-area">Reservatórios</h2>
+      <div class="grid-reservatorios" id="areaReservatorios"></div>
+    </section>
 
-    <h2 class="titulo-area">Bombas</h2>
-    <div class="grid-bombas" id="areaBombas"></div>
+    <section class="secao">
+      <h2 class="titulo-area">Bombas</h2>
+      <div class="grid-bombas" id="areaBombas"></div>
+    </section>
 
-    <h2 class="titulo-area">Pressões</h2>
-    <div class="grid-pressoes" id="areaPressoes"></div>
+    <section class="secao">
+      <h2 class="titulo-area">Pressões</h2>
+      <div class="grid-pressoes" id="areaPressoes"></div>
+    </section>
   </main>
 
   <footer>
@@ -825,42 +824,9 @@ function renderReservatorios(lista) {
 
         const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
         const nivelSuavizado = Math.round(nivel * 10) / 10;
-        const nivelAnterior = Number(agua.dataset.nivel || 0);
 
-        // Animação de balanço quando há mudança significativa
-        if (Math.abs(nivelSuavizado - nivelAnterior) >= 0.5) {
-            agua.classList.add("balancando");
-            setTimeout(() => agua.classList.remove("balancando"), 1300);
-        }
-
-      // Física com inércia (nível suave estilo industrial)
-function animarNivel(agua, target) {
-    let atual = Number(agua.dataset.render || 0);
-
-    function step() {
-        atual += (target - atual) * 0.08;
-
-        // trava quando estiver bem próximo (evita loop infinito)
-        if (Math.abs(target - atual) < 0.1) {
-            atual = target;
-        } else {
-            requestAnimationFrame(step);
-        }
-
-        agua.style.height = atual + "%";
-        agua.dataset.render = atual;
-    }
-
-    step();
-}
-
-// chama a animação
-animarNivel(agua, nivelSuavizado);
-
-// salva nível lógico
-agua.dataset.nivel = nivelSuavizado;
-
-
+        // Física com inércia (nível suave estilo industrial)
+        animarNivel(agua, nivelSuavizado);
 
         // Aplica classe de cor por nível
         agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
@@ -877,6 +843,27 @@ agua.dataset.nivel = nivelSuavizado;
         valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
+}
+
+// Animação com inércia para o nível da água
+function animarNivel(agua, target) {
+    let atual = Number(agua.dataset.render || 0);
+
+    function step() {
+        atual += (target - atual) * 0.08;
+
+        if (Math.abs(target - atual) < 0.1) {
+            atual = target;
+        } else {
+            requestAnimationFrame(step);
+        }
+
+        agua.style.height = atual + "%";
+        agua.dataset.render = atual;
+    }
+
+    step();
+    agua.dataset.nivel = target;
 }
 
 // ======================= BOMBAS =======================
