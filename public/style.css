@@ -1,221 +1,372 @@
-/* ==========================================================
-   RESERVATÓRIOS 3D PROFISSIONAL - PADRÃO INDUSTRIAL
-   ========================================================== */
-.grid-reservatorios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 40px;
-  margin-bottom: 50px;
-}
-
-/* Card plano para legibilidade em painel 24/7 */
-.card.reservatorio {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
-  border-radius: 18px;
-  padding: 28px 24px 32px;
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  box-shadow: 
-    0 20px 45px rgba(0,0,0,0.6),
-    0 8px 20px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(15px);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
+/* ================= RESET + LAYOUT 1 TELA ================= */
+html, body {
+  height: 100vh;
+  width: 100vw;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-/* Linha de brilho superior no card */
-.card.reservatorio::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
+body {
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-.card.reservatorio:hover {
-  transform: translateY(-10px);
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow: 
-    0 30px 60px rgba(0,0,0,0.7),
-    0 15px 35px rgba(0, 229, 255, 0.25),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+/* ================= HEADER COMPACTO ================= */
+header {
+  padding: 0.8vh 2vw;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  flex-shrink: 0;
 }
 
-.card.reservatorio.alerta {
-  border-color: #ff3d00;
-  box-shadow: 
-    0 20px 45px rgba(255, 61, 0, 0.4),
-    0 8px 20px rgba(255, 61, 0, 0.2),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  animation: alerta-pulse 2s infinite;
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
-@keyframes alerta-pulse {
- 0%, 100% { box-shadow: 0 20px 45px rgba(255, 61, 0, 0.4), 0 8px 20px rgba(255, 61, 0, 0.2); }
- 50% { box-shadow: 0 25px 55px rgba(255, 61, 0, 0.6), 0 12px 30px rgba(255, 61, 0, 0.4); }
-}
-
-.card.reservatorio h2 {
-  color: #e0f7ff;
-  font-size: 18px;
-  margin: 0 0 22px 0;
-  text-align: center;
+.cabecalho h1 {
+  font-size: clamp(14px, 1.8vw, 20px);
+  margin: 0;
+  color: #00e5ff;
   font-weight: 700;
-  letter-spacing: 0.8px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.9);
 }
 
-/* ================== TANQUE CILÍNDRICO METÁLICO ================== */
+.subtitulo {
+  font-size: clamp(9px, 1vw, 12px);
+  color: #888;
+  margin-top: 2px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(10px, 1vw, 12px);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+ 0%, 100% { opacity: 1; }
+ 50% { opacity: 0.5; }
+}
+
+#statusSistema {
+  font-size: clamp(9px, 1vw, 11px);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+.header-info {
+  font-size: clamp(9px, 1vw, 11px);
+  color: #888;
+}
+
+.btn-historico {
+  padding: 4px 10px;
+  font-size: clamp(10px, 1vw, 12px);
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 6px;
+  color: #00e5ff;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.btn-historico:hover {
+  background: rgba(0, 229, 255, 0.2);
+}
+
+/* ================= KPIS COMPACTOS ================= */
+.kpis-container {
+  padding: 0.8vh 2vw 0;
+  flex-shrink: 0;
+}
+
+.kpis-reduzido {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 1vh;
+  max-width: 500px;
+}
+
+.kpi {
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 10px;
+  padding: 1vh 1.2vw;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.kpi-critico {
+  border-left: 3px solid #ff4444;
+}
+
+.kpi span {
+  display: block;
+  font-size: clamp(9px, 0.9vw, 11px);
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi strong {
+  display: block;
+  font-size: clamp(18px, 2.5vw, 26px);
+  color: #00e5ff;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.lista-criticos {
+  margin-top: 4px;
+  font-size: clamp(8px, 0.8vw, 10px);
+  color: #ff9999;
+  line-height: 1.3;
+  max-height: 4vh;
+  overflow-y: auto;
+}
+
+.lista-criticos .critico-item {
+  padding: 1px 0;
+}
+
+/* ================= MAIN GRID ================= */
+main {
+  flex: 1;
+  padding: 0.8vh 2vw 1vh;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 1.2vh;
+  overflow: hidden;
+  min-height: 0; /* importante pro flex funcionar */
+}
+
+.secao {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.titulo-area {
+  font-size: clamp(12px, 1.2vw, 15px);
+  margin: 0 0 0.8vh 0;
+  color: #00e5ff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Grids internos com scroll próprio */
+.grid-reservatorios,
+.grid-bombas,
+.grid-pressoes {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  padding-right: 4px;
+  min-height: 0;
+}
+
+/* ================= CARDS ================= */
+.card {
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-left: 4px solid #00e5ff;
+  border-radius: 10px;
+  padding: 1vh 1.2vw;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: 0.3s;
+}
+
+.card:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 6px 24px rgba(0, 229, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8vh;
+}
+
+.card-title {
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 600;
+  color: #fff;
+}
+
+.card-status {
+  font-size: clamp(8px, 0.8vw, 10px);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-ok { 
+  border-left-color: #00ff88; 
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88; 
+}
+.status-warning { 
+  border-left-color: #ffaa00; 
+  background: rgba(255, 170, 0, 0.1);
+  color: #ffaa00; 
+}
+.status-danger { 
+  border-left-color: #ff4444; 
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff4444; 
+}
+
+/* ================= TANQUE CANVAS ================= */
+.tanque-container {
+  position: relative;
+  height: 22vh; /* altura relativa à tela */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+}
+
 .tanque {
   position: relative;
-  width: 170px;
-  height: 230px;
-  margin: 25px auto;
-  background: linear-gradient(90deg, 
-      #0a1a2a 0%, 
-      #1a3a5a 25%, 
-      #2d5f8a 50%, 
-      #1a3a5a 75%, 
-      #0a1a2a 100%);
-  border-radius: 0 0 60px 60px;
-  border: 2px solid rgba(120, 180, 220, 0.3);
-  box-shadow: 
-    inset -25px 0 50px rgba(0,0,0,0.8),
-    inset 25px 0 50px rgba(255,255,255,0.06),
-    inset 0 -40px 60px rgba(0,0,0,0.85);
+  width: 120px;
+  height: 22vh;
+  background: linear-gradient(180deg, rgba(20,40,60,0.8) 0%, rgba(10,20,30,0.9) 100%);
+  border: 2px solid rgba(0, 229, 255, 0.3);
+  border-radius: 0 0 60px 60px / 0 0 30px 30px;
   overflow: hidden;
-  transform: perspective(800px) rotateX(2deg); /* Adicionado para 3D */
+  box-shadow: inset 0 0 30px rgba(0, 40, 80, 0.6), 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Tampa superior com relevo metálico */
-.tanque::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 36px;
-  background: radial-gradient(ellipse at center, #5a8bb8 0%, #2a4a66 60%, #112d47 100%);
-  border-radius: 50%;
-  border: 3px solid #6a9cc8;
-  box-shadow: 
-    0 -6px 18px rgba(0,0,0,0.9),
-    inset 0 4px 8px rgba(255,255,255,0.25),
-    inset 0 -2px 4px rgba(0,0,0,0.5);
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* Reflexo de vidro na parede interna - Mantido para brilho */
-.tanque::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(95deg, 
-    rgba(255,255,255,0.15) 0%, 
-    transparent 25%, 
-    transparent 70%,
-    rgba(255,255,255,0.08) 100%);
-  pointer-events: none;
-  z-index: 6;
-  border-radius: 0 0 60px 60px;
-  mix-blend-mode: screen;
-}
-
-/* ================== CANVAS DA ÁGUA ================== */
 .canvas-agua {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 0 0 55px 55px;
-  z-index: 1;
-}
-
-/* Escala de nível lateral */
-.escala {
-  position: absolute;
-  right: -52px;
-  top: 20px;
-  height: 78%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #7aa8cc;
-  font-size: 11px;
-  font-weight: 700;
-  text-shadow: 2px 2px 5px rgba(0,0,0,0.95);
-  z-index: 8;
-  letter-spacing: 0.5px;
+  width: 120px;
+  height: 22vh;
   pointer-events: none;
 }
 
-.escala span {
-  position: relative;
-  padding-right: 8px;
-}
-
-.escala span::before {
-  content: "";
+.nivel-info {
   position: absolute;
+  bottom: 1vh;
+  left: 0;
   right: 0;
-  top: 50%;
-  width: 15px;
-  height: 1px;
-  background: linear-gradient(90deg, #4a7fa8, transparent);
-  transform: translateY(-50%);
-}
-
-/* ================== INFO DO RESERVATÓRIO ================== */
-.info {
   text-align: center;
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+  pointer-events: none;
 }
 
-.info .valor {
-  font-size: 38px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 4px 25px rgba(0,229,255,0.5);
-  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.8));
-  line-height: 1;
+.nivel-valor {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  color: #00e5ff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
 }
 
-.info .litros {
-  font-size: 15px;
-  color: #a8c8e8;
-  margin-top: 10px;
-  font-weight: 600;
-  text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
-  letter-spacing: 0.5px;
+.nivel-litros {
+  font-size: clamp(8px, 0.9vw, 10px);
+  color: #aaa;
+  margin-top: 2px;
 }
 
-/* ================== CLASSES DE ALERTA NÍVEL ================== */
-.card.reservatorio.nivel-cheio { border-color: #00e676; }
-.card.reservatorio.nivel-alto { border-color: #40c4ff; }
-.card.reservatorio.nivel-medio { border-color: #00ddff; }
-.card.reservatorio.nivel-baixo { border-color: #ffc107; }
-.card.reservatorio.nivel-critico { border-color: #ff3d00; }
+.escala {
+  position: absolute;
+  right: 6px;
+  top: 1vh;
+  height: 20vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: clamp(7px, 0.7vw, 9px);
+  color: #666;
+  font-weight: 500;
+}
 
-/* Responsivo */
-@media (max-width: 768px) {
-  .tanque { 
-    width: 145px; 
-    height: 200px; 
+/* ================= BOMBAS ================= */
+.bomba-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: clamp(10px, 1vw, 12px);
+  color: #ccc;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  padding: 0.5vh 2vw;
+  text-align: center;
+  font-size: clamp(8px, 0.8vw, 10px);
+  color: #555;
+  background: rgba(10, 10, 10, 0.95);
+  border-top: 1px solid rgba(0, 229, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* ================= SCROLLBAR ================= */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 20, 20, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
+/* ================= RESPONSIVO ================= */
+@media (max-width: 1200px) {
+  main {
+    grid-template-columns: 1fr; /* 1 coluna em telas menores */
+    overflow-y: auto;
   }
-  .grid-reservatorios { 
-    gap: 30px; 
+  body {
+    overflow: auto; /* libera scroll geral no mobile/tablet */
+  }
+  .tanque-container {
+    height: 25vh;
+  }
+  .tanque, .canvas-agua {
+    height: 25vh;
+  }
+}
+
+/* Tela muito baixa */
+@media (max-height: 700px) {
+  .tanque-container, .tanque, .canvas-agua {
+    height: 18vh;
+  }
+  .kpi strong {
+    font-size: clamp(16px, 2vw, 22px);
   }
 }
