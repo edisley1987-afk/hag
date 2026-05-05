@@ -251,17 +251,22 @@ main {
   font-weight: 800;
   flex-shrink: 0;
 }
-
-/* Grids internos com scroll próprio */
+/* ================== GRID HORIZONTAL REAL ================== */
 .grid-reservatorios,
 .grid-bombas, 
 .grid-pressoes {
-  flex: 1;
-  overflow-y: auto;
+
   display: flex;
-  flex-direction: column;
-  gap: 1vh;
-  padding-right: 4px;
+  flex-direction: row;      /* ✅ horizontal */
+  flex-wrap: nowrap;        /* ✅ não quebra linha */
+
+  overflow-x: auto;         /* ✅ scroll lateral */
+  overflow-y: hidden;       /* ✅ remove scroll vertical */
+
+  gap: 12px;
+  padding-bottom: 10px;
+
+  flex: 0 0 auto;           /* ✅ impede crescer vertical */
   min-height: 0;
 }
 
