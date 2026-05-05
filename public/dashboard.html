@@ -871,21 +871,23 @@ class AguaCanvas {
   
   desenharCondensacao() {
   // 1. Gera nova gota quando reservatório está cheio
+ desenharCondensacao() {
+  // Gera nova gota quando reservatório está cheio
   if (this.nivel > 0.65 && Math.random() < 0.3) {
     this.condensacao.push({
       x: 15 + Math.random() * 170,
       y: Math.random() * this.height * 0.4,
       size: 1 + Math.random() * 2,
       alpha: 0.3 + Math.random() * 0.3,
-      life: 200  // <- vida da gota tem que estar aqui dentro do objeto
-    }); // <- fecha o objeto e o push
+      life: 200
+    });
   }
   
-  // 2. Anima e remove gotas
+  // Anima e remove gotas
   this.condensacao = this.condensacao.filter(gota => {
     gota.life--;
     gota.alpha = gota.life / 200;
-    gota.y += 0.3; // gota escorrendo
+    gota.y += 0.3;
     
     if (gota.y < this.height * 0.8) {
       this.ctx.beginPath();
@@ -897,6 +899,9 @@ class AguaCanvas {
     return gota.life > 0 && gota.y < this.height * 0.9;
   });
 }
+
+} // <- ESSA CHAVE AQUI FECHA A CLASSE AguaCanvas
+
 // ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", init);
 
