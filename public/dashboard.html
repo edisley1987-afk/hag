@@ -887,7 +887,7 @@ class AguaCanvas {
   this.condensacao = this.condensacao.filter(gota => {
     gota.life--;
     gota.alpha = gota.life / 200;
-    gota.y += 0.3;
+    gota.y += 0.3; // gota escorrendo
     
     if (gota.y < this.height * 0.8) {
       this.ctx.beginPath();
@@ -898,9 +898,8 @@ class AguaCanvas {
     
     return gota.life > 0 && gota.y < this.height * 0.9;
   });
-}
-
-} // <- ESSA CHAVE AQUI FECHA A CLASSE AguaCanvas
+} // <- fecha a função
+}   // <- fecha a classe AguaCanvas
 
 // ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", init);
