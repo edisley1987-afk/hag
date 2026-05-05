@@ -1,86 +1,72 @@
 /* ==========================================================
-   CSS HAG DASHBOARD 1 TELA - CARDS HORIZONTAL
+   CSS HAG DASHBOARD - HORIZONTAL PROFISSIONAL
    ========================================================== */
 
-/* ================== RESET E LAYOUT 100VH ================== */
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
+/* ================== RESET ================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html, body {
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* trava scroll da página */
+  overflow: hidden;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
   background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
   color: #e0f7ff;
-  letter-spacing: 0.2px;
 }
 
-body.sem-sinal { 
-  opacity: 0.6; 
-  filter: grayscale(0.3); 
-}
-
-/* ================== HEADER COMPACTO ================== */
+/* ================== HEADER ================== */
 header {
   background: rgba(10, 26, 42, 0.85);
-  backdrop-filter: blur(15px);
-  padding: 0.8vh 2vw;
+  backdrop-filter: blur(10px);
+  padding: 8px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   flex-shrink: 0;
   z-index: 100;
 }
 
 .cabecalho {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 1rem;
-  max-width: 1800px;
-  margin: 0 auto;
 }
 
 .cabecalho h1 {
-  font-size: clamp(14px, 1.8vw, 22px);
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
+  font-size: 18px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-weight: 900;
-  letter-spacing: 1px;
 }
 
-.subtitulo { 
-  color: #8aa5c7; 
-  font-size: clamp(9px, 1vw, 12px); 
-  font-weight: 500;
+.subtitulo {
+  color: #8aa5c7;
+  font-size: 11px;
 }
 
 .status {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #8aa5c7;
-  font-size: clamp(10px, 1vw, 13px);
-  font-weight: 600;
+  font-size: 12px;
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #00ff88;
-  box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.5);
+  box-shadow: 0 0 8px #00ff88;
   animation: pulse-dot 2s infinite;
 }
 
@@ -92,30 +78,27 @@ header {
 .btn-historico {
   background: linear-gradient(135deg, #123d66 0%, #1b5a99 100%);
   color: #e0f7ff;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 8px;
   text-decoration: none;
-  font-size: clamp(10px, 1vw, 12px);
+  font-size: 11px;
   font-weight: 600;
   border: 1px solid rgba(255,255,255,0.12);
-  transition: all 0.3s;
+  transition: 0.3s;
 }
 
 .btn-historico:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(27,90,153,0.4);
+  box-shadow: 0 6px 15px rgba(27,90,153,0.4);
 }
 
 #statusSistema {
-  max-width: 1800px;
-  margin: 6px auto 0;
-  padding: 6px 12px;
+  margin: 5px auto 0;
+  padding: 5px 10px;
   background: rgba(10, 26, 42, 0.7);
-  border-radius: 8px;
-  font-size: clamp(9px, 1vw, 11px);
+  border-radius: 6px;
+  font-size: 10px;
   color: #8aa5c7;
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(8px);
 }
 
 #statusSistema.status-success { color: #00ff88; }
@@ -123,73 +106,48 @@ header {
 #statusSistema.status-warning { color: #ffd600; }
 
 .header-info {
-  max-width: 1800px;
-  margin: 4px auto 0;
+  font-size: 10px;
   color: #8aa5c7;
-  font-size: clamp(9px, 1vw, 11px);
+  margin-top: 3px;
 }
 
-/* ================== KPIs REDUZIDOS ================== */
-.kpis-container { 
-  max-width: 1800px; 
-  margin: 0.8vh auto 0; 
-  padding: 0 2vw;
-  width: 100%;
+/* ================== KPIs ================== */
+.kpis-container {
+  padding: 8px 20px 0;
   flex-shrink: 0;
 }
 
 .kpis-reduzido {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 1vh;
-  max-width: 500px;
+  display: flex;
+  gap: 10px;
+  max-width: 450px;
 }
 
 .kpi {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 1vh 1.2vw;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(15,35,60,0.9);
+  padding: 8px 12px;
+  border-radius: 10px;
+  flex: 1;
   text-align: center;
-  backdrop-filter: blur(12px);
-  transition: all 0.35s;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.kpi::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6), transparent);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 .kpi-critico {
   border-left: 3px solid #ff4444;
 }
 
-.kpi:hover { 
-  transform: translateY(-3px); 
-  border-color: rgba(0,229,255,0.35); 
-}
-
 .kpi span {
   display: block;
-  font-size: clamp(9px, 0.9vw, 11px);
+  font-size: 10px;
   color: #8aa5c7;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
   font-weight: 700;
 }
 
 .kpi strong {
   display: block;
-  font-size: clamp(18px, 2.5vw, 26px);
+  font-size: 20px;
   background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -198,11 +156,11 @@ header {
 }
 
 .lista-criticos {
-  margin-top: 4px;
-  font-size: clamp(8px, 0.8vw, 10px);
+  margin-top: 3px;
+  font-size: 9px;
   color: #ff9999;
   line-height: 1.3;
-  max-height: 4vh;
+  max-height: 35px;
   overflow-y: auto;
 }
 
@@ -211,178 +169,170 @@ header {
 }
 
 /* ================== MAIN GRID ================== */
-/* ================== MAIN GRID ================== */
 main {
-  flex: 1; /* ocupa espaço restante */
-  max-width: 1800px;
-  margin: 0.8vh auto 0.5vh;
-  padding: 0 2vw;
-  width: 100%;
+  flex: 1;
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 1.2vh;
-  overflow: hidden; /* só aqui */
+  gap: 10px;
+  padding: 8px 20px;
+  overflow: hidden;
   min-height: 0;
 }
 
+/* ================== SEÇÕES ================== */
 .secao {
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* mantém aqui pra travar altura da seção */
   min-height: 0;
+  overflow: hidden;
 }
 
-/* ================== GRIDS HORIZONTAL ================== */
+.titulo-area {
+  font-size: 14px;
+  color: #00e5ff;
+  margin-bottom: 6px;
+  border-left: 3px solid #00e5ff;
+  padding-left: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ================== GRID HORIZONTAL ================== */
 .grid-reservatorios,
-.grid-bombas, 
+.grid-bombas,
 .grid-pressoes {
+  display: flex;
+  flex-direction: row;   /* cards lado a lado */
+  flex-wrap: nowrap;     /* não quebra linha */
+  overflow-x: auto;      /* scroll horizontal */
+  overflow-y: hidden;    /* sem scroll vertical */
+  gap: 10px;
+  padding-bottom: 8px;
   flex: 1;
-  overflow-x: auto;     /* scroll horizontal se passar da tela */
-  overflow-y: hidden;   /* sem scroll vertical */
-  display: flex;        
-  flex-direction: row;  /* cards lado a lado */
-  flex-wrap: nowrap;    /* não quebra linha - fica tudo na horizontal */
-  gap: 1vh;
-  padding-bottom: 8px;  /* espaço pro hover não cortar */
+  align-items: stretch;
   min-height: 0;
-  align-items: flex-start;
 }
 
-/* Largura fixa dos cards por tipo */
+/* ================== TAMANHO DOS CARDS ================== */
 .grid-reservatorios .card {
-  flex: 0 0 280px; /* não encolhe, não cresce, largura 280px */
+  flex: 0 0 260px; /* largura fixa reservatório */
 }
 
 .grid-bombas .card,
 .grid-pressoes .card {
-  flex: 0 0 220px;
-}
-/* ================== CARDS ================== */
-.card {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 1vh 1.2vw;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
-  transition: all 0.35s;
-  position: relative;
-  overflow: hidden;
+  flex: 0 0 220px; /* largura fixa bomba e pressão */
 }
 
-.card:hover { 
-  transform: translateY(-4px); 
-  border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 12px 30px rgba(0,229,255,0.2);
+/* ================== CARDS ================== */
+.card {
+  background: linear-gradient(135deg, rgba(15,35,60,0.8), rgba(8,20,35,0.95));
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 140px; /* altura padrão horizontal */
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0,229,255,0.3);
+  box-shadow: 0 10px 25px rgba(0,229,255,0.2);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.8vh;
+  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .card-title {
-  font-size: clamp(11px, 1.1vw, 14px);
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: bold;
   color: #e0f7ff;
 }
 
 .card-status {
-  font-size: clamp(8px, 0.8vw, 10px);
+  font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
   text-transform: uppercase;
 }
 
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* STATUS */
 .status-ok { 
   border-left: 3px solid #00ff88; 
-  background: rgba(0, 255, 136, 0.1);
   color: #00ff88; 
+  background: rgba(0,255,136,0.1);
 }
 .status-warning { 
   border-left: 3px solid #ffaa00; 
-  background: rgba(255, 170, 0, 0.1);
   color: #ffaa00; 
+  background: rgba(255,170,0,0.1);
 }
 .status-danger { 
   border-left: 3px solid #ff4444; 
-  background: rgba(255, 68, 68, 0.1);
   color: #ff4444; 
+  background: rgba(255,68,68,0.1);
 }
 
-/* ================== TANQUE CANVAS ================== */
+/* ================== TANQUE ================== */
 .tanque-container {
-  position: relative;
-  height: 18vh;
+  height: 12vh; /* altura reduzida */
   display: flex;
   justify-content: center;
   align-items: center;
+  flex: 1;
 }
 
 .tanque {
-  position: relative;
-  width: 100px;
-  height: 18vh;
-  background: 
-    repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 4px),
-    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
-    linear-gradient(95deg, #0a1a2a 0%, #1a3a5a 15%, #3a6b9e 35%, #4a7fb5 50%, #3a6b9e 65%, #1a3a5a 85%, #0a1a2a 100%);
-  border-radius: 0 0 50px 50px / 0 0 25px 25px;
-  border: 2px solid rgba(160, 200, 240, 0.4);
-  box-shadow: 
-    inset -25px 0 50px rgba(0,0,0,0.8),
-    inset 25px 0 50px rgba(255,255,255,0.08),
-    inset 0 -35px 50px rgba(0,0,0,0.9),
-    0 12px 28px rgba(0,0,0,0.5);
+  width: 80px;
+  height: 12vh;
+  background: linear-gradient(#1a3a5a, #4a7fb5);
+  border-radius: 0 0 30px 30px;
   overflow: hidden;
-  transform: perspective(500px) rotateX(2deg);
-}
-
-.tanque::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 36px;
-  background: radial-gradient(ellipse at center, #8bb8e8 0%, #3a5f85 55%, #1a2f45 100%);
-  border-radius: 50%;
-  border: 3px solid #9cc8f0;
-  box-shadow: 0 -6px 15px rgba(0,0,0,0.9), inset 0 5px 10px rgba(255,255,255,0.4);
-  z-index: 10;
+  position: relative;
+  border: 2px solid rgba(160, 200, 240, 0.3);
+  box-shadow: inset 0 -20px 40px rgba(0,0,0,0.7);
 }
 
 .canvas-agua {
+  width: 100%;
+  height: 100%;
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100px;
-  height: 18vh;
-  border-radius: 0 0 48px 48px;
-  z-index: 1;
 }
 
 .escala {
   position: absolute;
-  right: -38px;
-  top: 12px;
+  right: -30px;
+  top: 10px;
   height: 85%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: #7aa8cc;
-  font-size: clamp(6px, 0.6vw, 8px);
+  font-size: 7px;
   font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-  z-index: 8;
+  pointer-events: none;
 }
 
 .escala span {
   position: relative;
-  padding-right: 6px;
+  padding-right: 5px;
 }
 
 .escala span::before {
@@ -390,85 +340,64 @@ main {
   position: absolute;
   right: 0;
   top: 50%;
-  width: 10px;
-  height: 1.5px;
-  background: linear-gradient(90deg, #4a7fa8, transparent);
+  width: 8px;
+  height: 1px;
+  background: #4a7fa8;
   transform: translateY(-50%);
 }
 
+/* ================== TEXTO NÍVEL ================== */
 .nivel-info {
-  position: absolute;
-  bottom: 0.8vh;
-  left: 0;
-  right: 0;
   text-align: center;
-  z-index: 10;
-  pointer-events: none;
+  margin-top: 5px;
+  flex-shrink: 0;
 }
 
 .nivel-valor {
-  font-size: clamp(12px, 1.4vw, 16px);
-  font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 3px 12px rgba(0,229,255,0.5);
+  font-size: 14px;
+  font-weight: bold;
+  color: #00e5ff;
   line-height: 1;
 }
 
 .nivel-litros {
-  font-size: clamp(7px, 0.8vw, 9px);
+  font-size: 9px;
   color: #a8c8e8;
-  margin-top: 3px;
-  font-weight: 600;
+  margin-top: 2px;
 }
 
 /* ================== BOMBAS ================== */
 .bomba-stats {
+  font-size: 12px;
+  color: #ccc;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: clamp(10px, 1vw, 12px);
-  color: #ccc;
-}
-
-.card.bomba.ligada { 
-  border-left: 3px solid #00c853; 
-  box-shadow: 0 0 20px rgba(0,200,83,0.4); 
-}
-.card.bomba.desligada { 
-  border-left: 3px solid #555; 
-  opacity: 0.65; 
-}
-.card.bomba.stale { 
-  opacity: 0.45; 
-  filter: grayscale(0.6); 
+  flex: 1;
+  justify-content: center;
 }
 
 .status-icon {
-  font-size: clamp(24px, 2.5vw, 32px);
+  font-size: 28px;
   text-align: center;
-  margin: 6px 0;
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.8));
+  margin: 5px 0;
 }
 
 /* ================== FOOTER ================== */
 footer {
   text-align: center;
-  padding: 0.5vh 2vw;
+  padding: 5px;
+  font-size: 10px;
   color: #5a7a9a;
-  font-size: clamp(8px, 0.8vw, 10px);
   border-top: 1px solid rgba(255,255,255,0.08);
   background: rgba(10, 26, 42, 0.6);
-  backdrop-filter: blur(15px);
   flex-shrink: 0;
 }
 
-/* ================== SCROLLBAR ================== */
+/* ================== SCROLL ================== */
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  height: 4px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -476,43 +405,50 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 229, 255, 0.3);
+  background: rgba(0,229,255,0.4);
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 229, 255, 0.5);
+  background: rgba(0,229,255,0.6);
 }
 
 /* ================== RESPONSIVO ================== */
 @media (max-width: 1200px) {
   main {
-    grid-template-columns: 1fr; /* 1 coluna em telas menores */
+    grid-template-columns: 1fr; /* 1 coluna no mobile */
     overflow-y: auto;
   }
+
   html, body {
-    overflow: auto; /* libera scroll geral no mobile */
+    overflow: auto; /* libera scroll no mobile */
   }
+
   .grid-reservatorios,
-  .grid-bombas, 
+  .grid-bombas,
   .grid-pressoes {
     flex-direction: column; /* volta pra vertical no mobile */
+    overflow-x: hidden;
+    overflow-y: auto;
   }
+
   .grid-reservatorios .card,
   .grid-bombas .card,
   .grid-pressoes .card {
     flex: 0 0 auto; /* largura 100% no mobile */
   }
-  .tanque-container, .tanque, .canvas-agua {
+
+  .tanque-container, .tanque {
     height: 25vh;
   }
 }
 
 @media (max-height: 700px) {
-  .tanque-container, .tanque, .canvas-agua {
-    height: 15vh;
+  .tanque-container, .tanque {
+    height: 10vh;
   }
+  
   .kpi strong {
-    font-size: clamp(16px, 2vw, 22px);
+    font-size: 16px;
   }
 }
