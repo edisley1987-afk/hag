@@ -6,10 +6,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>HAG - Sistema de Monitoramento Hídrico 3D</title>
+  <title>HAG - Sistema de Monitoramento Hídrico 3D Ultra Realista</title>
   <style>
 /* ==========================================================
-   CSS PROFISSIONAL - HAG DASHBOARD 3D INDUSTRIAL
+   CSS PROFISSIONAL - HAG DASHBOARD 3D INDUSTRIAL ULTRA
    ========================================================== */
 
 /* ================== RESET E LAYOUT GERAL ================== */
@@ -130,6 +130,10 @@ header {
   font-weight: 500;
 }
 
+#statusSistema.status-success { color: #00ff88; }
+#statusSistema.status-error { color: #ff3d00; }
+#statusSistema.status-warning { color: #ffd600; }
+
 .header-info {
   max-width: 1800px;
   margin: 12px auto 0;
@@ -148,8 +152,12 @@ header {
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 colunas fixas no desktop */
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 18px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,229,255,0.3) transparent;
 }
 
 .kpi {
@@ -163,6 +171,7 @@ header {
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   position: relative;
   overflow: hidden;
+  min-width: 140px;
 }
 
 .kpi::before {
@@ -235,7 +244,7 @@ main {
   width: 100%;
 }
 
-/* ================== RESERVATÓRIOS 3D PROFISSIONAL ================== */
+/* ================== RESERVATÓRIOS 3D CANVAS ULTRA ================== */
 .card.reservatorio {
   background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
   border-radius: 20px;
@@ -249,16 +258,6 @@ main {
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   position: relative;
   overflow: hidden;
-}
-
-.card.reservatorio::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
 }
 
 .card.reservatorio:hover {
@@ -280,6 +279,23 @@ main {
  50% { box-shadow: 0 35px 70px rgba(255, 61, 0, 0.65), 0 15px 35px rgba(255, 61, 0, 0.45); }
 }
 
+.card.reservatorio.vibra-critico {
+  animation: vibra-critico 0.3s infinite;
+}
+
+@keyframes vibra-critico {
+ 0%, 100% { transform: translateX(0); }
+ 25% { transform: translateX(-2px); }
+ 75% { transform: translateX(2px); }
+}
+
+/* Classes de nível SCADA */
+.card.reservatorio.nivel-cheio { border-color: #00e676; }
+.card.reservatorio.nivel-alto { border-color: #40c4ff; }
+.card.reservatorio.nivel-medio { border-color: #00ddff; }
+.card.reservatorio.nivel-baixo { border-color: #ffc107; }
+.card.reservatorio.nivel-critico { border-color: #ff3d00; }
+
 .card.reservatorio h2 {
   color: #e0f7ff;
   font-size: 19px;
@@ -290,42 +306,56 @@ main {
   text-shadow: 0 3px 15px rgba(0,0,0,0.9);
 }
 
-/* ================== TANQUE CILÍNDRICO METÁLICO ================== */
+/* ================== TANQUE CILÍNDRICO METÁLICO ESCOVADO ================== */
 .tanque {
   position: relative;
-  width: 180px;
-  height: 240px;
+  width: 200px;
+  height: 260px;
   margin: 30px auto;
-  background: linear-gradient(90deg, 
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      rgba(255,255,255,0.025) 1px,
+      transparent 2px,
+      transparent 4px
+    ), /* efeito aço escovado */
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
+    linear-gradient(95deg, 
       #0a1a2a 0%, 
-      #1a3a5a 25%, 
-      #2d5f8a 50%, 
-      #1a3a5a 75%, 
+      #1a3a5a 15%, 
+      #3a6b9e 35%, 
+      #4a7fb5 50%, 
+      #3a6b9e 65%, 
+      #1a3a5a 85%, 
       #0a1a2a 100%);
-  border-radius: 0 0 65px 65px;
-  border: 3px solid rgba(120, 180, 220, 0.35);
+  border-radius: 0 0 70px 70px;
+  border: 3px solid rgba(160, 200, 240, 0.4);
   box-shadow: 
-    inset -30px 0 60px rgba(0,0,0,0.85),
-    inset 30px 0 60px rgba(255,255,255,0.07),
-    inset 0 -45px 70px rgba(0,0,0,0.9);
+    inset -40px 0 80px rgba(0,0,0,0.9),
+    inset 40px 0 80px rgba(255,255,255,0.08),
+    inset 0 -50px 80px rgba(0,0,0,0.95),
+    0 20px 50px rgba(0,0,0,0.6);
   overflow: hidden;
+  transform: perspective(800px) rotateX(2deg);
 }
 
 .tanque::before {
   content: "";
   position: absolute;
-  top: -20px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 40px;
-  background: radial-gradient(ellipse at center, #5a8bb8 0%, #2a4a66 60%, #112d47 100%);
+  top: -25px;
+  left: -5px;
+  width: calc(100% + 10px);
+  height: 50px;
+  background: radial-gradient(ellipse at center, #8bb8e8 0%, #3a5f85 55%, #1a2f45 100%);
   border-radius: 50%;
-  border: 3px solid #6a9cc8;
+  border: 4px solid #9cc8f0;
   box-shadow: 
-    0 -8px 22px rgba(0,0,0,0.95),
-    inset 0 5px 10px rgba(255,255,255,0.3),
-    inset 0 -3px 6px rgba(0,0,0,0.6);
+    0 -12px 30px rgba(0,0,0,0.98),
+    inset 0 8px 15px rgba(255,255,255,0.4),
+    inset 0 -5px 10px rgba(0,0,0,0.7);
   z-index: 10;
+  pointer-events: none;
 }
 
 .tanque::after {
@@ -336,15 +366,27 @@ main {
   width: 100%;
   height: 100%;
   background: linear-gradient(95deg, 
-    rgba(255,255,255,0.18) 0%, 
+    rgba(255,255,255,0.15) 0%, 
     transparent 25%, 
     transparent 70%,
-    rgba(255,255,255,0.1) 100%);
+    rgba(255,255,255,0.08) 100%);
   pointer-events: none;
   z-index: 6;
-  border-radius: 0 0 65px 65px;
+  border-radius: 0 0 70px 70px;
+  mix-blend-mode: screen;
 }
 
+.canvas-agua {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0 0 68px 68px;
+  z-index: 1;
+}
+
+/* Escala de nível lateral */
 .escala {
   position: absolute;
   right: -58px;
@@ -359,6 +401,7 @@ main {
   text-shadow: 2px 2px 6px rgba(0,0,0,0.95);
   z-index: 8;
   letter-spacing: 0.8px;
+  pointer-events: none;
 }
 
 .escala span {
@@ -375,118 +418,6 @@ main {
   height: 2px;
   background: linear-gradient(90deg, #4a7fa8, transparent);
   transform: translateY(-50%);
-}
-
-/* ================== ÁGUA COM FÍSICA REAL ================== */
-.agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0%;
-  border-radius: 0 0 60px 60px;
-  transition: height 0.3s linear;
-  z-index: 1;
-  overflow: hidden;
-  background: linear-gradient(to top, 
-    #003d7a 0%, 
-    #0066cc 30%, 
-    #0099ff 60%, 
-    #40c4ff 85%, 
-    #80d8ff 100%);
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,40,100,0.75),
-    inset 0 12px 25px rgba(255,255,255,0.25);
-}
-
-.agua::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 5%;
-  width: 90%;
-  height: 10px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.55) 0%, 
-    rgba(255,255,255,0.25) 40%, 
-    transparent 70%);
-  border-radius: 50%;
-  transform: translateY(-50%);
-  filter: blur(2px);
-  z-index: 3;
-}
-
-.agua::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.2) 0%, 
-    rgba(255,255,255,0.08) 50%,
-    transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.onda {
-  position: absolute;
-  top: -12px;
-  left: -60%;
-  width: 220%;
-  height: 24px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.32) 0%, 
-    rgba(255,255,255,0.12) 45%,
-    transparent 70%);
-  animation: onda 4s ease-in-out infinite;
-  filter: blur(2.5px);
-  z-index: 4;
-}
-
-@keyframes onda {
- 0%, 100% { transform: translateX(0) scaleY(1); }
- 50% { transform: translateX(30%) scaleY(1.3); }
-}
-
-.agua.balancando {
-  animation: balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes balanco {
- 0%, 100% { transform: skewX(0deg) scaleX(1); }
- 25% { transform: skewX(1.8deg) scaleX(1.015); }
- 75% { transform: skewX(-1.2deg) scaleX(0.985); }
-}
-
-/* ================== CORES POR NÍVEL ================== */
-.agua.nivel-cheio { 
-  background: linear-gradient(to top, #00c853 0%, #00e676 50%, #69f0ae 85%, #b9f6ca 100%); 
-  box-shadow: inset 0 -30px 60px rgba(0,120,60,0.65), inset 0 12px 25px rgba(255,255,255,0.35), 0 0 35px rgba(0,230,118,0.35);
-}
-.agua.nivel-alto { 
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
-  box-shadow: inset 0 -30px 60px rgba(0,80,160,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 30px rgba(64,196,255,0.3);
-}
-.agua.nivel-medio { 
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
-  box-shadow: inset 0 -30px 60px rgba(0,60,120,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 25px rgba(0,221,255,0.25);
-}
-.agua.nivel-baixo { 
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
-  box-shadow: inset 0 -30px 60px rgba(200,120,0,0.65), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 25px rgba(255,193,7,0.25);
-}
-.agua.nivel-critico { 
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
-  box-shadow: inset 0 -30px 60px rgba(150,0,0,0.75), inset 0 12px 25px rgba(255,255,255,0.3), 0 0 40px rgba(255,61,0,0.45);
-  animation: pulsar-critico 1.6s infinite;
-}
-
-@keyframes pulsar-critico {
- 0%, 100% { opacity: 1; transform: scale(1); }
- 50% { opacity: 0.85; transform: scale(1.02); }
 }
 
 /* ================== INFO DO RESERVATÓRIO ================== */
@@ -610,25 +541,21 @@ footer {
 /* ================== RESPONSIVO ================== */
 @media (max-width: 1200px) {
   .kpis {
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas em tablet */
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .tanque { 
-    width: 150px; 
-    height: 210px; 
+    width: 160px; 
+    height: 220px; 
   }
   .kpis {
-    grid-template-columns: repeat(2, 1fr); /* 2 colunas no mobile */
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
     gap: 12px;
   }
   .kpi strong {
     font-size: 22px;
-  }
-  .kpi span {
-    font-size: 10px;
-    letter-spacing: 0.8px;
   }
   .grid-reservatorios,
   .grid-bombas,
@@ -639,6 +566,10 @@ footer {
   .cabecalho h1 {
     font-size: 22px;
   }
+  main, .kpis-container, header {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
   </style>
 </head>
@@ -646,14 +577,14 @@ footer {
   <header>
     <div class="cabecalho">
       <div>
-        <h1>HAG - Sistema Hídrico 3D</h1>
+        <h1>HAG - Sistema Hídrico 3D Ultra</h1>
         <div class="subtitulo">Hospital Arnaldo Gavazza • Monitoramento em Tempo Real</div>
       </div>
       <div class="status">
         <div class="status-dot"></div>
         <span id="statusTexto">Conectando...</span>
       </div>
-      <a href="/historico" class="btn-historico">📊 Histórico</a>
+      <a href="/historico-view" class="btn-historico">📊 Histórico</a>
     </div>
     <div id="statusSistema">🟢 Sistema inicializado - Aguardando dados</div>
     <div class="header-info">
@@ -704,13 +635,13 @@ footer {
   </main>
 
   <footer>
-    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento Hídrico 3D v2.0
+    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento Hídrico 3D v4.0 Ultra Realista
   </footer>
 
   <script>
 /**
- * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 2.0 - Profissional SCADA
+ * Dashboard HAG 3D Ultra Realista - Hospital Arnaldo Gavazza
+ * Versão 4.0 - Física de Fluidos + Inércia + Ripple + Condensação
  */
 
 const API = "/api/dashboard";
@@ -721,16 +652,259 @@ let ultimoDado = Date.now();
 let renderPending = false;
 let cacheDados = new Map();
 
+// ======================= CLASSE CANVAS ÁGUA ULTRA REALISTA =======================
+class AguaCanvas {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.width = canvas.width = 200;
+    this.height = canvas.height = 260;
+    
+    // Física da água
+    this.nivel = 0; // 0 a 1 - nível atual renderizado
+    this.nivelTarget = 0; // nível alvo
+    this.velocidade = 0; // inércia da água
+    this.rippleOffset = 0; // amplitude do ripple de impacto
+    
+    // Ondas senoidais
+    this.ondas = [];
+    this.particulas = [];
+    this.condensacao = [];
+    this.time = 0;
+    
+    // 4 ondas sobrepostas para movimento orgânico realista
+    for (let i = 0; i < 4; i++) {
+      this.ondas.push({
+        amplitude: 12 + i * 4,
+        frequency: 0.018 + i * 0.004,
+        phase: i * Math.PI / 3,
+        speed: 0.035 + i * 0.008
+      });
+    }
+    
+    this.animate();
+  }
+  
+  setNivel(nivel) {
+    const nivelAnterior = this.nivelTarget;
+    this.nivelTarget = Math.min(1, Math.max(0, nivel / 100));
+    
+    // Calcula impacto para efeito ripple quando há mudança brusca
+    const delta = Math.abs(this.nivelTarget - nivelAnterior);
+    if (delta > 0.04) {
+      this.rippleOffset = delta * 20; // intensidade do ripple
+    }
+  }
+  
+  animate() {
+    this.time += 0.016; // 60fps
+    
+    // Física: inércia + mola + amortecimento
+    const diferenca = this.nivelTarget - this.nivel;
+    this.velocidade += diferenca * 0.12; // aceleração
+    this.velocidade *= 0.88; // amortecimento
+    this.nivel += this.velocidade; // aplicação da velocidade
+    
+    // Decay do ripple
+    this.rippleOffset *= 0.91;
+    
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    
+    const yAgua = this.height * (1 - this.nivel);
+    this.desenharAgua(yAgua);
+    this.desenharOnda(yAgua);
+    this.desenharParticulas(yAgua);
+    this.desenharReflexo(yAgua);
+    this.desenharRefracao(yAgua);
+    this.desenharCondensacao();
+    
+    requestAnimationFrame(() => this.animate());
+  }
+  
+  desenharAgua(yAgua) {
+    const grad = this.ctx.createLinearGradient(0, yAgua, 0, this.height);
+    
+    // Gradiente dinâmico conforme nível + profundidade
+    if (this.nivel > 0.95) {
+      grad.addColorStop(0, 'rgba(0, 220, 120, 0.95)');
+      grad.addColorStop(0.5, 'rgba(0, 160, 80, 0.98)');
+      grad.addColorStop(1, 'rgba(0, 100, 50, 1)');
+    } else if (this.nivel > 0.7) {
+      grad.addColorStop(0, 'rgba(64, 196, 255, 0.95)');
+      grad.addColorStop(0.5, 'rgba(0, 120, 200, 0.98)');
+      grad.addColorStop(1, 'rgba(0, 60, 140, 1)');
+    } else if (this.nivel > 0.4) {
+      grad.addColorStop(0, 'rgba(0, 221, 255, 0.95)');
+      grad.addColorStop(0.5, 'rgba(0, 100, 180, 0.98)');
+      grad.addColorStop(1, 'rgba(0, 40, 100, 1)');
+    } else if (this.nivel > 0.2) {
+      grad.addColorStop(0, 'rgba(255, 193, 7, 0.95)');
+      grad.addColorStop(0.5, 'rgba(220, 140, 0, 0.98)');
+      grad.addColorStop(1, 'rgba(160, 80, 0, 1)');
+    } else {
+      grad.addColorStop(0, 'rgba(255, 61, 0, 0.95)');
+      grad.addColorStop(0.5, 'rgba(200, 30, 0, 0.98)');
+      grad.addColorStop(1, 'rgba(120, 0, 0, 1)');
+    }
+    
+    // Corpo da água com curva inferior do cilindro
+    this.ctx.fillStyle = grad;
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, yAgua);
+    this.ctx.lineTo(0, this.height);
+    this.ctx.lineTo(this.width, this.height);
+    this.ctx.lineTo(this.width, yAgua);
+    this.ctx.arc(this.width/2, this.height, this.width/2, 0, Math.PI);
+    this.ctx.closePath();
+    this.ctx.fill();
+    
+    // Sombra interna para profundidade 3D
+    this.ctx.fillStyle = 'rgba(0, 40, 100, 0.5)';
+    this.ctx.beginPath();
+    this.ctx.moveTo(0, yAgua);
+    this.ctx.lineTo(0, this.height);
+    this.ctx.lineTo(this.width * 0.25, this.height);
+    this.ctx.lineTo(this.width * 0.25, yAgua);
+    this.ctx.closePath();
+    this.ctx.fill();
+  }
+  
+  desenharOnda(yAgua) {
+    // Linha principal da onda com ripple de impacto
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    this.ctx.lineWidth = 2.5;
+    this.ctx.beginPath();
+    
+    for (let x = 0; x <= this.width; x += 2) {
+      let y = yAgua;
+      
+      // Soma das 4 ondas senoidais
+      this.ondas.forEach(onda => {
+        y += Math.sin(x * onda.frequency + this.time * onda.speed + onda.phase) * onda.amplitude * this.nivel;
+      });
+      
+      // Ripple de impacto quando nível muda
+      const rippleWave = Math.sin(x * 0.08 + this.time * 0.4) * this.rippleOffset;
+      y += rippleWave;
+      
+      // Menisco nas bordas - curvatura real da água
+      const distanciaBorda = Math.min(x, this.width - x);
+      const fatorMenisco = Math.max(0, 1 - distanciaBorda / 35);
+      y -= fatorMenisco * 14;
+      
+      if (x === 0) this.ctx.moveTo(x, y);
+      else this.ctx.lineTo(x, y);
+    }
+    
+    this.ctx.stroke();
+    
+    // Reflexo da superfície
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    this.ctx.lineTo(this.width, yAgua + 18);
+    this.ctx.lineTo(0, yAgua + 18);
+    this.ctx.closePath();
+    this.ctx.fill();
+  }
+  
+  desenharParticulas(yAgua) {
+    // Gera bolhas quando nível sobe
+    if (Math.random() < 0.2 && this.nivel > 0.15 && Math.abs(this.velocidade) > 0.01) {
+      this.particulas.push({
+        x: 35 + Math.random() * 130,
+        y: this.height,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: -2.5 - Math.random() * 2,
+        size: 2 + Math.random() * 4,
+        alpha: 1,
+        life: 120
+      });
+    }
+    
+    // Anima e remove bolhas
+    this.particulas = this.particulas.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.025; // gravidade
+      p.life--;
+      p.alpha = p.life / 120;
+      
+      if (p.y > yAgua && p.y < this.height) {
+        // Bolha principal com gradiente
+        const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        grad.addColorStop(0, `rgba(255, 255, 255, ${p.alpha})`);
+        grad.addColorStop(1, `rgba(255, 255, 255, 0)`);
+        this.ctx.fillStyle = grad;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Brilho da bolha
+        this.ctx.beginPath();
+        this.ctx.arc(p.x - p.size/3, p.y - p.size/3, p.size/2, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.9})`;
+        this.ctx.fill();
+      }
+      
+      return p.life > 0 && p.y < this.height + 25;
+    });
+  }
+  
+  desenharReflexo(yAgua) {
+    // Reflexo especular da tampa do tanque na superfície da água
+    const grad = this.ctx.createLinearGradient(0, yAgua - 15, 0, yAgua + 15);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
+    grad.addColorStop(1, 'transparent');
+    this.ctx.fillStyle = grad;
+    this.ctx.fillRect(0, yAgua - 15, this.width, 30);
+  }
+  
+  desenharRefracao(yAgua) {
+    // Efeito de refração - distorce a parede atrás da água
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = 'soft-light';
+    this.ctx.fillStyle = 'rgba(100, 180, 255, 0.12)';
+    this.ctx.fillRect(0, yAgua, this.width * 0.22, this.height - yAgua);
+    this.ctx.globalCompositeOperation = 'source-over';
+    this.ctx.restore();
+  }
+  
+  desenharCondensacao() {
+    // Gotas de condensação na parede interna quando reservatório está cheio
+    if (this.nivel > 0.65 && Math.random() < 0.3) {
+      this.condensacao.push({
+        x: 15 + Math.random() * 170,
+        y: Math.random() * this.height * 0.4,
+        size: 1 + Math.random() * 2,
+        alpha: 0.3 + Math.random() * 0.3,
+             gota.life--;
+      gota.alpha = gota.life / 200;
+      gota.y += 0.3; // gota escorrendo
+      
+      if (gota.y < this.height * 0.8) {
+        this.ctx.beginPath();
+        this.ctx.arc(gota.x, gota.y, gota.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(180, 220, 255, ${gota.alpha})`;
+        this.ctx.fill();
+      }
+      
+      return gota.life > 0 && gota.y < this.height * 0.9;
+    });
+  }
+}
+
+// ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-    console.log("%c HAG Dashboard v2.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
+    console.log("%c HAG Dashboard v4.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
     fallbackHTTP();
     conectarWS();
     setInterval(fallbackHTTP, 8000);
     iniciarMonitoramentoSinal();
 }
 
+// ======================= MONITORAMENTO DE SINAL =======================
 function iniciarMonitoramentoSinal() {
     setInterval(() => {
         const tempoSemSinal = Date.now() - ultimoDado;
@@ -747,6 +921,7 @@ function iniciarMonitoramentoSinal() {
     }, 5000);
 }
 
+// ======================= PROCESSAMENTO DE DADOS =======================
 function processarPayload(payload) {
     if (!payload) return;
     if (payload.type === "update" && payload.dados) {
@@ -756,6 +931,7 @@ function processarPayload(payload) {
     scheduleRender(payload);
 }
 
+// ======================= RENDER OTIMIZADO COM RAF =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
@@ -775,6 +951,7 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
+// ======================= RESERVATÓRIOS CANVAS =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -790,12 +967,10 @@ function renderReservatorios(lista) {
             el.innerHTML = `
                 <h2>${r.nome}</h2>
                 <div class="tanque">
-                    <div class="escala">
-                        <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                    </div>
-                    <div class="agua">
-                        <div class="onda"></div>
-                    </div>
+                  <canvas class="canvas-agua"></canvas>
+                  <div class="escala">
+                      <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                  </div>
                 </div>
                 <div class="info">
                     <div class="valor">0%</div>
@@ -804,51 +979,41 @@ function renderReservatorios(lista) {
             `;
             area.appendChild(el);
             cacheDados.set(id, el);
+            
+            // Inicializa Canvas
+            const canvas = el.querySelector('.canvas-agua');
+            el.canvasAgua = new AguaCanvas(canvas);
         }
 
-        const agua = el.querySelector(".agua");
         const valor = el.querySelector(".valor");
         const litros = el.querySelector(".litros");
-
         const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
         const nivelSuavizado = Math.round(nivel * 10) / 10;
 
-        animarNivel(agua, nivelSuavizado);
+        // Atualiza Canvas
+        if (el.canvasAgua) {
+          el.canvasAgua.setNivel(nivelSuavizado);
+        }
 
-        agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
-        if (nivel >= 95) agua.classList.add("nivel-cheio");
-        else if (nivel >= 70) agua.classList.add("nivel-alto");
-        else if (nivel >= 40) agua.classList.add("nivel-medio");
-        else if (nivel >= 20) agua.classList.add("nivel-baixo");
-        else agua.classList.add("nivel-critico");
-
+        // Alerta visual
         el.classList.toggle("alerta", nivel < 20);
+        el.classList.toggle("vibra-critico", nivel < 10);
+        
+        // Classe de nível para borda colorida estilo SCADA
+        el.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
+        if (nivel >= 95) el.classList.add("nivel-cheio");
+        else if (nivel >= 70) el.classList.add("nivel-alto");
+        else if (nivel >= 40) el.classList.add("nivel-medio");
+        else if (nivel >= 20) el.classList.add("nivel-baixo");
+        else el.classList.add("nivel-critico");
 
+        // Atualiza textos
         valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
         litros.innerText = `${formatar(r.current_liters)} L`;
     });
 }
 
-function animarNivel(agua, target) {
-    let atual = Number(agua.dataset.render || 0);
-
-    function step() {
-        atual += (target - atual) * 0.08;
-
-        if (Math.abs(target - atual) < 0.1) {
-            atual = target;
-        } else {
-            requestAnimationFrame(step);
-        }
-
-        agua.style.height = atual + "%";
-        agua.dataset.render = atual;
-    }
-
-    step();
-    agua.dataset.nivel = target;
-}
-
+// ======================= BOMBAS =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -876,6 +1041,7 @@ function renderBombas(lista) {
     });
 }
 
+// ======================= PRESSÕES =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -899,11 +1065,15 @@ function renderPressoes(lista) {
     });
 }
 
+// ======================= KPIs =======================
 function atualizarKPIs(data) {
     const kpis = data.kpis || {};
     const elementos = {
         kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
         bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
+        kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
+        kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
+        kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
     };
 
     Object.entries(elementos).forEach(([id, valor]) => {
@@ -1014,8 +1184,6 @@ window.addEventListener("error", (e) => {
 window.addEventListener("unhandledrejection", (e) => {
     console.error("Promise rejeitada:", e.reason);
 });
- 
-</script>
+  </script>
 </body>
 </html>
-        
