@@ -1,1043 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>HAG - Sistema de Monitoramento Hídrico 3D</title>
-  <style>
-/* ==========================================================
-   CSS PROFISSIONAL - HAG DASHBOARD 3D INDUSTRIAL
-   ========================================================== */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-/* ================== RESET E LAYOUT GERAL ================== */
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
-}
+<title>Monitoramento HAG</title> 
 
-body {
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
-  color: #e0f7ff;
-  min-height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  letter-spacing: 0.2px;
-}
-
-body.sem-sinal { 
-  opacity: 0.6; 
-  filter: grayscale(0.3); 
-}
-
-/* ================== HEADER ================== */
-header {
-  background: rgba(10, 26, 42, 0.85);
-  backdrop-filter: blur(15px);
-  padding: 22px 30px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.cabecalho {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  max-width: 1800px;
-  margin: 0 auto;
-}
-
-.cabecalho h1 {
-  font-size: 28px;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
-  letter-spacing: 1px;
-  text-shadow: 0 4px 20px rgba(0,229,255,0.3);
-}
-
-.subtitulo { 
-  color: #8aa5c7; 
-  font-size: 14px; 
-  font-weight: 500;
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #8aa5c7;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.status-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #00ff88;
-  box-shadow: 0 0 15px #00ff88, 0 0 30px rgba(0,255,136,0.5);
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
- 0%, 100% { box-shadow: 0 0 15px #00ff88, 0 0 30px rgba(0,255,136,0.5); }
- 50% { box-shadow: 0 0 25px #00ff88, 0 0 45px rgba(0,255,136,0.7); }
-}
-
-.btn-historico {
-  background: linear-gradient(135deg, #123d66 0%, #1b5a99 100%);
-  color: #e0f7ff;
-  padding: 12px 24px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.12);
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-}
-
-.btn-historico:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(27,90,153,0.5);
-  border-color: rgba(0,229,255,0.4);
-}
-
-#statusSistema {
-  max-width: 1800px;
-  margin: 18px auto 0;
-  padding: 14px 24px;
-  background: rgba(10, 26, 42, 0.7);
-  border-radius: 12px;
-  font-size: 14px;
-  color: #8aa5c7;
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(8px);
-  font-weight: 500;
-}
-
-.header-info {
-  max-width: 1800px;
-  margin: 12px auto 0;
-  color: #8aa5c7;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* ================== KPIs ================== */
-.kpis-container { 
-  max-width: 1800px; 
-  margin: 20px auto 0; 
-  padding: 0 30px;
-}
-
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 22px;
-}
-
-.kpi {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 22px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  text-align: center;
-  backdrop-filter: blur(12px);
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  position: relative;
-  overflow: hidden;
-}
-
-.kpi::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6), transparent);
-}
-
-.kpi:hover { 
-  transform: translateY(-8px); 
-  border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 20px 45px rgba(0,229,255,0.25);
-}
-
-.kpi span {
-  display: block;
-  font-size: 12px;
-  color: #8aa5c7;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 700;
-}
-
-.kpi strong {
-  font-size: 34px;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
-  text-shadow: 0 4px 20px rgba(0,229,255,0.3);
-}
-
-/* ================== SEÇÕES ================== */
-main {
-  flex: 1;
-  max-width: 1800px;
-  margin: 20px auto 40px;
-  padding: 0 30px;
-  width: 100%;
-}
-
-.secao {
-  margin-bottom: 50px;
-}
-
-.titulo-area {
-  font-size: 24px;
-  color: #00e5ff;
-  margin-bottom: 25px;
-  border-left: 5px solid #00e5ff;
-  padding-left: 18px;
-  text-shadow: 0 0 25px rgba(0,229,255,0.4);
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-/* ================== GRIDS LADO A LADO ================== */
-.grid-reservatorios,
-.grid-bombas, 
-.grid-pressoes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 35px;
-  width: 100%;
-}
-
-/* ================== RESERVATÓRIOS 3D PROFISSIONAL ================== */
-.card.reservatorio {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
-  border-radius: 20px;
-  padding: 32px 26px 36px;
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  box-shadow: 
-    0 25px 50px rgba(0,0,0,0.65),
-    0 10px 25px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(15px);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.card.reservatorio::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
-}
-
-.card.reservatorio:hover {
-  transform: translateY(-12px);
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow: 
-    0 35px 70px rgba(0,0,0,0.75),
-    0 18px 40px rgba(0, 229, 255, 0.3),
-    inset 0 1px 0 rgba(255,255,255,0.1);
-}
-
-.card.reservatorio.alerta {
-  border-color: #ff3d00;
-  animation: alerta-pulse 2s infinite;
-}
-
-@keyframes alerta-pulse {
- 0%, 100% { box-shadow: 0 25px 50px rgba(255, 61, 0, 0.45), 0 10px 25px rgba(255, 61, 0, 0.25); }
- 50% { box-shadow: 0 35px 70px rgba(255, 61, 0, 0.65), 0 15px 35px rgba(255, 61, 0, 0.45); }
-}
-
-.card.reservatorio h2 {
-  color: #e0f7ff;
-  font-size: 19px;
-  margin: 0 0 25px 0;
-  text-align: center;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-shadow: 0 3px 15px rgba(0,0,0,0.9);
-}
-
-/* ================== TANQUE CILÍNDRICO METÁLICO ================== */
-.tanque {
-  position: relative;
-  width: 180px;
-  height: 240px;
-  margin: 30px auto;
-  background: linear-gradient(90deg, 
-      #0a1a2a 0%, 
-      #1a3a5a 25%, 
-      #2d5f8a 50%, 
-      #1a3a5a 75%, 
-      #0a1a2a 100%);
-  border-radius: 0 0 65px 65px;
-  border: 3px solid rgba(120, 180, 220, 0.35);
-  box-shadow: 
-    inset -30px 0 60px rgba(0,0,0,0.85),
-    inset 30px 0 60px rgba(255,255,255,0.07),
-    inset 0 -45px 70px rgba(0,0,0,0.9);
-  overflow: hidden;
-}
-
-/* Tampa superior com relevo metálico */
-.tanque::before {
-  content: "";
-  position: absolute;
-  top: -20px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 40px;
-  background: radial-gradient(ellipse at center, #5a8bb8 0%, #2a4a66 60%, #112d47 100%);
-  border-radius: 50%;
-  border: 3px solid #6a9cc8;
-  box-shadow: 
-    0 -8px 22px rgba(0,0,0,0.95),
-    inset 0 5px 10px rgba(255,255,255,0.3),
-    inset 0 -3px 6px rgba(0,0,0,0.6);
-  z-index: 10;
-}
-
-/* Reflexo de vidro na parede interna */
-.tanque::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(95deg, 
-    rgba(255,255,255,0.18) 0%, 
-    transparent 25%, 
-    transparent 70%,
-    rgba(255,255,255,0.1) 100%);
-  pointer-events: none;
-  z-index: 6;
-  border-radius: 0 0 65px 65px;
-}
-
-/* Escala de nível lateral */
-.escala {
-  position: absolute;
-  right: -58px;
-  top: 25px;
-  height: 80%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #7aa8cc;
-  font-size: 12px;
-  font-weight: 700;
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.95);
-  z-index: 8;
-  letter-spacing: 0.8px;
-}
-
-.escala span {
-  position: relative;
-  padding-right: 10px;
-}
-
-.escala span::before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  width: 18px;
-  height: 2px;
-  background: linear-gradient(90deg, #4a7fa8, transparent);
-  transform: translateY(-50%);
-}
-
-/* ================== ÁGUA COM FÍSICA REAL ================== */
-.agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0%;
-  border-radius: 0 0 60px 60px;
-  transition: height 0.3s linear;
-  z-index: 1;
-  overflow: hidden;
-  background: linear-gradient(to top, 
-    #003d7a 0%, 
-    #0066cc 30%, 
-    #0099ff 60%, 
-    #40c4ff 85%, 
-    #80d8ff 100%);
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,40,100,0.75),
-    inset 0 12px 25px rgba(255,255,255,0.25);
-}
-
-/* Menisco - curvatura da superfície da água */
-.agua::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 5%;
-  width: 90%;
-  height: 10px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.55) 0%, 
-    rgba(255,255,255,0.25) 40%, 
-    transparent 70%);
-  border-radius: 50%;
-  transform: translateY(-50%);
-  filter: blur(2px);
-  z-index: 3;
-}
-
-/* Reflexo lateral da água na parede */
-.agua::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    rgba(255,255,255,0.2) 0%, 
-    rgba(255,255,255,0.08) 50%,
-    transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Onda suave na superfície */
-.onda {
-  position: absolute;
-  top: -12px;
-  left: -60%;
-  width: 220%;
-  height: 24px;
-  background: radial-gradient(ellipse at center, 
-    rgba(255,255,255,0.32) 0%, 
-    rgba(255,255,255,0.12) 45%,
-    transparent 70%);
-  animation: onda 4s ease-in-out infinite;
-  filter: blur(2.5px);
-  z-index: 4;
-}
-
-@keyframes onda {
- 0%, 100% { transform: translateX(0) scaleY(1); }
- 50% { transform: translateX(30%) scaleY(1.3); }
-}
-
-/* Balanço físico quando nível muda */
-.agua.balancando {
-  animation: balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes balanco {
- 0%, 100% { transform: skewX(0deg) scaleX(1); }
- 25% { transform: skewX(1.8deg) scaleX(1.015); }
- 75% { transform: skewX(-1.2deg) scaleX(0.985); }
-}
-
-/* ================== CORES POR NÍVEL ================== */
-.agua.nivel-cheio { 
-  background: linear-gradient(to top, #00c853 0%, #00e676 50%, #69f0ae 85%, #b9f6ca 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,120,60,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.35),
-    0 0 35px rgba(0,230,118,0.35);
-}
-.agua.nivel-alto { 
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,80,160,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 30px rgba(64,196,255,0.3);
-}
-.agua.nivel-medio { 
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(0,60,120,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 25px rgba(0,221,255,0.25);
-}
-.agua.nivel-baixo { 
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(200,120,0,0.65),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 25px rgba(255,193,7,0.25);
-}
-.agua.nivel-critico { 
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%); 
-  box-shadow: 
-    inset 0 -30px 60px rgba(150,0,0,0.75),
-    inset 0 12px 25px rgba(255,255,255,0.3),
-    0 0 40px rgba(255,61,0,0.45);
-  animation: pulsar-critico 1.6s infinite;
-}
-
-@keyframes pulsar-critico {
- 0%, 100% { opacity: 1; transform: scale(1); }
- 50% { opacity: 0.85; transform: scale(1.02); }
-}
-
-/* ================== INFO DO RESERVATÓRIO ================== */
-.info {
-  text-align: center;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.info .valor {
-  font-size: 42px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 5px 30px rgba(0,229,255,0.55);
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.85));
-  line-height: 1;
-}
-
-.info .litros {
-  font-size: 16px;
-  color: #a8c8e8;
-  margin-top: 12px;
-  font-weight: 600;
-  text-shadow: 1px 1px 6px rgba(0,0,0,0.95);
-  letter-spacing: 0.8px;
-}
-
-/* ================== BOMBAS E PRESSÕES ================== */
-.card {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 26px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.55);
-  backdrop-filter: blur(12px);
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.4), transparent);
-}
-
-.card:hover { 
-  transform: translateY(-8px); 
-  border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 25px 50px rgba(0,229,255,0.25);
-}
-
-.card.bomba h2, .card h2 {
-  font-size: 17px;
-  color: #e0f7ff;
-  margin-bottom: 18px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-.card.bomba.ligada { 
-  border-color: #00c853; 
-  box-shadow: 0 0 35px rgba(0,200,83,0.45), 0 15px 40px rgba(0,0,0,0.55); 
-}
-.card.bomba.desligada { 
-  border-color: #555; 
-  opacity: 0.65; 
-}
-.card.bomba.stale { 
-  opacity: 0.45; 
-  filter: grayscale(0.6); 
-}
-
-.status-icon {
-  font-size: 44px;
-  text-align: center;
-  margin: 18px 0;
-  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.85));
-}
-
-.valor {
-  font-size: 22px;
-  font-weight: 800;
-  color: #00e5ff;
-  text-align: center;
-  text-shadow: 0 3px 15px rgba(0,229,255,0.4);
-  letter-spacing: 0.5px;
-}
-
-.ciclos, .valor-pressao {
-  font-size: 15px;
-  color: #8aa5c7;
-  text-align: center;
-  margin-top: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* ================== FOOTER ================== */
-footer {
-  text-align: center;
-  padding: 35px 30px;
-  color: #5a7a9a;
-  font-size: 13px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  margin-top: auto;
-  background: rgba(10, 26, 42, 0.6);
-  backdrop-filter: blur(15px);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-/* ================== RESPONSIVO ================== */
-@media (max-width: 768px) {
-  .tanque { 
-    width: 150px; 
-    height: 210px; 
-  }
-  .grid-reservatorios,
-  .grid-bombas,
-  .grid-pressoes { 
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-  .cabecalho h1 {
-    font-size: 22px;
-  }
-  .kpis {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-}
-  </style>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <header>
-    <div class="cabecalho">
-      <div>
-        <h1>HAG - Sistema Hídrico 3D</h1>
-        <div class="subtitulo">Hospital Arnaldo Gavazza • Monitoramento em Tempo Real</div>
-      </div>
-      <div class="status">
-        <div class="status-dot"></div>
-        <span id="statusTexto">Conectando...</span>
-      </div>
-      <a href="/historico" class="btn-historico">📊 Histórico</a>
-    </div>
-    <div id="statusSistema">🟢 Sistema inicializado - Aguardando dados</div>
-    <div class="header-info">
-      Última atualização: <span id="hora">--:--</span>
-    </div>
-  </header>
 
-  <div class="kpis-container">
-    <div class="kpis">
-      <div class="kpi">
-        <span>Reservatórios Críticos</span>
-        <strong id="kpiCritico">0</strong>
-      </div>
-      <div class="kpi">
-        <span>Bombas Ativas</span>
-        <strong id="bombasAtivas">0</strong>
-      </div>
-      <div class="kpi">
-        <span>Elevador Hoje</span>
-        <strong id="kpiElevador">0 L</strong>
-      </div>
-      <div class="kpi">
-        <span>Lavanderia Hoje</span>
-        <strong id="kpiLavanderia">0 L</strong>
-      </div>
-      <div class="kpi">
-        <span>Osmose Hoje</span>
-        <strong id="kpiOsmose">0 L</strong>
-      </div>
-    </div>
-  </div>
+<header>
 
-  <main>
-    <section class="secao">
-      <h2 class="titulo-area">Reservatórios</h2>
-      <div class="grid-reservatorios" id="areaReservatorios"></div>
-    </section>
+<!-- =========================
+TOPO
+========================= -->
+<div class="cabecalho">
 
-    <section class="secao">
-      <h2 class="titulo-area">Bombas</h2>
-      <div class="grid-bombas" id="areaBombas"></div>
-    </section>
+<h1>💧 Monitoramento HAG</h1>
 
-    <section class="secao">
-      <h2 class="titulo-area">Pressões</h2>
-      <div class="grid-pressoes" id="areaPressoes"></div>
-    </section>
-  </main>
+<div class="subtitulo">
+Sistema de Monitoramento de Reservatórios
+</div>
 
-  <footer>
-    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento Hídrico 3D v2.0
-  </footer>
+<div class="status">
+<span class="status-dot"></span>
+Tempo real conectado • <span id="hora">--:--</span>
+</div>
 
-  <script>
-/**
- * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 2.0 - Profissional SCADA
- */
+<a href="historico.html" class="btn-historico">
+📊 Histórico
+</a>
 
-const API = "/api/dashboard";
-let ws = null;
-let reconnectDelay = 3000;
-let maxReconnectDelay = 30000;
-let ultimoDado = Date.now();
-let renderPending = false;
-let cacheDados = new Map();
+</div>
 
-// ======================= INIT =======================
-document.addEventListener("DOMContentLoaded", init);
+<!-- =========================
+STATUS SISTEMA
+========================= -->
+<div id="statusSistema">
+🟢 Tempo real conectado
+</div>
 
-function init() {
-    console.log("%c HAG Dashboard v2.0 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
-    fallbackHTTP();
-    conectarWS();
-    setInterval(fallbackHTTP, 8000);
-    iniciarMonitoramentoSinal();
-}
+<!-- =========================
+DATA
+========================= -->
+<div class="header-info">
 
-// ======================= MONITORAMENTO DE SINAL =======================
-function iniciarMonitoramentoSinal() {
-    setInterval(() => {
-        const tempoSemSinal = Date.now() - ultimoDado;
-        if (tempoSemSinal > 15000) {
-            setStatus("🟡 Aguardando sinal do Gateway...", "warning");
-            document.body.classList.add("sem-sinal");
-            atualizarStatusVisual("Sem sinal");
-        } else {
-            document.body.classList.remove("sem-sinal");
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                atualizarStatusVisual("Tempo real conectado");
-            }
-        }
-    }, 5000);
-}
+<div>
+📅 <span id="dataSistema">--/--/----</span>
+</div>
 
-// ======================= PROCESSAMENTO DE DADOS =======================
-function processarPayload(payload) {
-    if (!payload) return;
-    if (payload.type === "update" && payload.dados) {
-        payload = payload.dados;
-    }
-    ultimoDado = Date.now();
-    scheduleRender(payload);
-}
+</div>
 
-// ======================= RENDER OTIMIZADO COM RAF =======================
-function scheduleRender(data) {
-    if (renderPending) return;
-    renderPending = true;
-    requestAnimationFrame(() => {
-        atualizarUI(data);
-        renderPending = false;
-    });
-}
+<!-- =========================
+KPIs
+========================= -->
+<div class="kpis">
 
-function atualizarUI(data) {
-    if (!data) return;
-    const elHora = document.getElementById("hora");
-    if (elHora) elHora.innerText = data.lastUpdate || "--:--";
-    renderReservatorios(data.reservatorios || []);
-    renderBombas(data.bombas || []);
-    renderPressoes(data.pressoes || []);
-    atualizarKPIs(data);
-}
+<div class="kpi">
+Elevador Hoje
+<span id="kpiElevador">0 L</span>
+</div>
 
-// ======================= RESERVATÓRIOS 3D COM ÁGUA =======================
-function renderReservatorios(lista) {
-    const area = document.getElementById("areaReservatorios");
-    if (!area) return;
+<div class="kpi">
+Lavanderia Hoje
+<span id="kpiLavanderia">0 L</span>
+</div>
 
-    lista.forEach(r => {
-        const id = `res-${r.setor}`;
-        let el = cacheDados.get(id);
+<div class="kpi">
+Osmose Hoje
+<span id="kpiOsmose">0 L</span>
+</div>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card reservatorio";
-            el.innerHTML = `
-                <h2>${r.nome}</h2>
-                <div class="tanque">
-                    <div class="escala">
-                        <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                    </div>
-                    <div class="agua">
-                        <div class="onda"></div>
-                    </div>
-                </div>
-                <div class="info">
-                    <div class="valor">0%</div>
-                    <div class="litros">0 L</div>
-                </div>
-            `;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-        }
+<div class="kpi">
+Bombas Ativas
+<span id="bombasAtivas">0</span>
+</div>
 
-        const agua = el.querySelector(".agua");
-        const valor = el.querySelector(".valor");
-        const litros = el.querySelector(".litros");
+<div class="kpi">
+Reservatórios Críticos
+<span id="kpiCritico">0</span>
+</div>
 
-        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
-        const nivelSuavizado = Math.round(nivel * 10) / 10;
+</div>
 
-        // Física com inércia (nível suave estilo industrial)
-        animarNivel(agua, nivelSuavizado);
+</header>
 
-        // Aplica classe de cor por nível
-        agua.classList.remove("nivel-cheio", "nivel-alto", "nivel-medio", "nivel-baixo", "nivel-critico");
-        if (nivel >= 95) agua.classList.add("nivel-cheio");
-        else if (nivel >= 70) agua.classList.add("nivel-alto");
-        else if (nivel >= 40) agua.classList.add("nivel-medio");
-        else if (nivel >= 20) agua.classList.add("nivel-baixo");
-        else agua.classList.add("nivel-critico");
 
-        // Alerta visual no card quando nível crítico
-        el.classList.toggle("alerta", nivel < 20);
+<main>
 
-        // Atualiza textos com formatação
-        valor.innerText = `${nivelSuavizado.toFixed(1)}%`;
-        litros.innerText = `${formatar(r.current_liters)} L`;
-    });
-}
+<!-- =========================
+RESERVATÓRIOS
+========================= -->
+<section>
 
-// Animação com inércia para o nível da água
-function animarNivel(agua, target) {
-    let atual = Number(agua.dataset.render || 0);
+<h2 class="titulo-area">Reservatórios</h2>
 
-    function step() {
-        atual += (target - atual) * 0.08;
+<div id="areaReservatorios" class="grid-reservatorios">
+<!-- JS PREENCHE -->
+</div>
 
-        if (Math.abs(target - atual) < 0.1) {
-            atual = target;
-        } else {
-            requestAnimationFrame(step);
-        }
+</section>
 
-        agua.style.height = atual + "%";
-        agua.dataset.render = atual;
-    }
 
-    step();
-    agua.dataset.nivel = target;
-}
+<!-- =========================
+BOMBAS
+========================= -->
+<section>
 
-// ======================= BOMBAS =======================
-function renderBombas(lista) {
-    const area = document.getElementById("areaBombas");
-    if (!area) return;
+<h2 class="titulo-area">Bombas</h2>
 
-    lista.forEach((b, i) => {
-        const id = `bomba-${i}`;
-        let el = cacheDados.get(id);
-        const ligada = b.estado === "ligada";
-        const desconhecido = b.estado === "desconhecido" || b.estado === undefined;
+<div id="areaBombas" class="grid-bombas">
+<!-- JS PREENCHE -->
+</div>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card bomba";
-            el.innerHTML = `<h2></h2><div class="status-icon"></div><div class="valor"></div><div class="ciclos"></div>`;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-        }
+</section>
 
-        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
-        el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".status-icon").innerText = desconhecido ? "⚪" : ligada ? "🟢" : "🔴";
-        el.querySelector(".valor").innerText = desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".ciclos").innerText = `${formatar(b.ciclo || 0)} ciclos`;
-    });
-}
 
-// ======================= PRESSÕES =======================
-function renderPressoes(lista) {
-    const area = document.getElementById("areaPressoes");
-    if (!area) return;
+<!-- =========================
+PRESSÕES
+========================= -->
+<section>
 
-    lista.forEach((p, i) => {
-        const id = `pressao-${i}`;
-        let el = cacheDados.get(id);
+<h2 class="titulo-area">Pressões</h2>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card";
-            el.innerHTML = `<h2></h2><div class="valor-pressao"></div>`;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-        }
+<div id="areaPressoes" class="grid-pressoes">
+<!-- JS PREENCHE -->
+</div>
 
-        const pressao = Number(p.pressao || 0).toFixed(2);
-        el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${pressao} bar`;
-    });
-}
+</section>
 
-// ======================= KPIs =======================
-function atualizarKPIs(data) {
-    const kpis = data.kpis || {};
-    const elementos = {
-        kpiCritico: (data.reservatorios || []).filter(r => r.percent < 30).length,
-        bombasAtivas: (data.bombas || []).filter(b => b.estado === "ligada").length,
-        kpiElevador: `${formatar(kpis.elevador_hoje || 0)} L`,
-        kpiLavanderia: `${formatar(kpis.lavanderia_hoje || 0)} L`,
-        kpiOsmose: `${formatar(kpis.osmose_hoje || 0)} L`
-    };
+</main>
 
-    Object.entries(elementos).forEach(([id, valor]) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = valor;
-    });
-}
 
-// ======================= WEBSOCKET COM RECONEXÃO EXPONENCIAL =======================
-function conectarWS() {
-    if (ws) ws.close();
-    
-    const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
-    ws = new WebSocket(`${protocolo}//${location.host}`);
-    
-    ws.onopen = () => {
-        console.log("%c🟢 WebSocket conectado", "color: #00ff88; font-weight: bold;");
-        setStatus("🟢 Tempo real conectado", "success");
-        atualizarStatusVisual("Tempo real conectado");
-        reconnectDelay = 3000; // Reset delay
-    };
+<footer>
+Sistema Profissional - HAG
+</footer>
 
-    ws.onmessage = (msg) => { 
-        try { 
-            processarPayload(JSON.parse(msg.data)); 
-        } catch (e) { 
-            console.error("Erro ao processar mensagem WS:", e); 
-        } 
-    };
 
-    ws.onclose = () => { 
-        console.log("%c🔴 WebSocket desconectado", "color: #ff3d00; font-weight: bold;");
-        setStatus("🔴 Reconectando...", "error"); 
-        atualizarStatusVisual("Reconectando...");
-        setTimeout(conectarWS, reconnectDelay); 
-        reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay); // Backoff exponencial
-    };
+<!-- =========================
+📡 DASHBOARD JS
+========================= -->
+<script src="/dashboard.js"></script>
 
-    ws.onerror = (err) => {
-        console.error("Erro WebSocket:", err);
-    };
-}
-
-// ======================= FALLBACK HTTP =======================
-async function fallbackHTTP() {
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const res = await fetch(API + "?t=" + Date.now(), {
-            cache: "no-store",
-            signal: controller.signal,
-            headers: { "Cache-Control": "no-cache, no-store, must-revalidate" }
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        processarPayload(data);
-    } catch (err) {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            setStatus("🔴 Erro de comunicação", "error");
-            atualizarStatusVisual("Desconectado");
-        }
-    }
-}
-
-// ======================= HELPERS =======================
-function setStatus(txt, tipo = "info") {
-    const el = document.getElementById("statusSistema");
-    if (!el) return;
-    el.innerText = txt;
-    el.className = `status-${tipo}`;
-}
-
-function atualizarStatusVisual(texto) {
-    const el = document.getElementById("statusTexto");
-    const dot = document.querySelector(".status-dot");
-    if (!el || !dot) return;
-    
-    el.innerText = texto;
-    
-    if (texto.includes("Tempo real")) {
-        dot.style.background = "#00ff88";
-        dot.style.boxShadow = "0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.4)";
-    } else if (texto.includes("Reconectando")) {
-        dot.style.background = "#ffd600";
-        dot.style.boxShadow = "0 0 12px #ffd600, 0 0 24px rgba(255,214,0,0.4)";
-    } else {
-        dot.style.background = "#ff3d00";
-        dot.style.boxShadow = "0 0 12px #ff3d00, 0 0 24px rgba(255,61,0,0.4)";
-    }
-}
-
-function formatar(n) { 
-    return Number(n || 0).toLocaleString("pt-BR", { 
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0 
-    }); 
-}
-
-// ======================= TRATAMENTO DE ERRO GLOBAL =======================
-window.addEventListener("error", (e) => {
-    console.error("Erro não tratado:", e.error);
-});
-
-window.addEventListener("unhandledrejection", (e) => {
-    console.error("Promise rejeitada:", e.reason);
-});
- 
+<script>
+console.log("🔥 Dashboard carregado");
 </script>
+
 </body>
 </html>

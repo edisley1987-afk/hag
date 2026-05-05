@@ -1,1153 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>HAG - Sistema de Monitoramento</title>
-  
-  <style>
-/* ==========================================================
-   CSS HAG DASHBOARD 1 TELA HORIZONTAL
-   ========================================================== */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-/* ================== RESET E LAYOUT 100VH ================== */
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
-}
+<title>Monitoramento HAG</title> 
 
-html, body {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden; /* trava scroll da página */
-}
-
-body {
-  display: flex;
-  flex-direction: column;
-  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: radial-gradient(ellipse at top, #0d1f33 0%, #061120 100%);
-  color: #e0f7ff;
-  letter-spacing: 0.2px;
-}
-
-body.sem-sinal { 
-  opacity: 0.6; 
-  filter: grayscale(0.3); 
-}
-
-/* ================== HEADER COMPACTO ================== */
-header {
-  background: rgba(10, 26, 42, 0.85);
-  backdrop-filter: blur(15px);
-  padding: 0.8vh 2vw;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  flex-shrink: 0;
-  z-index: 100;
-}
-
-.cabecalho {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  max-width: 1800px;
-  margin: 0 auto;
-}
-
-.cabecalho h1 {
-  font-size: clamp(14px, 1.8vw, 22px);
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
-  letter-spacing: 1px;
-}
-
-.subtitulo { 
-  color: #8aa5c7; 
-  font-size: clamp(9px, 1vw, 12px); 
-  font-weight: 500;
-}
-
-.status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #8aa5c7;
-  font-size: clamp(10px, 1vw, 13px);
-  font-weight: 600;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #00ff88;
-  box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0,255,136,0.5);
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
- 0%, 100% { opacity: 1; }
- 50% { opacity: 0.5; }
-}
-
-.btn-historico {
-  background: linear-gradient(135deg, #123d66 0%, #1b5a99 100%);
-  color: #e0f7ff;
-  padding: 6px 14px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: clamp(10px, 1vw, 12px);
-  font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.12);
-  transition: all 0.3s;
-}
-
-.btn-historico:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(27,90,153,0.4);
-}
-
-#statusSistema {
-  max-width: 1800px;
-  margin: 6px auto 0;
-  padding: 6px 12px;
-  background: rgba(10, 26, 42, 0.7);
-  border-radius: 8px;
-  font-size: clamp(9px, 1vw, 11px);
-  color: #8aa5c7;
-  border: 1px solid rgba(255,255,255,0.06);
-  backdrop-filter: blur(8px);
-}
-
-#statusSistema.status-success { color: #00ff88; }
-#statusSistema.status-error { color: #ff3d00; }
-#statusSistema.status-warning { color: #ffd600; }
-
-.header-info {
-  max-width: 1800px;
-  margin: 4px auto 0;
-  color: #8aa5c7;
-  font-size: clamp(9px, 1vw, 11px);
-}
-
-/* ================== KPIs REDUZIDOS ================== */
-.kpis-container { 
-  max-width: 1800px; 
-  margin: 0.8vh auto 0; 
-  padding: 0 2vw;
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.kpis-reduzido {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
-  gap: 1vh;
-  max-width: 500px;
-}
-
-.kpi {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 1vh 1.2vw;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  text-align: center;
-  backdrop-filter: blur(12px);
-  transition: all 0.35s;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.kpi::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6), transparent);
-}
-
-.kpi-critico {
-  border-left: 3px solid #ff4444;
-}
-
-.kpi:hover { 
-  transform: translateY(-3px); 
-  border-color: rgba(0,229,255,0.35); 
-}
-
-.kpi span {
-  display: block;
-  font-size: clamp(9px, 0.9vw, 11px);
-  color: #8aa5c7;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
-}
-
-.kpi strong {
-  display: block;
-  font-size: clamp(18px, 2.5vw, 26px);
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 900;
-}
-
-.lista-criticos {
-  margin-top: 4px;
-  font-size: clamp(8px, 0.8vw, 10px);
-  color: #ff9999;
-  line-height: 1.3;
-  max-height: 4vh;
-  overflow-y: auto;
-}
-
-.lista-criticos .critico-item {
-  padding: 1px 0;
-}
-
-/* ================== MAIN GRID ================== */
-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr;      /* 1 coluna só */
-  grid-template-rows: 1fr 1fr 1fr; /* 3 linhas */
-  gap: 12px;
-  padding: 8px 2vw;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.secao {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.titulo-area {
-  font-size: clamp(12px, 1.2vw, 16px);
-  color: #00e5ff;
-  margin-bottom: 0.8vh;
-  border-left: 4px solid #00e5ff;
-  padding-left: 12px;
-  text-shadow: 0 0 15px rgba(0,229,255,0.4);
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-/* ================== GRID HORIZONTAL REAL ================== */
-.grid-reservatorios,
-.grid-bombas,
-.grid-pressoes {
-  display: flex;
-  flex-direction: row;   /* cards lado a lado */
- flex-wrap: wrap; /* permite quebrar linha */
-  overflow-x: auto;      /* scroll horizontal */
-  overflow-y: hidden;    /* sem scroll vertical */
-  gap: 12px;
-  padding-bottom: 10px;
-  flex: 1;
-  align-items: stretch;
-  min-height: 0;
-}
-
-/* Largura fixa dos cards */
-.grid-reservatorios .card {
-  flex: 0 0 260px; /* 260px fixo */
-}
-
-.grid-bombas .card,
-.grid-pressoes .card {
-  flex: 0 0 220px; /* 220px fixo */
-}
-
-/* ================== CARDS ================== */
-.card {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.8) 0%, rgba(8, 20, 35, 0.95) 100%);
-  padding: 1vh 1.2vw;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
-  transition: all 0.35s;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.card:hover { 
-  transform: translateY(-4px); 
-  border-color: rgba(0,229,255,0.35); 
-  box-shadow: 0 12px 30px rgba(0,229,255,0.2);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.8vh;
-  flex-shrink: 0;
-}
-
-.card-title {
-  font-size: clamp(11px, 1.1vw, 14px);
-  font-weight: 700;
-  color: #e0f7ff;
-}
-
-.card-status {
-  font-size: clamp(8px, 0.8vw, 10px);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 0;
-}
-
-.status-ok { 
-  border-left: 3px solid #00ff88; 
-  background: rgba(0, 255, 136, 0.1);
-  color: #00ff88; 
-}
-.status-warning { 
-  border-left: 3px solid #ffaa00; 
-  background: rgba(255, 170, 0, 0.1);
-  color: #ffaa00; 
-}
-.status-danger { 
-  border-left: 3px solid #ff4444; 
-  background: rgba(255, 68, 68, 0.1);
-  color: #ff4444; 
-}
-
-/* ================== TANQUE CANVAS ================== */
-.tanque-container {
-  position: relative;
-  height: 18vh; /* reduzido para caber horizontal */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-}
-
-.tanque {
-  position: relative;
-  width: 100px; /* reduzido para 100px */
-  height: 18vh;
-  background: 
-    repeating-linear-gradient(90deg, transparent 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 4px),
-    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
-    linear-gradient(95deg, #0a1a2a 0%, #1a3a5a 15%, #3a6b9e 35%, #4a7fb5 50%, #3a6b9e 65%, #1a3a5a 85%, #0a1a2a 100%);
-  border-radius: 0 0 50px 50px / 0 0 25px 25px;
-  border: 2px solid rgba(160, 200, 240, 0.4);
-  box-shadow: 
-    inset -25px 0 50px rgba(0,0,0,0.8),
-    inset 25px 0 50px rgba(255,255,255,0.08),
-    inset 0 -35px 50px rgba(0,0,0,0.9),
-    0 12px 28px rgba(0,0,0,0.5);
-  overflow: hidden;
-  transform: perspective(500px) rotateX(2deg);
-}
-
-.tanque::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 36px;
-  background: radial-gradient(ellipse at center, #8bb8e8 0%, #3a5f85 55%, #1a2f45 100%);
-  border-radius: 50%;
-  border: 3px solid #9cc8f0;
-  box-shadow: 0 -6px 15px rgba(0,0,0,0.9), inset 0 5px 10px rgba(255,255,255,0.4);
-  z-index: 10;
-}
-
-.canvas-agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100px; /* 100px para bater com o tanque */
-  height: 18vh;
-  border-radius: 0 0 48px 48px;
-  z-index: 1;
-}
-
-.escala {
-  position: absolute;
-  right: -38px;
-  top: 12px;
-  height: 85%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #7aa8cc;
-  font-size: clamp(6px, 0.6vw, 8px);
-  font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-  z-index: 8;
-}
-
-.escala span {
-  position: relative;
-  padding-right: 6px;
-}
-
-.escala span::before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  width: 10px;
-  height: 1.5px;
-  background: linear-gradient(90deg, #4a7fa8, transparent);
-  transform: translateY(-50%);
-}
-
-.nivel-info {
-  position: absolute;
-  bottom: 0.8vh;
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.nivel-valor {
-  font-size: clamp(12px, 1.4vw, 16px);
-  font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 3px 12px rgba(0,229,255,0.5);
-  line-height: 1;
-}
-
-.nivel-litros {
-  font-size: clamp(7px, 0.8vw, 9px);
-  color: #a8c8e8;
-  margin-top: 3px;
-  font-weight: 600;
-}
-
-/* ================== BOMBAS ================== */
-.bomba-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: clamp(10px, 1vw, 12px);
-  color: #ccc;
-  flex: 1;
-  justify-content: center;
-}
-
-.card.bomba.ligada { 
-  border-left: 3px solid #00c853; 
-  box-shadow: 0 0 25px rgba(0,200,83,0.4); 
-}
-.card.bomba.desligada { 
-  border-left: 3px solid #555; 
-  opacity: 0.65; 
-}
-.card.bomba.stale { 
-  opacity: 0.45; 
-  filter: grayscale(0.6); 
-}
-
-.status-icon {
-  font-size: clamp(24px, 2.5vw, 32px);
-  text-align: center;
-  margin: 6px 0;
-  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.8));
-}
-
-/* ================== FOOTER ================== */
-footer {
-  text-align: center;
-  padding: 0.5vh 2vw;
-  color: #5a7a9a;
-  font-size: clamp(8px, 0.8vw, 10px);
-  border-top: 1px solid rgba(255,255,255,0.08);
-  background: rgba(10, 26, 42, 0.6);
-  backdrop-filter: blur(15px);
-  flex-shrink: 0;
-}
-
-/* ================== SCROLLBAR ================== */
-::-webkit-scrollbar {
-  height: 4px;
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(20, 20, 20, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 229, 255, 0.3);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 229, 255, 0.5);
-}
-
-/* ================== RESPONSIVO ================== */
-@media (max-width: 1200px) {
-  main {
-    grid-template-columns: 1fr; /* 1 coluna no mobile */
-    overflow-y: auto;
-  }
-  html, body {
-    overflow: auto; /* libera scroll geral no mobile */
-  }
-  .grid-reservatorios,
-  .grid-bombas,
-  .grid-pressoes {
-    flex-direction: column; /* volta pra vertical no mobile */
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  .grid-reservatorios .card,
-  .grid-bombas .card,
-  .grid-pressoes .card {
-    flex: 0 0 auto; /* largura 100% no mobile */
-  }
-  .tanque-container, .tanque, .canvas-agua {
-    height: 25vh;
-  }
-}
-
-@media (max-height: 700px) {
-  .tanque-container, .tanque, .canvas-agua {
-    height: 14vh;
-  }
-  .kpi strong {
-    font-size: clamp(16px, 2vw, 22px);
-  }
-}
-  </style>
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <header>
-    <div class="cabecalho">
-      <div>
-        <h1>HAG - Sistema Monitoramento</h1>
-        <div class="subtitulo">Hospital Arnaldo Gavazza • Monitoramento em Tempo Real</div>
-      </div>
-      <div class="status">
-        <div class="status-dot"></div>
-        <span id="statusTexto">Conectando...</span>
-      </div>
-      <a href="/historico-view" class="btn-historico">📊 Histórico</a>
-    </div>
-    <div id="statusSistema">🟢 Sistema inicializado - Aguardando dados</div>
-    <div class="header-info">
-      Última atualização: <span id="hora">--:--</span>
-    </div>
-  </header>
 
- <div class="kpis-container">
-  <div class="kpis kpis-reduzido">
-    <div class="kpi kpi-critico">
-      <span>Reservatórios Críticos</span>
-      <strong id="kpiCritico">0</strong>
-      <div id="listaCriticos" class="lista-criticos"></div>
-    </div>
-    <div class="kpi">
-      <span>Bombas Ativas</span>
-      <strong id="bombasAtivas">0</strong>
-    </div>
-  </div>
+<body>
+
+<header>
+
+<!-- =========================
+TOPO
+========================= -->
+<div class="cabecalho">
+
+<h1>💧 Monitoramento HAG</h1>
+
+<div class="subtitulo">
+Sistema de Monitoramento de Reservatórios
 </div>
 
-  <main>
-    <section class="secao">
-      <h2 class="titulo-area">Reservatórios</h2>
-      <div class="grid-reservatorios" id="areaReservatorios"></div>
-    </section>
+<div class="status">
+<span class="status-dot"></span>
+Tempo real conectado • <span id="hora">--:--</span>
+</div>
 
-    <section class="secao">
-      <h2 class="titulo-area">Bombas</h2>
-      <div class="grid-bombas" id="areaBombas"></div>
-    </section>
+<a href="historico.html" class="btn-historico">
+📊 Histórico
+</a>
 
-    <section class="secao">
-      <h2 class="titulo-area">Pressões</h2>
-      <div class="grid-pressoes" id="areaPressoes"></div>
-    </section>
-  </main>
+</div>
 
-  <footer>
-    HAG - Hospital Arnaldo Gavazza © 2026 | Sistema de Monitoramento 
-  </footer>
+<!-- =========================
+STATUS SISTEMA
+========================= -->
+<div id="statusSistema">
+🟢 Tempo real conectado
+</div>
 
-  <script>
-/**
- * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 4.1 - Horizontal
- */
+<!-- =========================
+DATA
+========================= -->
+<div class="header-info">
 
-const API = "/api/dashboard";
-let ws = null;
-let reconnectDelay = 3000;
-let maxReconnectDelay = 30000;
-let ultimoDado = Date.now();
-let renderPending = false;
-let cacheDados = new Map();
-let lastData = null;
+<div>
+📅 <span id="dataSistema">--/--/----</span>
+</div>
 
-// ======================= CLASSE CANVAS ÁGUA RESPONSIVO =======================
-class AguaCanvas {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.width = canvas.width = 100; // 100px para bater com CSS
-    this.height = canvas.height = Math.floor(window.innerHeight * 0.18); // 18vh para bater com CSS
-    
-    this.nivel = 0;
-    this.nivelTarget = 0;
-    this.velocidade = 0;
-    this.rippleOffset = 0;
-    this.ondas = [];
-    this.particulas = [];
-    this.condensacao = [];
-    this.time = 0;
-    
-    for (let i = 0; i < 4; i++) {
-      this.ondas.push({
-        amplitude: 5 + i * 2,
-        frequency: 0.018 + i * 0.004,
-        phase: i * Math.PI / 3,
-        speed: 0.035 + i * 0.008
-      });
-    }
-    
-    this.animate();
-    window.addEventListener('resize', () => {
-      this.height = canvas.height = Math.floor(window.innerHeight * 0.18);
-    });
-  }
-  
-  setNivel(nivel) {
-    const nivelAnterior = this.nivelTarget;
-    this.nivelTarget = Math.min(1, Math.max(0, nivel / 100));
-    const delta = Math.abs(this.nivelTarget - nivelAnterior);
-    if (delta > 0.04) {
-      this.rippleOffset = delta * 15;
-    }
-  }
-  
-  animate() {
-    this.time += 0.016;
-    const diferenca = this.nivelTarget - this.nivel;
-    this.velocidade += diferenca * 0.12;
-    this.velocidade *= 0.88;
-    this.nivel += this.velocidade;
-    this.rippleOffset *= 0.91;
-    
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    
-    const yAgua = this.height * (1 - this.nivel);
-    this.desenharAgua(yAgua);
-    this.desenharOnda(yAgua);
-    this.desenharParticulas(yAgua);
-    this.desenharCondensacao();
-    this.desenharReflexo(yAgua);
-    
-    requestAnimationFrame(() => this.animate());
-  }
-  
-  desenharAgua(yAgua) {
-    const grad = this.ctx.createLinearGradient(0, yAgua, 0, this.height);
-    
-    if (this.nivel > 0.95) {
-      grad.addColorStop(0, 'rgba(0, 220, 120, 0.95)');
-      grad.addColorStop(1, 'rgba(0, 100, 50, 1)');
-    } else if (this.nivel > 0.7) {
-      grad.addColorStop(0, 'rgba(64, 196, 255, 0.95)');
-      grad.addColorStop(1, 'rgba(0, 60, 140, 1)');
-    } else if (this.nivel > 0.4) {
-      grad.addColorStop(0, 'rgba(0, 221, 255, 0.95)');
-      grad.addColorStop(1, 'rgba(0, 40, 100, 1)');
-    } else if (this.nivel > 0.2) {
-      grad.addColorStop(0, 'rgba(255, 193, 7, 0.95)');
-      grad.addColorStop(1, 'rgba(160, 80, 0, 1)');
-    } else {
-      grad.addColorStop(0, 'rgba(255, 61, 0, 0.95)');
-      grad.addColorStop(1, 'rgba(120, 0, 0, 1)');
-    }
-    
-    this.ctx.fillStyle = grad;
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, yAgua);
-    this.ctx.lineTo(0, this.height);
-    this.ctx.lineTo(this.width, this.height);
-    this.ctx.lineTo(this.width, yAgua);
-    this.ctx.arc(this.width/2, this.height, this.width/2, 0, Math.PI);
-    this.ctx.closePath();
-    this.ctx.fill();
-    
-    this.ctx.fillStyle = 'rgba(0, 40, 100, 0.5)';
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, yAgua);
-    this.ctx.lineTo(0, this.height);
-    this.ctx.lineTo(this.width * 0.25, this.height);
-    this.ctx.lineTo(this.width * 0.25, yAgua);
-    this.ctx.closePath();
-    this.ctx.fill();
-  }
-  
-  desenharOnda(yAgua) {
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    
-    for (let x = 0; x <= this.width; x += 2) {
-      let y = yAgua;
-      this.ondas.forEach(onda => {
-        y += Math.sin(x * onda.frequency + this.time * onda.speed + onda.phase) * onda.amplitude * this.nivel;
-      });
-      const rippleWave = Math.sin(x * 0.08 + this.time * 0.4) * this.rippleOffset;
-      y += rippleWave;
-      const distanciaBorda = Math.min(x, this.width - x);
-      const fatorMenisco = Math.max(0, 1 - distanciaBorda / 30);
-      y -= fatorMenisco * 10;
-      
-      if (x === 0) this.ctx.moveTo(x, y);
-      else this.ctx.lineTo(x, y);
-    }
-    this.ctx.stroke();
-    
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-    this.ctx.lineTo(this.width, yAgua + 12);
-    this.ctx.lineTo(0, yAgua + 12);
-    this.ctx.closePath();
-    this.ctx.fill();
-  }
-  
-  desenharParticulas(yAgua) {
-    if (Math.random() < 0.15 && this.nivel > 0.15 && Math.abs(this.velocidade) > 0.01) {
-      this.particulas.push({
-        x: 20 + Math.random() * 60,
-        y: this.height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: -2 - Math.random() * 1.5,
-        size: 1.5 + Math.random() * 2.5,
-        alpha: 1,
-        life: 100
-      });
-    }
-    
-    this.particulas = this.particulas.filter(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.025;
-      p.life--;
-      p.alpha = p.life / 100;
-      
-      if (p.y > yAgua && p.y < this.height) {
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.8})`;
-        this.ctx.fill();
-        this.ctx.beginPath();
-        this.ctx.arc(p.x - p.size/3, p.y - p.size/3, p.size/2, 0, Math.PI * 2);
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
-        this.ctx.fill();
-      }
-      return p.life > 0 && p.y < this.height + 20;
-    });
-  }
-  
-  desenharCondensacao() {
-    if (this.nivel > 0.65 && Math.random() < 0.3) {
-      this.condensacao.push({
-        x: 8 + Math.random() * 84,
-        y: Math.random() * this.height * 0.4,
-        size: 1 + Math.random() * 1.5,
-        alpha: 0.3 + Math.random() * 0.3,
-        life: 200
-      });
-    }
-    
-    this.condensacao = this.condensacao.filter(gota => {
-      gota.life--;
-      gota.alpha = gota.life / 200;
-      gota.y += 0.3;
-      if (gota.y < this.height * 0.8) {
-        this.ctx.beginPath();
-        this.ctx.arc(gota.x, gota.y, gota.size, 0, Math.PI * 2);
-        this.ctx.fillStyle = `rgba(180, 220, 255, ${gota.alpha})`;
-        this.ctx.fill();
-      }
-      return gota.life > 0 && gota.y < this.height * 0.9;
-    });
-  }
-  
-  desenharReflexo(yAgua) {
-    const grad = this.ctx.createLinearGradient(0, yAgua - 8, 0, yAgua + 8);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
-    grad.addColorStop(1, 'transparent');
-    this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, yAgua - 8, this.width, 16);
-  }
-}
+</div>
 
-// ======================= INIT =======================
-document.addEventListener("DOMContentLoaded", init);
+<!-- =========================
+KPIs
+========================= -->
+<div class="kpis">
 
-function init() {
-    console.log("%c HAG Dashboard v4.1 - Sistema Iniciado", "color: #00e5ff; font-weight: bold; font-size: 14px;");
-    fallbackHTTP();
-    conectarWS();
-    setInterval(fallbackHTTP, 8000);
-    iniciarMonitoramentoSinal();
-}
+<div class="kpi">
+Elevador Hoje
+<span id="kpiElevador">0 L</span>
+</div>
 
-function iniciarMonitoramentoSinal() {
-    setInterval(() => {
-        const tempoSemSinal = Date.now() - ultimoDado;
-        if (tempoSemSinal > 15000) {
-            setStatus("🟡 Aguardando sinal do Gateway...", "warning");
-            document.body.classList.add("sem-sinal");
-            atualizarStatusVisual("Sem sinal");
-        } else {
-            document.body.classList.remove("sem-sinal");
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                atualizarStatusVisual("Tempo real conectado");
-            }
-        }
-    }, 5000);
-}
+<div class="kpi">
+Lavanderia Hoje
+<span id="kpiLavanderia">0 L</span>
+</div>
 
-function processarPayload(payload) {
-    if (!payload) return;
-    if (payload.type === "update" && payload.dados) {
-        payload = payload.dados;
-    }
-    ultimoDado = Date.now();
-    scheduleRender(payload);
-}
+<div class="kpi">
+Osmose Hoje
+<span id="kpiOsmose">0 L</span>
+</div>
 
-function scheduleRender(data) {
-    lastData = data;
+<div class="kpi">
+Bombas Ativas
+<span id="bombasAtivas">0</span>
+</div>
 
-    if (renderPending) return;
+<div class="kpi">
+Reservatórios Críticos
+<span id="kpiCritico">0</span>
+</div>
 
-    renderPending = true;
+</div>
 
-    requestAnimationFrame(() => {
-        atualizarUI(lastData);
-        renderPending = false;
-    });
-}
+</header>
 
-function atualizarUI(data) {
-    if (!data) return;
-    const elHora = document.getElementById("hora");
-    if (elHora) elHora.innerText = data.lastUpdate || "--:--";
-    renderReservatorios(data.reservatorios || []);
-    renderBombas(data.bombas || []);
-    renderPressoes(data.pressoes || []);
-    atualizarKPIs(data);
-}
 
-function renderReservatorios(lista) {
-    const area = document.getElementById("areaReservatorios");
-    if (!area) return;
+<main>
 
-    lista.forEach(r => {
-        const id = `res-${r.setor}`;
-        let el = cacheDados.get(id);
-        const nivel = Math.min(100, Math.max(0, Number(r.percent) || 0));
-        const nivelSuavizado = Math.round(nivel * 10) / 10;
+<!-- =========================
+RESERVATÓRIOS
+========================= -->
+<section>
 
-        let statusClass, statusText;
-        if (nivel >= 70) {
-            statusClass = 'status-ok';
-            statusText = 'Normal';
-        } else if (nivel >= 30) {
-            statusClass = 'status-warning'; 
-            statusText = 'Atenção';
-        } else {
-            statusClass = 'status-danger';
-            statusText = 'Crítico';
-        }
+<h2 class="titulo-area">Reservatórios</h2>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = `card reservatorio ${statusClass}`;
-            el.innerHTML = `
-                <div class="card-header">
-                  <h2 class="card-title">${r.nome}</h2>
-                  <div class="card-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="card-content">
-                  <div class="tanque-container">
-                    <div class="tanque">
-                      <canvas class="canvas-agua"></canvas>
-                      <div class="escala">
-                          <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                      </div>
-                    </div>
-                    <div class="nivel-info">
-                        <div class="nivel-valor">${nivelSuavizado.toFixed(1)}%</div>
-                        <div class="nivel-litros">${formatar(r.current_liters)} L</div>
-                    </div>
-                  </div>
-                </div>
-            `;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-            const canvas = el.querySelector('.canvas-agua');
-            el.canvasAgua = new AguaCanvas(canvas);
-        } else {
-            el.className = `card reservatorio ${statusClass}`;
-            el.querySelector('.card-status').className = `card-status ${statusClass}`;
-            el.querySelector('.card-status').innerText = statusText;
-           
-            const valorAtual = el.dataset.nivel ? parseFloat(el.dataset.nivel) : null;
-            if (valorAtual === null || Math.abs(valorAtual - nivelSuavizado) > 0.5) {
-                el.querySelector(".nivel-valor").textContent = `${nivelSuavizado.toFixed(1)}%`;
-                el.dataset.nivel = nivelSuavizado;
-            }
-            
-            el.querySelector(".nivel-litros").innerText = `${formatar(r.current_liters)} L`;
-            
-            if (el.canvasAgua) {
-                const nivelCanvasAtual = el.dataset.nivelCanvas ? parseFloat(el.dataset.nivelCanvas) : null;
-                if (nivelCanvasAtual === null || Math.abs(nivelCanvasAtual - nivelSuavizado) > 1) {
-                    el.canvasAgua.setNivel(nivelSuavizado);
-                    el.dataset.nivelCanvas = nivelSuavizado;
-                }
-            }
-        }
-    });
-}
+<div id="areaReservatorios" class="grid-reservatorios">
+<!-- JS PREENCHE -->
+</div>
 
-function renderBombas(lista) {
-    const area = document.getElementById("areaBombas");
-    if (!area) return;
+</section>
 
-    lista.forEach(b => {
-        const id = `bomba-${b.id}`;
-        let el = cacheDados.get(id);
-        const ligada = b.status === 'ligada' || b.status === 'on' || b.status === 1;
-        const stale = b.stale === true;
 
-        let statusClass = ligada ? 'ligada' : 'desligada';
-        if (stale) statusClass += ' stale';
+<!-- =========================
+BOMBAS
+========================= -->
+<section>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = `card bomba ${statusClass}`;
-            el.innerHTML = `
-                <div class="card-header">
-                  <h2 class="card-title">${b.nome}</h2>
-                  <div class="card-status ${ligada ? 'status-ok' : 'status-danger'}">
-                    ${ligada ? 'Ligada' : 'Desligada'}
-                  </div>
-                </div>
-                <div class="card-content">
-                  <div class="status-icon">${ligada ? '⚡' : '⏸️'}</div>
-                  <div class="bomba-stats">
-                    <div>Corrente: <strong>${b.corrente ?? '--'} A</strong></div>
-                    <div>Pressão: <strong>${b.pressao ?? '--'} bar</strong></div>
-                    <div>Tempo: <strong>${formatarTempo(b.tempo_ligado)}</strong></div>
-                  </div>
-                </div>
-            `;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-        } else {
-            el.className = `card bomba ${statusClass}`;
-            el.querySelector('.card-status').className = `card-status ${ligada ? 'status-ok' : 'status-danger'}`;
-            el.querySelector('.card-status').innerText = ligada ? 'Ligada' : 'Desligada';
-            el.querySelector('.status-icon').innerText = ligada ? '⚡' : '⏸️';
-            el.querySelector('.bomba-stats').innerHTML = `
-                <div>Corrente: <strong>${b.corrente ?? '--'} A</strong></div>
-                <div>Pressão: <strong>${b.pressao ?? '--'} bar</strong></div>
-                <div>Tempo: <strong>${formatarTempo(b.tempo_ligado)}</strong></div>
-            `;
-        }
-    });
-}
+<h2 class="titulo-area">Bombas</h2>
 
-function renderPressoes(lista) {
-    const area = document.getElementById("areaPressoes");
-    if (!area) return;
+<div id="areaBombas" class="grid-bombas">
+<!-- JS PREENCHE -->
+</div>
 
-    lista.forEach(p => {
-        const id = `pressao-${p.id}`;
-        let el = cacheDados.get(id);
-        const valor = Number(p.valor) || 0;
-        
-        let statusClass = 'status-ok';
-        let statusText = 'Normal';
-        if (valor > (p.limite_alto ?? 5)) {
-            statusClass = 'status-danger';
-            statusText = 'Alta';
-        } else if (valor < (p.limite_baixo ?? 1.5)) {
-            statusClass = 'status-warning';
-            statusText = 'Baixa';
-        }
+</section>
 
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = `card pressao ${statusClass}`;
-            el.innerHTML = `
-                <div class="card-header">
-                  <h2 class="card-title">${p.nome}</h2>
-                  <div class="card-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="card-content">
-                  <div class="nivel-valor">${valor.toFixed(2)} bar</div>
-                  <div class="nivel-litros">Limite: ${p.limite_baixo ?? 1.5} - ${p.limite_alto ?? 5} bar</div>
-                </div>
-            `;
-            area.appendChild(el);
-            cacheDados.set(id, el);
-        } else {
-            el.className = `card pressao ${statusClass}`;
-            el.querySelector('.card-status').className = `card-status ${statusClass}`;
-            el.querySelector('.card-status').innerText = statusText;
-            el.querySelector('.nivel-valor').innerText = `${valor.toFixed(2)} bar`;
-        }
-    });
-}
 
-function atualizarKPIs(data) {
-    const criticos = (data.reservatorios || []).filter(r => (r.percent || 0) < 30);
-    const bombasAtivas = (data.bombas || []).filter(b => b.status === 'ligada' || b.status === 'on' || b.status === 1).length;
+<!-- =========================
+PRESSÕES
+========================= -->
+<section>
 
-    document.getElementById("kpiCritico").innerText = criticos.length;
-    document.getElementById("bombasAtivas").innerText = bombasAtivas;
+<h2 class="titulo-area">Pressões</h2>
 
-    const listaCriticos = document.getElementById("listaCriticos");
-    if (criticos.length > 0) {
-        listaCriticos.innerHTML = criticos.map(c => 
-            `<div class="critico-item">${c.nome}: ${c.percent.toFixed(1)}%</div>`
-        ).join('');
-    } else {
-        listaCriticos.innerHTML = '';
-    }
-}
+<div id="areaPressoes" class="grid-pressoes">
+<!-- JS PREENCHE -->
+</div>
 
-// ======================= WEBSOCKET =======================
-function conectarWS() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/dashboard`;
+</section>
 
-    try {
-        ws = new WebSocket(wsUrl);
+</main>
 
-        ws.onopen = () => {
-            setStatus("🟢 Conectado em tempo real", "success");
-            atualizarStatusVisual("Tempo real conectado");
-            reconnectDelay = 3000; // reset
-        };
 
-        ws.onmessage = (event) => {
-            try {
-                const payload = JSON.parse(event.data);
-                processarPayload(payload);
-            } catch (e) {
-                console.error("Erro ao processar mensagem WS:", e);
-            }
-        };
+<footer>
+Sistema Profissional - HAG
+</footer>
 
-        ws.onclose = () => {
-            setStatus("🔴 Desconectado - Reconectando...", "error");
-            atualizarStatusVisual("Desconectado");
-            setTimeout(conectarWS, reconnectDelay);
-            reconnectDelay = Math.min(reconnectDelay * 1.5, maxReconnectDelay);
-        };
 
-        ws.onerror = (err) => {
-            console.error("Erro WebSocket:", err);
-            ws.close();
-        };
-    } catch (e) {
-        console.error("Falha ao conectar WS:", e);
-        setTimeout(conectarWS, reconnectDelay);
-    }
-}
+<!-- =========================
+📡 DASHBOARD JS
+========================= -->
+<script src="/dashboard.js"></script>
 
-// ======================= FALLBACK HTTP =======================
-async function fallbackHTTP() {
-    try {
-        const res = await fetch(`${API}?t=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        processarPayload(data);
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            setStatus("🟡 Modo HTTP - Tempo real indisponível", "warning");
-            atualizarStatusVisual("HTTP polling");
-        }
-    } catch (err) {
-        console.error("Erro fallback HTTP:", err);
-        setStatus("🔴 Erro de conexão com servidor", "error");
-    }
-}
+<script>
+console.log("🔥 Dashboard carregado");
+</script>
 
-// ======================= HELPERS =======================
-function setStatus(msg, tipo = "info") {
-    const el = document.getElementById("statusSistema");
-    if (!el) return;
-    el.innerText = msg;
-    el.className = `status-${tipo}`;
-}
-
-function atualizarStatusVisual(status) {
-    const el = document.getElementById("statusTexto");
-    if (el) el.innerText = status;
-}
-
-function formatar(valor) {
-    if (valor === null || valor === undefined) return "0";
-    return new Intl.NumberFormat('pt-BR').format(Number(valor));
-}
-
-function formatarTempo(segundos) {
-    if (!segundos || segundos < 60) return `${segundos ?? 0}s`;
-    const h = Math.floor(segundos / 3600);
-    const m = Math.floor((segundos % 3600) / 60);
-    const s = segundos % 60;
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
-}
-  </script>
 </body>
 </html>
