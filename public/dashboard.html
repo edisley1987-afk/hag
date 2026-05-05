@@ -868,9 +868,6 @@ class AguaCanvas {
     this.ctx.globalCompositeOperation = 'source-over';
     this.ctx.restore();
   }
-  
-  desenharCondensacao() {
-  // 1. Gera nova gota quando reservatório está cheio
  desenharCondensacao() {
   // Gera nova gota quando reservatório está cheio
   if (this.nivel > 0.65 && Math.random() < 0.3) {
