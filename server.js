@@ -1,28 +1,3 @@
-/**
- * =========================================================
- * Sistema de Monitoramento de Reservatórios – HAG
- * =========================================================
- *
- * Autor: Edisley Afonso Costa
- * Projeto: Hospital Arnaldo Gavazza
- *
- * Descrição:
- * Servidor Node.js responsável pelo processamento
- * de dados IoT, histórico, consumo, alertas e dashboard
- * em tempo real (WebSocket).
- *
- * Tecnologias:
- * - Node.js (ESModules)
- * - Express
- * - WebSocket (ws)
- * - Render Cloud
- *
- * Criado em: 2025
- * Direitos autorais © 2025 Edisley Afonso Costa
- *
- * Uso autorizado exclusivamente para o projeto HAG.
- * =========================================================
- */
 // @author: Edisley Afonso Costa
 // @version: 1.0.3
 // @last_update: 2026-05-06
@@ -42,14 +17,60 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
 
-// [RAW] Debug - capturar todas requisições que chegam
+// ------------------------- MIDDLEWARES GLOBAIS - TEM QUE VIR ANTES -------------------------
+app.use(cors());
+app.use(compression());
+// IMPORTANTE: strict: false salva o body bruto em req._rawBody
+app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.text({ type: "*/*", limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 app.use((req, res, next) => {
-  console.log(`[RAW] ${req.method} ${req.originalUrl}`);
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   next();
 });
 
-const server = http.createServer(app);
+// ------------------------- GATEWAY TRACE - DEBUG -------------------------
+// TEM QUE VIR DEPOIS do express.json pra não quebrar o parsing
+app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  const auth = req.headers['authorization'] || 'none';
+
+  console.log(`[GATEWAY TRACE] =================================`);
+  console.log(`[GATEWAY TRACE] IP: ${ip}`);
+  console.log(`[GATEWAY TRACE] User-Agent: ${userAgent}`);
+  console.log(`[GATEWAY TRACE] Authorization: ${auth}`);
+  console.log(`[GATEWAY TRACE] Content-Type: ${req.headers['content-type']}`);
+  console.log(`[GATEWAY TRACE] Raw Body: ${req._rawBody || 'vazio'}`);
+  console.log(`[GATEWAY TRACE] Parsed Body: ${JSON.stringify(req.body)}`);
+  console.log(`[GATEWAY TRACE] Timestamp: ${new Date().toISOString()}`);
+
+  next();
+});
+
+// ------------------------- RAW TRACE GERAL -------------------------
+app.use((req, res, next) => {
+  if (req.originalUrl.includes('/atualizar')) {
+    console.log(`[RAW] ${req.method} ${req.originalUrl} - IP: ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`);
+  }
+  next();
+});
+
+// ------------------------- BASIC AUTH - SÓ PARA DASHBOARD -------------------------
+app.use(["/api/dashboard", "/historico", "/dados", "/consumo", "/manutencao", "/dashboard", "/historico-view", "/login"], (req, res, next) => {
+  const auth = req.headers.authorization;
+  const expected = 'Basic ' + Buffer.from('118582:118582').toString('base64');
+  if (!auth || auth!== expected) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="HAG"');
+    return res.status(401).send('Unauthorized');
+  }
+  next();
+});
 
 // ================= WEBSOCKET =================
 const wss = new WebSocketServer({ server });
@@ -87,50 +108,6 @@ const ALERTA_FATOR = 2.5;
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
-
-// ------------------------- MIDDLEWARES GLOBAIS -------------------------
-app.use(cors());
-app.use(compression());
-app.use(express.json({ limit: "10mb", strict: false }));
-app.use(express.text({ type: "*/*", limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-  next();
-});
-
-app.use((req, res, next) => {
-  const start = Date.now();
-  res.on("finish", () => {
-    const ms = Date.now() - start;
-    console.log(chalk.gray(`[${new Date().toISOString()}] [${req.method}] ${req.originalUrl} → ${ms}ms`));
-  });
-  next();
-});
-
-// ------------------------- BASIC AUTH - SÓ PARA DASHBOARD -------------------------
-// Gateway ITG fica liberado
-app.use(["/api/dashboard", "/historico", "/dados", "/consumo", "/manutencao", "/dashboard", "/historico-view", "/login"], (req, res, next) => {
-  const auth = req.headers.authorization;
-  const expected = 'Basic ' + Buffer.from('118582:118582').toString('base64');
-  if (!auth || auth!== expected) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="HAG"');
-    return res.status(401).send('Unauthorized');
-  }
-  next();
-});
-
-// ------------------------- DEBUG GATEWAY -------------------------
-app.use((req, res, next) => {
-  if (req.originalUrl.includes('/atualizar')) {
-    console.log(`[DEBUG] Recebido: ${req.method} ${req.originalUrl}`);
-    console.log(`[DEBUG] Headers:`, JSON.stringify(req.headers));
-  }
-  next();
-});
 
 // ================= SENSORES / CALIBRAÇÃO =================
 const SENSORES = safeReadJson(
@@ -217,17 +194,7 @@ function parseTimestamp(ts, fallback) {
 }
 
 function extractAnyPayload(req) {
-  let raw = req.body;
-  if (typeof raw === "object") return raw;
-  if (typeof raw === "string") {
-    try { return JSON.parse(raw); } catch {}
-    if (raw.includes("=")) {
-      const obj = {};
-      raw.split("&").forEach(p => { const [k, v] = p.split("="); if (k) obj[decodeURIComponent(k)] = decodeURIComponent(v || ""); });
-      return obj;
-    }
-  }
-  return {};
+  return req.body || {};
 }
 
 function normalizarNomeSensor(ref) {
