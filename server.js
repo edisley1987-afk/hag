@@ -4,7 +4,7 @@
  * =========================================================
  * Autor: Edisley Afonso Costa
  * Projeto: Hospital Arnaldo Gavazza
- * Versão: 1.0.4
+ * Versão: 1.0.5
  * Atualização: 2026-05-06
  * =========================================================
  */
@@ -25,10 +25,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
-// ------------------------- MIDDLEWARES GLOBAIS -------------------------
+// ------------------------- MIDDLEWARES GLOBAIS - TEM QUE VIR PRIMEIRO -------------------------
 app.use(cors());
 app.use(compression());
-app.use(express.json({ limit: "10mb", strict: false })); // strict:false salva req._rawBody
+app.use(express.json({ limit: "10mb", strict: false })); // strict:false = salva req._rawBody
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -39,10 +39,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// ------------------------- GATEWAY TRACE - DEBUG -------------------------
+// ------------------------- GATEWAY TRACE - DEPOIS DO PARSER -------------------------
 app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  console.log(`[GATEWAY TRACE] IP: ${ip} | UA: ${req.headers['user-agent']} | Body: ${req._rawBody?.slice(0, 200)}`);
+  console.log(`[GATEWAY TRACE] =================================`);
+  console.log(`[GATEWAY TRACE] IP: ${ip}`);
+  console.log(`[GATEWAY TRACE] User-Agent: ${req.headers['user-agent']}`);
+  console.log(`[GATEWAY TRACE] Content-Type: ${req.headers['content-type']}`);
+  console.log(`[GATEWAY TRACE] Raw Body: ${req._rawBody || 'vazio'}`);
+  console.log(`[GATEWAY TRACE] Parsed Body: ${JSON.stringify(req.body)}`);
+  console.log(`[GATEWAY TRACE] Timestamp: ${new Date().toISOString()}`);
   next();
 });
 
@@ -146,7 +152,6 @@ function calcularNivel(ref, leitura) {
   let p = Math.max(0, Math.min(1, (leitura - sensor.leituraVazio) / span));
   if (!isFinite(p)) p = 0;
 
-  // Filtro suavização SCADA
   const key = ref;
   if (MEMORIA_NIVEL[key] === undefined) MEMORIA_NIVEL[key] = p;
   let filtrado = (MEMORIA_NIVEL[key] * 0.85) + (p * 0.15);
@@ -193,7 +198,6 @@ function convertAndMerge(dataArray) {
     const tsAtual = new Date(parseTimestamp(item.time, ts)).getTime();
     const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
 
-    // Ignora dados mais antigos que 2min
     if (tsAnterior && tsAtual < tsAnterior - 120000) continue;
 
     let valor = item.value;
@@ -208,7 +212,7 @@ function convertAndMerge(dataArray) {
     } else if (sensor.capacidade) {
       const atual = Number(valor) || 0;
       const ant = Number(novo[ref]) || atual;
-      valor = Number(((ant * 0.8) + (atual * 0.2)).toFixed(6)); // suavização
+      valor = Number(((ant * 0.8) + (atual * 0.2)).toFixed(6));
     }
 
     novo[ref] = valor;
@@ -231,7 +235,6 @@ function registrarHistorico(dados) {
       if (!hist[k]) hist[k] = { pontos: [] };
 
       const ultimo = hist[k].pontos.at(-1);
-      // Só salva se variação > 1% da capacidade ou passou 5min
       const variacaoMinima = SENSORES[k].capacidade? SENSORES[k].capacidade * 0.01 : 0.01;
       if (!ultimo || Math.abs(v - ultimo.valor) > variacaoMinima || Date.now() - ultimo.timestamp > 300000) {
         hist[k].pontos.push({
@@ -243,7 +246,6 @@ function registrarHistorico(dados) {
     }
   });
 
-  // Limpa dados mais antigos que 7 dias
   const datas = Object.keys(hist).sort().reverse();
   if (datas.length > DIAS_HISTORICO) {
     const datasParaRemover = datas.slice(DIAS_HISTORICO);
@@ -325,7 +327,6 @@ app.get("/dados", (req, res) => {
   res.json(safeReadJson(DATA_FILE, {}));
 });
 
-// Histórico dos últimos 7 dias
 app.get("/historico", (req, res) => {
   const hist = safeReadJson(HIST_FILE, {});
   const datas = Object.keys(hist).sort().reverse().slice(0, DIAS_HISTORICO);
@@ -346,7 +347,6 @@ app.get("/historico", (req, res) => {
   res.json(saida);
 });
 
-// Histórico 24h de um reservatório específico
 app.get("/historico/24h/:reservatorio", (req, res) => {
   const nome = req.params.reservatorio.toLowerCase();
   const ref = MAPA_RESERVATORIOS[nome];
