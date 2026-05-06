@@ -285,42 +285,44 @@ function normalizePacket(raw) {
       time: Date.now()
     }));
   }
-  return arr.filter(x => x.ref!== undefined);
-}
-
-function parseTimestamp(t, fallback) {
-  if (!t) return fallback;
-  let ms;
-  if (t > 1e14) ms = Math.floor(t / 1000);
-  else if (t > 1e10) ms = t;
-  else ms = t * 1000;
-  const date = new Date(ms);
-  if (isNaN(date.getTime())) return fallback;
-  return date.toISOString();
-}
-
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
-  const novo = {...ultimo };
+  const novo = { ...ultimo };
   const timestampNow = new Date().toISOString();
 
   for (const item of dataArray) {
     const ref = item.ref;
     let rawVal = item.value;
-    const tsAtual = new Date(parseTimestamp(item.time, timestampNow)).getTime();
-    const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
-    if (tsAtual < tsAnterior) continue;
 
-    if (typeof rawVal === "string" && rawVal.trim()!== "" &&!isNaN(Number(rawVal))) {
+    const tsAtual = new Date(parseTimestamp(item.time, timestampNow)).getTime();
+    const tsAnterior = novo[`${ref}_timestamp`]
+      ? new Date(novo[`${ref}_timestamp`]).getTime()
+      : 0;
+
+    // filtro inteligente (CORRETO)
+    if (tsAnterior && tsAtual < tsAnterior - 120000) {
+      continue;
+    }
+
+    // conversão segura (TEM QUE ESTAR AQUI DENTRO)
+    if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
       rawVal = Number(rawVal);
     }
 
     const sensor = SENSORES[ref];
+
+    // sensor não mapeado
     if (!sensor) {
       novo[ref] = rawVal;
       novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
       continue;
     }
+
+    // resto do processamento...
+  }
+
+  return novo;
+}
 
     if (sensor.tipo === "pressao") {
       if (rawVal == null || rawVal === "") {
