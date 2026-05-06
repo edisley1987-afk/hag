@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 1.0.2 - Com efeito de água animado
+ * Versão 1.0.3 - Com efeito de água animado
  */
 
 const API = "/api/dashboard";
@@ -260,7 +260,7 @@ function renderHistoricoChart(data) {
                         }
                     }
                 }
-            }
+            } // <- aqui estava faltando fechar
         }
     });
 }
