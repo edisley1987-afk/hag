@@ -2,7 +2,6 @@
  * =========================================================
  * Sistema de Monitoramento de Reservatórios – HAG
  * =========================================================
- *
  * Autor: Edisley Afonso Costa
  * Projeto: Hospital Arnaldo Gavazza
  * Versão: 1.0.4
@@ -48,7 +47,7 @@ app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
 });
 
 // ------------------------- BASIC AUTH - SÓ PARA DASHBOARD -------------------------
-app.use(["/api/dashboard", "/historico", "/dados", "/consumo", "/manutencao", "/dashboard"], (req, res, next) => {
+app.use(["/api/dashboard", "/historico", "/dados", "/dashboard"], (req, res, next) => {
   const auth = req.headers.authorization;
   const expected = 'Basic ' + Buffer.from('118582:118582').toString('base64');
   if (!auth || auth!== expected) {
@@ -85,13 +84,10 @@ function wsBroadcast(data) {
 const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
-const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
 
-const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2min
 const DIAS_HISTORICO = 7;
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
 
 // ================= SENSORES / CALIBRAÇÃO =================
 const SENSORES = {
@@ -139,10 +135,6 @@ function safeWriteJson(filePath, data) {
   }
 }
 
-function getManutencao() {
-  try { return JSON.parse(fs.readFileSync(MANUT_FILE, "utf8")); } catch { return { ativo: false }; }
-}
-
 // ================= CALIBRAÇÃO NÍVEL =================
 const MEMORIA_NIVEL = {};
 
@@ -168,12 +160,12 @@ function calcularNivel(ref, leitura) {
   };
 }
 
-// Converte timestamp do gateway para ISO
+// Converte timestamp do gateway para ISO - timestamp vem em nanossegundos
 function parseTimestamp(ts, fallback) {
   if (!ts) return fallback;
   let ms = ts;
-  if (ts > 1e14) ms = Math.floor(ts / 1000); // nanossegundos
-  else if (ts < 1e10) ms = ts * 1000; // segundos
+  if (ts > 1e14) ms = Math.floor(ts / 1000); // nanossegundos -> ms
+  else if (ts < 1e10) ms = ts * 1000; // segundos -> ms
   const date = new Date(ms);
   return isNaN(date.getTime())? fallback : date.toISOString();
 }
@@ -181,7 +173,6 @@ function parseTimestamp(ts, fallback) {
 // Normaliza payload do ITG200
 function normalizePacket(raw) {
   if (!raw?.data ||!Array.isArray(raw.data)) return [];
-
   return raw.data.map(i => ({
     ref: i.ref,
     value: typeof i.value === "string" &&!isNaN(Number(i.value))? Number(i.value) : i.value,
@@ -235,16 +226,15 @@ function registrarHistorico(dados) {
   const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }).split('/').reverse().join('-');
   const hist = safeReadJson(HIST_FILE, {});
 
-  if (!hist[hoje]) hist[hoje] = {};
-
   Object.entries(dados).forEach(([k, v]) => {
     if (k.endsWith("_current") && SENSORES[k]) {
-      if (!hist[hoje][k]) hist[hoje][k] = { pontos: [] };
+      if (!hist[k]) hist[k] = { pontos: [] };
 
-      const ultimo = hist[hoje][k].pontos.at(-1);
-      // Só salva se variação > 1% da capacidade ou 5min passaram
-      if (!ultimo || Math.abs(v - ultimo.valor) > (SENSORES[k].capacidade * 0.01 || 0.01)) {
-        hist[hoje][k].pontos.push({
+      const ultimo = hist[k].pontos.at(-1);
+      // Só salva se variação > 1% da capacidade ou passou 5min
+      const variacaoMinima = SENSORES[k].capacidade? SENSORES[k].capacidade * 0.01 : 0.01;
+      if (!ultimo || Math.abs(v - ultimo.valor) > variacaoMinima || Date.now() - ultimo.timestamp > 300000) {
+        hist[k].pontos.push({
           hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" }),
           valor: v,
           timestamp: Date.now()
@@ -294,7 +284,7 @@ function buildDashboard(dados) {
   ];
 
   return {
-    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR"),
+    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
     reservatorios,
     pressoes,
     bombas
@@ -338,10 +328,10 @@ app.get("/dados", (req, res) => {
 // Histórico dos últimos 7 dias
 app.get("/historico", (req, res) => {
   const hist = safeReadJson(HIST_FILE, {});
-  const dias = Object.keys(hist).sort().reverse().slice(0, DIAS_HISTORICO);
+  const datas = Object.keys(hist).sort().reverse().slice(0, DIAS_HISTORICO);
 
   const saida = [];
-  dias.forEach(data => {
+  datas.forEach(data => {
     Object.entries(hist[data] || {}).forEach(([ref, dados]) => {
       const setor = Object.keys(MAPA_RESERVATORIOS).find(k => MAPA_RESERVATORIOS[k] === ref);
       if (setor && dados.pontos) {
