@@ -29,8 +29,10 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(compression());
 
-// Captura body bruto para debug do gateway
+// Captura body bruto para debug do gateway - PRECISA VIR ANTES DO EXPRESS.JSON
 app.use("/atualizar/api/v1_2/json/itg/data", express.raw({type: "*/*", limit: "10mb"}));
+app.use("/atualizar", express.raw({type: "*/*", limit: "10mb"}));
+app.use("/iot", express.raw({type: "*/*", limit: "10mb"}));
 
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
@@ -44,7 +46,7 @@ app.use((req, res, next) => {
 });
 
 // ------------------------- GATEWAY TRACE - DEBUG -------------------------
-app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
+app.use(["/atualizar/api/v1_2/json/itg/data", "/atualizar", "/iot"], (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
   const ua = req.headers['user-agent'] || 'desconhecido';
   const rawBody = req.body?.toString("utf8") || "";
@@ -320,6 +322,16 @@ function buildDashboard(dados) {
     kpis
   };
 }
+
+// --- ROTA DE HEALTHCHECK (Para o Gateway parar de ignorar) ---
+app.get('/', (req, res) => {
+  res.status(200).send('Servidor HAG Online');
+});
+
+// Se o seu Gateway exigir um ping específico, você também pode adicionar:
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
 
 // ================= ROTA PRINCIPAL GATEWAY ITG 200 =================
 app.post(["/atualizar/api/v1_2/json/itg/data", "/atualizar", "/iot"], async (req, res) => {
