@@ -1,7 +1,14 @@
-// @author: Edisley Afonso Costa
-// @version: 1.0.3
-// @last_update: 2026-05-06
-// @environment: Production (Render)
+/**
+ * =========================================================
+ * Sistema de Monitoramento de Reservatórios – HAG
+ * =========================================================
+ *
+ * Autor: Edisley Afonso Costa
+ * Projeto: Hospital Arnaldo Gavazza
+ * Versão: 1.0.4
+ * Atualização: 2026-05-06
+ * =========================================================
+ */
 
 import express from "express";
 import fs from "fs";
@@ -19,11 +26,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
-// ------------------------- MIDDLEWARES GLOBAIS - TEM QUE VIR ANTES -------------------------
+// ------------------------- MIDDLEWARES GLOBAIS -------------------------
 app.use(cors());
 app.use(compression());
-// IMPORTANTE: strict: false salva o body bruto em req._rawBody
-app.use(express.json({ limit: "10mb", strict: false }));
+app.use(express.json({ limit: "10mb", strict: false })); // strict:false salva req._rawBody
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -35,34 +41,14 @@ app.use((req, res, next) => {
 });
 
 // ------------------------- GATEWAY TRACE - DEBUG -------------------------
-// TEM QUE VIR DEPOIS do express.json pra não quebrar o parsing
 app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  const userAgent = req.headers['user-agent'] || 'unknown';
-  const auth = req.headers['authorization'] || 'none';
-
-  console.log(`[GATEWAY TRACE] =================================`);
-  console.log(`[GATEWAY TRACE] IP: ${ip}`);
-  console.log(`[GATEWAY TRACE] User-Agent: ${userAgent}`);
-  console.log(`[GATEWAY TRACE] Authorization: ${auth}`);
-  console.log(`[GATEWAY TRACE] Content-Type: ${req.headers['content-type']}`);
-  console.log(`[GATEWAY TRACE] Raw Body: ${req._rawBody || 'vazio'}`);
-  console.log(`[GATEWAY TRACE] Parsed Body: ${JSON.stringify(req.body)}`);
-  console.log(`[GATEWAY TRACE] Timestamp: ${new Date().toISOString()}`);
-
-  next();
-});
-
-// ------------------------- RAW TRACE GERAL -------------------------
-app.use((req, res, next) => {
-  if (req.originalUrl.includes('/atualizar')) {
-    console.log(`[RAW] ${req.method} ${req.originalUrl} - IP: ${req.headers['x-forwarded-for'] || req.socket.remoteAddress}`);
-  }
+  console.log(`[GATEWAY TRACE] IP: ${ip} | UA: ${req.headers['user-agent']} | Body: ${req._rawBody?.slice(0, 200)}`);
   next();
 });
 
 // ------------------------- BASIC AUTH - SÓ PARA DASHBOARD -------------------------
-app.use(["/api/dashboard", "/historico", "/dados", "/consumo", "/manutencao", "/dashboard", "/historico-view", "/login"], (req, res, next) => {
+app.use(["/api/dashboard", "/historico", "/dados", "/consumo", "/manutencao", "/dashboard"], (req, res, next) => {
   const auth = req.headers.authorization;
   const expected = 'Basic ' + Buffer.from('118582:118582').toString('base64');
   if (!auth || auth!== expected) {
@@ -100,35 +86,30 @@ const DATA_DIR = path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "readings.json");
 const HIST_FILE = path.join(DATA_DIR, "historico.json");
 const MANUT_FILE = path.join(DATA_DIR, "manutencao.json");
-const CONSUMO_FILE = path.join(DATA_DIR, "consumo_osmose.json");
-const ALERTA_FILE = path.join(DATA_DIR, "alerta_consumo.json");
 
-const DATA_TIMEOUT_MS = 2 * 60 * 1000;
-const ALERTA_FATOR = 2.5;
+const DATA_TIMEOUT_MS = 2 * 60 * 1000; // 2min
+const DIAS_HISTORICO = 7;
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MANUT_FILE)) fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo: false }, null, 2));
 
 // ================= SENSORES / CALIBRAÇÃO =================
-const SENSORES = safeReadJson(
-  path.join(DATA_DIR, "sensores.json"),
-  {
-    "Reservatorio_Elevador_current": { leituraVazio: 0.005170, leituraCheio: 0.010247, capacidade: 20000, altura: 1.45 },
-    "Reservatorio_Osmose_current": { leituraVazio: 0.005050, leituraCheio: 0.006973, capacidade: 200, altura: 1.0 },
-    "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.005370, capacidade: 1000, altura: 0.45 },
-    "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004048, leituraCheio: 0.004970, capacidade: 9000, altura: 0.6 },
-    "Reservatorio_lavanderia_current": { leituraVazio: 0.006012, leituraCheio: 0.011623, capacidade: 10000, altura: 1.45 },
-    "Pressao_Saida_Osmose_current": { tipo: "pressao" },
-    "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
-    "Pressao_Saida_CME_current": { tipo: "pressao" },
-    "Bomba_01_binary": { tipo: "bomba" },
-    "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
-    "Bomba_02_binary": { tipo: "bomba" },
-    "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
-    "Bomba_Osmose_binary": { tipo: "bomba" },
-    "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
-  }
-);
+const SENSORES = {
+  "Reservatorio_Elevador_current": { leituraVazio: 0.005170, leituraCheio: 0.010247, capacidade: 20000, altura: 1.45 },
+  "Reservatorio_Osmose_current": { leituraVazio: 0.005050, leituraCheio: 0.006973, capacidade: 200, altura: 1.0 },
+  "Reservatorio_CME_current": { leituraVazio: 0.004088, leituraCheio: 0.005370, capacidade: 1000, altura: 0.45 },
+  "Reservatorio_Agua_Abrandada_current": { leituraVazio: 0.004048, leituraCheio: 0.004970, capacidade: 9000, altura: 0.6 },
+  "Reservatorio_lavanderia_current": { leituraVazio: 0.006012, leituraCheio: 0.011623, capacidade: 10000, altura: 1.45 },
+  "Pressao_Saida_Osmose_current": { tipo: "pressao" },
+  "Pressao_Retorno_Osmose_current": { tipo: "pressao" },
+  "Pressao_Saida_CME_current": { tipo: "pressao" },
+  "Bomba_01_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_01_counter": { tipo: "ciclo" },
+  "Bomba_02_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_02_counter": { tipo: "ciclo" },
+  "Bomba_Osmose_binary": { tipo: "bomba" },
+  "Ciclos_Bomba_Osmose_counter": { tipo: "ciclo" }
+};
 
 const MAPA_RESERVATORIOS = {
   elevador: "Reservatorio_Elevador_current",
@@ -149,6 +130,7 @@ function safeReadJson(filePath, fallback) {
     return fallback;
   }
 }
+
 function safeWriteJson(filePath, data) {
   try {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
@@ -160,24 +142,23 @@ function safeWriteJson(filePath, data) {
 function getManutencao() {
   try { return JSON.parse(fs.readFileSync(MANUT_FILE, "utf8")); } catch { return { ativo: false }; }
 }
-function setManutencao(ativo) { fs.writeFileSync(MANUT_FILE, JSON.stringify({ ativo }, null, 2)); }
 
-// ================= CALIBRAÇÃO ESTÁVEL =================
+// ================= CALIBRAÇÃO NÍVEL =================
 const MEMORIA_NIVEL = {};
 
 function calcularNivel(ref, leitura) {
   const sensor = SENSORES[ref];
-  if (!sensor ||!sensor.capacidade) return { percentual: 0, litros: 0, altura: 0 };
+  if (!sensor?.capacidade) return { percentual: 0, litros: 0, altura: 0 };
+
   const span = (sensor.leituraCheio - sensor.leituraVazio) || 1;
   let p = Math.max(0, Math.min(1, (leitura - sensor.leituraVazio) / span));
   if (!isFinite(p)) p = 0;
 
+  // Filtro suavização SCADA
   const key = ref;
   if (MEMORIA_NIVEL[key] === undefined) MEMORIA_NIVEL[key] = p;
-  const anterior = MEMORIA_NIVEL[key];
-  let filtrado = (anterior * 0.85) + (p * 0.15);
-  if (Math.abs(filtrado - anterior) < 0.01) filtrado = anterior;
-  filtrado = Math.max(0, Math.min(1, filtrado));
+  let filtrado = (MEMORIA_NIVEL[key] * 0.85) + (p * 0.15);
+  if (Math.abs(filtrado - MEMORIA_NIVEL[key]) < 0.01) filtrado = MEMORIA_NIVEL[key];
   MEMORIA_NIVEL[key] = filtrado;
 
   return {
@@ -187,84 +168,59 @@ function calcularNivel(ref, leitura) {
   };
 }
 
+// Converte timestamp do gateway para ISO
 function parseTimestamp(ts, fallback) {
   if (!ts) return fallback;
-  const date = new Date(ts);
+  let ms = ts;
+  if (ts > 1e14) ms = Math.floor(ts / 1000); // nanossegundos
+  else if (ts < 1e10) ms = ts * 1000; // segundos
+  const date = new Date(ms);
   return isNaN(date.getTime())? fallback : date.toISOString();
 }
 
-function extractAnyPayload(req) {
-  return req.body || {};
-}
-
-function normalizarNomeSensor(ref) {
-  const mapa = {
-    "Reservatorio_Elevador": "Reservatorio_Elevador_current",
-    "Reservatorio_Osmose": "Reservatorio_Osmose_current",
-    "Reservatorio_CME": "Reservatorio_CME_current",
-    "Reservatorio_Agua_Abrandada": "Reservatorio_Agua_Abrandada_current",
-    "Reservatorio_lavanderia": "Reservatorio_lavanderia_current",
-    "Pressao_Saida_Osmose": "Pressao_Saida_Osmose_current",
-    "Pressao_Retorno_Osmose": "Pressao_Retorno_Osmose_current",
-    "Pressao_Saida_CME": "Pressao_Saida_CME_current",
-    "Bomba_01": "Bomba_01_binary",
-    "Bomba_02": "Bomba_02_binary",
-    "Bomba_Osmose": "Bomba_Osmose_binary",
-    "Ciclos_Bomba_01": "Ciclos_Bomba_01_counter",
-    "Ciclos_Bomba_02": "Ciclos_Bomba_02_counter",
-    "Ciclos_Bomba_Osmose": "Ciclos_Bomba_Osmose_counter"
-  };
-  return mapa[ref] || ref;
-}
-
+// Normaliza payload do ITG200
 function normalizePacket(raw) {
-  let arr = [];
-  if (!raw) return arr;
-  if (raw.data && Array.isArray(raw.data)) {
-    arr = raw.data.map(i => ({
-      ref: normalizarNomeSensor(i.ref || i.name || i.key),
-      value: i.value!== undefined? i.value : i.v,
-      dev_id: i.dev_id || raw.dev_id,
-      time: i.time || Date.now()
-    }));
-  } else if (Array.isArray(raw)) {
-    arr = raw.map(i => ({ ref: normalizarNomeSensor(i.ref), value: i.value, time: i.time || Date.now() }));
-  } else if (typeof raw === "object") {
-    arr = Object.keys(raw).map(k => ({ ref: normalizarNomeSensor(k), value: raw[k], time: Date.now() }));
-  }
-  return arr.filter(x => x.ref!== undefined);
+  if (!raw?.data ||!Array.isArray(raw.data)) return [];
+
+  return raw.data.map(i => ({
+    ref: i.ref,
+    value: typeof i.value === "string" &&!isNaN(Number(i.value))? Number(i.value) : i.value,
+    time: i.time || Date.now()
+  }));
 }
 
+// Mescla dados e salva em readings.json
 function convertAndMerge(dataArray) {
   const novo = safeReadJson(DATA_FILE, {});
   const ts = new Date().toISOString();
 
   for (const item of dataArray) {
     const ref = item.ref;
-    let rawVal = item.value;
+    const sensor = SENSORES[ref];
+    if (!sensor) continue;
+
     const tsAtual = new Date(parseTimestamp(item.time, ts)).getTime();
     const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
 
+    // Ignora dados mais antigos que 2min
     if (tsAnterior && tsAtual < tsAnterior - 120000) continue;
-    if (typeof rawVal === "string" &&!isNaN(Number(rawVal))) rawVal = Number(rawVal);
 
-    const sensor = SENSORES[ref];
-    if (!sensor) {
-      novo[ref] = rawVal;
-    } else if (sensor.tipo === "pressao") {
-      let c = ((Number(rawVal) - 0.004) / 0.016) * 20;
-      novo[ref] = Number(Math.max(0, Math.min(20, c)).toFixed(2));
+    let valor = item.value;
+
+    if (sensor.tipo === "pressao") {
+      let c = ((Number(valor) - 0.004) / 0.016) * 20;
+      valor = Number(Math.max(0, Math.min(20, c)).toFixed(2));
     } else if (sensor.tipo === "bomba") {
-      novo[ref] = Number(rawVal) === 1? 1 : 0;
+      valor = Number(valor) === 1? 1 : 0;
     } else if (sensor.tipo === "ciclo") {
-      novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
+      valor = Math.max(0, Math.round(Number(valor) || 0));
     } else if (sensor.capacidade) {
-      const atual = Number(rawVal) || 0;
+      const atual = Number(valor) || 0;
       const ant = Number(novo[ref]) || atual;
-      novo[ref] = Number(((ant * 0.8) + (atual * 0.2)).toFixed(6));
-    } else {
-      novo[ref] = rawVal;
+      valor = Number(((ant * 0.8) + (atual * 0.2)).toFixed(6)); // suavização
     }
+
+    novo[ref] = valor;
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, ts);
   }
 
@@ -274,20 +230,41 @@ function convertAndMerge(dataArray) {
   return novo;
 }
 
+// Registra histórico com retenção de 7 dias
 function registrarHistorico(dados) {
   const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }).split('/').reverse().join('-');
   const hist = safeReadJson(HIST_FILE, {});
+
   if (!hist[hoje]) hist[hoje] = {};
 
   Object.entries(dados).forEach(([k, v]) => {
-    if (k.endsWith("_current") && SENSORES[k]?.capacidade) {
+    if (k.endsWith("_current") && SENSORES[k]) {
       if (!hist[hoje][k]) hist[hoje][k] = { pontos: [] };
-      hist[hoje][k].pontos.push({ hora: new Date().toLocaleTimeString(), valor: v });
+
+      const ultimo = hist[hoje][k].pontos.at(-1);
+      // Só salva se variação > 1% da capacidade ou 5min passaram
+      if (!ultimo || Math.abs(v - ultimo.valor) > (SENSORES[k].capacidade * 0.01 || 0.01)) {
+        hist[hoje][k].pontos.push({
+          hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+          valor: v,
+          timestamp: Date.now()
+        });
+      }
     }
   });
+
+  // Limpa dados mais antigos que 7 dias
+  const datas = Object.keys(hist).sort().reverse();
+  if (datas.length > DIAS_HISTORICO) {
+    const datasParaRemover = datas.slice(DIAS_HISTORICO);
+    datasParaRemover.forEach(d => delete hist[d]);
+    console.log(`[HISTORICO] Removidas ${datasParaRemover.length} datas antigas`);
+  }
+
   safeWriteJson(HIST_FILE, hist);
 }
 
+// Monta dados para o dashboard
 function buildDashboard(dados) {
   const reservatorios = Object.keys(MAPA_RESERVATORIOS).map(setor => {
     const ref = MAPA_RESERVATORIOS[setor];
@@ -324,24 +301,24 @@ function buildDashboard(dados) {
   };
 }
 
-// ================= ROTEAMENTO GATEWAY ITG 200 =================
-app.post(["/atualizar/api/v1_2/json/itg/data", "/atualizar/api/v1_2/json/itg/connection_status", "/atualizar", "/iot"], async (req, res) => {
+// ================= ROTA PRINCIPAL GATEWAY ITG 200 =================
+app.post(["/atualizar/api/v1_2/json/itg/data", "/atualizar", "/iot"], async (req, res) => {
   try {
-    console.log("🔥 CHEGOU DADO DO GATEWAY");
-    console.log("📥 BODY:", req.body);
+    console.log("🔥 DADO RECEBIDO DO GATEWAY");
 
-    let parsed = extractAnyPayload(req);
+    const parsed = req.body;
     if (parsed.seq && parsed.interface!== undefined &&!parsed.data) {
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, msg: "connection_status" });
     }
 
     const arr = normalizePacket(parsed);
-    if (!arr.length) return res.status(400).json({ erro: "Nenhum dado encontrado" });
+    if (!arr.length) return res.status(400).json({ erro: "Nenhum dado válido" });
 
     const novo = convertAndMerge(arr);
     registrarHistorico(novo);
     wsBroadcast({ type: "update", dados: buildDashboard(novo) });
-    res.json({ ok: true });
+
+    res.json({ ok: true, recebidos: arr.length });
   } catch (e) {
     console.error("Erro processar:", e);
     res.status(500).json({ erro: e.message });
@@ -358,19 +335,48 @@ app.get("/dados", (req, res) => {
   res.json(safeReadJson(DATA_FILE, {}));
 });
 
+// Histórico dos últimos 7 dias
 app.get("/historico", (req, res) => {
-  res.json(safeReadJson(HIST_FILE, {}));
+  const hist = safeReadJson(HIST_FILE, {});
+  const dias = Object.keys(hist).sort().reverse().slice(0, DIAS_HISTORICO);
+
+  const saida = [];
+  dias.forEach(data => {
+    Object.entries(hist[data] || {}).forEach(([ref, dados]) => {
+      const setor = Object.keys(MAPA_RESERVATORIOS).find(k => MAPA_RESERVATORIOS[k] === ref);
+      if (setor && dados.pontos) {
+        dados.pontos.forEach(p => {
+          saida.push({ reservatorio: setor, data, hora: p.hora, valor: p.valor, timestamp: p.timestamp });
+        });
+      }
+    });
+  });
+
+  saida.sort((a, b) => b.timestamp - a.timestamp);
+  res.json(saida);
 });
 
-app.get("/api/debug-calculo", (req, res) => {
-  const dados = safeReadJson(DATA_FILE, {});
-  const debug = {};
-  Object.keys(MAPA_RESERVATORIOS).forEach(setor => {
-    const ref = MAPA_RESERVATORIOS[setor];
-    const leitura = Number(dados[ref] || 0);
-    debug[setor] = { ref, leitura_bruta: leitura, config: SENSORES[ref], resultado: calcularNivel(ref, leitura) };
+// Histórico 24h de um reservatório específico
+app.get("/historico/24h/:reservatorio", (req, res) => {
+  const nome = req.params.reservatorio.toLowerCase();
+  const ref = MAPA_RESERVATORIOS[nome];
+  if (!ref) return res.status(400).json({ erro: "Reservatório inválido" });
+
+  const hist = safeReadJson(HIST_FILE, {});
+  const agora = Date.now();
+  const saida = [];
+
+  Object.entries(hist).forEach(([data, sensores]) => {
+    const pontos = sensores?.[ref]?.pontos || [];
+    pontos.forEach(p => {
+      if (agora - p.timestamp <= 24 * 60 * 60 * 1000) {
+        saida.push({ reservatorio: nome, timestamp: p.timestamp, valor: p.valor });
+      }
+    });
   });
-  res.json(debug);
+
+  saida.sort((a, b) => a.timestamp - b.timestamp);
+  res.json(saida);
 });
 
 // ------------------------- ARQUIVOS ESTÁTICOS -------------------------
