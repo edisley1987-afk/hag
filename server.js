@@ -1,12 +1,12 @@
 /**
- * =========================================================
- * Sistema de Monitoramento de Reservatórios – HAG
- * =========================================================
- * Autor: Edisley Afonso Costa
- * Projeto: Hospital Arnaldo Gavazza
- * Versão: 1.0.5
- * Atualização: 2026-05-06
- * =========================================================
+  * =========================================================
+  * Sistema de Monitoramento de Reservatórios – HAG
+  * =========================================================
+  * Autor: Edisley Afonso Costa
+  * Projeto: Hospital Arnaldo Gavazza
+  * Versão: 1.0.6
+  * Atualização: 2026-05-06
+  * =========================================================
  */
 
 import express from "express";
@@ -25,10 +25,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
-// ------------------------- MIDDLEWARES GLOBAIS - TEM QUE VIR PRIMEIRO -------------------------
+// ------------------------- MIDDLEWARES GLOBAIS -------------------------
 app.use(cors());
 app.use(compression());
-app.use(express.json({ limit: "10mb", strict: false })); // strict:false = salva req._rawBody
+app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -39,16 +39,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// ------------------------- GATEWAY TRACE - DEPOIS DO PARSER -------------------------
+// ------------------------- GATEWAY TRACE - DEBUG -------------------------
 app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  console.log(`[GATEWAY TRACE] =================================`);
-  console.log(`[GATEWAY TRACE] IP: ${ip}`);
-  console.log(`[GATEWAY TRACE] User-Agent: ${req.headers['user-agent']}`);
-  console.log(`[GATEWAY TRACE] Content-Type: ${req.headers['content-type']}`);
-  console.log(`[GATEWAY TRACE] Raw Body: ${req._rawBody || 'vazio'}`);
-  console.log(`[GATEWAY TRACE] Parsed Body: ${JSON.stringify(req.body)}`);
-  console.log(`[GATEWAY TRACE] Timestamp: ${new Date().toISOString()}`);
+  console.log(`[GATEWAY TRACE] IP: ${ip} | UA: ${req.headers['user-agent']} | Body: ${req._rawBody?.slice(0, 200)}`);
   next();
 });
 
@@ -169,8 +163,8 @@ function calcularNivel(ref, leitura) {
 function parseTimestamp(ts, fallback) {
   if (!ts) return fallback;
   let ms = ts;
-  if (ts > 1e14) ms = Math.floor(ts / 1000); // nanossegundos -> ms
-  else if (ts < 1e10) ms = ts * 1000; // segundos -> ms
+  if (ts > 1e14) ms = Math.floor(ts / 1000);
+  else if (ts < 1e10) ms = ts * 1000;
   const date = new Date(ms);
   return isNaN(date.getTime())? fallback : date.toISOString();
 }
@@ -197,7 +191,6 @@ function convertAndMerge(dataArray) {
 
     const tsAtual = new Date(parseTimestamp(item.time, ts)).getTime();
     const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
-
     if (tsAnterior && tsAtual < tsAnterior - 120000) continue;
 
     let valor = item.value;
@@ -250,10 +243,27 @@ function registrarHistorico(dados) {
   if (datas.length > DIAS_HISTORICO) {
     const datasParaRemover = datas.slice(DIAS_HISTORICO);
     datasParaRemover.forEach(d => delete hist[d]);
-    console.log(`[HISTORICO] Removidas ${datasParaRemover.length} datas antigas`);
   }
 
   safeWriteJson(HIST_FILE, hist);
+}
+
+// Calcula consumo do dia
+function calcularConsumoHoje(hist, hoje) {
+  const consumo = { elevador_hoje: 0, lavanderia_hoje: 0, osmose_hoje: 0 };
+
+  const calc = (ref) => {
+    const pontos = hist[ref]?.pontos || [];
+    if (pontos.length < 2) return 0;
+    const primeiro = pontos[0].valor;
+    const ultimo = pontos.at(-1).valor;
+    return Math.max(0, primeiro - ultimo) * SENSORES[ref].capacidade;
+  };
+
+  consumo.elevador_hoje = calc("Reservatorio_Elevador_current");
+  consumo.lavanderia_hoje = calc("Reservatorio_lavanderia_current");
+  consumo.osmose_hoje = calc("Reservatorio_Osmose_current");
+  return consumo;
 }
 
 // Monta dados para o dashboard
@@ -285,11 +295,16 @@ function buildDashboard(dados) {
     { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
   ];
 
+  const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }).split('/').reverse().join('-');
+  const hist = safeReadJson(HIST_FILE, {});
+  const kpis = calcularConsumoHoje(hist, hoje);
+
   return {
     lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
     reservatorios,
     pressoes,
-    bombas
+    bombas,
+    kpis
   };
 }
 
@@ -299,18 +314,19 @@ app.post(["/atualizar/api/v1_2/json/itg/data", "/atualizar", "/iot"], async (req
     console.log("🔥 DADO RECEBIDO DO GATEWAY");
 
     const parsed = req.body;
-    if (parsed.seq && parsed.interface!== undefined &&!parsed.data) {
-      return res.status(200).json({ ok: true, msg: "connection_status" });
+    if (parsed.seq && (!parsed.data || parsed.signal!== undefined)) {
+      return res.status(200).json({ ok: true, msg: "connection_ack" });
     }
 
     const arr = normalizePacket(parsed);
-    if (!arr.length) return res.status(400).json({ erro: "Nenhum dado válido" });
+    if (!arr.length) return res.status(200).json({ ok: true, msg: "empty_payload" });
 
     const novo = convertAndMerge(arr);
     registrarHistorico(novo);
     wsBroadcast({ type: "update", dados: buildDashboard(novo) });
 
-    res.json({ ok: true, recebidos: arr.length });
+    console.log(`[GATEWAY] ${arr.length} sensores salvos - ${novo.timestamp}`);
+    res.json({ ok: true, recebidos: arr.length, timestamp: novo.timestamp });
   } catch (e) {
     console.error("Erro processar:", e);
     res.status(500).json({ erro: e.message });
@@ -331,19 +347,20 @@ app.get("/historico", (req, res) => {
   const hist = safeReadJson(HIST_FILE, {});
   const datas = Object.keys(hist).sort().reverse().slice(0, DIAS_HISTORICO);
 
-  const saida = [];
+  const saida = {};
   datas.forEach(data => {
+    saida[data] = {};
     Object.entries(hist[data] || {}).forEach(([ref, dados]) => {
       const setor = Object.keys(MAPA_RESERVATORIOS).find(k => MAPA_RESERVATORIOS[k] === ref);
       if (setor && dados.pontos) {
-        dados.pontos.forEach(p => {
-          saida.push({ reservatorio: setor, data, hora: p.hora, valor: p.valor, timestamp: p.timestamp });
-        });
+        saida[data][setor] = dados.pontos.map(p => ({
+          x: p.timestamp,
+          y: Math.round(calcularNivel(ref, p.valor).percentual * 100)
+        }));
       }
     });
   });
 
-  saida.sort((a, b) => b.timestamp - a.timestamp);
   res.json(saida);
 });
 
@@ -360,7 +377,7 @@ app.get("/historico/24h/:reservatorio", (req, res) => {
     const pontos = sensores?.[ref]?.pontos || [];
     pontos.forEach(p => {
       if (agora - p.timestamp <= 24 * 60 * 60 * 1000) {
-        saida.push({ reservatorio: nome, timestamp: p.timestamp, valor: p.valor });
+        saida.push({ reservatorio: nome, timestamp: p.timestamp, valor: Math.round(calcularNivel(ref, p.valor).percentual * 100) });
       }
     });
   });
