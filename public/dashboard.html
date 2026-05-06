@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard HAG 3D - Reservatórios</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -14,77 +15,77 @@
     padding: 20px;
     min-height: 100vh;
   }
- .header {
+.header {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 30px; padding: 20px; background: rgba(30, 41, 59, 0.8);
     border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);
   }
- .header h1 { font-size: 24px; color: #60a5fa; }
- .status { display: flex; align-items: center; gap: 10px; font-size: 14px; }
- .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #00ff88; animation: pulse 2s infinite; }
+.header h1 { font-size: 24px; color: #60a5fa; }
+.status { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; background: #00ff88; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
- .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
- .kpi-card {
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.kpi-card {
     background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.2); text-align: center;
   }
- .kpi-card h3 { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; }
- .kpi-card.value { font-size: 28px; font-weight: bold; color: #60a5fa; }
+.kpi-card h3 { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; }
+.kpi-card.value { font-size: 28px; font-weight: bold; color: #60a5fa; }
 
- .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
- .card {
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.card {
     background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px;
     border: 1px solid rgba(148, 163, 184, 0.2); transition: all 0.3s;
   }
- .card:hover { border-color: #60a5fa; box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2); }
- .card h2 { font-size: 16px; margin-bottom: 15px; color: #cbd5e1; }
+.card:hover { border-color: #60a5fa; box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2); }
+.card h2 { font-size: 16px; margin-bottom: 15px; color: #cbd5e1; }
 
- .reservatorio.tanque {
+.tanque {
     position: relative; width: 100%; height: 200px; background: rgba(15, 23, 42, 0.6);
     border-radius: 8px; overflow: hidden; border: 2px solid #334155; margin-bottom: 15px;
   }
- .escala {
+.escala {
     position: absolute; right: 5px; top: 0; height: 100%; display: flex; flex-direction: column;
     justify-content: space-between; padding: 10px 0; font-size: 10px; color: #64748b; z-index: 2;
   }
- .agua {
+.agua {
     position: absolute; bottom: 0; width: 100%; height: 0%;
     background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
     transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1;
   }
- .agua.nivel-cheio { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); }
- .agua.nivel-alto { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
- .agua.nivel-medio { background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%); }
- .agua.nivel-baixo { background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); }
- .agua.nivel-critico { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
- .onda {
+.agua.nivel-cheio { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); }
+.agua.nivel-alto { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
+.agua.nivel-medio { background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%); }
+.agua.nivel-baixo { background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); }
+.agua.nivel-critico { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+.onda {
     position: absolute; top: -10px; width: 200%; height: 20px;
     background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.3) 0%, transparent 50%);
     animation: wave 3s infinite linear; opacity: 0.5;
   }
   @keyframes wave { 0% { transform: translateX(-50%); } 100% { transform: translateX(0%); } }
- .agua.balancando.onda { animation: wave-bounce 1.3s ease-in-out; }
+.agua.balancando.onda { animation: wave-bounce 1.3s ease-in-out; }
   @keyframes wave-bounce {
     0%, 100% { transform: translateX(-50%) translateY(0); }
     25% { transform: translateX(-40%) translateY(-5px); }
     75% { transform: translateX(-60%) translateY(5px); }
   }
 
- .info { display: flex; justify-content: space-between; align-items: center; }
- .valor { font-size: 32px; font-weight: bold; }
- .litros { font-size: 14px; color: #94a3b8; }
- .card.alerta { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+.info { display: flex; justify-content: space-between; align-items: center; }
+.valor { font-size: 32px; font-weight: bold; }
+.litros { font-size: 14px; color: #94a3b8; }
+.card.alerta { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 
- .bomba.ligada.status-icon { color: #22c55e; }
- .bomba.desligada.status-icon { color: #ef4444; }
- .bomba.stale.status-icon { color: #64748b; }
- .status-icon { font-size: 40px; text-align: center; margin: 10px 0; }
- .ciclos { font-size: 12px; color: #94a3b8; text-align: center; }
+.bomba.ligada.status-icon { color: #22c55e; }
+.bomba.desligada.status-icon { color: #ef4444; }
+.bomba.stale.status-icon { color: #64748b; }
+.status-icon { font-size: 40px; text-align: center; margin: 10px 0; }
+.ciclos { font-size: 12px; color: #94a3b8; text-align: center; }
 
- .valor-pressao { font-size: 28px; font-weight: bold; color: #60a5fa; text-align: center; margin: 20px 0; }
+.valor-pressao { font-size: 28px; font-weight: bold; color: #60a5fa; text-align: center; margin: 20px 0; }
 
- .chart-container { background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); }
+.chart-container { background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); }
   canvas { max-height: 300px; }
 
   body.sem-sinal { opacity: 0.7; }
@@ -125,7 +126,6 @@ let ultimoDado = Date.now();
 let renderPending = false;
 let chartHistorico = null;
 
-// ======================= INIT =======================
 init();
 
 function init() {
@@ -136,9 +136,8 @@ function init() {
 
     setInterval(() => {
         if (Date.now() - ultimoDado > 15000) {
-            setStatus("🟡 Aguardando sinal do Gateway...");
-            document.body.classList.add("sem-sinal");
             atualizarStatusVisual("Sem sinal");
+            document.body.classList.add("sem-sinal");
         } else {
             document.body.classList.remove("sem-sinal");
             atualizarStatusVisual("Tempo real conectado");
@@ -146,7 +145,6 @@ function init() {
     }, 5000);
 }
 
-// ======================= PROCESSAMENTO =======================
 function processarPayload(payload) {
     if (!payload) return;
     if (payload.type === "update" && payload.dados) payload = payload.dados;
@@ -154,7 +152,6 @@ function processarPayload(payload) {
     scheduleRender(payload);
 }
 
-// ======================= RENDER OTIMIZADO =======================
 function scheduleRender(data) {
     if (renderPending) return;
     renderPending = true;
@@ -173,7 +170,6 @@ function atualizarUI(data) {
     atualizarKPIs(data);
 }
 
-// ======================= RESERVATÓRIOS 3D =======================
 function renderReservatorios(lista) {
     const area = document.getElementById("areaReservatorios");
     if (!area) return;
@@ -229,7 +225,6 @@ function renderReservatorios(lista) {
     });
 }
 
-// ======================= BOMBAS =======================
 function renderBombas(lista) {
     const area = document.getElementById("areaBombas");
     if (!area) return;
@@ -256,7 +251,6 @@ function renderBombas(lista) {
     });
 }
 
-// ======================= PRESSÕES =======================
 function renderPressoes(lista) {
     const area = document.getElementById("areaPressoes");
     if (!area) return;
@@ -276,7 +270,6 @@ function renderPressoes(lista) {
     });
 }
 
-// ======================= HISTÓRICO 7 DIAS =======================
 async function carregarHistorico() {
     try {
         const res = await fetch("/historico", { cache: "no-store" });
@@ -291,41 +284,71 @@ function renderHistoricoChart(data) {
     const ctx = document.getElementById("chartHistorico");
     if (!ctx) return;
 
+    const cores = {
+        elevador: '#60a5fa',
+        osmose: '#22c55e',
+        cme: '#facc15',
+        abrandada: '#f97316',
+        lavanderia: '#a855f7'
+    };
+
     const datasets = Object.keys(data).map(setor => ({
         label: setor.charAt(0).toUpperCase() + setor.slice(1),
         data: data[setor],
         borderWidth: 2,
-        tension: 0.4
+        tension: 0.4,
+        borderColor: cores[setor] || '#60a5fa',
+        backgroundColor: cores[setor] || '#60a5fa',
+        pointRadius: 2,
+        pointHoverRadius: 5
     }));
 
-    options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-        x: { type: 'time', time: { unit: 'hour' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
-        y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' } }
-    },
-    plugins: { 
-        legend: { 
-            labels: { 
-                color: '#e2e8f0' 
-            } 
-        } 
-    }
+    if (chartHistorico) chartHistorico.destroy();
+
+    chartHistorico = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
+                    ticks: { color: '#94a3b8' },
+                    grid: { color: 'rgba(148,163,184,0.1)' }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { color: '#94a3b8', callback: v => v + '%' },
+                    grid: { color: 'rgba(148,163,184,0.1)' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#e2e8f0' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
-// ======================= WEBSOCKET =======================
 function conectarWS() {
     if (ws) ws.close();
     const protocolo = location.protocol === "https:"? "wss:" : "ws:";
     ws = new WebSocket(`${protocolo}//${location.host}`);
-    ws.onopen = () => { setStatus("🟢 Tempo real conectado"); };
+    ws.onopen = () => { atualizarStatusVisual("Tempo real conectado"); };
     ws.onmessage = (msg) => { try { processarPayload(JSON.parse(msg.data)); } catch (e) { console.error("Erro WS:", e); } };
-    ws.onclose = () => { setStatus("🔴 Reconectando..."); atualizarStatusVisual("Reconectando..."); setTimeout(conectarWS, reconnectDelay); };
+    ws.onclose = () => { atualizarStatusVisual("Reconectando..."); setTimeout(conectarWS, reconnectDelay); };
     ws.onerror = (err) => console.error("Erro WebSocket:", err);
 }
 
-// ======================= FALLBACK HTTP =======================
 async function fallbackHTTP() {
     try {
         const res = await fetch(API + "?t=" + Date.now(), { cache: "no-store" });
@@ -334,23 +357,16 @@ async function fallbackHTTP() {
         processarPayload(data);
     } catch (err) {
         if (!ws || ws.readyState!== 1) {
-            setStatus("🔴 Erro de comunicação");
             atualizarStatusVisual("Desconectado");
         }
     }
 }
 
-// ======================= HELPERS =======================
-function setStatus(txt) {
-    // Atualiza só o status visual principal
-    atualizarStatusVisual(txt);
-}
-
 function atualizarStatusVisual(texto) {
     const el = document.getElementById("statusTexto");
     const dot = document.querySelector(".status-dot");
-    if (!el || !dot) return;
-    
+    if (!el ||!dot) return;
+
     el.innerText = texto;
     if (texto.includes("Tempo real")) {
         dot.style.background = "#00ff88";
@@ -361,8 +377,8 @@ function atualizarStatusVisual(texto) {
     }
 }
 
-function formatar(n) { 
-    return Number(n || 0).toLocaleString("pt-BR"); 
+function formatar(n) {
+    return Number(n || 0).toLocaleString("pt-BR");
 }
 
 function atualizarKPIs(data) {
@@ -371,7 +387,7 @@ function atualizarKPIs(data) {
     const elElevador = document.getElementById("kpiElevador");
     const elLavanderia = document.getElementById("kpiLavanderia");
     const elOsmose = document.getElementById("kpiOsmose");
-    
+
     if (elCritico) {
         elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
     }
