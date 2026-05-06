@@ -250,9 +250,7 @@ function renderHistoricoChart(data) {
                 }
             },
             plugins: {
-                legend: {
-                    labels: { color: '#e2e8f0' }
-                },
+                legend: { labels: { color: '#e2e8f0' } },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
@@ -260,7 +258,7 @@ function renderHistoricoChart(data) {
                         }
                     }
                 }
-            } // <- aqui estava faltando fechar
+            }
         }
     });
 }
