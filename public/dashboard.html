@@ -298,20 +298,20 @@ function renderHistoricoChart(data) {
         tension: 0.4
     }));
 
-    if (chartHistorico) chartHistorico.destroy();
-    chartHistorico = new Chart(ctx, {
-        type: 'line',
-        data: { datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { type: 'time', time: { unit: 'hour' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
-                y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' } }
-            },
-            plugins: { legend: { labels: { color: '#e2e8f0' } }
-        }
-    });
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        x: { type: 'time', time: { unit: 'hour' }, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+        y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+    },
+    plugins: { 
+        legend: { 
+            labels: { 
+                color: '#e2e8f0' 
+            } 
+        } 
+    }
 }
 
 // ======================= WEBSOCKET =======================
