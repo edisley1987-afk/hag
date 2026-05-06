@@ -264,11 +264,13 @@ function normalizarNomeSensor(ref) {
 
 function normalizePacket(raw) {
   let arr = [];
+
   if (!raw) return arr;
+
   if (raw.data && Array.isArray(raw.data)) {
     arr = raw.data.map(i => ({
       ref: normalizarNomeSensor(i.ref || i.name || i.key),
-      value: i.value!== undefined? i.value : i.v,
+      value: i.value !== undefined ? i.value : i.v,
       dev_id: i.dev_id || raw.dev_id,
       time: i.time || Date.now()
     }));
@@ -285,6 +287,9 @@ function normalizePacket(raw) {
       time: Date.now()
     }));
   }
+   // ✅ FECHOU A FUNÇÃO CORRETAMENTE
+  return arr.filter(x => x.ref !== undefined);
+}
 function convertAndMerge(dataArray) {
   const ultimo = safeReadJson(DATA_FILE, {});
   const novo = { ...ultimo };
@@ -299,68 +304,51 @@ function convertAndMerge(dataArray) {
       ? new Date(novo[`${ref}_timestamp`]).getTime()
       : 0;
 
-    // filtro inteligente (CORRETO)
-    if (tsAnterior && tsAtual < tsAnterior - 120000) {
-      continue;
-    }
+    // filtro de atraso
+    if (tsAnterior && tsAtual < tsAnterior - 120000) continue;
 
-    // conversão segura (TEM QUE ESTAR AQUI DENTRO)
     if (typeof rawVal === "string" && rawVal.trim() !== "" && !isNaN(Number(rawVal))) {
       rawVal = Number(rawVal);
     }
 
     const sensor = SENSORES[ref];
 
-    // sensor não mapeado
     if (!sensor) {
       novo[ref] = rawVal;
       novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
       continue;
     }
 
-    // resto do processamento...
-  }
-
-  return novo;
-}
-
+    // ✅ AQUI FICA TODO O BLOCO
     if (sensor.tipo === "pressao") {
-      if (rawVal == null || rawVal === "") {
-        novo[ref] = null;
-      } else {
-        let valorNum = Number(rawVal);
-        let convertido = ((valorNum - 0.004) / 0.016) * 20;
-        convertido = Math.max(0, Math.min(20, convertido));
-        novo[ref] = Number(convertido.toFixed(2));
-      }
+      let valorNum = Number(rawVal);
+      let convertido = ((valorNum - 0.004) / 0.016) * 20;
+      convertido = Math.max(0, Math.min(20, convertido));
+      novo[ref] = Number(convertido.toFixed(2));
+
     } else if (sensor.tipo === "bomba") {
-      const valorAtual = Number(rawVal) === 1? 1 : 0;
-      const anterior = novo[ref]!== undefined? novo[ref] : valorAtual;
-      const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
-      const agora = Date.now();
-      const TEMPO_LIGAR = 3000;
-      const TEMPO_DESLIGAR = 5000;
-      if (valorAtual!== anterior) {
-        const tempoNecessario = valorAtual === 1? TEMPO_LIGAR : TEMPO_DESLIGAR;
-        if (agora - tsAnterior > tempoNecessario) novo[ref] = valorAtual;
-      } else {
-        novo[ref] = valorAtual;
-      }
+      const valorAtual = Number(rawVal) === 1 ? 1 : 0;
+      novo[ref] = valorAtual;
+
     } else if (sensor.tipo === "ciclo") {
       novo[ref] = Math.max(0, Math.round(Number(rawVal) || 0));
+
     } else if (sensor.capacidade) {
       const valorAtual = Number(rawVal) || 0;
       const anterior = Number(novo[ref]) || valorAtual;
       const suavizado = (anterior * 0.8) + (valorAtual * 0.2);
       novo[ref] = Number(suavizado.toFixed(6));
+
     } else {
       novo[ref] = rawVal;
     }
+
     novo[`${ref}_timestamp`] = parseTimestamp(item.time, timestampNow);
   }
 
   novo.timestamp = timestampNow;
   novo.version = Date.now();
+
   safeWriteJson(DATA_FILE, novo);
   return novo;
 }
