@@ -1,12 +1,12 @@
 /**
-  * =========================================================
-  * Sistema de Monitoramento de Reservatórios – HAG
-  * =========================================================
-  * Autor: Edisley Afonso Costa
-  * Projeto: Hospital Arnaldo Gavazza
-  * Versão: 1.0.6
-  * Atualização: 2026-05-06
-  * =========================================================
+    * =========================================================
+    * Sistema de Monitoramento de Reservatórios – HAG
+    * =========================================================
+    * Autor: Edisley Afonso Costa
+    * Projeto: Hospital Arnaldo Gavazza
+    * Versão: 1.0.7
+    * Atualização: 2026-05-06
+    * =========================================================
  */
 
 import express from "express";
@@ -28,6 +28,10 @@ const server = http.createServer(app);
 // ------------------------- MIDDLEWARES GLOBAIS -------------------------
 app.use(cors());
 app.use(compression());
+
+// Captura body bruto para debug do gateway
+app.use("/atualizar/api/v1_2/json/itg/data", express.raw({type: "*/*", limit: "10mb"}));
+
 app.use(express.json({ limit: "10mb", strict: false }));
 app.use(express.text({ type: "*/*", limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -42,7 +46,16 @@ app.use((req, res, next) => {
 // ------------------------- GATEWAY TRACE - DEBUG -------------------------
 app.use("/atualizar/api/v1_2/json/itg/data", (req, res, next) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  console.log(`[GATEWAY TRACE] IP: ${ip} | UA: ${req.headers['user-agent']} | Body: ${req._rawBody?.slice(0, 200)}`);
+  const ua = req.headers['user-agent'] || 'desconhecido';
+  const rawBody = req.body?.toString("utf8") || "";
+
+  // Ignora healthcheck do Python pra não poluir log
+  if (ua.includes('Python')) {
+    console.log(`[GATEWAY TRACE] Healthcheck Python ignorado - IP: ${ip}`);
+    return res.status(200).json({ ok: true, msg: "healthcheck" });
+  }
+
+  console.log(`[GATEWAY TRACE] IP: ${ip} | UA: ${ua} | Body: ${rawBody.slice(0, 200)}`);
   next();
 });
 
@@ -313,7 +326,17 @@ app.post(["/atualizar/api/v1_2/json/itg/data", "/atualizar", "/iot"], async (req
   try {
     console.log("🔥 DADO RECEBIDO DO GATEWAY");
 
-    const parsed = req.body;
+    // Parse do body bruto capturado pelo express.raw
+    const rawBody = req.body?.toString("utf8") || "{}";
+    let parsed;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch (e) {
+      console.error("Body inválido:", rawBody.slice(0, 200));
+      return res.status(400).json({ erro: "JSON inválido" });
+    }
+
+    // Ack de conexão do ITG200
     if (parsed.seq && (!parsed.data || parsed.signal!== undefined)) {
       return res.status(200).json({ ok: true, msg: "connection_ack" });
     }
