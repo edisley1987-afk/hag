@@ -1,167 +1,141 @@
 /* ==========================================================
-   DASHBOARD HAG 3D - PROFISSIONAL INDUSTRIAL
-   Versão: 1.0.5 - Hospital Arnaldo Gavazza
+   DASHBOARD HAG - ESTILO VIDRO TRANSPARENTE (GLASS)
    ========================================================== */
 
 :root {
-    --bg-dark: #081423;
-    --card-gradient: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
-    --cyan-neon: #00e5ff;
-    --green-neon: #00ff88;
-    --red-alert: #ff3d00;
-    --text-blue: #a8c8e8;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --neon-cyan: #00e5ff;
+    --neon-blue: #0077ff;
+    --neon-green: #00ff88;
+    --text-main: #ffffff;
 }
 
-.grid-reservatorios, .grid-bombas {
+/* Grid Layout */
+.grid-reservatorios {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 40px;
-    margin-bottom: 50px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    padding: 20px;
 }
 
-/* ================== CARDS (ESTILO VIDRO/NEUMORFISMO) ================== */
-.card {
-    background: var(--card-gradient);
-    border-radius: 18px;
-    padding: 28px 24px 32px;
-    border: 1px solid rgba(0, 229, 255, 0.15);
-    box-shadow: 0 20px 45px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-    backdrop-filter: blur(15px);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    position: relative;
-    overflow: visible; /* Permitir Tooltips */
+/* Card Principal Estilo Vidro */
+.card.reservatorio {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card::before {
-    content: "";
-    position: absolute; top: 0; left: 0; width: 100%; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
-}
-
-.card:hover {
-    transform: translateY(-10px);
-    border-color: var(--cyan-neon);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 15px 35px rgba(0, 229, 255, 0.15);
+.card.reservatorio:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
 }
 
 .card h2 {
-    color: #e0f7ff;
-    font-size: 18px;
-    margin: 0 0 22px 0;
-    text-align: center;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+    font-size: 16px;
+    color: var(--text-main);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
 }
 
-/* ================== TANQUE CILÍNDRICO 3D ================== */
+/* ================== A CAIXA D'ÁGUA TRANSPARENTE ================== */
 .tanque {
     position: relative;
-    width: 170px;
-    height: 230px;
-    margin: 25px auto;
-    background: linear-gradient(90deg, #0a1a2a 0%, #1a3a5a 25%, #2d5f8a 50%, #1a3a5a 75%, #0a1a2a 100%);
-    border-radius: 0 0 60px 60px;
-    border: 2px solid rgba(120, 180, 220, 0.3);
-    box-shadow: inset -25px 0 50px rgba(0,0,0,0.8), inset 25px 0 50px rgba(255,255,255,0.06);
+    width: 160px;
+    height: 220px;
+    margin: 0 auto;
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: 15px; /* Cantos arredondados da imagem */
     overflow: hidden;
-    z-index: 5;
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
-.tanque::before { /* Tampa */
+/* Linhas de medição horizontais */
+.tanque::after {
     content: "";
-    position: absolute; top: -18px; left: -4px; width: calc(100% + 8px); height: 36px;
-    background: radial-gradient(ellipse at center, #5a8bb8 0%, #2a4a66 60%, #112d47 100%);
-    border-radius: 50%; border: 3px solid #6a9cc8; z-index: 10;
-}
-
-/* ================== ÁGUA E FÍSICA ================== */
-.agua {
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
-    border-radius: 0 0 55px 55px;
-    transition: height 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    z-index: 1; overflow: hidden;
-}
-
-.onda {
-    position: absolute; top: -10px; left: -60%; width: 220%; height: 20px;
-    background: radial-gradient(ellipse at center, rgba(255,255,255,0.28) 0%, transparent 70%);
-    animation: onda 4s ease-in-out infinite;
-    filter: blur(2px); z-index: 4;
-}
-
-@keyframes onda {
-    0%, 100% { transform: translateX(0) scaleY(1); }
-    50% { transform: translateX(30%) scaleY(1.25); }
-}
-
-.agua.balancando { animation: balanco 1.3s ease-in-out; }
-@keyframes balanco {
-    25% { transform: skewX(1.8deg); }
-    75% { transform: skewX(-1.2deg); }
-}
-
-/* ================== CORES DE NÍVEL ================== */
-.nivel-cheio { background: linear-gradient(to top, #00c853, #b9f6ca); }
-.nivel-alto { background: linear-gradient(to top, #00b0ff, #b3e5fc); }
-.nivel-medio { background: linear-gradient(to top, #0077ff, #a7ffeb); }
-.nivel-baixo { background: linear-gradient(to top, #ff9800, #ffe082); }
-.nivel-critico { 
-    background: linear-gradient(to top, #d50000, #ffab91); 
-    animation: pulsar-critico 1.6s infinite;
-}
-
-@keyframes pulsar-critico {
-    50% { opacity: 0.7; }
-}
-
-/* ================== BOMBAS E ANIMAÇÃO ================== */
-.status-icon {
-    font-size: 45px;
-    display: flex;
-    justify-content: center;
-    margin: 15px 0;
-}
-
-@keyframes spin-industrial {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.card.bomba.ligada { border-color: var(--green-neon); box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
-.card.bomba.desligada { opacity: 0.8; }
-
-/* ================== TOOLTIP PROFISSIONAL ================== */
-.tooltip-scada {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 100% 25px;
     pointer-events: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    backdrop-filter: blur(10px);
 }
 
-/* ================== ESCALA LATERAL ================== */
-.escala {
-    position: absolute; right: -52px; top: 20px; height: 78%;
-    display: flex; flex-direction: column; justify-content: space-between;
-    color: #7aa8cc; font-size: 11px; font-weight: 700; z-index: 8;
+/* Água com Brilho Neon (Glow) */
+.agua {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--neon-blue) 100%);
+    transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -5px 20px rgba(0, 229, 255, 0.4);
 }
 
-.escala span::before {
-    content: ""; position: absolute; right: 0; top: 50%; width: 15px; height: 1px;
-    background: linear-gradient(90deg, #4a7fa8, transparent);
+/* Efeito de onda no topo da água */
+.onda {
+    position: absolute;
+    top: -10px;
+    width: 200%;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    filter: blur(4px);
+    animation: moveOnda 3s ease-in-out infinite;
 }
 
-/* ================== INFO E VALORES ================== */
-.info .valor {
-    font-size: 38px; font-weight: 900;
-    background: linear-gradient(135deg, #00e5ff 0%, #fff 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+@keyframes moveOnda {
+    0%, 100% { transform: translateX(-25%); }
+    50% { transform: translateX(0%); }
 }
 
-.info .litros { font-size: 15px; color: var(--text-blue); margin-top: 5px; }
+/* Texto Centralizado dentro do Tanque */
+.label-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+}
 
-/* ================== RESPONSIVIDADE ================== */
-@media (max-width: 768px) {
-    .tanque { width: 140px; height: 190px; }
-    .escala { right: 5px; color: rgba(255,255,255,0.3); }
-    .grid-reservatorios { gap: 20px; }
+.label-percent {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.label-litros {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Status inferior (Bolinha verde/vermelha) */
+.status-badge {
+    margin-top: 15px;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.status-badge.normal { color: var(--neon-green); }
+.status-badge.critico { color: #ff3d00; animation: blink 1s infinite; }
+
+@keyframes blink { 
+    50% { opacity: 0.5; } 
+}
+
+/* Bombas e Pressões (Seguindo o mesmo estilo) */
+.card.bomba, .card.pressao {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
 }
