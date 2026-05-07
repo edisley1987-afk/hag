@@ -34,7 +34,6 @@
 .kpi-card.value { font-size: 28px; font-weight: bold; color: #60a5fa; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
-
 .card {
     background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px;
     border: 1px solid rgba(148, 163, 184, 0.2); transition: all 0.3s;
@@ -42,353 +41,54 @@
 .card:hover { border-color: #60a5fa; box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2); }
 .card h2 { font-size: 16px; margin-bottom: 15px; color: #cbd5e1; }
 
-.valor-pressao { font-size: 28px; font-weight: bold; color: #60a5fa; text-align: center; margin: 20px 0; }
-
-.chart-container { background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); }
-  canvas { max-height: 300px; }
-
-  body.sem-sinal { opacity: 0.7; }
-
-/* ==========================================================
-   RESERVATÓRIOS 3D PROFISSIONAL - PADRÃO INDUSTRIAL
-   ========================================================== */
-.grid-reservatorios {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 40px;
-  margin-bottom: 50px;
-}
-
-/* Card plano para legibilidade em painel 24/7 */
-.card.reservatorio {
-  background: linear-gradient(135deg, rgba(15, 35, 60, 0.85) 0%, rgba(8, 20, 35, 0.95) 100%);
-  border-radius: 18px;
-  padding: 28px 24px 32px;
-  border: 1px solid rgba(0, 229, 255, 0.15);
-  box-shadow:
-    0 20px 45px rgba(0,0,0,0.6),
-    0 8px 20px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter: blur(15px);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
-  overflow: hidden;
-  text-align: center;
-}
-
-/* Linha de brilho superior no card */
-.card.reservatorio::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
-}
-
-.card.reservatorio:hover {
-  transform: translateY(-10px);
-  border-color: rgba(0, 229, 255, 0.4);
-  box-shadow:
-    0 30px 60px rgba(0,0,0,0.7),
-    0 15px 35px rgba(0, 229, 255, 0.25),
-    inset 0 1px 0 rgba(255,255,255,0.1);
-}
-
-.card.reservatorio.alerta {
-  border-color: #ff3d00;
-  box-shadow:
-    0 20px 45px rgba(255, 61, 0, 0.4),
-    0 8px 20px rgba(255, 61, 0, 0.2),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-  animation: alerta-pulse 2s infinite;
-}
-
-@keyframes alerta-pulse {
- 0%, 100% { box-shadow: 0 20px 45px rgba(255, 61, 0, 0.4), 0 8px 20px rgba(255, 61, 0, 0.2); }
- 50% { box-shadow: 0 25px 55px rgba(255, 61, 0, 0.6), 0 12px 30px rgba(255, 61, 0, 0.4); }
-}
-
-.card.reservatorio h2 {
-  color: #e0f7ff;
-  font-size: 18px;
-  margin: 0 0 22px 0;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.9);
-}
-
-/* ================== TANQUE CILÍNDRICO METÁLICO ================== */
 .tanque {
-  position: relative;
-  width: 170px;
-  height: 230px;
-  margin: 25px auto;
-  background: linear-gradient(90deg,
-      #0a1a2a 0%,
-      #1a3a5a 25%,
-      #2d5f8a 50%,
-      #1a3a5a 75%,
-      #0a1a2a 100%);
-  border-radius: 0 0 60px 60px;
-  border: 2px solid rgba(120, 180, 220, 0.3);
-  box-shadow:
-    inset -25px 0 50px rgba(0,0,0,0.8),
-    inset 25px 0 50px rgba(255,255,255,0.06),
-    inset 0 -40px 60px rgba(0,0,0,0.85);
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-}
-
-/* Tampa superior com relevo metálico */
-.tanque::before {
-  content: "";
-  position: absolute;
-  top: -18px;
-  left: -4px;
-  width: calc(100% + 8px);
-  height: 36px;
-  background: radial-gradient(ellipse at center, #5a8bb8 0%, #2a4a66 60%, #112d47 100%);
-  border-radius: 50%;
-  border: 3px solid #6a9cc8;
-  box-shadow:
-    0 -6px 18px rgba(0,0,0,0.9),
-    inset 0 4px 8px rgba(255,255,255,0.25),
-    inset 0 -2px 4px rgba(0,0,0,0.5);
-  z-index: 10;
-}
-
-/* Reflexo de vidro na parede interna */
-.tanque::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(95deg,
-    rgba(255,255,255,0.15) 0%,
-    transparent 25%,
-    transparent 70%,
-    rgba(255,255,255,0.08) 100%);
-  pointer-events: none;
-  z-index: 6;
-  border-radius: 0 0 60px 60px;
-}
-
-/* Escala de nível lateral */
+    position: relative; width: 100%; height: 200px; background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px; overflow: hidden; border: 2px solid #334155; margin-bottom: 15px;
+  }
 .escala {
-  position: absolute;
-  right: -52px;
-  top: 20px;
-  height: 78%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #7aa8cc;
-  font-size: 11px;
-  font-weight: 700;
-  text-shadow: 2px 2px 5px rgba(0,0,0,0.95);
-  z-index: 8;
-  letter-spacing: 0.5px;
-}
-
-.escala span {
-  position: relative;
-  padding-right: 8px;
-}
-
-.escala span::before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  width: 15px;
-  height: 1px;
-  background: linear-gradient(90deg, #4a7fa8, transparent);
-  transform: translateY(-50%);
-}
-
-/* ================== ÁGUA COM FÍSICA REAL ================== */
+    position: absolute; right: 5px; top: 0; height: 100%; display: flex; flex-direction: column;
+    justify-content: space-between; padding: 10px 0; font-size: 10px; color: #64748b; z-index: 2;
+  }
 .agua {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 0%;
-  border-radius: 0 0 55px 55px;
-  transition: height 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 1;
-  overflow: hidden;
-  background: linear-gradient(to top,
-    #003d7a 0%,
-    #0066cc 30%,
-    #0099ff 60%,
-    #40c4ff 85%,
-    #80d8ff 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(0,40,100,0.7),
-    inset 0 10px 20px rgba(255,255,255,0.2);
-}
-
-/* Menisco - curvatura da superfície da água */
-.agua::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 5%;
-  width: 90%;
-  height: 8px;
-  background: radial-gradient(ellipse at center,
-    rgba(255,255,255,0.5) 0%,
-    rgba(255,255,255,0.2) 40%,
-    transparent 70%);
-  border-radius: 50%;
-  transform: translateY(-50%);
-  filter: blur(1.5px);
-  z-index: 3;
-}
-
-/* Reflexo lateral da água na parede */
-.agua::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0.18) 0%,
-    rgba(255,255,255,0.06) 50%,
-    transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Onda suave na superfície */
+    position: absolute; bottom: 0; width: 100%; height: 0%;
+    background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
+    transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1;
+  }
+.agua.nivel-cheio { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); }
+.agua.nivel-alto { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
+.agua.nivel-medio { background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%); }
+.agua.nivel-baixo { background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); }
+.agua.nivel-critico { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
 .onda {
-  position: absolute;
-  top: -10px;
-  left: -60%;
-  width: 220%;
-  height: 20px;
-  background: radial-gradient(ellipse at center,
-    rgba(255,255,255,0.28) 0%,
-    rgba(255,255,255,0.1) 45%,
-    transparent 70%);
-  animation: onda 4s ease-in-out infinite;
-  filter: blur(2px);
-  z-index: 4;
-}
+    position: absolute; top: -10px; width: 200%; height: 20px;
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.3) 0%, transparent 50%);
+    animation: wave 3s infinite linear; opacity: 0.5;
+  }
+  @keyframes wave { 0% { transform: translateX(-50%); } 100% { transform: translateX(0%); } }
+.agua.balancando.onda { animation: wave-bounce 1.3s ease-in-out; }
+  @keyframes wave-bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    25% { transform: translateX(-40%) translateY(-5px); }
+    75% { transform: translateX(-60%) translateY(5px); }
+  }
 
-@keyframes onda {
- 0%, 100% { transform: translateX(0) scaleY(1); }
- 50% { transform: translateX(30%) scaleY(1.25); }
-}
+.info { display: flex; justify-content: space-between; align-items: center; }
+.valor { font-size: 32px; font-weight: bold; }
+.litros { font-size: 14px; color: #94a3b8; }
+.card.alerta { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
 
-/* Balanço físico quando nível muda */
-.agua.balancando {
-  animation: balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes balanco {
- 0%, 100% { transform: skewX(0deg) scaleX(1); }
- 25% { transform: skewX(1.8deg) scaleX(1.015); }
- 75% { transform: skewX(-1.2deg) scaleX(0.985); }
-}
-
-/* ================== CORES POR NÍVEL ================== */
-.agua.nivel-cheio {
-  background: linear-gradient(to top, #00c853 0%, #00e676 50%, #69f0ae 85%, #b9f6ca 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(0,120,60,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.3),
-    0 0 30px rgba(0,230,118,0.3);
-}
-.agua.nivel-alto {
-  background: linear-gradient(to top, #00b0ff 0%, #40c4ff 50%, #80d8ff 85%, #b3e5fc 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(0,80,160,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 25px rgba(64,196,255,0.25);
-}
-.agua.nivel-medio {
-  background: linear-gradient(to top, #0077ff 0%, #00ddff 50%, #64ffff 85%, #a7ffeb 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(0,60,120,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 20px rgba(0,221,255,0.2);
-}
-.agua.nivel-baixo {
-  background: linear-gradient(to top, #ff9800 0%, #ffc107 50%, #ffd54f 85%, #ffe082 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(200,120,0,0.6),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 20px rgba(255,193,7,0.2);
-}
-.agua.nivel-critico {
-  background: linear-gradient(to top, #d50000 0%, #ff3d00 50%, #ff6e40 85%, #ffab91 100%);
-  box-shadow:
-    inset 0 -25px 50px rgba(150,0,0,0.7),
-    inset 0 10px 20px rgba(255,255,255,0.25),
-    0 0 35px rgba(255,61,0,0.4);
-  animation: pulsar-critico 1.6s infinite;
-}
-
-@keyframes pulsar-critico {
- 0%, 100% { opacity: 1; transform: scale(1); }
- 50% { opacity: 0.85; transform: scale(1.02); }
-}
-
-/* ================== INFO DO RESERVATÓRIO ================== */
-.info {
-  text-align: center;
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.info.valor {
-  font-size: 38px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #00e5ff 0%, #40d4ff 50%, #80e0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 4px 25px rgba(0,229,255,0.5);
-  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.8));
-  line-height: 1;
-}
-
-.info.litros {
-  font-size: 15px;
-  color: #a8c8e8;
-  margin-top: 10px;
-  font-weight: 600;
-  text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
-  letter-spacing: 0.5px;
-}
-
-/* ================== BOMBAS ================== */
 .bomba.ligada.status-icon { color: #22c55e; }
 .bomba.desligada.status-icon { color: #ef4444; }
 .bomba.stale.status-icon { color: #64748b; }
 .status-icon { font-size: 40px; text-align: center; margin: 10px 0; }
 .ciclos { font-size: 12px; color: #94a3b8; text-align: center; }
 
-/* Responsivo */
-@media (max-width: 768px) {
- .tanque {
-    width: 145px;
-    height: 200px;
-  }
- .grid-reservatorios {
-    gap: 30px;
-  }
-}
+.valor-pressao { font-size: 28px; font-weight: bold; color: #60a5fa; text-align: center; margin: 20px 0; }
+
+.chart-container { background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); }
+  canvas { max-height: 300px; }
+
+  body.sem-sinal { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -409,7 +109,7 @@
     <div class="kpi-card"><h3>Consumo Osmose Hoje</h3><div class="value" id="kpiOsmose">0 L</div></div>
   </div>
 
-  <div class="grid-reservatorios" id="areaReservatorios"></div>
+  <div class="grid" id="areaReservatorios"></div>
   <div class="grid" id="areaBombas"></div>
   <div class="grid" id="areaPressoes"></div>
 
@@ -547,7 +247,7 @@ function renderBombas(lista) {
         el.querySelector("h2").innerText = b.nome;
         el.querySelector(".status-icon").innerText = desconhecido? "⚪" : ligada? "🟢" : "🔴";
         el.querySelector(".valor").innerText = desconhecido? "SEM DADOS" : ligada? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".ciclos").innerText = `${b.ciclo?? 0} ciclos`;
+        el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
     });
 }
 
@@ -566,16 +266,13 @@ function renderPressoes(lista) {
             area.appendChild(el);
         }
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao?? 0).toFixed(2)} bar`;
+        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
     });
 }
 
 async function carregarHistorico() {
     try {
-        const res = await fetch("/historico", {
-            cache: "no-store",
-            headers: { "Authorization": "Basic " + btoa("118582:118582") }
-        });
+        const res = await fetch("/historico", { cache: "no-store" });
         const data = await res.json();
         renderHistoricoChart(data);
     } catch (e) {
@@ -597,7 +294,7 @@ function renderHistoricoChart(data) {
 
     const datasets = Object.keys(data).map(setor => ({
         label: setor.charAt(0).toUpperCase() + setor.slice(1),
-        data: data[setor] || [],
+        data: data[setor],
         borderWidth: 2,
         tension: 0.4,
         borderColor: cores[setor] || '#60a5fa',
@@ -654,10 +351,7 @@ function conectarWS() {
 
 async function fallbackHTTP() {
     try {
-        const res = await fetch(API + "?t=" + Date.now(), {
-            cache: "no-store",
-            headers: { "Authorization": "Basic " + btoa("118582:118582") }
-        });
+        const res = await fetch(API + "?t=" + Date.now(), { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         processarPayload(data);
