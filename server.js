@@ -216,13 +216,35 @@ const MAPA_RESERVATORIOS = {
 // ================= CONSUMO HOJE =================
 function calcularConsumoHoje(hist) {
   const calc = (ref) => {
-    const p = hist[ref]?.pontos || [];
-    if (p.length < 2) return 0;
-    return Math.max(0, p[0].valor - p[p.length - 1].valor) * SENSORES[ref].capacidade;
+    const sensor = SENSORES[ref];
+    const reg = hist[ref];
+    if (!sensor || !reg || !reg.pontos || reg.pontos.length < 2) return 0;
+
+    let totalDescidaBruta = 0;
+    const pontos = reg.pontos;
+
+    for (let i = 1; i < pontos.length; i++) {
+      const vAnterior = pontos[i - 1].valor;
+      const vAtual = pontos[i].valor;
+      // Soma apenas quando o nível cai
+      if (vAtual < vAnterior) {
+        totalDescidaBruta += (vAnterior - vAtual);
+      }
+    }
+
+    const span = (sensor.leituraCheio - sensor.leituraVazio) || 1;
+    const consumoLitros = (totalDescidaBruta / span) * sensor.capacidade;
+    
+    return Math.round(consumoLitros);
   };
+
   return {
+    // Nomes duplos para garantir que o seu card encontre o dado
+    elevador: calc("Reservatorio_Elevador_current"),
     elevador_hoje: calc("Reservatorio_Elevador_current"),
+    lavanderia: calc("Reservatorio_lavanderia_current"),
     lavanderia_hoje: calc("Reservatorio_lavanderia_current"),
+    osmose: calc("Reservatorio_Osmose_current"),
     osmose_hoje: calc("Reservatorio_Osmose_current")
   };
 }
