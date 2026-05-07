@@ -182,46 +182,63 @@ function renderReservatorios(lista) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card reservatorio";
-            el.innerHTML = `
-                <h2>${r.nome}</h2>
-                <div class="tanque">
-                    <div class="escala"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
-                    <div class="agua"><div class="onda"></div></div>
-                </div>
-                <div class="info">
-                    <div class="valor">0%</div>
-                    <div class="litros">0 L</div>
-                </div>
-            `;
             area.appendChild(el);
         }
 
-        const agua = el.querySelector(".agua");
-        const valor = el.querySelector(".valor");
-        const litros = el.querySelector(".litros");
-
         const nivel = Math.min(100, Math.max(0, r.percent));
         const nivelSuavizado = Math.round(nivel);
-        const nivelAnterior = Number(agua.dataset.nivel || 0);
+        const isCritico = nivel < 20;
 
-        if (Math.abs(nivelSuavizado - nivelAnterior) >= 1) {
-            agua.classList.add("balancando");
-            setTimeout(() => agua.classList.remove("balancando"), 1300);
-        }
+        // Injeta a estrutura 3D com o Tooltip
+        el.innerHTML = `
+            <h2>${r.nome}</h2>
+            
+            <div class="tooltip-scada" style="visibility: hidden; position: absolute; background: rgba(8, 20, 35, 0.95); border: 1px solid #00e5ff; padding: 10px; border-radius: 8px; z-index: 100; font-size: 12px; top: -10px; left: 50%; transform: translateX(-50%); transition: 0.3s; opacity: 0;">
+                <strong style="color: #00e5ff">DETALHES DO SETOR</strong><br>
+                Capacidade: ${formatar(r.capacidade)} L<br>
+                Pressão Saída: ${r.pressao_saida || '0.00'} bar
+            </div>
 
+            <div class="tanque">
+                <div class="escala">
+                    <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
+                </div>
+                <div class="agua">
+                    <div class="onda"></div>
+                </div>
+            </div>
+            <div class="info">
+                <div class="valor">${nivelSuavizado}%</div>
+                <div class="litros">${formatar(r.current_liters)} L</div>
+            </div>
+        `;
+
+        const agua = el.querySelector(".agua");
+        const valor = el.querySelector(".valor");
+
+        // Alerta pulsante do seu CSS
+        if (isCritico) el.classList.add("alerta"); 
+        else el.classList.remove("alerta");
+
+        // Atualiza altura e cor baseada no seu CSS
         agua.style.height = `${nivelSuavizado}%`;
-        agua.dataset.nivel = nivelSuavizado;
-        agua.className = "agua";
-
+        agua.className = "agua"; 
+        
         if (nivel >= 95) agua.classList.add("nivel-cheio");
         else if (nivel >= 70) agua.classList.add("nivel-alto");
         else if (nivel >= 40) agua.classList.add("nivel-medio");
         else if (nivel >= 20) agua.classList.add("nivel-baixo");
-        else agua.classList.add("nivel-critico");
+        else agua.classList.add("nivel-critico", "balancando");
 
-        if (nivel < 20) el.classList.add("alerta"); else el.classList.remove("alerta");
-        valor.innerText = `${nivelSuavizado}%`;
-        litros.innerText = `${formatar(r.current_liters)} L`;
+        // Lógica de exibir/esconder o tooltip no hover via JS (mais estável)
+        el.onmouseenter = () => { 
+            const tt = el.querySelector(".tooltip-scada");
+            tt.style.visibility = "visible"; tt.style.opacity = "1"; tt.style.top = "-50px";
+        };
+        el.onmouseleave = () => {
+            const tt = el.querySelector(".tooltip-scada");
+            tt.style.visibility = "hidden"; tt.style.opacity = "0"; tt.style.top = "-10px";
+        };
     });
 }
 
