@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 1.0.4 - Compatível com Server 1.0.1
+ * Versão 1.0.5 - Compatível com CSS 3D Industrial
  */
 
 const API = "/api/dashboard";
