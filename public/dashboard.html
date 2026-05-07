@@ -3,234 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAG - Monitoramento de Reservatórios</title>
-    <style>
-        /* ==========================================================
-           CSS CONSOLIDADO - ESTILO VIDRO TRANSPARENTE (GLASS)
-           ========================================================== */
-        :root {
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --neon-cyan: #00e5ff;
-            --neon-blue: #0077ff;
-            --neon-green: #00ff88;
-            --text-main: #ffffff;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--glass-border);
-            margin-bottom: 30px;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 25px;
-        }
-
-        /* CARD ESTILO VIDRO */
-        .card {
-            background: rgba(30, 41, 59, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .card h2 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 0;
-            opacity: 0.8;
-        }
-
-        /* A CAIXA D'ÁGUA TRANSPARENTE */
-        .tanque {
-            position: relative;
-            width: 140px;
-            height: 190px;
-            margin: 15px auto;
-            background: var(--glass-bg);
-            border: 2px solid var(--glass-border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        /* Linhas de medição horizontais internas */
-        .tanque::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 100% 20px;
-            pointer-events: none;
-        }
-
-        /* ÁGUA COM GLOW NEON */
-        .agua {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--neon-blue) 100%);
-            transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 -5px 20px rgba(0, 229, 255, 0.4);
-        }
-
-        /* TEXTO CENTRALIZADO NO TANQUE */
-        .label-container {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            text-align: center;
-            width: 100%;
-        }
-
-        .label-percent {
-            font-size: 30px;
-            font-weight: 800;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
-
-        .label-litros {
-            font-size: 11px;
-            opacity: 0.7;
-        }
-
-        /* STATUS BADGE */
-        .status-badge {
-            margin-top: 15px;
-            font-size: 11px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .status-badge.normal { color: var(--neon-green); }
-        .status-badge.critico { color: #ff3d00; }
-
-        /* BOMBAS */
-        .bomba-icon {
-            font-size: 40px;
-            margin: 15px 0;
-        }
-        
-        .spin {
-            animation: spin 2s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-    </style>
-</head>
+    <title>HAG SCADA - Dashboard Profissional</title>
+    </head>
 <body>
 
-    <header>
-        <div>
-            <h1 style="margin:0; font-size: 22px;">Monitoramento Hospital Arnaldo Gavazza</h1>
-            <span style="font-size: 12px; color: var(--neon-green);">● Tempo real conectado</span>
+    <nav class="sidebar">
+        <div class="logo-area">
+            <span style="font-size: 28px;">💧</span>
+            <span class="nav-text" style="font-weight: bold; margin-left: 10px;">HAG SCADA</span>
         </div>
-        <div id="relogio" style="font-size: 18px;">--:--:--</div>
-    </header>
+        <ul>
+            <li class="active"><span>📊</span> <span class="nav-text">Dashboard</span></li>
+            <li><span>📈</span> <span class="nav-text">Gráficos</span></li>
+            <li><span>📱</span> <span class="nav-text">Dispositivos</span></li>
+            <li><span>⚠️</span> <span class="nav-text">Alertas</span></li>
+            <li><span>⚙️</span> <span class="nav-text">Configurações</span></li>
+        </ul>
+        <div style="margin-top: auto; padding: 20px; font-size: 10px; opacity: 0.4;">
+            V6.1 HARDENED
+        </div>
+    </nav>
 
-    <h3 style="color: var(--neon-cyan)">RESERVATÓRIOS</h3>
-    <div id="areaReservatorios" class="grid-container">
+    <main class="main-content">
+        
+        <header class="top-bar">
+            <div class="titulo-area">
+                <h1>SISTEMA DE MONITORAMENTO DE CAIXA D'ÁGUA</h1>
+                <p>Hospital Arnaldo Gavazza | Unidade de Monitoramento Industrial</p>
+            </div>
+            <div class="status-tempo">
+                <div id="relogio" style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">00:00:00</div>
+                <div style="color: var(--neon-green); font-size: 12px; text-align: right;">● TEMPO REAL CONECTADO</div>
+            </div>
+        </header>
+
+        <h3 style="color: var(--neon-cyan); margin-bottom: 20px; font-size: 14px;">RESERVATÓRIOS PRINCIPAIS</h3>
+        <section id="areaReservatorios" class="grid-reservatorios">
+            </section>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 40px;">
+            
+            <div>
+                <h3 style="color: var(--neon-cyan); margin-bottom: 20px; font-size: 14px;">ESTADO DAS BOMBAS</h3>
+                <div id="areaBombas" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    </div>
+            </div>
+
+            <div>
+                <h3 style="color: var(--neon-cyan); margin-bottom: 20px; font-size: 14px;">SENSORES DE PRESSÃO</h3>
+                <div id="areaPressao" style="display: flex; flex-direction: column; gap: 20px;">
+                    </div>
+            </div>
+
         </div>
 
-    <h3 style="color: var(--neon-cyan); margin-top: 50px;">ESTADO DAS BOMBAS</h3>
-    <div id="areaBombas" class="grid-container">
-        </div>
+    </main>
 
     <script>
-        // Simulação de Dados (O seu WebSocket enviará isso)
-        const mockData = {
-            reservatorios: [
-                { nome: "Elevador", percent: 83, capacidade: 20000, current_liters: 16659, setor: "elev" },
-                { nome: "Osmose", percent: 94, capacidade: 200, current_liters: 188, setor: "osm" },
-                { nome: "Cme", percent: 100, capacidade: 1000, current_liters: 1000, setor: "cme" },
-                { nome: "Abrandada", percent: 94, capacidade: 9000, current_liters: 8423, setor: "abr" },
-                { nome: "Lavanderia", percent: 90, capacidade: 10000, current_liters: 9033, setor: "lav" }
-            ],
-            bombas: [
-                { nome: "Bomba 01", estado: "desligada", ciclo: 1 },
-                { nome: "Bomba 02", estado: "ligada", ciclo: 0 },
-                { nome: "Bomba Osmose", estado: "ligada", ciclo: 716 }
-            ]
-        };
+        // Simulação de dados para os novos cards de pressão
+        const dadosPressao = [
+            { nome: "Saída Osmose", valor: 3.67, unidade: "bar" },
+            { nome: "Retorno Osmose", valor: 1.56, unidade: "bar" },
+            { nome: "Saída CME", valor: 0.51, unidade: "bar" }
+        ];
 
-        function formatar(n) {
-            return Number(n).toLocaleString('pt-BR');
-        }
-
-        function renderReservatorios(lista) {
-            const area = document.getElementById("areaReservatorios");
-            if (!area) return;
-
-            area.innerHTML = ""; // Limpa para atualizar
-
-            lista.forEach(r => {
-                const isCritico = r.percent < 20;
-                const card = document.createElement("div");
-                card.className = "card reservatorio";
-                
-                card.innerHTML = `
-                    <h2>${r.nome}</h2>
-                    <div class="tanque">
-                        <div class="label-container">
-                            <div class="label-percent">${Math.round(r.percent)}%</div>
-                            <div class="label-litros">${formatar(r.current_liters)} L</div>
-                        </div>
-                        <div class="agua" style="height: ${r.percent}%"></div>
-                    </div>
-                    <div class="status-badge ${isCritico ? 'critico' : 'normal'}">
-                        ● ${isCritico ? 'CRÍTICO' : 'NORMAL'}
-                    </div>
-                `;
-                area.appendChild(card);
-            });
-        }
-
-        function renderBombas(lista) {
-            const area = document.getElementById("areaBombas");
-            if (!area) return;
+        // Função para renderizar os cards de pressão com o novo estilo
+        function renderPressao() {
+            const area = document.getElementById("areaPressao");
             area.innerHTML = "";
-
-            lista.forEach(b => {
-                const ligada = b.estado === "ligada";
+            
+            dadosPressao.forEach(p => {
                 const card = document.createElement("div");
-                card.className = `card bomba ${b.estado}`;
+                card.className = "card"; 
+                // Usando o mesmo estilo de vidro dos outros cards
+                card.style.padding = "20px";
+                card.style.display = "flex";
+                card.style.justifyContent = "space-between";
+                card.style.alignItems = "center";
                 
                 card.innerHTML = `
-                    <h2>${b.nome}</h2>
-                    <div class="bomba-icon ${ligada ? 'spin' : ''}" style="color: ${ligada ? 'var(--neon-green)' : '#ff3d00'}">
-                        ${ligada ? '⚙️' : '🛑'}
+                    <div style="text-align: left;">
+                        <div style="font-size: 12px; opacity: 0.6; text-transform: uppercase;">${p.nome}</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--neon-cyan);">${p.valor} <span style="font-size: 14px;">${p.unidade}</span></div>
                     </div>
-                    <div style="font-weight: bold; color: ${ligada ? 'var(--neon-green)' : '#ff3d00'}">
-                        ${ligada ? 'EM OPERAÇÃO' : 'INATIVA'}
+                    <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--neon-blue); display: flex; align-items: center; justify-content: center; opacity: 0.5;">
+                        <span style="font-size: 10px;">PSI</span>
                     </div>
-                    <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">${b.ciclo} ciclos hoje</div>
                 `;
                 area.appendChild(card);
             });
@@ -241,10 +99,11 @@
             document.getElementById("relogio").innerText = new Date().toLocaleTimeString();
         }, 1000);
 
-        // Inicialização
-        renderReservatorios(mockData.reservatorios);
-        renderBombas(mockData.bombas);
-
+        // Inicializar (Aqui você chamaria suas funções de renderização de tanques e bombas também)
+        renderPressao();
+        // renderReservatorios(seusDados);
+        // renderBombas(seusDados);
     </script>
+
 </body>
 </html>
