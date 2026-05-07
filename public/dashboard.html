@@ -256,15 +256,38 @@ function renderBombas(lista) {
             el = document.createElement("div");
             el.id = id;
             el.className = "card bomba";
-            el.innerHTML = `<h2></h2><div class="status-icon"></div><div class="valor"></div><div class="ciclos"></div>`;
             area.appendChild(el);
         }
 
-        el.className = `card bomba ${desconhecido? "stale" : ligada? "ligada" : "desligada"}`;
-        el.querySelector("h2").innerText = b.nome;
-        el.querySelector(".status-icon").innerText = desconhecido? "⚪" : ligada? "🟢" : "🔴";
-        el.querySelector(".valor").innerText = desconhecido? "SEM DADOS" : ligada? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
+        // Atualiza as classes para o CSS aplicar as cores certas
+        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
+        
+        // Define qual ícone usar e se ele deve girar
+        let icone = "🛑"; // Padrão desligada
+        let animacao = "";
+        let corStatus = "#ff3d00";
+
+        if (desconhecido) {
+            icone = "⚪";
+            corStatus = "#94a3b8";
+        } else if (ligada) {
+            icone = "⚙️"; // Engrenagem para quando está ligada
+            animacao = "animation: spin-industrial 2s linear infinite;";
+            corStatus = "#00ff88";
+        }
+
+        el.innerHTML = `
+            <h2>${b.nome}</h2>
+            <div class="status-icon" style="font-size: 40px; margin: 15px 0; transition: all 0.5s; ${animacao} color: ${corStatus};">
+                ${icone}
+            </div>
+            <div class="valor" style="font-size: 18px; font-weight: bold; color: ${corStatus};">
+                ${desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA"}
+            </div>
+            <div class="ciclos" style="color: #a8c8e8; margin-top: 5px;">
+                ${b.ciclo || 0} ciclos hoje
+            </div>
+        `;
     });
 }
 
