@@ -213,6 +213,20 @@ const MAPA_RESERVATORIOS = {
   lavanderia: "Reservatorio_lavanderia_current"
 };
 
+// ================= CONSUMO HOJE =================
+function calcularConsumoHoje(hist) {
+  const calc = (ref) => {
+    const p = hist[ref]?.pontos || [];
+    if (p.length < 2) return 0;
+    return Math.max(0, p[0].valor - p[p.length - 1].valor) * SENSORES[ref].capacidade;
+  };
+  return {
+    elevador_hoje: calc("Reservatorio_Elevador_current"),
+    lavanderia_hoje: calc("Reservatorio_lavanderia_current"),
+    osmose_hoje: calc("Reservatorio_Osmose_current")
+  };
+}
+
 // ================= CALIBRAÇÃO ESTÁVEL (SCADA GRADE) =================
 const MEMORIA_NIVEL = {}; // memória isolada por sensor
 
@@ -251,6 +265,54 @@ function calcularNivel(ref, leitura) {
     percentual: filtrado,
     litros,
     altura: alturaCm
+  };
+}
+
+// =========================================================
+// MONTAGEM DO DASHBOARD - ÚNICA VERSÃO
+// =========================================================
+function buildDashboard(dados) {
+  const hist = safeReadJson(HIST_FILE, {});
+  const kpis = calcularConsumoHoje(hist);
+
+  const reservatorios = Object.keys(MAPA_RESERVATORIOS).map(setor => {
+    const ref = MAPA_RESERVATORIOS[setor];
+    const sensor = SENSORES[ref];
+    const leitura = Number(dados[ref] || 0);
+    const { percentual, litros, altura } = calcularNivel(ref, leitura);
+    return {
+      nome: setor.charAt(0).toUpperCase() + setor.slice(1),
+      setor,
+      percent: Math.round(percentual * 100),
+      current_liters: litros,
+      altura_cm: altura,
+      capacidade: sensor.capacidade
+    };
+  });
+
+  const pressoes = [
+    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"]?? null },
+    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"]?? null },
+    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"]?? null }
+  ];
+
+  const bombas = [
+    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
+    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
+    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
+  ];
+
+  const bombasLigadas = bombas.filter(b => b.estado === "ligada").map(b => b.nome);
+
+  return {
+    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+    reservatorios,
+    pressoes,
+    bombas,
+    bombasLigadas,
+    kpis,
+    manutencao: getManutencao().ativo,
+    alerta_consumo: safeReadJson(ALERTA_FILE, {})
   };
 }
 
@@ -418,6 +480,7 @@ function registrarHistorico(dadosConvertidos) {
     const ultimo = reg.pontos.at(-1);
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
       reg.pontos.push({
+        timestamp: Date.now(),
         hora: new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" }),
         valor
       });
@@ -436,50 +499,6 @@ function aplicarFailSafeBombas(dados) {
     dados[`${ref}_stale`] = stale;
   });
   return dados;
-}
-
-// =========================================================
-// MONTAGEM DO DASHBOARD
-// =========================================================
-function buildDashboard(dados) {
-  const reservatorios = Object.keys(MAPA_RESERVATORIOS).map(setor => {
-    const ref = MAPA_RESERVATORIOS[setor];
-    const sensor = SENSORES[ref];
-    const leitura = Number(dados[ref] || 0);
-    const { percentual, litros, altura } = calcularNivel(ref, leitura);
-    return {
-      nome: setor.charAt(0).toUpperCase() + setor.slice(1),
-      setor,
-      percent: Math.round(percentual * 100),
-      current_liters: litros,
-      altura_cm: altura,
-      capacidade: sensor.capacidade
-    };
-  });
-
-  const pressoes = [
-    { nome: "Pressão Saída Osmose", setor: "saida_osmose", pressao: dados["Pressao_Saida_Osmose_current"]?? null },
-    { nome: "Pressão Retorno Osmose", setor: "retorno_osmose", pressao: dados["Pressao_Retorno_Osmose_current"]?? null },
-    { nome: "Pressão Saída CME", setor: "saida_cme", pressao: dados["Pressao_Saida_CME_current"]?? null }
-  ];
-
-  const bombas = [
-    { nome: "Bomba 01", estado: Number(dados["Bomba_01_binary"]?? dados["Bomba_01_current"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_01_counter"]) || 0 },
-    { nome: "Bomba 02", estado: Number(dados["Bomba_02_binary"]?? dados["Bomba_02_current"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_02_counter"]) || 0 },
-    { nome: "Bomba Osmose", estado: Number(dados["Bomba_Osmose_binary"]?? dados["Bomba_Osmose_current"]) === 1? "ligada" : "desligada", ciclo: Number(dados["Ciclos_Bomba_Osmose_counter"]) || 0 }
-  ];
-
-  const bombasLigadas = bombas.filter(b => b.estado === "ligada").map(b => b.nome);
-
-  return {
-    lastUpdate: dados.timestamp || new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
-    reservatorios,
-    pressoes,
-    bombas,
-    bombasLigadas,
-    manutencao: getManutencao().ativo,
-    alerta_consumo: safeReadJson(ALERTA_FILE, {})
-  };
 }
 
 // =========================================================
@@ -652,21 +671,31 @@ app.get("/dados", (req, res) => {
 
 app.get("/historico", (req, res) => {
   const historico = safeReadJson(HIST_FILE, {});
-  const saida = [];
+  const saida = {};
+
   for (const [data, sensores] of Object.entries(historico)) {
     for (const [ref, dados] of Object.entries(sensores || {})) {
-      const nome = Object.keys(MAPA_RESERVATORIOS).find(key => MAPA_RESERVATORIOS[key] === ref);
-      if (!nome ||!dados) continue;
-      if (typeof dados.min === "number") {
-        saida.push({ reservatorio: nome, timestamp: new Date(data).getTime(), valor: dados.min });
-      }
-      for (const p of dados.pontos || []) {
+      const setor = Object.keys(MAPA_RESERVATORIOS).find(key => MAPA_RESERVATORIOS[key] === ref);
+      if (!setor ||!dados.pontos) continue;
+
+      if (!saida[setor]) saida[setor] = [];
+      for (const p of dados.pontos) {
         const ts = new Date(`${data}T${p.hora}-03:00`).getTime();
-        if (!isNaN(ts)) saida.push({ reservatorio: nome, timestamp: ts, valor: p.valor });
+        if (!isNaN(ts)) {
+          saida[setor].push({
+            x: ts,
+            y: Math.round(calcularNivel(ref, p.valor).percentual * 100)
+          });
+        }
       }
     }
   }
-  saida.sort((a, b) => a.timestamp - b.timestamp);
+
+  // Ordena por timestamp
+  Object.keys(saida).forEach(setor => {
+    saida[setor].sort((a, b) => a.x - b.x);
+  });
+
   return res.json(saida);
 });
 
