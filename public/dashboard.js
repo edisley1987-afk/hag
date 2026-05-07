@@ -1,6 +1,6 @@
 /**
  * Dashboard HAG 3D - Hospital Arnaldo Gavazza
- * Versão 1.0.3 - Com efeito de água animado
+ * Versão 1.0.4 - Compatível com Server 1.0.1
  */
 
 const API = "/api/dashboard";
@@ -167,7 +167,7 @@ function renderBombas(lista) {
         el.querySelector("h2").innerText = b.nome;
         el.querySelector(".status-icon").innerText = desconhecido? "⚪" : ligada? "🟢" : "🔴";
         el.querySelector(".valor").innerText = desconhecido? "SEM DADOS" : ligada? "EM OPERAÇÃO" : "INATIVA";
-        el.querySelector(".ciclos").innerText = `${b.ciclo || 0} ciclos`;
+        el.querySelector(".ciclos").innerText = `${b.ciclo?? 0} ciclos`;
     });
 }
 
@@ -189,14 +189,18 @@ function renderPressoes(lista) {
         }
 
         el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
+        const pressao = Number(p.pressao?? 0);
+        el.querySelector(".valor-pressao").innerText = `${pressao.toFixed(2)} bar`;
     });
 }
 
 // ======================= HISTÓRICO 7 DIAS =======================
 async function carregarHistorico() {
     try {
-        const res = await fetch("/historico", { cache: "no-store" });
+        const res = await fetch("/historico", {
+            cache: "no-store",
+            headers: { "Authorization": "Basic " + btoa("118582:118582") }
+        });
         const data = await res.json();
         renderHistoricoChart(data);
     } catch (e) {
@@ -218,7 +222,7 @@ function renderHistoricoChart(data) {
 
     const datasets = Object.keys(data).map(setor => ({
         label: setor.charAt(0).toUpperCase() + setor.slice(1),
-        data: data[setor],
+        data: data[setor] || [],
         borderWidth: 2,
         tension: 0.4,
         borderColor: cores[setor] || '#60a5fa',
@@ -299,7 +303,10 @@ async function fallbackHTTP() {
     try {
         const res = await fetch(API + "?t=" + Date.now(), {
             cache: "no-store",
-            headers: { "Cache-Control": "no-cache" }
+            headers: {
+                "Cache-Control": "no-cache",
+                "Authorization": "Basic " + btoa("118582:118582")
+            }
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
