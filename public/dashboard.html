@@ -1,449 +1,250 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitoramento HAG</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #e2e8f0;
-    padding: 20px;
-    min-height: 100vh;
-  }
-.header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 30px; padding: 20px; background: rgba(30, 41, 59, 0.8);
-    border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);
-  }
-.header h1 { font-size: 24px; color: #60a5fa; }
-.status { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.status-dot { width: 10px; height: 10px; border-radius: 50%; background: #00ff88; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAG - Monitoramento de Reservatórios</title>
+    <style>
+        /* ==========================================================
+           CSS CONSOLIDADO - ESTILO VIDRO TRANSPARENTE (GLASS)
+           ========================================================== */
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --neon-cyan: #00e5ff;
+            --neon-blue: #0077ff;
+            --neon-green: #00ff88;
+            --text-main: #ffffff;
+        }
 
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-.kpi-card {
-    background: rgba(30, 41, 59, 0.8); padding: 15px; border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.2); text-align: center;
-  }
-.kpi-card h3 { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; }
-.kpi-card.value { font-size: 28px; font-weight: bold; color: #60a5fa; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
-.card {
-    background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.2); transition: all 0.3s;
-  }
-.card:hover { border-color: #60a5fa; box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2); }
-.card h2 { font-size: 16px; margin-bottom: 15px; color: #cbd5e1; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 30px;
+        }
 
-.tanque {
-    position: relative; width: 100%; height: 200px; background: rgba(15, 23, 42, 0.6);
-    border-radius: 8px; overflow: hidden; border: 2px solid #334155; margin-bottom: 15px;
-  }
-.escala {
-    position: absolute; right: 5px; top: 0; height: 100%; display: flex; flex-direction: column;
-    justify-content: space-between; padding: 10px 0; font-size: 10px; color: #64748b; z-index: 2;
-  }
-.agua {
-    position: absolute; bottom: 0; width: 100%; height: 0%;
-    background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
-    transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1;
-  }
-.agua.nivel-cheio { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); }
-.agua.nivel-alto { background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); }
-.agua.nivel-medio { background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%); }
-.agua.nivel-baixo { background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); }
-.agua.nivel-critico { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
-.onda {
-    position: absolute; top: -10px; width: 200%; height: 20px;
-    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.3) 0%, transparent 50%);
-    animation: wave 3s infinite linear; opacity: 0.5;
-  }
-  @keyframes wave { 0% { transform: translateX(-50%); } 100% { transform: translateX(0%); } }
-.agua.balancando.onda { animation: wave-bounce 1.3s ease-in-out; }
-  @keyframes wave-bounce {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    25% { transform: translateX(-40%) translateY(-5px); }
-    75% { transform: translateX(-60%) translateY(5px); }
-  }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+        }
 
-.info { display: flex; justify-content: space-between; align-items: center; }
-.valor { font-size: 32px; font-weight: bold; }
-.litros { font-size: 14px; color: #94a3b8; }
-.card.alerta { border-color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        /* CARD ESTILO VIDRO */
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
 
-.bomba.ligada.status-icon { color: #22c55e; }
-.bomba.desligada.status-icon { color: #ef4444; }
-.bomba.stale.status-icon { color: #64748b; }
-.status-icon { font-size: 40px; text-align: center; margin: 10px 0; }
-.ciclos { font-size: 12px; color: #94a3b8; text-align: center; }
+        .card h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0;
+            opacity: 0.8;
+        }
 
-.valor-pressao { font-size: 28px; font-weight: bold; color: #60a5fa; text-align: center; margin: 20px 0; }
+        /* A CAIXA D'ÁGUA TRANSPARENTE */
+        .tanque {
+            position: relative;
+            width: 140px;
+            height: 190px;
+            margin: 15px auto;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
 
-.chart-container { background: rgba(30, 41, 59, 0.8); padding: 20px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); }
-  canvas { max-height: 300px; }
+        /* Linhas de medição horizontais internas */
+        .tanque::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 100% 20px;
+            pointer-events: none;
+        }
 
-  body.sem-sinal { opacity: 0.7; }
-</style>
+        /* ÁGUA COM GLOW NEON */
+        .agua {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--neon-blue) 100%);
+            transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 -5px 20px rgba(0, 229, 255, 0.4);
+        }
+
+        /* TEXTO CENTRALIZADO NO TANQUE */
+        .label-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+        }
+
+        .label-percent {
+            font-size: 30px;
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .label-litros {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        /* STATUS BADGE */
+        .status-badge {
+            margin-top: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .status-badge.normal { color: var(--neon-green); }
+        .status-badge.critico { color: #ff3d00; }
+
+        /* BOMBAS */
+        .bomba-icon {
+            font-size: 40px;
+            margin: 15px 0;
+        }
+        
+        .spin {
+            animation: spin 2s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🏥 Monitoramento Hospital Arnaldo Gavazza</h1>
-    <div class="status">
-      <div class="status-dot"></div>
-      <span id="statusTexto">Tempo real conectado</span>
-      <span id="hora">--:--</span>
-    </div>
-  </div>
 
-  <div class="kpis">
-    <div class="kpi-card"><h3>Reservatórios Críticos</h3><div class="value" id="kpiCritico">0</div></div>
-    <div class="kpi-card"><h3>Bombas Ativas</h3><div class="value" id="bombasAtivas">0</div></div>
-    <div class="kpi-card"><h3>Consumo Elevador Hoje</h3><div class="value" id="kpiElevador">0 L</div></div>
-    <div class="kpi-card"><h3>Consumo Lavanderia Hoje</h3><div class="value" id="kpiLavanderia">0 L</div></div>
-    <div class="kpi-card"><h3>Consumo Osmose Hoje</h3><div class="value" id="kpiOsmose">0 L</div></div>
-  </div>
+    <header>
+        <div>
+            <h1 style="margin:0; font-size: 22px;">Monitoramento Hospital Arnaldo Gavazza</h1>
+            <span style="font-size: 12px; color: var(--neon-green);">● Tempo real conectado</span>
+        </div>
+        <div id="relogio" style="font-size: 18px;">--:--:--</div>
+    </header>
 
-  <div class="grid" id="areaReservatorios"></div>
-  <div class="grid" id="areaBombas"></div>
-  <div class="grid" id="areaPressoes"></div>
+    <h3 style="color: var(--neon-cyan)">RESERVATÓRIOS</h3>
+    <div id="areaReservatorios" class="grid-container">
+        </div>
 
-  <div class="chart-container">
-    <h2>Histórico 7 Dias - Nível dos Reservatórios (%)</h2>
-    <canvas id="chartHistorico"></canvas>
-  </div>
+    <h3 style="color: var(--neon-cyan); margin-top: 50px;">ESTADO DAS BOMBAS</h3>
+    <div id="areaBombas" class="grid-container">
+        </div>
 
-<script>
-const API = "/api/dashboard";
-let ws = null;
-let reconnectDelay = 3000;
-let ultimoDado = Date.now();
-let renderPending = false;
-let chartHistorico = null;
-
-init();
-
-function init() {
-    carregarHistorico();
-    fallbackHTTP();
-    conectarWS();
-    setInterval(fallbackHTTP, 8000);
-
-    setInterval(() => {
-        if (Date.now() - ultimoDado > 15000) {
-            atualizarStatusVisual("Sem sinal");
-            document.body.classList.add("sem-sinal");
-        } else {
-            document.body.classList.remove("sem-sinal");
-            atualizarStatusVisual("Tempo real conectado");
-        }
-    }, 5000);
-}
-
-function processarPayload(payload) {
-    if (!payload) return;
-    if (payload.type === "update" && payload.dados) payload = payload.dados;
-    ultimoDado = Date.now();
-    scheduleRender(payload);
-}
-
-function scheduleRender(data) {
-    if (renderPending) return;
-    renderPending = true;
-    requestAnimationFrame(() => {
-        atualizarUI(data);
-        renderPending = false;
-    });
-}
-
-function atualizarUI(data) {
-    if (!data) return;
-    document.getElementById("hora").innerText = data.lastUpdate || "--:--";
-    renderReservatorios(data.reservatorios || []);
-    renderBombas(data.bombas || []);
-    renderPressoes(data.pressoes || []);
-    atualizarKPIs(data);
-}
-
-function renderReservatorios(lista) {
-    const area = document.getElementById("areaReservatorios");
-    if (!area) return;
-
-    lista.forEach(r => {
-        const id = `res-${r.setor}`;
-        let el = document.getElementById(id);
-
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card reservatorio";
-            area.appendChild(el);
-        }
-
-        const nivel = Math.min(100, Math.max(0, r.percent));
-        const nivelSuavizado = Math.round(nivel);
-        const isCritico = nivel < 20;
-
-        // Injeta a estrutura 3D com o Tooltip
-        el.innerHTML = `
-            <h2>${r.nome}</h2>
-            
-            <div class="tooltip-scada" style="visibility: hidden; position: absolute; background: rgba(8, 20, 35, 0.95); border: 1px solid #00e5ff; padding: 10px; border-radius: 8px; z-index: 100; font-size: 12px; top: -10px; left: 50%; transform: translateX(-50%); transition: 0.3s; opacity: 0;">
-                <strong style="color: #00e5ff">DETALHES DO SETOR</strong><br>
-                Capacidade: ${formatar(r.capacidade)} L<br>
-                Pressão Saída: ${r.pressao_saida || '0.00'} bar
-            </div>
-
-            <div class="tanque">
-                <div class="escala">
-                    <span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>
-                </div>
-                <div class="agua">
-                    <div class="onda"></div>
-                </div>
-            </div>
-            <div class="info">
-                <div class="valor">${nivelSuavizado}%</div>
-                <div class="litros">${formatar(r.current_liters)} L</div>
-            </div>
-        `;
-
-        const agua = el.querySelector(".agua");
-        const valor = el.querySelector(".valor");
-
-        // Alerta pulsante do seu CSS
-        if (isCritico) el.classList.add("alerta"); 
-        else el.classList.remove("alerta");
-
-        // Atualiza altura e cor baseada no seu CSS
-        agua.style.height = `${nivelSuavizado}%`;
-        agua.className = "agua"; 
-        
-        if (nivel >= 95) agua.classList.add("nivel-cheio");
-        else if (nivel >= 70) agua.classList.add("nivel-alto");
-        else if (nivel >= 40) agua.classList.add("nivel-medio");
-        else if (nivel >= 20) agua.classList.add("nivel-baixo");
-        else agua.classList.add("nivel-critico", "balancando");
-
-        // Lógica de exibir/esconder o tooltip no hover via JS (mais estável)
-        el.onmouseenter = () => { 
-            const tt = el.querySelector(".tooltip-scada");
-            tt.style.visibility = "visible"; tt.style.opacity = "1"; tt.style.top = "-50px";
+    <script>
+        // Simulação de Dados (O seu WebSocket enviará isso)
+        const mockData = {
+            reservatorios: [
+                { nome: "Elevador", percent: 83, capacidade: 20000, current_liters: 16659, setor: "elev" },
+                { nome: "Osmose", percent: 94, capacidade: 200, current_liters: 188, setor: "osm" },
+                { nome: "Cme", percent: 100, capacidade: 1000, current_liters: 1000, setor: "cme" },
+                { nome: "Abrandada", percent: 94, capacidade: 9000, current_liters: 8423, setor: "abr" },
+                { nome: "Lavanderia", percent: 90, capacidade: 10000, current_liters: 9033, setor: "lav" }
+            ],
+            bombas: [
+                { nome: "Bomba 01", estado: "desligada", ciclo: 1 },
+                { nome: "Bomba 02", estado: "ligada", ciclo: 0 },
+                { nome: "Bomba Osmose", estado: "ligada", ciclo: 716 }
+            ]
         };
-        el.onmouseleave = () => {
-            const tt = el.querySelector(".tooltip-scada");
-            tt.style.visibility = "hidden"; tt.style.opacity = "0"; tt.style.top = "-10px";
-        };
-    });
-}
 
-function renderBombas(lista) {
-    const area = document.getElementById("areaBombas");
-    if (!area) return;
-
-    lista.forEach((b, i) => {
-        const id = `bomba-${i}`;
-        let el = document.getElementById(id);
-        const ligada = b.estado === "ligada";
-        const desconhecido = b.estado === "desconhecido";
-
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card bomba";
-            area.appendChild(el);
+        function formatar(n) {
+            return Number(n).toLocaleString('pt-BR');
         }
 
-        // Atualiza as classes para o CSS aplicar as cores certas
-        el.className = `card bomba ${desconhecido ? "stale" : ligada ? "ligada" : "desligada"}`;
-        
-        // Define qual ícone usar e se ele deve girar
-        let icone = "🛑"; // Padrão desligada
-        let animacao = "";
-        let corStatus = "#ff3d00";
+        function renderReservatorios(lista) {
+            const area = document.getElementById("areaReservatorios");
+            if (!area) return;
 
-        if (desconhecido) {
-            icone = "⚪";
-            corStatus = "#94a3b8";
-        } else if (ligada) {
-            icone = "⚙️"; // Engrenagem para quando está ligada
-            animacao = "animation: spin-industrial 2s linear infinite;";
-            corStatus = "#00ff88";
+            area.innerHTML = ""; // Limpa para atualizar
+
+            lista.forEach(r => {
+                const isCritico = r.percent < 20;
+                const card = document.createElement("div");
+                card.className = "card reservatorio";
+                
+                card.innerHTML = `
+                    <h2>${r.nome}</h2>
+                    <div class="tanque">
+                        <div class="label-container">
+                            <div class="label-percent">${Math.round(r.percent)}%</div>
+                            <div class="label-litros">${formatar(r.current_liters)} L</div>
+                        </div>
+                        <div class="agua" style="height: ${r.percent}%"></div>
+                    </div>
+                    <div class="status-badge ${isCritico ? 'critico' : 'normal'}">
+                        ● ${isCritico ? 'CRÍTICO' : 'NORMAL'}
+                    </div>
+                `;
+                area.appendChild(card);
+            });
         }
 
-        el.innerHTML = `
-            <h2>${b.nome}</h2>
-            <div class="status-icon" style="font-size: 40px; margin: 15px 0; transition: all 0.5s; ${animacao} color: ${corStatus};">
-                ${icone}
-            </div>
-            <div class="valor" style="font-size: 18px; font-weight: bold; color: ${corStatus};">
-                ${desconhecido ? "SEM DADOS" : ligada ? "EM OPERAÇÃO" : "INATIVA"}
-            </div>
-            <div class="ciclos" style="color: #a8c8e8; margin-top: 5px;">
-                ${b.ciclo || 0} ciclos hoje
-            </div>
-        `;
-    });
-}
+        function renderBombas(lista) {
+            const area = document.getElementById("areaBombas");
+            if (!area) return;
+            area.innerHTML = "";
 
-function renderPressoes(lista) {
-    const area = document.getElementById("areaPressoes");
-    if (!area) return;
-
-    lista.forEach((p, i) => {
-        const id = `pressao-${i}`;
-        let el = document.getElementById(id);
-        if (!el) {
-            el = document.createElement("div");
-            el.id = id;
-            el.className = "card";
-            el.innerHTML = `<h2></h2><div class="valor-pressao"></div>`;
-            area.appendChild(el);
+            lista.forEach(b => {
+                const ligada = b.estado === "ligada";
+                const card = document.createElement("div");
+                card.className = `card bomba ${b.estado}`;
+                
+                card.innerHTML = `
+                    <h2>${b.nome}</h2>
+                    <div class="bomba-icon ${ligada ? 'spin' : ''}" style="color: ${ligada ? 'var(--neon-green)' : '#ff3d00'}">
+                        ${ligada ? '⚙️' : '🛑'}
+                    </div>
+                    <div style="font-weight: bold; color: ${ligada ? 'var(--neon-green)' : '#ff3d00'}">
+                        ${ligada ? 'EM OPERAÇÃO' : 'INATIVA'}
+                    </div>
+                    <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">${b.ciclo} ciclos hoje</div>
+                `;
+                area.appendChild(card);
+            });
         }
-        el.querySelector("h2").innerText = p.nome;
-        el.querySelector(".valor-pressao").innerText = `${Number(p.pressao || 0).toFixed(2)} bar`;
-    });
-}
 
-async function carregarHistorico() {
-    try {
-        const res = await fetch("/historico", { cache: "no-store" });
-        const data = await res.json();
-        renderHistoricoChart(data);
-    } catch (e) {
-        console.error("Erro histórico:", e);
-    }
-}
+        // Relógio
+        setInterval(() => {
+            document.getElementById("relogio").innerText = new Date().toLocaleTimeString();
+        }, 1000);
 
-function renderHistoricoChart(data) {
-    const ctx = document.getElementById("chartHistorico");
-    if (!ctx) return;
+        // Inicialização
+        renderReservatorios(mockData.reservatorios);
+        renderBombas(mockData.bombas);
 
-    const cores = {
-        elevador: '#60a5fa',
-        osmose: '#22c55e',
-        cme: '#facc15',
-        abrandada: '#f97316',
-        lavanderia: '#a855f7'
-    };
-
-    const datasets = Object.keys(data).map(setor => ({
-        label: setor.charAt(0).toUpperCase() + setor.slice(1),
-        data: data[setor],
-        borderWidth: 2,
-        tension: 0.4,
-        borderColor: cores[setor] || '#60a5fa',
-        backgroundColor: cores[setor] || '#60a5fa',
-        pointRadius: 2,
-        pointHoverRadius: 5
-    }));
-
-    if (chartHistorico) chartHistorico.destroy();
-
-    chartHistorico = new Chart(ctx, {
-        type: 'line',
-        data: { datasets },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: { unit: 'hour', displayFormats: { hour: 'HH:mm' } },
-                    ticks: { color: '#94a3b8' },
-                    grid: { color: 'rgba(148,163,184,0.1)' }
-                },
-                y: {
-                    min: 0,
-                    max: 100,
-                    ticks: { color: '#94a3b8', callback: v => v + '%' },
-                    grid: { color: 'rgba(148,163,184,0.1)' }
-                }
-            },
-            plugins: {
-                legend: { labels: { color: '#e2e8f0' } },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.y + '%';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function conectarWS() {
-    if (ws) ws.close();
-    const protocolo = location.protocol === "https:"? "wss:" : "ws:";
-    ws = new WebSocket(`${protocolo}//${location.host}`);
-    ws.onopen = () => { atualizarStatusVisual("Tempo real conectado"); };
-    ws.onmessage = (msg) => { try { processarPayload(JSON.parse(msg.data)); } catch (e) { console.error("Erro WS:", e); } };
-    ws.onclose = () => { atualizarStatusVisual("Reconectando..."); setTimeout(conectarWS, reconnectDelay); };
-    ws.onerror = (err) => console.error("Erro WebSocket:", err);
-}
-
-async function fallbackHTTP() {
-    try {
-        const res = await fetch(API + "?t=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        processarPayload(data);
-    } catch (err) {
-        if (!ws || ws.readyState!== 1) {
-            atualizarStatusVisual("Desconectado");
-        }
-    }
-}
-
-function atualizarStatusVisual(texto) {
-    const el = document.getElementById("statusTexto");
-    const dot = document.querySelector(".status-dot");
-    if (!el ||!dot) return;
-
-    el.innerText = texto;
-    if (texto.includes("Tempo real")) {
-        dot.style.background = "#00ff88";
-    } else if (texto.includes("Reconectando")) {
-        dot.style.background = "#ffd600";
-    } else {
-        dot.style.background = "#ff3d00";
-    }
-}
-
-function formatar(n) {
-    return Number(n || 0).toLocaleString("pt-BR");
-}
-
-function atualizarKPIs(data) {
-    const elCritico = document.getElementById("kpiCritico");
-    const elAtivas = document.getElementById("bombasAtivas");
-    const elElevador = document.getElementById("kpiElevador");
-    const elLavanderia = document.getElementById("kpiLavanderia");
-    const elOsmose = document.getElementById("kpiOsmose");
-
-    if (elCritico) {
-        elCritico.innerText = (data.reservatorios || []).filter(r => r.percent < 30).length;
-    }
-    if (elAtivas) {
-        elAtivas.innerText = (data.bombas || []).filter(b => b.estado === "ligada").length;
-    }
-    if (elElevador) {
-        elElevador.innerText = `${formatar(data.kpis?.elevador_hoje || 0)} L`;
-    }
-    if (elLavanderia) {
-        elLavanderia.innerText = `${formatar(data.kpis?.lavanderia_hoje || 0)} L`;
-    }
-    if (elOsmose) {
-        elOsmose.innerText = `${formatar(data.kpis?.osmose_hoje || 0)} L`;
-    }
-}
-</script>
+    </script>
 </body>
 </html>
