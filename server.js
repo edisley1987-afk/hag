@@ -280,11 +280,14 @@ function buildDashboard(dados) {
 }
 
 // ================= PREVISÃO DE ESVAZIAMENTO =================
-function preverEsvaziamento(nivelAtual, consumoPorMinuto) {
-  if (!consumoPorMinuto || consumoPorMinuto <= 0) return null;
-  const minutos = nivelAtual / consumoPorMinuto;
+function preverEsvaziamento(nivelAtualLitros, consumoPorMinutoLitros) {
+  if (!consumoPorMinutoLitros || consumoPorMinutoLitros <= 0) return null;
+  const minutos = nivelAtualLitros / consumoPorMinutoLitros;
   const data = new Date(Date.now() + minutos * 60000);
-  return { minutos_restantes: Math.round(minutos), previsao: data.toISOString() };
+  return {
+    minutos_restantes: Math.round(minutos),
+    previsao: data.toISOString()
+  };
 }
 
 function normalizarNomeSensor(ref) {
@@ -307,6 +310,33 @@ function normalizarNomeSensor(ref) {
   return mapa[ref] || ref;
 }
 
+function normalizePacket(raw) {
+  let arr = [];
+  if (!raw) return arr;
+
+  if (raw.data && Array.isArray(raw.data)) {
+    arr = raw.data.map(i => ({
+      ref: normalizarNomeSensor(i.ref || i.name || i.key),
+      value: i.value!== undefined? i.value : i.v,
+      dev_id: i.dev_id || raw.dev_id,
+      time: i.time || Date.now()
+    }));
+  } else if (Array.isArray(raw)) {
+    arr = raw.map(i => ({
+      ref: normalizarNomeSensor(i.ref),
+      value: i.value,
+      time: i.time || Date.now()
+    }));
+  } else if (typeof raw === "object") {
+    arr = Object.keys(raw).map(k => ({
+      ref: normalizarNomeSensor(k),
+      value: raw[k],
+      time: Date.now()
+    }));
+  }
+  return arr.filter(x => x.ref!== undefined);
+}
+
 function parseTimestamp(t, fallback) {
   if (!t) return fallback;
   let ms = t > 1e14? Math.floor(t / 1000) : t > 1e10? t : t * 1000;
@@ -325,6 +355,7 @@ function convertAndMerge(dataArray) {
     const tsAtual = new Date(parseTimestamp(item.time, timestampNow)).getTime();
     const tsAnterior = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
 
+    // IGNORA dado mais antigo
     if (tsAnterior && tsAtual < tsAnterior) continue;
 
     if (typeof rawVal === "string" && rawVal.trim()!== "" &&!isNaN(Number(rawVal))) {
@@ -353,6 +384,7 @@ function convertAndMerge(dataArray) {
       const tsAnteriorBomba = novo[`${ref}_timestamp`]? new Date(novo[`${ref}_timestamp`]).getTime() : 0;
       const agora = Date.now();
       const TEMPO_LIGAR = 3000, TEMPO_DESLIGAR = 5000;
+
       if (valorAtual!== anterior) {
         const tempoNecessario = valorAtual === 1? TEMPO_LIGAR : TEMPO_DESLIGAR;
         if (agora - tsAnteriorBomba > tempoNecessario) novo[ref] = valorAtual;
@@ -397,9 +429,9 @@ function registrarHistorico(dadosConvertidos) {
     reg.min = Math.min(reg.min, valor);
     reg.max = Math.max(reg.max, valor);
 
-    // Variação em corrente, não litros
+    // Variação em corrente, não litros - 1% do span do sensor
     const span = sensor.leituraCheio - sensor.leituraVazio;
-    const variacao = span * 0.01; // 1% do span
+    const variacao = span * 0.01;
     const ultimo = reg.pontos.at(-1);
     if (!ultimo || Math.abs(valor - ultimo.valor) >= variacao) {
       reg.pontos.push({
