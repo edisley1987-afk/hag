@@ -163,7 +163,12 @@ function scheduleRender(data) {
 
 function atualizarUI(data) {
     if (!data) return;
-    document.getElementById("hora").innerText = data.lastUpdate || "--:--";
+    const horaBR = new Date().toLocaleTimeString("pt-BR", { 
+  timeZone: "America/Sao_Paulo",
+  hour: '2-digit', 
+  minute: '2-digit' 
+});
+document.getElementById("hora").innerText = horaBR;
     renderReservatorios(data.reservatorios || []);
     renderBombas(data.bombas || []);
     renderPressoes(data.pressoes || []);
