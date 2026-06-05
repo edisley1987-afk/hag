@@ -207,21 +207,54 @@ function calcularNivel(ref, leitura) {
 
 // ================= CONSUMO HOJE =================
 function calcularConsumoHoje(hist) {
+
+  const hoje = new Date()
+    .toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    })
+    .split("/")
+    .reverse()
+    .join("-");
+
+  const dadosHoje = hist[hoje] || {};
+
   const calc = (ref) => {
+
     const sensor = SENSORES[ref];
-    const reg = hist[ref];
-    if (!sensor ||!reg ||!reg.pontos || reg.pontos.length < 2) return 0;
+    const reg = dadosHoje[ref];
+
+    if (
+      !sensor ||
+      !reg ||
+      !reg.pontos ||
+      reg.pontos.length < 2
+    ) {
+      return 0;
+    }
 
     let totalDescidaLitros = 0;
-    const pontos = reg.pontos;
 
-    for (let i = 1; i < pontos.length; i++) {
-      const litrosAnterior = calcularNivel(ref, pontos[i - 1].valor).litros;
-      const litrosAtual = calcularNivel(ref, pontos[i].valor).litros;
+    for (let i = 1; i < reg.pontos.length; i++) {
+
+      const litrosAnterior =
+        calcularNivel(
+          ref,
+          reg.pontos[i - 1].valor
+        ).litros;
+
+      const litrosAtual =
+        calcularNivel(
+          ref,
+          reg.pontos[i].valor
+        ).litros;
+
       if (litrosAtual < litrosAnterior) {
-        totalDescidaLitros += (litrosAnterior - litrosAtual);
+
+        totalDescidaLitros +=
+          (litrosAnterior - litrosAtual);
       }
     }
+
     return Math.round(totalDescidaLitros);
   };
 
