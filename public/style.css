@@ -1,2334 +1,632 @@
 /* ==========================================================
-   MONITORAMENTO HAG
-   CSS COMPLETO
-========================================================== */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-
-body {
-
-    font-family:
-        'Segoe UI',
-        Arial,
-        sans-serif;
-
-    background:
-        linear-gradient(
-            135deg,
-            #0f172a 0%,
-            #1e293b 100%
-        );
-
-    color:
-        #e2e8f0;
-
-    padding:
-        20px;
-
-    min-height:
-        100vh;
-
-}
-
-
-/* ==========================================================
-   CABEÇALHO
-========================================================== */
-
-.header {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    align-items:
-        center;
-
-    margin-bottom:
-        30px;
-
-    padding:
-        20px;
-
-    background:
-        rgba(
-            30,
-            41,
-            59,
-            0.8
-        );
-
-    border-radius:
-        12px;
-
-    border:
-        1px solid
-        rgba(
-            148,
-            163,
-            184,
-            0.2
-        );
-
-}
-
-
-.header h1 {
-
-    font-size:
-        24px;
-
-    color:
-        #60a5fa;
-
-}
-
-
-.status {
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    gap:
-        10px;
-
-    font-size:
-        14px;
-
-}
-
-
-.status-dot {
-
-    width:
-        10px;
-
-    height:
-        10px;
-
-    border-radius:
-        50%;
-
-    background:
-        #00ff88;
-
-    animation:
-        pulse 2s infinite;
-
-}
-
-
-@keyframes pulse {
-
-    0%,
-    100% {
-
-        opacity:
-            1;
-
-    }
-
-    50% {
-
-        opacity:
-            0.5;
-
-    }
-
-}
-
-
-/* ==========================================================
-   KPIs
-========================================================== */
-
-.kpis {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(
-                200px,
-                1fr
-            )
-        );
-
-    gap:
-        15px;
-
-    margin-bottom:
-        30px;
-
-}
-
-
-.kpi-card {
-
-    background:
-        rgba(
-            30,
-            41,
-            59,
-            0.8
-        );
-
-    padding:
-        15px;
-
-    border-radius:
-        10px;
-
-    border:
-        1px solid
-        rgba(
-            148,
-            163,
-            184,
-            0.2
-        );
-
-    text-align:
-        center;
-
-}
-
-
-.kpi-card h3 {
-
-    font-size:
-        12px;
-
-    color:
-        #94a3b8;
-
-    margin-bottom:
-        8px;
-
-    text-transform:
-        uppercase;
-
-}
-
-
-.kpi-card .value {
-
-    font-size:
-        28px;
-
-    font-weight:
-        bold;
-
-    color:
-        #60a5fa;
-
-}
-
-
-/* ==========================================================
-   GRID
-========================================================== */
-
-.grid {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(
-                280px,
-                1fr
-            )
-        );
-
-    gap:
-        20px;
-
-    margin-bottom:
-        30px;
-
-}
-
+   RESERVATÓRIOS 3D PROFISSIONAL - PADRÃO INDUSTRIAL
+   ========================================================== */
 
 .grid-reservatorios {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(
-                280px,
-                1fr
-            )
-        );
-
-    gap:
-        40px;
-
-    margin-bottom:
-        50px;
-
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 40px;
+  margin-bottom: 50px;
 }
-
 
 /* ==========================================================
-   CARD BASE
-========================================================== */
-
-.card {
-
-    background:
-        rgba(
-            30,
-            41,
-            59,
-            0.8
-        );
-
-    padding:
-        20px;
-
-    border-radius:
-        12px;
-
-    border:
-        1px solid
-        rgba(
-            148,
-            163,
-            184,
-            0.2
-        );
-
-    transition:
-        all 0.3s;
-
-}
-
-
-.card:hover {
-
-    border-color:
-        #60a5fa;
-
-    box-shadow:
-        0 8px 20px
-        rgba(
-            96,
-            165,
-            250,
-            0.2
-        );
-
-}
-
-
-.card h2 {
-
-    font-size:
-        16px;
-
-    margin-bottom:
-        15px;
-
-    color:
-        #cbd5e1;
-
-}
-
-
-/* ==========================================================
-   RESERVATÓRIO 3D
-========================================================== */
+   CARD
+   ========================================================== */
 
 .card.reservatorio {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15, 35, 60, 0.85) 0%,
+      rgba(8, 20, 35, 0.95) 100%
+    );
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(
-                15,
-                35,
-                60,
-                0.85
-            ) 0%,
-            rgba(
-                8,
-                20,
-                35,
-                0.95
-            ) 100%
-        );
+  border-radius: 18px;
 
-    border-radius:
-        18px;
+  padding: 28px 24px 32px;
 
-    padding:
-        28px 24px 32px;
+  border: 1px solid rgba(0, 229, 255, 0.15);
 
-    border:
-        1px solid
-        rgba(
-            0,
-            229,
-            255,
-            0.15
-        );
+  box-shadow:
+    0 20px 45px rgba(0,0,0,0.6),
+    0 8px 20px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.05);
 
-    box-shadow:
-        0 20px 45px
-        rgba(
-            0,
-            0,
-            0,
-            0.6
-        ),
+  backdrop-filter: blur(15px);
 
-        0 8px 20px
-        rgba(
-            0,
-            0,
-            0,
-            0.4
-        ),
+  transition:
+    all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 
-        inset 0 1px 0
-        rgba(
-            255,
-            255,
-            255,
-            0.05
-        );
+  position: relative;
 
-    backdrop-filter:
-        blur(15px);
+  overflow: visible;
 
-    transition:
-        all
-        0.4s
-        cubic-bezier(
-            0.23,
-            1,
-            0.32,
-            1
-        );
-
-    position:
-        relative;
-
-    overflow:
-        visible;
-
-    text-align:
-        center;
-
+  text-align: center;
 }
 
+/* Linha superior */
 
 .card.reservatorio::before {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  top: 0;
+  left: 0;
 
-    top:
-        0;
+  width: 100%;
+  height: 1px;
 
-    left:
-        0;
-
-    width:
-        100%;
-
-    height:
-        1px;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(
-                0,
-                229,
-                255,
-                0.5
-            ),
-            transparent
-        );
-
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 229, 255, 0.5),
+      transparent
+    );
 }
 
+/* Hover */
 
 .card.reservatorio:hover {
+  transform: translateY(-6px);
 
-    transform:
-        translateY(-6px);
+  border-color: rgba(0, 229, 255, 0.28);
 
-    border-color:
-        rgba(
-            0,
-            229,
-            255,
-            0.28
-        );
-
-    box-shadow:
-        0 18px 35px
-        rgba(
-            0,
-            0,
-            0,
-            0.55
-        ),
-
-        0 0 18px
-        rgba(
-            0,
-            180,
-            255,
-            0.12
-        );
-
+  box-shadow:
+    0 18px 35px rgba(0,0,0,0.55),
+    0 0 18px rgba(0,180,255,.12);
 }
 
-
-/* ==========================================================
-   ALERTA DO CARD
-========================================================== */
+/* ALERTA */
 
 .card.reservatorio.alerta {
+  border-color: #ff3d00;
 
-    border-color:
-        #ff3d00;
+  box-shadow:
+    0 20px 45px rgba(255, 61, 0, 0.4),
+    0 8px 20px rgba(255, 61, 0, 0.2),
+    inset 0 1px 0 rgba(255,255,0.05);
 
-    box-shadow:
-        0 20px 45px
-        rgba(
-            255,
-            61,
-            0,
-            0.4
-        ),
-
-        0 8px 20px
-        rgba(
-            255,
-            61,
-            0,
-            0.2
-        ),
-
-        inset 0 1px 0
-        rgba(
-            255,
-            255,
-            0,
-            0.05
-        );
-
-    animation:
-        alerta-pulse
-        1s
-        infinite;
-
+  animation: alerta-pulse 2s infinite;
 }
-
 
 @keyframes alerta-pulse {
 
-    0%,
-    100% {
+  0%, 100% {
+    box-shadow:
+      0 20px 45px rgba(255, 61, 0, 0.4),
+      0 8px 20px rgba(255, 61, 0, 0.2);
+  }
 
-        box-shadow:
-            0 20px 45px
-            rgba(
-                255,
-                61,
-                0,
-                0.4
-            ),
-
-            0 8px 20px
-            rgba(
-                255,
-                61,
-                0,
-                0.2
-            );
-
-    }
-
-    50% {
-
-        box-shadow:
-            0 25px 55px
-            rgba(
-                255,
-                61,
-                0,
-                0.8
-            ),
-
-            0 12px 30px
-            rgba(
-                255,
-                61,
-                0,
-                0.5
-            );
-
-    }
-
+  50% {
+    box-shadow:
+      0 25px 55px rgba(255, 61, 0, 0.6),
+      0 12px 30px rgba(255, 61, 0, 0.4);
+  }
 }
 
-
-/* ==========================================================
-   TITULO RESERVATÓRIO
-========================================================== */
+/* TITULO */
 
 .card.reservatorio h2 {
+  color: #e0f7ff;
 
-    color:
-        #e0f7ff;
+  font-size: 18px;
 
-    font-size:
-        18px;
+  margin: 0 0 22px 0;
 
-    margin:
-        0 0 22px 0;
+  text-align: center;
 
-    text-align:
-        center;
+  font-weight: 700;
 
-    font-weight:
-        700;
+  letter-spacing: 0.8px;
 
-    letter-spacing:
-        0.8px;
-
-    text-shadow:
-        0 2px 12px
-        rgba(
-            0,
-            0,
-            0,
-            0.9
-        );
-
+  text-shadow:
+    0 2px 12px rgba(0,0,0,0.9);
 }
-
 
 /* ==========================================================
    TANQUE
-========================================================== */
+   ========================================================== */
 
 .tanque {
+  position: relative;
 
-    position:
-        relative;
+  width: 150px;
+  height: 250px;
 
-    width:
-        150px;
+  margin: 25px auto;
 
-    height:
-        250px;
+  background:
+    linear-gradient(
+      90deg,
+      #071421 0%,
+      #163552 20%,
+      #2e5e87 50%,
+      #163552 80%,
+      #071421 100%
+    );
 
-    margin:
-        25px auto;
+  border-radius:
+    18px 18px 30px 30px;
 
-    background:
-        linear-gradient(
-            90deg,
-            #071421 0%,
-            #163552 20%,
-            #2e5e87 50%,
-            #163552 80%,
-            #071421 100%
-        );
+  border:
+    2px solid rgba(120, 220, 255, 0.25);
 
-    border-radius:
-        18px 18px 30px 30px;
+  overflow: hidden;
 
-    border:
-        2px solid
-        rgba(
-            120,
-            220,
-            255,
-            0.25
-        );
+  display: flex;
+  align-items: flex-end;
 
-    overflow:
-        hidden;
-
-    display:
-        flex;
-
-    align-items:
-        flex-end;
-
-    box-shadow:
-        inset -18px 0 35px
-        rgba(
-            0,
-            0,
-            0,
-            0.65
-        ),
-
-        inset 18px 0 30px
-        rgba(
-            255,
-            255,
-            255,
-            0.05
-        ),
-
-        inset 0 -25px 45px
-        rgba(
-            0,
-            0,
-            0,
-            0.75
-        ),
-
-        0 0 25px
-        rgba(
-            0,
-            180,
-            255,
-            0.15
-        );
-
+  box-shadow:
+    inset -18px 0 35px rgba(0,0,0,.65),
+    inset 18px 0 30px rgba(255,255,255,.05),
+    inset 0 -25px 45px rgba(0,0,0,.75),
+    0 0 25px rgba(0,180,255,.15);
 }
 
-
-/* ==========================================================
-   TAMPA
-========================================================== */
+/* TAMPA */
 
 .tanque::before {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  top: -12px;
+  left: 50%;
 
-    top:
-        -12px;
+  transform: translateX(-50%);
 
-    left:
-        50%;
+  width: 108px;
+  height: 24px;
 
-    transform:
-        translateX(-50%);
+  border-radius: 50%;
 
-    width:
-        108px;
+  background:
+    radial-gradient(
+      ellipse at center,
+      #7ec8ff 0%,
+      #44698d 55%,
+      #1b3047 100%
+    );
 
-    height:
-        24px;
+  border:
+    2px solid rgba(160,220,255,.45);
 
-    border-radius:
-        50%;
+  box-shadow:
+    0 0 14px rgba(0,180,255,.25),
+    inset 0 3px 5px rgba(255,255,255,.25),
+    inset 0 -3px 5px rgba(0,0,0,.45);
 
-    background:
-        radial-gradient(
-            ellipse at center,
-            #7ec8ff 0%,
-            #44698d 55%,
-            #1b3047 100%
-        );
-
-    border:
-        2px solid
-        rgba(
-            160,
-            220,
-            255,
-            0.45
-        );
-
-    box-shadow:
-        0 0 14px
-        rgba(
-            0,
-            180,
-            255,
-            0.25
-        ),
-
-        inset 0 3px 5px
-        rgba(
-            255,
-            255,
-            255,
-            0.25
-        ),
-
-        inset 0 -3px 5px
-        rgba(
-            0,
-            0,
-            0,
-            0.45
-        );
-
-    z-index:
-        10;
-
+  z-index: 10;
 }
 
-
-/* ==========================================================
-   REFLEXO
-========================================================== */
+/* REFLEXO VIDRO */
 
 .tanque::after {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  top: 0;
+  left: 14px;
 
-    top:
-        0;
+  width: 16px;
+  height: 100%;
 
-    left:
-        14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.28),
+      rgba(255,255,255,.08),
+      transparent
+    );
 
-    width:
-        16px;
+  border-radius: 20px;
 
-    height:
-        100%;
+  filter: blur(1px);
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(
-                255,
-                255,
-                255,
-                0.28
-            ),
-            rgba(
-                255,
-                255,
-                255,
-                0.08
-            ),
-            transparent
-        );
+  z-index: 6;
 
-    border-radius:
-        20px;
-
-    filter:
-        blur(1px);
-
-    z-index:
-        6;
-
-    pointer-events:
-        none;
-
+  pointer-events: none;
 }
-
 
 /* ==========================================================
    ESCALA
-========================================================== */
+   ========================================================== */
 
 .escala {
+  position: absolute;
 
-    position:
-        absolute;
+  right: -52px;
+  top: 20px;
 
-    right:
-        -52px;
+  height: 78%;
 
-    top:
-        20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
-    height:
-        78%;
+  color: #7aa8cc;
 
-    display:
-        flex;
+  font-size: 11px;
 
-    flex-direction:
-        column;
+  font-weight: 700;
 
-    justify-content:
-        space-between;
+  text-shadow:
+    2px 2px 5px rgba(0,0,0,0.95);
 
-    color:
-        #7aa8cc;
+  z-index: 8;
 
-    font-size:
-        11px;
-
-    font-weight:
-        700;
-
-    text-shadow:
-        2px 2px 5px
-        rgba(
-            0,
-            0,
-            0,
-            0.95
-        );
-
-    z-index:
-        8;
-
-    letter-spacing:
-        0.5px;
-
+  letter-spacing: 0.5px;
 }
-
 
 .escala span {
-
-    position:
-        relative;
-
-    padding-right:
-        8px;
-
+  position: relative;
+  padding-right: 8px;
 }
-
 
 .escala span::before {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  right: 0;
+  top: 50%;
 
-    right:
-        0;
+  width: 15px;
+  height: 1px;
 
-    top:
-        50%;
+  background:
+    linear-gradient(
+      90deg,
+      #4a7fa8,
+      transparent
+    );
 
-    width:
-        15px;
-
-    height:
-        1px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #4a7fa8,
-            transparent
-        );
-
-    transform:
-        translateY(-50%);
-
+  transform: translateY(-50%);
 }
-
 
 /* ==========================================================
    ÁGUA
-========================================================== */
+   ========================================================== */
 
 .agua {
+  position: absolute;
 
-    position:
-        absolute;
+  bottom: 0;
+  left: 0;
 
-    bottom:
-        0;
+  width: 100%;
+  height: 0%;
 
-    left:
-        0;
+  border-radius:
+    18px 18px 30px 30px;
 
-    width:
-        100%;
+  transition:
+    height 1.2s cubic-bezier(.22,.61,.36,1);
 
-    height:
-        0%;
+  z-index: 1;
 
-    border-radius:
-        18px 18px 30px 30px;
+  overflow: hidden;
 
-    transition:
-        height
-        1.2s
-        cubic-bezier(
-            .22,
-            .61,
-            .36,
-            1
-        );
+  will-change: height, transform;
 
-    z-index:
-        1;
+  transform: translateZ(0);
 
-    overflow:
-        hidden;
+  background:
+    linear-gradient(
+      to top,
+      #0050a8 0%,
+      #008cff 45%,
+      #46d5ff 80%,
+      #8cecff 100%
+    );
 
-    will-change:
-        height,
-        transform;
-
-    transform:
-        translateZ(0);
-
-    background:
-        linear-gradient(
-            to top,
-            #0050a8 0%,
-            #008cff 45%,
-            #46d5ff 80%,
-            #8cecff 100%
-        );
-
-    box-shadow:
-        inset 0 -18px 35px
-        rgba(
-            0,
-            40,
-            100,
-            0.55
-        ),
-
-        inset 0 8px 15px
-        rgba(
-            255,
-            255,
-            255,
-            0.18
-        ),
-
-        0 0 20px
-        rgba(
-            0,
-            180,
-            255,
-            0.18
-        );
-
+  box-shadow:
+    inset 0 -18px 35px rgba(0,40,100,.55),
+    inset 0 8px 15px rgba(255,255,255,.18),
+    0 0 20px rgba(0,180,255,.18);
 }
 
-
-/* ==========================================================
-   SUPERFÍCIE
-========================================================== */
+/* SUPERFÍCIE */
 
 .agua::before {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  top: 0;
+  left: 5%;
 
-    top:
-        0;
+  width: 90%;
+  height: 8px;
 
-    left:
-        5%;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255,255,255,0.5) 0%,
+      rgba(255,255,255,0.2) 40%,
+      transparent 70%
+    );
 
-    width:
-        90%;
+  border-radius: 50%;
 
-    height:
-        8px;
+  transform: translateY(-50%);
 
-    background:
-        radial-gradient(
-            ellipse at center,
-            rgba(
-                255,
-                255,
-                255,
-                0.5
-            ) 0%,
-            rgba(
-                255,
-                255,
-                255,
-                0.2
-            ) 40%,
-            transparent 70%
-        );
+  filter: blur(1.5px);
 
-    border-radius:
-        50%;
-
-    transform:
-        translateY(-50%);
-
-    filter:
-        blur(1.5px);
-
-    z-index:
-        3;
-
+  z-index: 3;
 }
 
-
-/* ==========================================================
-   REFLEXO ÁGUA
-========================================================== */
+/* REFLEXO ÁGUA */
 
 .agua::after {
+  content: "";
 
-    content:
-        "";
+  position: absolute;
 
-    position:
-        absolute;
+  top: 0;
+  left: 0;
 
-    top:
-        0;
+  width: 35%;
+  height: 100%;
 
-    left:
-        0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,0.18) 0%,
+      rgba(255,255,255,0.06) 50%,
+      transparent 100%
+    );
 
-    width:
-        35%;
+  pointer-events: none;
 
-    height:
-        100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(
-                255,
-                255,
-                255,
-                0.18
-            ) 0%,
-            rgba(
-                255,
-                255,
-                255,
-                0.06
-            ) 50%,
-            transparent 100%
-        );
-
-    pointer-events:
-        none;
-
-    z-index:
-        2;
-
+  z-index: 2;
 }
 
-
-/* ==========================================================
-   ONDA
-========================================================== */
+/* ONDA */
 
 .onda {
+  position: absolute;
 
-    position:
-        absolute;
+  top: -6px;
+  left: -30%;
 
-    top:
-        -6px;
+  width: 160%;
+  height: 14px;
 
-    left:
-        -30%;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255,255,255,0.28) 0%,
+      rgba(255,255,255,0.1) 45%,
+      transparent 70%
+    );
 
-    width:
-        160%;
+  animation:
+    onda 4s ease-in-out infinite;
 
-    height:
-        14px;
+  filter: blur(2px);
 
-    background:
-        radial-gradient(
-            ellipse at center,
-            rgba(
-                255,
-                255,
-                255,
-                0.28
-            ) 0%,
-            rgba(
-                255,
-                255,
-                255,
-                0.1
-            ) 45%,
-            transparent 70%
-        );
-
-    animation:
-        onda
-        4s
-        ease-in-out
-        infinite;
-
-    filter:
-        blur(2px);
-
-    z-index:
-        4;
-
+  z-index: 4;
 }
-
 
 @keyframes onda {
 
-    0%,
-    100% {
+  0%, 100% {
+    transform:
+      translateX(0)
+      scaleY(1);
+  }
 
-        transform:
-            translateX(0)
-            scaleY(1);
-
-    }
-
-    50% {
-
-        transform:
-            translateX(30%)
-            scaleY(1.25);
-
-    }
-
+  50% {
+    transform:
+      translateX(30%)
+      scaleY(1.25);
+  }
 }
 
-
-/* ==========================================================
-   BALANÇO
-========================================================== */
+/* BALANÇO */
 
 .agua.balancando {
-
-    animation:
-        balanco
-        1.3s
-        cubic-bezier(
-            0.25,
-            0.46,
-            0.45,
-            0.94
-        );
-
+  animation:
+    balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 
 @keyframes balanco {
 
-    0%,
-    100% {
+  0%, 100% {
+    transform:
+      skewX(0deg)
+      scaleX(1);
+  }
 
-        transform:
-            skewX(0deg)
-            scaleX(1);
+  25% {
+    transform:
+      skewX(1.8deg)
+      scaleX(1.015);
+  }
 
-    }
-
-    25% {
-
-        transform:
-            skewX(1.8deg)
-            scaleX(1.015);
-
-    }
-
-    75% {
-
-        transform:
-            skewX(-1.2deg)
-            scaleX(0.985);
-
-    }
-
+  75% {
+    transform:
+      skewX(-1.2deg)
+      scaleX(0.985);
+  }
 }
 
-
 /* ==========================================================
-   NÍVEL CHEIO
-========================================================== */
+   NÍVEIS
+   ========================================================== */
 
 .agua.nivel-cheio {
+  background:
+    linear-gradient(
+      to top,
+      #00c853 0%,
+      #00e676 50%,
+      #69f0ae 85%,
+      #b9f6ca 100%
+    );
 
-    background:
-        linear-gradient(
-            to top,
-            #00c853 0%,
-            #00e676 50%,
-            #69f0ae 85%,
-            #b9f6ca 100%
-        );
-
-    box-shadow:
-        inset 0 -25px 50px
-        rgba(
-            0,
-            120,
-            60,
-            0.6
-        ),
-
-        inset 0 10px 20px
-        rgba(
-            255,
-            255,
-            255,
-            0.3
-        ),
-
-        0 0 30px
-        rgba(
-            0,
-            230,
-            118,
-            0.3
-        );
-
+  box-shadow:
+    inset 0 -25px 50px rgba(0,120,60,0.6),
+    inset 0 10px 20px rgba(255,255,255,0.3),
+    0 0 30px rgba(0,230,118,0.3);
 }
-
-
-/* ==========================================================
-   NÍVEL ALTO
-========================================================== */
 
 .agua.nivel-alto {
+  background:
+    linear-gradient(
+      to top,
+      #00b0ff 0%,
+      #40c4ff 50%,
+      #80d8ff 85%,
+      #b3e5fc 100%
+    );
 
-    background:
-        linear-gradient(
-            to top,
-            #00b0ff 0%,
-            #40c4ff 50%,
-            #80d8ff 85%,
-            #b3e5fc 100%
-        );
-
-    box-shadow:
-        inset 0 -25px 50px
-        rgba(
-            0,
-            80,
-            160,
-            0.6
-        ),
-
-        inset 0 10px 20px
-        rgba(
-            255,
-            255,
-            255,
-            0.25
-        ),
-
-        0 0 25px
-        rgba(
-            64,
-            196,
-            255,
-            0.25
-        );
-
+  box-shadow:
+    inset 0 -25px 50px rgba(0,80,160,0.6),
+    inset 0 10px 20px rgba(255,255,255,0.25),
+    0 0 25px rgba(64,196,255,0.25);
 }
-
-
-/* ==========================================================
-   NÍVEL MÉDIO
-========================================================== */
 
 .agua.nivel-medio {
+  background:
+    linear-gradient(
+      to top,
+      #0077ff 0%,
+      #00ddff 50%,
+      #64ffff 85%,
+      #a7ffeb 100%
+    );
 
-    background:
-        linear-gradient(
-            to top,
-            #0077ff 0%,
-            #00ddff 50%,
-            #64ffff 85%,
-            #a7ffeb 100%
-        );
-
+  box-shadow:
+    inset 0 -25px 50px rgba(0,60,120,0.6),
+    inset 0 10px 20px rgba(255,255,255,0.25),
+    0 0 20px rgba(0,221,255,0.2);
 }
-
-
-/* ==========================================================
-   NÍVEL BAIXO
-========================================================== */
 
 .agua.nivel-baixo {
+  background:
+    linear-gradient(
+      to top,
+      #ff9800 0%,
+      #ffc107 50%,
+      #ffd54f 85%,
+      #ffe082 100%
+    );
 
-    background:
-        linear-gradient(
-            to top,
-            #ff9800 0%,
-            #ffc107 50%,
-            #ffd54f 85%,
-            #ffe082 100%
-        );
-
-    box-shadow:
-        inset 0 -25px 50px
-        rgba(
-            200,
-            120,
-            0,
-            0.6
-        ),
-
-        inset 0 10px 20px
-        rgba(
-            255,
-            255,
-            255,
-            0.25
-        ),
-
-        0 0 20px
-        rgba(
-            255,
-            193,
-            7,
-            0.2
-        );
-
+  box-shadow:
+    inset 0 -25px 50px rgba(200,120,0,0.6),
+    inset 0 10px 20px rgba(255,255,255,0.25),
+    0 0 20px rgba(255,193,7,0.2);
 }
-
-
-/* ==========================================================
-   NÍVEL CRÍTICO
-========================================================== */
 
 .agua.nivel-critico {
+  background:
+    linear-gradient(
+      to top,
+      #d50000 0%,
+      #ff3d00 50%,
+      #ff6e40 85%,
+      #ffab91 100%
+    );
 
-    background:
-        linear-gradient(
-            to top,
-            #d50000 0%,
-            #ff3d00 50%,
-            #ff6e40 85%,
-            #ffab91 100%
-        );
+  box-shadow:
+    inset 0 -25px 50px rgba(150,0,0,0.7),
+    inset 0 10px 20px rgba(255,255,255,0.25),
+    0 0 35px rgba(255,61,0,0.4);
 
-    box-shadow:
-        inset 0 -25px 50px
-        rgba(
-            150,
-            0,
-            0,
-            0.7
-        ),
-
-        inset 0 10px 20px
-        rgba(
-            255,
-            255,
-            255,
-            0.25
-        ),
-
-        0 0 35px
-        rgba(
-            255,
-            61,
-            0,
-            0.5
-        );
-
-    animation:
-        pulsar-critico
-        0.8s
-        infinite;
-
+  animation:
+    pulsar-critico 1.6s infinite;
 }
-
 
 @keyframes pulsar-critico {
 
-    0%,
-    100% {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 
-        opacity:
-            1;
-
-    }
-
-    50% {
-
-        opacity:
-            0.65;
-
-    }
-
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
 }
 
-
 /* ==========================================================
-   INFORMAÇÕES DO RESERVATÓRIO
-========================================================== */
+   INFO
+   ========================================================== */
 
 .info {
+  text-align: center;
 
-    text-align:
-        center;
+  margin-top: 28px;
 
-    margin-top:
-        28px;
+  padding-top: 20px;
 
-    padding-top:
-        20px;
-
-    border-top:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
-
+  border-top:
+    1px solid rgba(255,255,255,0.08);
 }
-
 
 .info .valor {
+  font-size: 38px;
 
-    font-size:
-        38px;
+  font-weight: 900;
 
-    font-weight:
-        900;
+  line-height: 1;
 
-    line-height:
-        1;
+  background:
+    linear-gradient(
+      135deg,
+      #00e5ff 0%,
+      #40d4ff 50%,
+      #80e0ff 100%
+    );
 
-    background:
-        linear-gradient(
-            135deg,
-            #00e5ff 0%,
-            #40d4ff 50%,
-            #80e0ff 100%
-        );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 
-    -webkit-background-clip:
-        text;
+  text-shadow:
+    0 4px 25px rgba(0,229,255,0.5);
 
-    -webkit-text-fill-color:
-        transparent;
-
-    background-clip:
-        text;
-
-    filter:
-        drop-shadow(
-            0 3px 10px
-            rgba(
-                0,
-                0,
-                0,
-                0.8
-            )
-        );
-
+  filter:
+    drop-shadow(0 3px 10px rgba(0,0,0,0.8));
 }
-
 
 .info .litros {
+  font-size: 15px;
 
-    font-size:
-        15px;
+  color: #a8c8e8;
 
-    color:
-        #a8c8e8;
+  margin-top: 10px;
 
-    margin-top:
-        10px;
+  font-weight: 600;
 
-    font-weight:
-        600;
+  letter-spacing: 0.5px;
 
-    letter-spacing:
-        0.5px;
-
-    text-shadow:
-        1px 1px 5px
-        rgba(
-            0,
-            0,
-            0,
-            0.9
-        );
-
+  text-shadow:
+    1px 1px 5px rgba(0,0,0,0.9);
 }
-
-
-/* ==========================================================
-   BOMBAS
-========================================================== */
-
-.card.bomba {
-
-    min-height:
-        150px;
-
-    position:
-        relative;
-
-}
-
-
-.card.bomba h2 {
-
-    font-size:
-        20px;
-
-}
-
-
-.status-icon {
-
-    font-size:
-        40px;
-
-    text-align:
-        center;
-
-    margin:
-        10px 0;
-
-}
-
-
-.bomba.ligada
-.status-icon {
-
-    color:
-        #22c55e;
-
-}
-
-
-.bomba.desligada
-.status-icon {
-
-    color:
-        #ef4444;
-
-}
-
-
-.bomba.stale
-.status-icon {
-
-    color:
-        #64748b;
-
-}
-
-
-.bomba .valor {
-
-    font-size:
-        14px;
-
-    font-weight:
-        600;
-
-}
-
-
-.ciclos {
-
-    font-size:
-        12px;
-
-    color:
-        #94a3b8;
-
-    text-align:
-        center;
-
-    margin-top:
-        10px;
-
-}
-
-
-/* ==========================================================
-   PRESSÃO
-========================================================== */
-
-.pressao-card {
-
-    text-align:
-        center;
-
-}
-
-
-.valor-pressao {
-
-    font-size:
-        28px;
-
-    font-weight:
-        bold;
-
-    color:
-        #60a5fa;
-
-    text-align:
-        center;
-
-    margin:
-        20px 0;
-
-}
-
-
-/* ==========================================================
-   GRÁFICO
-========================================================== */
-
-.chart-container {
-
-    background:
-        rgba(
-            30,
-            41,
-            59,
-            0.8
-        );
-
-    padding:
-        20px;
-
-    border-radius:
-        12px;
-
-    border:
-        1px solid
-        rgba(
-            148,
-            163,
-            184,
-            0.2
-        );
-
-    margin-bottom:
-        30px;
-
-}
-
-
-.chart-container h2 {
-
-    color:
-        #cbd5e1;
-
-    margin-bottom:
-        15px;
-
-    font-size:
-        18px;
-
-}
-
-
-.chart-wrapper {
-
-    position:
-        relative;
-
-    height:
-        360px;
-
-    width:
-        100%;
-
-}
-
-
-#chartHistorico {
-
-    width:
-        100% !important;
-
-    height:
-        100% !important;
-
-}
-
-
-/* ==========================================================
-   ALERTA DE TELA INTEIRA
-========================================================== */
-
-.alerta-tela {
-
-    position:
-        fixed;
-
-    inset:
-        0;
-
-    width:
-        100vw;
-
-    height:
-        100vh;
-
-    background:
-        rgba(
-            80,
-            0,
-            0,
-            0.94
-        );
-
-    backdrop-filter:
-        blur(8px);
-
-    display:
-        flex;
-
-    justify-content:
-        center;
-
-    align-items:
-        center;
-
-    z-index:
-        99999;
-
-    opacity:
-        0;
-
-    visibility:
-        hidden;
-
-    pointer-events:
-        none;
-
-    transition:
-        opacity
-        0.3s
-        ease;
-
-}
-
-
-.alerta-tela.mostrar {
-
-    opacity:
-        1;
-
-    visibility:
-        visible;
-
-    pointer-events:
-        auto;
-
-    animation:
-        piscarTela
-        0.8s
-        infinite;
-
-}
-
-
-@keyframes piscarTela {
-
-    0%,
-    100% {
-
-        background:
-            rgba(
-                80,
-                0,
-                0,
-                0.94
-            );
-
-    }
-
-    50% {
-
-        background:
-            rgba(
-                180,
-                0,
-                0,
-                0.88
-            );
-
-    }
-
-}
-
-
-/* ==========================================================
-   CAIXA DO ALERTA
-========================================================== */
-
-.alerta-box {
-
-    width:
-        min(
-            700px,
-            90%
-        );
-
-    padding:
-        45px 35px;
-
-    text-align:
-        center;
-
-    border:
-        3px solid
-        #ff3d00;
-
-    border-radius:
-        25px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #260606,
-            #5b0808
-        );
-
-    box-shadow:
-        0 0 80px
-        rgba(
-            255,
-            61,
-            0,
-            0.8
-        ),
-
-        inset 0 0 30px
-        rgba(
-            255,
-            61,
-            0,
-            0.15
-        );
-
-    animation:
-        caixaAlerta
-        0.8s
-        infinite;
-
-}
-
-
-@keyframes caixaAlerta {
-
-    0%,
-    100% {
-
-        transform:
-            scale(1);
-
-    }
-
-    50% {
-
-        transform:
-            scale(1.025);
-
-    }
-
-}
-
-
-/* ==========================================================
-   ÍCONE ALERTA
-========================================================== */
-
-.alerta-icone {
-
-    font-size:
-        70px;
-
-    margin-bottom:
-        15px;
-
-    animation:
-        sinoAlerta
-        0.5s
-        infinite alternate;
-
-}
-
-
-@keyframes sinoAlerta {
-
-    from {
-
-        transform:
-            rotate(-8deg);
-
-    }
-
-    to {
-
-        transform:
-            rotate(8deg);
-
-    }
-
-}
-
-
-/* ==========================================================
-   TÍTULO ALERTA
-========================================================== */
-
-.alerta-titulo {
-
-    color:
-        #ffffff;
-
-    font-size:
-        28px;
-
-    font-weight:
-        900;
-
-    margin-bottom:
-        25px;
-
-    letter-spacing:
-        1px;
-
-}
-
-
-/* ==========================================================
-   RESERVATÓRIOS EM ALERTA
-========================================================== */
-
-.alerta-reservatorios {
-
-    display:
-        flex;
-
-    flex-direction:
-        column;
-
-    gap:
-        12px;
-
-    margin:
-        20px 0;
-
-}
-
-
-.reservatorio-alerta-item {
-
-    display:
-        flex;
-
-    justify-content:
-        space-between;
-
-    align-items:
-        center;
-
-    padding:
-        15px 20px;
-
-    background:
-        rgba(
-            255,
-            0,
-            0,
-            0.22
-        );
-
-    border:
-        1px solid
-        rgba(
-            255,
-            120,
-            120,
-            0.5
-        );
-
-    border-radius:
-        10px;
-
-    color:
-        #ffffff;
-
-}
-
-
-.alerta-nome {
-
-    font-size:
-        19px;
-
-    font-weight:
-        800;
-
-}
-
-
-.alerta-percentual {
-
-    font-size:
-        28px;
-
-    font-weight:
-        900;
-
-    color:
-        #ff8a80;
-
-}
-
-
-.alerta-detalhes {
-
-    color:
-        #ffdada;
-
-    font-size:
-        15px;
-
-    margin-bottom:
-        25px;
-
-}
-
-
-/* ==========================================================
-   BOTÃO ALERTA
-========================================================== */
-
-#btnFecharAlerta {
-
-    border:
-        2px solid
-        #ffffff;
-
-    background:
-        #ff3d00;
-
-    color:
-        #ffffff;
-
-    font-size:
-        16px;
-
-    font-weight:
-        800;
-
-    padding:
-        14px 30px;
-
-    border-radius:
-        10px;
-
-    cursor:
-        pointer;
-
-    transition:
-        all
-        0.2s;
-
-}
-
-
-#btnFecharAlerta:hover {
-
-    background:
-        #ffffff;
-
-    color:
-        #d50000;
-
-    transform:
-        scale(1.05);
-
-}
-
-
-/* ==========================================================
-   SEM SINAL
-========================================================== */
-
-body.sem-sinal {
-
-    opacity:
-        0.7;
-
-}
-
 
 /* ==========================================================
    RESPONSIVO
-========================================================== */
+   ========================================================== */
 
-@media (
-    max-width: 768px
-) {
+@media (max-width: 768px) {
 
-    body {
+  .tanque {
+    width: 145px;
+    height: 200px;
+  }
 
-        padding:
-            10px;
+  .grid-reservatorios {
+    gap: 30px;
+  }
 
-    }
-
-
-    .header {
-
-        flex-direction:
-            column;
-
-        gap:
-            15px;
-
-        text-align:
-            center;
-
-    }
-
-
-    .header h1 {
-
-        font-size:
-            19px;
-
-    }
-
-
-    .tanque {
-
-        width:
-            145px;
-
-        height:
-            200px;
-
-    }
-
-
-    .grid-reservatorios {
-
-        gap:
-            30px;
-
-    }
-
-
-    .info .valor {
-
-        font-size:
-            32px;
-
-    }
-
-
-    .alerta-titulo {
-
-        font-size:
-            21px;
-
-    }
-
-
-    .alerta-icone {
-
-        font-size:
-            55px;
-
-    }
-
-
-    .alerta-box {
-
-        padding:
-            30px 20px;
-
-    }
-
-}
-
-
-/* ==========================================================
-   TELAS PEQUENAS
-========================================================== */
-
-@media (
-    max-width: 480px
-) {
-
-    .kpis {
-
-        grid-template-columns:
-            1fr;
-
-    }
-
-
-    .grid {
-
-        grid-template-columns:
-            1fr;
-
-    }
-
-
-    .grid-reservatorios {
-
-        grid-template-columns:
-            1fr;
-
-    }
-
-
-    .alerta-nome {
-
-        font-size:
-            15px;
-
-    }
-
-
-    .alerta-percentual {
-
-        font-size:
-            22px;
-
-    }
-
+  .info .valor {
+    font-size: 32px;
+  }
 }

@@ -1,85 +1,311 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<title>Monitoramento HAG</title>
 
-<title>
-    Monitoramento HAG
-</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
+<style>
 
-<link
-    rel="stylesheet"
-    href="/style.css"
->
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    padding: 20px;
+    min-height: 100vh;
+}
 
-<script
-    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-</script>
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
 
-<script
-    src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js">
-</script>
+.header h1 {
+    font-size: 24px;
+    color: #60a5fa;
+}
 
+.status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00ff88;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+}
+
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: rgba(30, 41, 59, 0.8);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    text-align: center;
+}
+
+.kpi-card h3 {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.kpi-card .value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #60a5fa;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: rgba(30, 41, 59, 0.8);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    transition: all 0.3s;
+}
+
+.card:hover {
+    border-color: #60a5fa;
+    box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2);
+}
+
+.card h2 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #cbd5e1;
+}
+
+.tanque {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #334155;
+    margin-bottom: 15px;
+}
+
+.escala {
+    position: absolute;
+    right: 5px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 10px;
+    color: #64748b;
+    z-index: 2;
+}
+
+.agua {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
+    transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.agua.nivel-cheio {
+    background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+}
+
+.agua.nivel-alto {
+    background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+}
+
+.agua.nivel-medio {
+    background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%);
+}
+
+.agua.nivel-baixo {
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+}
+
+.agua.nivel-critico {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+}
+
+.onda {
+    position: absolute;
+    top: -10px;
+    width: 200%;
+    height: 20px;
+    background: radial-gradient(
+        circle at 50% 0%,
+        rgba(255, 255, 255, 0.3) 0%,
+        transparent 50%
+    );
+    animation: wave 3s infinite linear;
+    opacity: 0.5;
+}
+
+@keyframes wave {
+
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0%);
+    }
+
+}
+
+.agua.balancando .onda {
+    animation: wave-bounce 1.3s ease-in-out;
+}
+
+@keyframes wave-bounce {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    25% {
+        transform: translateX(-40%) translateY(-5px);
+    }
+
+    75% {
+        transform: translateX(-60%) translateY(5px);
+    }
+
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.valor {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.litros {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.card.alerta {
+    border-color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.bomba.ligada .status-icon {
+    color: #22c55e;
+}
+
+.bomba.desligada .status-icon {
+    color: #ef4444;
+}
+
+.bomba.stale .status-icon {
+    color: #64748b;
+}
+
+.status-icon {
+    font-size: 40px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.ciclos {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.valor-pressao {
+    font-size: 28px;
+    font-weight: bold;
+    color: #60a5fa;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.chart-container {
+    background: rgba(30, 41, 59, 0.8);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    position: relative;
+    height: 380px;
+}
+
+.chart-container h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #cbd5e1;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+body.sem-sinal {
+    opacity: 0.7;
+}
+
+</style>
 </head>
 
-
 <body>
-
-
-<!-- =====================================================
-     ALERTA DE RESERVATÓRIO CRÍTICO
-     ===================================================== -->
-
-<div
-    id="alertaTela"
-    class="alerta-tela"
->
-
-    <div class="alerta-box">
-
-        <div class="alerta-icone">
-            🚨
-        </div>
-
-        <div class="alerta-titulo">
-            RESERVATÓRIO EM ESTADO CRÍTICO
-        </div>
-
-        <div class="alerta-subtitulo">
-            Atenção! O nível de água está abaixo do limite crítico.
-        </div>
-
-        <div
-            id="alertaLista"
-            class="alerta-lista"
-        >
-        </div>
-
-        <button
-            type="button"
-            class="alerta-fechar"
-            onclick="fecharAlertaCritico()"
-        >
-            FECHAR ALERTA
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     HEADER
-     ===================================================== -->
 
 <div class="header">
 
@@ -104,133 +330,42 @@
 </div>
 
 
-<!-- =====================================================
-     KPIs
-     ===================================================== -->
-
 <div class="kpis">
 
-    <div
-        class="kpi-card"
-        id="cardKpiCritico"
-    >
-
-        <h3>
-            Reservatórios Críticos
-        </h3>
-
-        <div
-            class="value"
-            id="kpiCritico"
-        >
-            0
-        </div>
-
+    <div class="kpi-card">
+        <h3>Reservatórios Críticos</h3>
+        <div class="value" id="kpiCritico">0</div>
     </div>
 
-
     <div class="kpi-card">
-
-        <h3>
-            Bombas Ativas
-        </h3>
-
-        <div
-            class="value"
-            id="bombasAtivas"
-        >
-            0
-        </div>
-
+        <h3>Bombas Ativas</h3>
+        <div class="value" id="bombasAtivas">0</div>
     </div>
 
-
     <div class="kpi-card">
-
-        <h3>
-            Consumo Elevador Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiElevador"
-        >
-            0 L
-        </div>
-
+        <h3>Consumo Elevador Hoje</h3>
+        <div class="value" id="kpiElevador">0 L</div>
     </div>
 
-
     <div class="kpi-card">
-
-        <h3>
-            Consumo Lavanderia Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiLavanderia"
-        >
-            0 L
-        </div>
-
+        <h3>Consumo Lavanderia Hoje</h3>
+        <div class="value" id="kpiLavanderia">0 L</div>
     </div>
 
-
     <div class="kpi-card">
-
-        <h3>
-            Consumo Osmose Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiOsmose"
-        >
-            0 L
-        </div>
-
+        <h3>Consumo Osmose Hoje</h3>
+        <div class="value" id="kpiOsmose">0 L</div>
     </div>
 
 </div>
 
 
-<!-- =====================================================
-     RESERVATÓRIOS
-     ===================================================== -->
+<div class="grid" id="areaReservatorios"></div>
 
-<div
-    class="grid grid-reservatorios"
-    id="areaReservatorios"
->
-</div>
+<div class="grid" id="areaBombas"></div>
 
+<div class="grid" id="areaPressoes"></div>
 
-<!-- =====================================================
-     BOMBAS
-     ===================================================== -->
-
-<div
-    class="grid"
-    id="areaBombas"
->
-</div>
-
-
-<!-- =====================================================
-     PRESSÕES
-     ===================================================== -->
-
-<div
-    class="grid"
-    id="areaPressoes"
->
-</div>
-
-
-<!-- =====================================================
-     GRÁFICO
-     ===================================================== -->
 
 <div class="chart-container">
 
@@ -238,133 +373,80 @@
         Histórico 7 Dias - Nível dos Reservatórios (%)
     </h2>
 
-    <canvas
-        id="chartHistorico"
-    >
-    </canvas>
+    <canvas id="chartHistorico"></canvas>
 
 </div>
 
 
 <script>
 
+const API = "/api/dashboard";
 
-/* ==========================================================
-   CONFIGURAÇÃO
-   ========================================================== */
+let ws = null;
 
-const API =
-    "/api/dashboard";
+let reconnectDelay = 3000;
 
+let ultimoDado = Date.now();
 
-let ws =
-    null;
+let renderPending = false;
 
-
-let reconnectDelay =
-    3000;
-
-
-let ultimoDado =
-    Date.now();
-
-
-let renderPending =
-    false;
-
-
-let chartHistorico =
-    null;
-
-
-/* ==========================================================
-   CONTROLE DO HISTÓRICO
-   ========================================================== */
-
-let historicoAtualizacaoTimer =
-    null;
-
-
-let ultimaAtualizacaoHistorico =
-    0;
-
-
-let atualizacaoHistoricoEmAndamento =
-    false;
-
-
-/* ==========================================================
-   CONTROLE DO ALERTA
-   ========================================================== */
-
-let ultimoAlertaCritico =
-    0;
+let chartHistorico = null;
 
 
 /*
-   O alerta volta a aparecer a cada 60 segundos
-   enquanto existir reservatório crítico.
+==========================================================
+CONTROLE DE ATUALIZAÇÃO DO HISTÓRICO
+==========================================================
 */
 
-const intervaloAlertaCritico =
-    60000;
+let historicoAtualizacaoTimer = null;
+
+let ultimaAtualizacaoHistorico = 0;
+
+let atualizacaoHistoricoEmAndamento = false;
 
 
-/* ==========================================================
-   INICIALIZAÇÃO
-   ========================================================== */
+/*
+==========================================================
+INICIALIZAÇÃO
+==========================================================
+*/
 
 init();
 
 
 function init() {
 
+    // Carrega o histórico inicialmente
     carregarHistorico();
 
+    // Carrega os dados atuais
     fallbackHTTP();
 
+    // Conecta WebSocket
     conectarWS();
 
-
-    /*
-       Fallback a cada 8 segundos.
-    */
-
-    setInterval(
-        fallbackHTTP,
-        8000
-    );
+    // Fallback periódico
+    setInterval(fallbackHTTP, 8000);
 
 
     /*
-       Verificação de sinal.
+    Verifica se ainda existe comunicação
     */
 
     setInterval(() => {
 
-        if (
-            Date.now() -
-            ultimoDado >
-            15000
-        ) {
+        if (Date.now() - ultimoDado > 15000) {
 
-            atualizarStatusVisual(
-                "Sem sinal"
-            );
+            atualizarStatusVisual("Sem sinal");
 
-            document.body.classList.add(
-                "sem-sinal"
-            );
+            document.body.classList.add("sem-sinal");
 
         } else {
 
-            document.body.classList.remove(
-                "sem-sinal"
-            );
+            document.body.classList.remove("sem-sinal");
 
-            atualizarStatusVisual(
-                "Tempo real conectado"
-            );
+            atualizarStatusVisual("Tempo real conectado");
 
         }
 
@@ -373,52 +455,53 @@ function init() {
 }
 
 
-/* ==========================================================
-   PROCESSAR PAYLOAD
-   ========================================================== */
+/*
+==========================================================
+PROCESSAMENTO DO PAYLOAD
+==========================================================
+*/
 
 function processarPayload(payload) {
 
-    if (!payload) {
-        return;
+    if (!payload) return;
+
+
+    /*
+    Alguns servidores enviam:
+
+    {
+        type: "update",
+        dados: {...}
+    }
+
+    */
+
+    if (payload.type === "update" && payload.dados) {
+
+        payload = payload.dados;
+
     }
 
 
     /*
-       Trata payload:
-
-       {
-           type: "update",
-           dados: {...}
-       }
+    Marca que recebemos dados
     */
 
-    if (
-        payload.type === "update" &&
-        payload.dados
-    ) {
-
-        payload =
-            payload.dados;
-
-    }
-
-
-    ultimoDado =
-        Date.now();
+    ultimoDado = Date.now();
 
 
     /*
-       Atualiza cards.
+    Atualiza os cards
     */
 
-    scheduleRender(
-        payload
-    );
+    scheduleRender(payload);
 
 
     /*
-       Atualiza histórico.
+    IMPORTANTE:
+
+    Toda nova leitura também agenda
+    atualização do gráfico.
     */
 
     agendarAtualizacaoHistorico();
@@ -426,175 +509,146 @@ function processarPayload(payload) {
 }
 
 
-/* ==========================================================
-   AGENDAR ATUALIZAÇÃO DO GRÁFICO
-   ========================================================== */
+/*
+==========================================================
+AGENDAMENTO DA ATUALIZAÇÃO DO GRÁFICO
+==========================================================
+*/
 
 function agendarAtualizacaoHistorico() {
 
-    if (
-        historicoAtualizacaoTimer
-    ) {
+    /*
+    Se já existe uma atualização agendada,
+    cancela para evitar várias requisições.
+    */
 
-        clearTimeout(
-            historicoAtualizacaoTimer
-        );
+    if (historicoAtualizacaoTimer) {
+
+        clearTimeout(historicoAtualizacaoTimer);
 
     }
 
 
-    historicoAtualizacaoTimer =
-        setTimeout(
-            async () => {
+    /*
+    Pequeno atraso para dar tempo
+    do servidor salvar o histórico.
+    */
 
-                const agora =
-                    Date.now();
+    historicoAtualizacaoTimer = setTimeout(async () => {
 
-
-                if (
-                    agora -
-                    ultimaAtualizacaoHistorico <
-                    1000
-                ) {
-
-                    return;
-
-                }
+        const agora = Date.now();
 
 
-                if (
-                    atualizacaoHistoricoEmAndamento
-                ) {
+        /*
+        Não atualiza mais de uma vez por segundo.
+        */
 
-                    return;
+        if (agora - ultimaAtualizacaoHistorico < 1000) {
 
-                }
+            return;
 
-
-                ultimaAtualizacaoHistorico =
-                    agora;
+        }
 
 
-                atualizacaoHistoricoEmAndamento =
-                    true;
+        /*
+        Se já existe uma consulta em andamento,
+        não inicia outra.
+        */
+
+        if (atualizacaoHistoricoEmAndamento) {
+
+            return;
+
+        }
 
 
-                try {
+        ultimaAtualizacaoHistorico = agora;
 
-                    await carregarHistorico();
+        atualizacaoHistoricoEmAndamento = true;
 
-                } catch (erro) {
 
-                    console.error(
-                        "Erro ao atualizar histórico:",
-                        erro
-                    );
+        try {
 
-                } finally {
+            await carregarHistorico();
 
-                    atualizacaoHistoricoEmAndamento =
-                        false;
+        } catch (erro) {
 
-                }
+            console.error(
+                "Erro ao atualizar histórico:",
+                erro
+            );
 
-            },
-            800
-        );
+        } finally {
+
+            atualizacaoHistoricoEmAndamento = false;
+
+        }
+
+    }, 800);
 
 }
 
 
-/* ==========================================================
-   RENDER CONTROLADO
-   ========================================================== */
+/*
+==========================================================
+RENDERIZAÇÃO CONTROLADA
+==========================================================
+*/
 
 function scheduleRender(data) {
 
-    if (
-        renderPending
-    ) {
+    if (renderPending) return;
 
-        return;
-
-    }
+    renderPending = true;
 
 
-    renderPending =
-        true;
+    requestAnimationFrame(() => {
 
+        atualizarUI(data);
 
-    requestAnimationFrame(
-        () => {
+        renderPending = false;
 
-            atualizarUI(
-                data
-            );
-
-            renderPending =
-                false;
-
-        }
-    );
+    });
 
 }
 
 
-/* ==========================================================
-   ATUALIZAR UI
-   ========================================================== */
+/*
+==========================================================
+ATUALIZA INTERFACE
+==========================================================
+*/
 
 function atualizarUI(data) {
 
-    if (!data) {
-        return;
-    }
+    if (!data) return;
 
 
     const horaBR =
-        new Date()
-            .toLocaleTimeString(
-                "pt-BR",
-                {
-                    timeZone:
-                        "America/Sao_Paulo",
-
-                    hour:
-                        "2-digit",
-
-                    minute:
-                        "2-digit",
-
-                    second:
-                        "2-digit"
-                }
-            );
+        new Date().toLocaleTimeString(
+            "pt-BR",
+            {
+                timeZone: "America/Sao_Paulo",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
 
 
     const hora =
-        document.getElementById(
-            "hora"
-        );
+        document.getElementById("hora");
 
 
     if (hora) {
 
-        hora.innerText =
-            horaBR;
+        hora.innerText = horaBR;
 
     }
 
 
-    const reservatorios =
-        data.reservatorios || [];
-
-
     renderReservatorios(
-        reservatorios
-    );
-
-
-    verificarReservatoriosCriticos(
-        reservatorios
+        data.reservatorios || []
     );
 
 
@@ -608,16 +662,16 @@ function atualizarUI(data) {
     );
 
 
-    atualizarKPIs(
-        data
-    );
+    atualizarKPIs(data);
 
 }
 
 
-/* ==========================================================
-   RESERVATÓRIOS
-   ========================================================== */
+/*
+==========================================================
+RESERVATÓRIOS
+==========================================================
+*/
 
 function renderReservatorios(lista) {
 
@@ -627,506 +681,220 @@ function renderReservatorios(lista) {
         );
 
 
-    if (!area) {
-        return;
-    }
+    if (!area) return;
 
 
-    lista.forEach(
-        (r) => {
+    lista.forEach(r => {
 
-            const id =
-                `res-${r.setor}`;
-
-
-            let el =
-                document.getElementById(
-                    id
-                );
+        const id =
+            `res-${r.setor}`;
 
 
-            if (!el) {
-
-                el =
-                    document.createElement(
-                        "div"
-                    );
+        let el =
+            document.getElementById(id);
 
 
-                el.id =
-                    id;
+        if (!el) {
+
+            el =
+                document.createElement("div");
 
 
-                el.className =
-                    "card reservatorio";
+            el.id = id;
+
+            el.className =
+                "card reservatorio";
 
 
-                el.innerHTML = `
+            el.innerHTML = `
 
-                    <h2>
-                        ${r.nome || r.setor || "Reservatório"}
-                    </h2>
+                <h2>${r.nome}</h2>
 
-                    <div class="tanque">
+                <div class="tanque">
 
-                        <div class="escala">
+                    <div class="escala">
 
-                            <span>100</span>
-
-                            <span>75</span>
-
-                            <span>50</span>
-
-                            <span>25</span>
-
-                            <span>0</span>
-
-                        </div>
-
-
-                        <div class="agua">
-
-                            <div class="onda"></div>
-
-                        </div>
+                        <span>100</span>
+                        <span>75</span>
+                        <span>50</span>
+                        <span>25</span>
+                        <span>0</span>
 
                     </div>
 
+                    <div class="agua">
 
-                    <div class="info">
-
-                        <div class="valor">
-                            0%
-                        </div>
-
-                        <div class="litros">
-                            0 L
-                        </div>
+                        <div class="onda"></div>
 
                     </div>
-                `;
+
+                </div>
+
+                <div class="info">
+
+                    <div class="valor">
+                        0%
+                    </div>
+
+                    <div class="litros">
+                        0 L
+                    </div>
+
+                </div>
+            `;
 
 
-                area.appendChild(
-                    el
-                );
+            area.appendChild(el);
 
-            }
+        }
 
 
-            const agua =
-                el.querySelector(
-                    ".agua"
-                );
+        const agua =
+            el.querySelector(".agua");
 
 
-            const valor =
-                el.querySelector(
-                    ".valor"
-                );
+        const valor =
+            el.querySelector(".valor");
 
 
-            const litros =
-                el.querySelector(
-                    ".litros"
-                );
+        const litros =
+            el.querySelector(".litros");
 
 
-            const nivel =
-                Math.min(
-                    100,
-                    Math.max(
-                        0,
-                        Number(
-                            r.percent ||
-                            0
-                        )
-                    )
-                );
+        const nivel =
+            Math.min(
+                100,
+                Math.max(
+                    0,
+                    Number(r.percent || 0)
+                )
+            );
 
 
-            const nivelSuavizado =
-                Math.round(
-                    nivel
-                );
+        const nivelSuavizado =
+            Math.round(nivel);
 
 
-            const nivelAnterior =
-                Number(
-                    agua.dataset.nivel ||
-                    0
-                );
+        const nivelAnterior =
+            Number(
+                agua.dataset.nivel || 0
+            );
 
 
-            if (
-                Math.abs(
-                    nivelSuavizado -
-                    nivelAnterior
-                ) >= 1
-            ) {
+        if (
+            Math.abs(
+                nivelSuavizado -
+                nivelAnterior
+            ) >= 1
+        ) {
 
-                agua.classList.add(
+            agua.classList.add(
+                "balancando"
+            );
+
+
+            setTimeout(() => {
+
+                agua.classList.remove(
                     "balancando"
                 );
 
-
-                setTimeout(
-                    () => {
-
-                        agua.classList.remove(
-                            "balancando"
-                        );
-
-                    },
-                    1300
-                );
-
-            }
-
-
-            agua.style.height =
-                `${nivelSuavizado}%`;
-
-
-            agua.dataset.nivel =
-                nivelSuavizado;
-
-
-            /*
-               Remove apenas classes
-               de nível.
-            */
-
-            agua.classList.remove(
-                "nivel-cheio",
-                "nivel-alto",
-                "nivel-medio",
-                "nivel-baixo",
-                "nivel-critico"
-            );
-
-
-            if (
-                nivel >= 95
-            ) {
-
-                agua.classList.add(
-                    "nivel-cheio"
-                );
-
-            } else if (
-                nivel >= 70
-            ) {
-
-                agua.classList.add(
-                    "nivel-alto"
-                );
-
-            } else if (
-                nivel >= 40
-            ) {
-
-                agua.classList.add(
-                    "nivel-medio"
-                );
-
-            } else if (
-                nivel >= 20
-            ) {
-
-                agua.classList.add(
-                    "nivel-baixo"
-                );
-
-            } else {
-
-                agua.classList.add(
-                    "nivel-critico"
-                );
-
-            }
-
-
-            /*
-               Card crítico.
-            */
-
-            if (
-                nivel < 20
-            ) {
-
-                el.classList.add(
-                    "alerta"
-                );
-
-            } else {
-
-                el.classList.remove(
-                    "alerta"
-                );
-
-            }
-
-
-            valor.innerText =
-                `${nivelSuavizado}%`;
-
-
-            litros.innerText =
-                `${formatar(
-                    r.current_liters
-                )} L`;
+            }, 1300);
 
         }
-    );
-
-}
 
 
-/* ==========================================================
-   VERIFICAR RESERVATÓRIOS CRÍTICOS
-   ========================================================== */
-
-function verificarReservatoriosCriticos(
-    lista
-) {
-
-    if (
-        !Array.isArray(lista)
-    ) {
-
-        return;
-
-    }
+        agua.style.height =
+            `${nivelSuavizado}%`;
 
 
-    const criticos =
-        lista.filter(
-            (r) => {
-
-                const nivel =
-                    Number(
-                        r.percent ||
-                        0
-                    );
-
-
-                return nivel < 20;
-
-            }
-        );
-
-
-    const cardCritico =
-        document.getElementById(
-            "cardKpiCritico"
-        );
-
-
-    /*
-       Nenhum crítico.
-    */
-
-    if (
-        criticos.length === 0
-    ) {
-
-        if (cardCritico) {
-
-            cardCritico.classList.remove(
-                "critico-ativo"
-            );
-
-        }
+        agua.dataset.nivel =
+            nivelSuavizado;
 
 
         /*
-           Se não há mais crítico,
-           fecha automaticamente a tela.
+        Remove somente as classes
+        de nível.
+
+        Mantém a classe água.
         */
 
-        fecharAlertaCritico();
-
-        return;
-
-    }
-
-
-    /*
-       Existe crítico.
-    */
-
-    if (cardCritico) {
-
-        cardCritico.classList.add(
-            "critico-ativo"
-        );
-
-    }
-
-
-    const agora =
-        Date.now();
-
-
-    /*
-       Primeiro alerta imediatamente.
-       Depois novamente a cada minuto.
-    */
-
-    if (
-        agora -
-        ultimoAlertaCritico >=
-        intervaloAlertaCritico
-    ) {
-
-        mostrarAlertaCritico(
-            criticos
+        agua.classList.remove(
+            "nivel-cheio",
+            "nivel-alto",
+            "nivel-medio",
+            "nivel-baixo",
+            "nivel-critico"
         );
 
 
-        ultimoAlertaCritico =
-            agora;
+        if (nivel >= 95) {
 
-    }
-
-}
-
-
-/* ==========================================================
-   MOSTRAR ALERTA
-   ========================================================== */
-
-function mostrarAlertaCritico(
-    criticos
-) {
-
-    const tela =
-        document.getElementById(
-            "alertaTela"
-        );
-
-
-    const lista =
-        document.getElementById(
-            "alertaLista"
-        );
-
-
-    if (
-        !tela ||
-        !lista
-    ) {
-
-        return;
-
-    }
-
-
-    lista.innerHTML =
-        "";
-
-
-    criticos.forEach(
-        (r) => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                "alerta-reservatorio";
-
-
-            const nome =
-                document.createElement(
-                    "div"
-                );
-
-
-            nome.className =
-                "alerta-reservatorio-nome";
-
-
-            nome.innerText =
-                r.nome ||
-                r.setor ||
-                "Reservatório";
-
-
-            const nivel =
-                document.createElement(
-                    "div"
-                );
-
-
-            nivel.className =
-                "alerta-reservatorio-nivel";
-
-
-            nivel.innerText =
-                `${Math.round(
-                    Number(
-                        r.percent ||
-                        0
-                    )
-                )}%`;
-
-
-            div.appendChild(
-                nome
+            agua.classList.add(
+                "nivel-cheio"
             );
 
+        } else if (nivel >= 70) {
 
-            div.appendChild(
-                nivel
+            agua.classList.add(
+                "nivel-alto"
             );
 
+        } else if (nivel >= 40) {
 
-            lista.appendChild(
-                div
+            agua.classList.add(
+                "nivel-medio"
+            );
+
+        } else if (nivel >= 20) {
+
+            agua.classList.add(
+                "nivel-baixo"
+            );
+
+        } else {
+
+            agua.classList.add(
+                "nivel-critico"
             );
 
         }
-    );
 
 
-    tela.classList.add(
-        "ativo"
-    );
+        if (nivel < 20) {
 
-}
+            el.classList.add(
+                "alerta"
+            );
 
+        } else {
 
-/* ==========================================================
-   FECHAR ALERTA
-   ========================================================== */
+            el.classList.remove(
+                "alerta"
+            );
 
-function fecharAlertaCritico() {
-
-    const tela =
-        document.getElementById(
-            "alertaTela"
-        );
+        }
 
 
-    if (!tela) {
-        return;
-    }
+        valor.innerText =
+            `${nivelSuavizado}%`;
 
 
-    tela.classList.remove(
-        "ativo"
-    );
+        litros.innerText =
+            `${formatar(
+                r.current_liters
+            )} L`;
+
+    });
 
 }
 
 
-/* ==========================================================
-   BOMBAS
-   ========================================================== */
+/*
+==========================================================
+BOMBAS
+==========================================================
+*/
 
 function renderBombas(lista) {
 
@@ -1136,121 +904,110 @@ function renderBombas(lista) {
         );
 
 
-    if (!area) {
-        return;
-    }
+    if (!area) return;
 
 
-    lista.forEach(
-        (b, i) => {
+    lista.forEach((b, i) => {
 
-            const id =
-                `bomba-${i}`;
+        const id =
+            `bomba-${i}`;
 
 
-            let el =
-                document.getElementById(
-                    id
+        let el =
+            document.getElementById(id);
+
+
+        const ligada =
+            b.estado === "ligada";
+
+
+        const desconhecido =
+            b.estado === "desconhecido";
+
+
+        if (!el) {
+
+            el =
+                document.createElement(
+                    "div"
                 );
 
 
-            const ligada =
-                b.estado ===
-                "ligada";
-
-
-            const desconhecido =
-                b.estado ===
-                "desconhecido";
-
-
-            if (!el) {
-
-                el =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                el.id =
-                    id;
-
-
-                el.className =
-                    "card bomba";
-
-
-                el.innerHTML = `
-
-                    <h2></h2>
-
-                    <div class="status-icon"></div>
-
-                    <div class="valor"></div>
-
-                    <div class="ciclos"></div>
-
-                `;
-
-
-                area.appendChild(
-                    el
-                );
-
-            }
-
+            el.id = id;
 
             el.className =
-                `card bomba ${
-                    desconhecido
-                        ? "stale"
-                        : ligada
-                            ? "ligada"
-                            : "desligada"
-                }`;
+                "card bomba";
 
 
-            el.querySelector(
-                "h2"
-            ).innerText =
-                b.nome ||
-                "Bomba";
+            el.innerHTML = `
+
+                <h2></h2>
+
+                <div class="status-icon"></div>
+
+                <div class="valor"></div>
+
+                <div class="ciclos"></div>
+
+            `;
 
 
-            el.querySelector(
-                ".status-icon"
-            ).innerText =
-                desconhecido
-                    ? "⚪"
-                    : ligada
-                        ? "🟢"
-                        : "🔴";
-
-
-            el.querySelector(
-                ".valor"
-            ).innerText =
-                desconhecido
-                    ? "SEM DADOS"
-                    : ligada
-                        ? "EM OPERAÇÃO"
-                        : "INATIVA";
-
-
-            el.querySelector(
-                ".ciclos"
-            ).innerText =
-                `${b.ciclo || 0} ciclos`;
+            area.appendChild(el);
 
         }
-    );
+
+
+        el.className =
+            `card bomba ${
+                desconhecido
+                    ? "stale"
+                    : ligada
+                        ? "ligada"
+                        : "desligada"
+            }`;
+
+
+        el.querySelector(
+            "h2"
+        ).innerText =
+            b.nome;
+
+
+        el.querySelector(
+            ".status-icon"
+        ).innerText =
+            desconhecido
+                ? "⚪"
+                : ligada
+                    ? "🟢"
+                    : "🔴";
+
+
+        el.querySelector(
+            ".valor"
+        ).innerText =
+            desconhecido
+                ? "SEM DADOS"
+                : ligada
+                    ? "EM OPERAÇÃO"
+                    : "INATIVA";
+
+
+        el.querySelector(
+            ".ciclos"
+        ).innerText =
+            `${b.ciclo || 0} ciclos`;
+
+    });
 
 }
 
 
-/* ==========================================================
-   PRESSÕES
-   ========================================================== */
+/*
+==========================================================
+PRESSÕES
+==========================================================
+*/
 
 function renderPressoes(lista) {
 
@@ -1260,80 +1017,70 @@ function renderPressoes(lista) {
         );
 
 
-    if (!area) {
-        return;
-    }
+    if (!area) return;
 
 
-    lista.forEach(
-        (p, i) => {
+    lista.forEach((p, i) => {
 
-            const id =
-                `pressao-${i}`;
+        const id =
+            `pressao-${i}`;
 
 
-            let el =
-                document.getElementById(
-                    id
+        let el =
+            document.getElementById(id);
+
+
+        if (!el) {
+
+            el =
+                document.createElement(
+                    "div"
                 );
 
 
-            if (!el) {
+            el.id = id;
 
-                el =
-                    document.createElement(
-                        "div"
-                    );
+            el.className =
+                "card";
 
 
-                el.id =
-                    id;
+            el.innerHTML = `
+
+                <h2></h2>
+
+                <div class="valor-pressao"></div>
+
+            `;
 
 
-                el.className =
-                    "card";
-
-
-                el.innerHTML = `
-
-                    <h2></h2>
-
-                    <div class="valor-pressao"></div>
-
-                `;
-
-
-                area.appendChild(
-                    el
-                );
-
-            }
-
-
-            el.querySelector(
-                "h2"
-            ).innerText =
-                p.nome ||
-                "Pressão";
-
-
-            el.querySelector(
-                ".valor-pressao"
-            ).innerText =
-                `${Number(
-                    p.pressao ||
-                    0
-                ).toFixed(2)} bar`;
+            area.appendChild(el);
 
         }
-    );
+
+
+        el.querySelector(
+            "h2"
+        ).innerText =
+            p.nome;
+
+
+        el.querySelector(
+            ".valor-pressao"
+        ).innerText =
+            `${Number(
+                p.pressao || 0
+            ).toFixed(2)} bar`;
+
+    });
 
 }
 
 
-/* ==========================================================
-   CARREGAR HISTÓRICO
-   ========================================================== */
+/*
+==========================================================
+CARREGAR HISTÓRICO
+==========================================================
+*/
 
 async function carregarHistorico() {
 
@@ -1344,9 +1091,7 @@ async function carregarHistorico() {
                 "/historico?t=" +
                 Date.now(),
                 {
-                    cache:
-                        "no-store",
-
+                    cache: "no-store",
                     headers: {
                         "Cache-Control":
                             "no-cache"
@@ -1355,9 +1100,7 @@ async function carregarHistorico() {
             );
 
 
-        if (
-            !res.ok
-        ) {
+        if (!res.ok) {
 
             throw new Error(
                 `HTTP ${res.status}`
@@ -1370,9 +1113,11 @@ async function carregarHistorico() {
             await res.json();
 
 
-        renderHistoricoChart(
-            data
-        );
+        /*
+        Atualiza o gráfico
+        */
+
+        renderHistoricoChart(data);
 
 
         return data;
@@ -1392,13 +1137,13 @@ async function carregarHistorico() {
 }
 
 
-/* ==========================================================
-   GRÁFICO
-   ========================================================== */
+/*
+==========================================================
+GRÁFICO HISTÓRICO
+==========================================================
+*/
 
-function renderHistoricoChart(
-    data
-) {
+function renderHistoricoChart(data) {
 
     const canvas =
         document.getElementById(
@@ -1406,15 +1151,17 @@ function renderHistoricoChart(
         );
 
 
-    if (!canvas) {
-        return;
-    }
+    if (!canvas) return;
 
+
+    /*
+    Se o servidor retornar vazio,
+    não quebra o dashboard.
+    */
 
     if (
         !data ||
-        typeof data !==
-        "object"
+        typeof data !== "object"
     ) {
 
         console.warn(
@@ -1429,29 +1176,22 @@ function renderHistoricoChart(
 
     const cores = {
 
-        elevador:
-            "#60a5fa",
+        elevador: "#60a5fa",
 
-        osmose:
-            "#22c55e",
+        osmose: "#22c55e",
 
-        cme:
-            "#facc15",
+        cme: "#facc15",
 
-        abrandada:
-            "#f97316",
+        abrandada: "#f97316",
 
-        lavanderia:
-            "#a855f7"
+        lavanderia: "#a855f7"
 
     };
 
 
     const datasets =
-        Object.keys(
-            data
-        ).map(
-            (setor) => {
+        Object.keys(data).map(
+            setor => {
 
                 return {
 
@@ -1468,11 +1208,9 @@ function renderHistoricoChart(
                             ? data[setor]
                             : [],
 
-                    borderWidth:
-                        2,
+                    borderWidth: 2,
 
-                    tension:
-                        0.4,
+                    tension: 0.4,
 
                     borderColor:
                         cores[setor] ||
@@ -1482,14 +1220,11 @@ function renderHistoricoChart(
                         cores[setor] ||
                         "#60a5fa",
 
-                    pointRadius:
-                        2,
+                    pointRadius: 2,
 
-                    pointHoverRadius:
-                        5,
+                    pointHoverRadius: 5,
 
-                    fill:
-                        false
+                    fill: false
 
                 };
 
@@ -1498,23 +1233,24 @@ function renderHistoricoChart(
 
 
     /*
-       Destrói gráfico anterior.
+    Se o gráfico já existe,
+    destrói antes de recriar.
+
+    Isso garante que os dados
+    antigos não fiquem presos.
     */
 
-    if (
-        chartHistorico
-    ) {
+    if (chartHistorico) {
 
         chartHistorico.destroy();
 
-        chartHistorico =
-            null;
+        chartHistorico = null;
 
     }
 
 
     /*
-       Cria gráfico novo.
+    Cria novo gráfico
     */
 
     chartHistorico =
@@ -1522,8 +1258,7 @@ function renderHistoricoChart(
             canvas,
             {
 
-                type:
-                    "line",
+                type: "line",
 
                 data: {
 
@@ -1534,26 +1269,22 @@ function renderHistoricoChart(
 
                 options: {
 
-                    responsive:
-                        true,
+                    responsive: true,
 
                     maintainAspectRatio:
                         false,
 
                     animation: {
 
-                        duration:
-                            500
+                        duration: 500
 
                     },
 
                     interaction: {
 
-                        mode:
-                            "nearest",
+                        mode: "nearest",
 
-                        intersect:
-                            false
+                        intersect: false
 
                     },
 
@@ -1561,13 +1292,11 @@ function renderHistoricoChart(
 
                         x: {
 
-                            type:
-                                "time",
+                            type: "time",
 
                             time: {
 
-                                unit:
-                                    "hour",
+                                unit: "hour",
 
                                 displayFormats: {
 
@@ -1599,11 +1328,9 @@ function renderHistoricoChart(
 
                         y: {
 
-                            min:
-                                0,
+                            min: 0,
 
-                            max:
-                                100,
+                            max: 100,
 
                             ticks: {
 
@@ -1611,7 +1338,7 @@ function renderHistoricoChart(
                                     "#94a3b8",
 
                                 callback:
-                                    (value) =>
+                                    value =>
                                         value +
                                         "%"
 
@@ -1677,11 +1404,17 @@ function renderHistoricoChart(
 }
 
 
-/* ==========================================================
-   WEBSOCKET
-   ========================================================== */
+/*
+==========================================================
+WEBSOCKET
+==========================================================
+*/
 
 function conectarWS() {
+
+    /*
+    Fecha conexão anterior
+    */
 
     if (ws) {
 
@@ -1692,7 +1425,7 @@ function conectarWS() {
         } catch (e) {
 
             console.warn(
-                "Erro fechando WebSocket:",
+                "Erro fechando WS:",
                 e
             );
 
@@ -1702,8 +1435,7 @@ function conectarWS() {
 
 
     const protocolo =
-        location.protocol ===
-        "https:"
+        location.protocol === "https:"
             ? "wss:"
             : "ws:";
 
@@ -1719,90 +1451,92 @@ function conectarWS() {
 
 
     ws =
-        new WebSocket(
-            url
+        new WebSocket(url);
+
+
+    ws.onopen = () => {
+
+        console.log(
+            "WebSocket conectado"
         );
 
 
-    ws.onopen =
-        () => {
+        atualizarStatusVisual(
+            "Tempo real conectado"
+        );
+
+    };
+
+
+    ws.onmessage = (msg) => {
+
+        try {
+
+            const payload =
+                JSON.parse(
+                    msg.data
+                );
+
 
             console.log(
-                "WebSocket conectado"
+                "WebSocket recebeu atualização"
             );
 
 
-            atualizarStatusVisual(
-                "Tempo real conectado"
-            );
-
-        };
-
-
-    ws.onmessage =
-        (msg) => {
-
-            try {
-
-                const payload =
-                    JSON.parse(
-                        msg.data
-                    );
-
-
-                processarPayload(
-                    payload
-                );
-
-            } catch (e) {
-
-                console.error(
-                    "Erro WS:",
-                    e
-                );
-
-            }
-
-        };
-
-
-    ws.onclose =
-        () => {
-
-            console.warn(
-                "WebSocket desconectado"
+            processarPayload(
+                payload
             );
 
 
-            atualizarStatusVisual(
-                "Reconectando..."
-            );
-
-
-            setTimeout(
-                conectarWS,
-                reconnectDelay
-            );
-
-        };
-
-
-    ws.onerror =
-        (err) => {
+        } catch (e) {
 
             console.error(
-                "Erro WebSocket:",
-                err
+                "Erro WS:",
+                e
             );
 
-        };
+        }
+
+    };
+
+
+    ws.onclose = () => {
+
+        console.warn(
+            "WebSocket desconectado"
+        );
+
+
+        atualizarStatusVisual(
+            "Reconectando..."
+        );
+
+
+        setTimeout(
+            conectarWS,
+            reconnectDelay
+        );
+
+    };
+
+
+    ws.onerror = (err) => {
+
+        console.error(
+            "Erro WebSocket:",
+            err
+        );
+
+    };
 
 }
 
 
-/* ==========================================================
-   FALLBACK HTTP
-   ========================================================== */
+/*
+==========================================================
+FALLBACK HTTP
+==========================================================
+*/
 
 async function fallbackHTTP() {
 
@@ -1818,19 +1552,14 @@ async function fallbackHTTP() {
                         "no-store",
 
                     headers: {
-
                         "Cache-Control":
                             "no-cache"
-
                     }
-
                 }
             );
 
 
-        if (
-            !res.ok
-        ) {
+        if (!res.ok) {
 
             throw new Error(
                 `HTTP ${res.status}`
@@ -1843,6 +1572,12 @@ async function fallbackHTTP() {
             await res.json();
 
 
+        /*
+        Mesmo pelo fallback,
+        processarPayload agenda
+        a atualização do gráfico.
+        */
+
         processarPayload(
             data
         );
@@ -1852,8 +1587,7 @@ async function fallbackHTTP() {
 
         if (
             !ws ||
-            ws.readyState !==
-            1
+            ws.readyState !== 1
         ) {
 
             atualizarStatusVisual(
@@ -1867,9 +1601,11 @@ async function fallbackHTTP() {
 }
 
 
-/* ==========================================================
-   STATUS
-   ========================================================== */
+/*
+==========================================================
+STATUS
+==========================================================
+*/
 
 function atualizarStatusVisual(
     texto
@@ -1887,14 +1623,7 @@ function atualizarStatusVisual(
         );
 
 
-    if (
-        !el ||
-        !dot
-    ) {
-
-        return;
-
-    }
+    if (!el || !dot) return;
 
 
     el.innerText =
@@ -1929,9 +1658,11 @@ function atualizarStatusVisual(
 }
 
 
-/* ==========================================================
-   FORMATAÇÃO
-   ========================================================== */
+/*
+==========================================================
+FORMATAÇÃO
+==========================================================
+*/
 
 function formatar(n) {
 
@@ -1944,13 +1675,13 @@ function formatar(n) {
 }
 
 
-/* ==========================================================
-   KPIs
-   ========================================================== */
+/*
+==========================================================
+KPIs
+==========================================================
+*/
 
-function atualizarKPIs(
-    data
-) {
+function atualizarKPIs(data) {
 
     const elCritico =
         document.getElementById(
@@ -1982,35 +1713,30 @@ function atualizarKPIs(
         );
 
 
-    if (
-        elCritico
-    ) {
+    if (elCritico) {
 
         elCritico.innerText =
             (
                 data.reservatorios ||
                 []
             ).filter(
-                (r) =>
+                r =>
                     Number(
-                        r.percent ||
-                        0
-                    ) < 20
+                        r.percent || 0
+                    ) < 30
             ).length;
 
     }
 
 
-    if (
-        elAtivas
-    ) {
+    if (elAtivas) {
 
         elAtivas.innerText =
             (
                 data.bombas ||
                 []
             ).filter(
-                (b) =>
+                b =>
                     b.estado ===
                     "ligada"
             ).length;
@@ -2018,9 +1744,7 @@ function atualizarKPIs(
     }
 
 
-    if (
-        elElevador
-    ) {
+    if (elElevador) {
 
         elElevador.innerText =
             `${formatar(
@@ -2032,9 +1756,7 @@ function atualizarKPIs(
     }
 
 
-    if (
-        elLavanderia
-    ) {
+    if (elLavanderia) {
 
         elLavanderia.innerText =
             `${formatar(
@@ -2046,9 +1768,7 @@ function atualizarKPIs(
     }
 
 
-    if (
-        elOsmose
-    ) {
+    if (elOsmose) {
 
         elOsmose.innerText =
             `${formatar(
@@ -2061,10 +1781,7 @@ function atualizarKPIs(
 
 }
 
-
 </script>
 
-
 </body>
-
 </html>
