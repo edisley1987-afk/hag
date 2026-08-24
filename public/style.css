@@ -1,125 +1,61 @@
 /* ==========================================================
-   RESERVATÓRIOS 3D PROFISSIONAL - PADRÃO INDUSTRIAL
-   HOSPITAL ARNALDO GAVAZZA
-   ========================================================== */
-
-/* ==========================================================
-   GRID DOS RESERVATÓRIOS
+   RESERVATÓRIOS - CSS PRINCIPAL
+   VERSÃO SEGURA
    ========================================================== */
 
 .grid-reservatorios {
-  display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(280px, 1fr));
-
-  gap: 40px;
-
-  width: 100%;
-
-  margin-bottom: 50px;
-
-  align-items: start;
-
-  box-sizing: border-box;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 30px !important;
+    width: 100% !important;
+    margin: 20px 0 40px 0 !important;
+    padding: 0 !important;
 }
 
 /* ==========================================================
-   CARD DO RESERVATÓRIO
+   CARD
    ========================================================== */
 
 .card.reservatorio {
-  position: relative;
+    position: relative !important;
 
-  width: 100%;
+    display: block !important;
 
-  box-sizing: border-box;
+    width: 100% !important;
+    min-height: 430px !important;
 
-  background:
-    linear-gradient(
-      135deg,
-      rgba(15, 35, 60, 0.88) 0%,
-      rgba(8, 20, 35, 0.97) 100%
-    );
+    padding: 25px 20px 30px !important;
 
-  border-radius: 18px;
+    box-sizing: border-box !important;
 
-  padding: 28px 24px 32px;
+    background: linear-gradient(
+        145deg,
+        #102a43 0%,
+        #081725 50%,
+        #06111d 100%
+    ) !important;
 
-  border: 1px solid rgba(0, 229, 255, 0.15);
+    border: 2px solid rgba(0, 200, 255, 0.35) !important;
 
-  box-shadow:
-    0 20px 45px rgba(0, 0, 0, 0.60),
-    0 8px 20px rgba(0, 0, 0, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-radius: 18px !important;
 
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+    color: #ffffff !important;
 
-  transition:
-    transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
-    border-color 0.4s ease,
-    box-shadow 0.4s ease;
+    box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 
-  text-align: center;
+    text-align: center !important;
 
-  overflow: visible;
+    overflow: visible !important;
 
-  isolation: isolate;
-}
+    opacity: 1 !important;
 
-/* ==========================================================
-   LINHA SUPERIOR DO CARD
-   ========================================================== */
+    visibility: visible !important;
 
-.card.reservatorio::before {
-  content: "";
+    transform: none;
 
-  position: absolute;
-
-  top: 0;
-  left: 0;
-
-  width: 100%;
-  height: 1px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(0, 229, 255, 0.60),
-      transparent
-    );
-
-  pointer-events: none;
-
-  z-index: 20;
-}
-
-/* ==========================================================
-   BRILHO INFERIOR DO CARD
-   ========================================================== */
-
-.card.reservatorio::after {
-  content: "";
-
-  position: absolute;
-
-  left: 10%;
-  right: 10%;
-  bottom: -1px;
-
-  height: 1px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(0, 180, 255, 0.20),
-      transparent
-    );
-
-  pointer-events: none;
+    z-index: 1;
 }
 
 /* ==========================================================
@@ -127,86 +63,41 @@
    ========================================================== */
 
 .card.reservatorio:hover {
-  transform: translateY(-6px);
+    transform: translateY(-5px) !important;
 
-  border-color:
-    rgba(0, 229, 255, 0.35);
-
-  box-shadow:
-    0 25px 55px rgba(0, 0, 0, 0.65),
-    0 0 25px rgba(0, 180, 255, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-/* ==========================================================
-   ALERTA DO RESERVATÓRIO
-   ========================================================== */
-
-.card.reservatorio.alerta {
-  border-color: #ff3d00;
-
-  box-shadow:
-    0 20px 45px rgba(255, 61, 0, 0.40),
-    0 8px 20px rgba(255, 61, 0, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-  animation:
-    alerta-pulse 2s ease-in-out infinite;
-}
-
-/* ==========================================================
-   ANIMAÇÃO DO ALERTA
-   ========================================================== */
-
-@keyframes alerta-pulse {
-
-  0%,
-  100% {
-    border-color: #ff3d00;
+    border-color: rgba(0, 220, 255, 0.7) !important;
 
     box-shadow:
-      0 20px 45px rgba(255, 61, 0, 0.40),
-      0 8px 20px rgba(255, 61, 0, 0.20),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  }
-
-  50% {
-    border-color: #ff7043;
-
-    box-shadow:
-      0 25px 55px rgba(255, 61, 0, 0.60),
-      0 12px 30px rgba(255, 61, 0, 0.40),
-      0 0 20px rgba(255, 61, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
+        0 20px 45px rgba(0, 0, 0, 0.65),
+        0 0 25px rgba(0, 200, 255, 0.18) !important;
 }
 
 /* ==========================================================
-   TÍTULO DO RESERVATÓRIO
+   TÍTULO
    ========================================================== */
 
 .card.reservatorio h2 {
-  color: #e0f7ff;
+    display: block !important;
 
-  font-size: 18px;
+    margin: 0 0 20px 0 !important;
 
-  line-height: 1.3;
+    padding: 0 !important;
 
-  margin:
-    0 0 22px 0;
+    color: #e9faff !important;
 
-  text-align: center;
+    font-size: 18px !important;
 
-  font-weight: 700;
+    font-weight: 700 !important;
 
-  letter-spacing: 0.8px;
+    text-align: center !important;
 
-  text-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.90);
+    line-height: 1.3 !important;
 
-  position: relative;
+    letter-spacing: 0.5px !important;
 
-  z-index: 30;
+    opacity: 1 !important;
+
+    visibility: visible !important;
 }
 
 /* ==========================================================
@@ -214,87 +105,87 @@
    ========================================================== */
 
 .tanque {
-  position: relative;
+    position: relative !important;
 
-  width: 150px;
-  height: 250px;
+    display: flex !important;
 
-  margin: 25px auto;
+    width: 150px !important;
 
-  background:
-    linear-gradient(
-      90deg,
-      #071421 0%,
-      #163552 20%,
-      #2e5e87 50%,
-      #163552 80%,
-      #071421 100%
-    );
+    height: 250px !important;
 
-  border-radius:
-    18px 18px 30px 30px;
+    margin: 30px auto 25px auto !important;
 
-  border:
-    2px solid rgba(120, 220, 255, 0.25);
+    box-sizing: border-box !important;
 
-  overflow: hidden;
+    overflow: hidden !important;
 
-  display: flex;
+    align-items: flex-end !important;
 
-  align-items: flex-end;
+    background:
+        linear-gradient(
+            90deg,
+            #071421 0%,
+            #163552 20%,
+            #356b97 50%,
+            #163552 80%,
+            #071421 100%
+        ) !important;
 
-  justify-content: center;
+    border:
+        2px solid rgba(130, 220, 255, 0.45) !important;
 
-  box-sizing: border-box;
+    border-radius:
+        18px 18px 30px 30px !important;
 
-  box-shadow:
-    inset -18px 0 35px rgba(0, 0, 0, 0.65),
-    inset 18px 0 30px rgba(255, 255, 255, 0.05),
-    inset 0 -25px 45px rgba(0, 0, 0, 0.75),
-    0 0 25px rgba(0, 180, 255, 0.15);
+    box-shadow:
+        inset -15px 0 30px rgba(0, 0, 0, 0.65),
+        inset 15px 0 25px rgba(255, 255, 255, 0.07),
+        inset 0 -20px 35px rgba(0, 0, 0, 0.65),
+        0 0 25px rgba(0, 180, 255, 0.15) !important;
 
-  isolation: isolate;
+    opacity: 1 !important;
+
+    visibility: visible !important;
 }
 
 /* ==========================================================
-   TAMPA DO TANQUE
+   TAMPA
    ========================================================== */
 
 .tanque::before {
-  content: "";
+    content: "";
 
-  position: absolute;
+    position: absolute !important;
 
-  top: -12px;
-  left: 50%;
+    top: -11px !important;
 
-  transform:
-    translateX(-50%);
+    left: 50% !important;
 
-  width: 108px;
-  height: 24px;
+    width: 108px !important;
 
-  border-radius: 50%;
+    height: 24px !important;
 
-  background:
-    radial-gradient(
-      ellipse at center,
-      #7ec8ff 0%,
-      #44698d 55%,
-      #1b3047 100%
-    );
+    transform: translateX(-50%) !important;
 
-  border:
-    2px solid rgba(160, 220, 255, 0.45);
+    border-radius: 50% !important;
 
-  box-shadow:
-    0 0 14px rgba(0, 180, 255, 0.25),
-    inset 0 3px 5px rgba(255, 255, 255, 0.25),
-    inset 0 -3px 5px rgba(0, 0, 0, 0.45);
+    background:
+        radial-gradient(
+            ellipse,
+            #83ceff 0%,
+            #4c769c 50%,
+            #1b3047 100%
+        ) !important;
 
-  z-index: 10;
+    border:
+        2px solid rgba(160, 220, 255, 0.5) !important;
 
-  pointer-events: none;
+    box-shadow:
+        0 0 12px rgba(0, 180, 255, 0.25),
+        inset 0 3px 5px rgba(255, 255, 255, 0.25),
+        inset 0 -3px 5px rgba(0, 0, 0, 0.45) !important;
+
+    z-index: 10 !important;
 }
 
 /* ==========================================================
@@ -302,101 +193,31 @@
    ========================================================== */
 
 .tanque::after {
-  content: "";
+    content: "";
 
-  position: absolute;
+    position: absolute !important;
 
-  top: 0;
-  left: 14px;
+    top: 0 !important;
 
-  width: 16px;
-  height: 100%;
+    left: 13px !important;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.28),
-      rgba(255, 255, 255, 0.08),
-      transparent
-    );
+    width: 16px !important;
 
-  border-radius: 20px;
+    height: 100% !important;
 
-  filter: blur(1px);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.30),
+            rgba(255, 255, 255, 0.08),
+            transparent
+        ) !important;
 
-  z-index: 6;
+    border-radius: 20px !important;
 
-  pointer-events: none;
-}
+    z-index: 7 !important;
 
-/* ==========================================================
-   ESCALA DO RESERVATÓRIO
-   ========================================================== */
-
-.escala {
-  position: absolute;
-
-  right: -52px;
-  top: 20px;
-
-  height: 78%;
-
-  min-height: 130px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: space-between;
-
-  color: #7aa8cc;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  line-height: 1;
-
-  text-shadow:
-    2px 2px 5px rgba(0, 0, 0, 0.95);
-
-  z-index: 30;
-
-  letter-spacing: 0.5px;
-
-  pointer-events: none;
-}
-
-.escala span {
-  position: relative;
-
-  display: block;
-
-  padding-right: 8px;
-
-  white-space: nowrap;
-}
-
-.escala span::before {
-  content: "";
-
-  position: absolute;
-
-  right: 0;
-  top: 50%;
-
-  width: 15px;
-  height: 1px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #4a7fa8,
-      transparent
-    );
-
-  transform:
-    translateY(-50%);
+    pointer-events: none !important;
 }
 
 /* ==========================================================
@@ -404,204 +225,44 @@
    ========================================================== */
 
 .agua {
-  position: absolute;
+    position: absolute !important;
 
-  bottom: 0;
-  left: 0;
+    left: 0 !important;
 
-  width: 100%;
+    bottom: 0 !important;
 
-  /*
-     IMPORTANTE:
-     A altura é alterada pelo JavaScript.
-     O valor inicial continua em 0%.
-  */
+    width: 100% !important;
 
-  height: 0%;
+    height: 0% !important;
 
-  border-radius:
-    18px 18px 30px 30px;
+    overflow: hidden !important;
 
-  transition:
-    height 1.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+    border-radius:
+        18px 18px 30px 30px !important;
 
-  z-index: 2;
+    background:
+        linear-gradient(
+            to top,
+            #0050a8 0%,
+            #008cff 45%,
+            #46d5ff 80%,
+            #8cecff 100%
+        ) !important;
 
-  overflow: hidden;
+    box-shadow:
+        inset 0 -18px 35px rgba(0, 40, 100, 0.55),
+        inset 0 8px 15px rgba(255, 255, 255, 0.18) !important;
 
-  will-change: height;
+    transition:
+        height 1s ease !important;
 
-  transform:
-    translateZ(0);
+    z-index: 3 !important;
 
-  transform-origin:
-    center bottom;
+    opacity: 1 !important;
 
-  background:
-    linear-gradient(
-      to top,
-      #0050a8 0%,
-      #008cff 45%,
-      #46d5ff 80%,
-      #8cecff 100%
-    );
+    visibility: visible !important;
 
-  box-shadow:
-    inset 0 -18px 35px rgba(0, 40, 100, 0.55),
-    inset 0 8px 15px rgba(255, 255, 255, 0.18),
-    0 0 20px rgba(0, 180, 255, 0.18);
-
-  pointer-events: none;
-}
-
-/* ==========================================================
-   SUPERFÍCIE DA ÁGUA
-   ========================================================== */
-
-.agua::before {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-  left: 5%;
-
-  width: 90%;
-  height: 8px;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, 0.50) 0%,
-      rgba(255, 255, 255, 0.20) 40%,
-      transparent 70%
-    );
-
-  border-radius: 50%;
-
-  transform:
-    translateY(-50%);
-
-  filter: blur(1.5px);
-
-  z-index: 5;
-}
-
-/* ==========================================================
-   REFLEXO DA ÁGUA
-   ========================================================== */
-
-.agua::after {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-  left: 0;
-
-  width: 35%;
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.06) 50%,
-      transparent 100%
-    );
-
-  pointer-events: none;
-
-  z-index: 3;
-}
-
-/* ==========================================================
-   ONDA
-   ========================================================== */
-
-.onda {
-  position: absolute;
-
-  top: -6px;
-  left: -30%;
-
-  width: 160%;
-  height: 14px;
-
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, 0.28) 0%,
-      rgba(255, 255, 255, 0.10) 45%,
-      transparent 70%
-    );
-
-  animation:
-    onda 4s ease-in-out infinite;
-
-  filter: blur(2px);
-
-  z-index: 6;
-
-  pointer-events: none;
-}
-
-/* ==========================================================
-   ANIMAÇÃO DA ONDA
-   ========================================================== */
-
-@keyframes onda {
-
-  0%,
-  100% {
-    transform:
-      translateX(0)
-      scaleY(1);
-  }
-
-  50% {
-    transform:
-      translateX(30%)
-      scaleY(1.25);
-  }
-}
-
-/* ==========================================================
-   BALANÇO DA ÁGUA
-   ========================================================== */
-
-.agua.balancando {
-  animation:
-    balanco 1.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* ==========================================================
-   ANIMAÇÃO DO BALANÇO
-   ========================================================== */
-
-@keyframes balanco {
-
-  0%,
-  100% {
-    transform:
-      translateZ(0)
-      skewX(0deg)
-      scaleX(1);
-  }
-
-  25% {
-    transform:
-      translateZ(0)
-      skewX(1.8deg)
-      scaleX(1.015);
-  }
-
-  75% {
-    transform:
-      translateZ(0)
-      skewX(-1.2deg)
-      scaleX(0.985);
-  }
+    pointer-events: none !important;
 }
 
 /* ==========================================================
@@ -609,19 +270,14 @@
    ========================================================== */
 
 .agua.nivel-cheio {
-  background:
-    linear-gradient(
-      to top,
-      #00c853 0%,
-      #00e676 50%,
-      #69f0ae 85%,
-      #b9f6ca 100%
-    );
-
-  box-shadow:
-    inset 0 -25px 50px rgba(0, 120, 60, 0.60),
-    inset 0 10px 20px rgba(255, 255, 255, 0.30),
-    0 0 30px rgba(0, 230, 118, 0.30);
+    background:
+        linear-gradient(
+            to top,
+            #00a844 0%,
+            #00e676 50%,
+            #69f0ae 85%,
+            #b9f6ca 100%
+        ) !important;
 }
 
 /* ==========================================================
@@ -629,19 +285,14 @@
    ========================================================== */
 
 .agua.nivel-alto {
-  background:
-    linear-gradient(
-      to top,
-      #00b0ff 0%,
-      #40c4ff 50%,
-      #80d8ff 85%,
-      #b3e5fc 100%
-    );
-
-  box-shadow:
-    inset 0 -25px 50px rgba(0, 80, 160, 0.60),
-    inset 0 10px 20px rgba(255, 255, 255, 0.25),
-    0 0 25px rgba(64, 196, 255, 0.25);
+    background:
+        linear-gradient(
+            to top,
+            #008dcc 0%,
+            #00bfff 50%,
+            #80d8ff 85%,
+            #b3e5fc 100%
+        ) !important;
 }
 
 /* ==========================================================
@@ -649,19 +300,14 @@
    ========================================================== */
 
 .agua.nivel-medio {
-  background:
-    linear-gradient(
-      to top,
-      #0077ff 0%,
-      #00ddff 50%,
-      #64ffff 85%,
-      #a7ffeb 100%
-    );
-
-  box-shadow:
-    inset 0 -25px 50px rgba(0, 60, 120, 0.60),
-    inset 0 10px 20px rgba(255, 255, 255, 0.25),
-    0 0 20px rgba(0, 221, 255, 0.20);
+    background:
+        linear-gradient(
+            to top,
+            #006cff 0%,
+            #00ccff 50%,
+            #64ffff 85%,
+            #a7ffeb 100%
+        ) !important;
 }
 
 /* ==========================================================
@@ -669,19 +315,14 @@
    ========================================================== */
 
 .agua.nivel-baixo {
-  background:
-    linear-gradient(
-      to top,
-      #ff9800 0%,
-      #ffc107 50%,
-      #ffd54f 85%,
-      #ffe082 100%
-    );
-
-  box-shadow:
-    inset 0 -25px 50px rgba(200, 120, 0, 0.60),
-    inset 0 10px 20px rgba(255, 255, 255, 0.25),
-    0 0 20px rgba(255, 193, 7, 0.20);
+    background:
+        linear-gradient(
+            to top,
+            #ff8f00 0%,
+            #ffc107 50%,
+            #ffd54f 85%,
+            #ffe082 100%
+        ) !important;
 }
 
 /* ==========================================================
@@ -689,328 +330,275 @@
    ========================================================== */
 
 .agua.nivel-critico {
-  background:
-    linear-gradient(
-      to top,
-      #d50000 0%,
-      #ff3d00 50%,
-      #ff6e40 85%,
-      #ffab91 100%
-    );
+    background:
+        linear-gradient(
+            to top,
+            #c00000 0%,
+            #ff3d00 50%,
+            #ff7043 85%,
+            #ffab91 100%
+        ) !important;
 
-  box-shadow:
-    inset 0 -25px 50px rgba(150, 0, 0, 0.70),
-    inset 0 10px 20px rgba(255, 255, 255, 0.25),
-    0 0 35px rgba(255, 61, 0, 0.40);
-
-  animation:
-    pulsar-critico 1.6s ease-in-out infinite;
+    animation:
+        pulsar-critico 1.5s infinite !important;
 }
-
-/* ==========================================================
-   ANIMAÇÃO DO NÍVEL CRÍTICO
-   ========================================================== */
 
 @keyframes pulsar-critico {
 
-  0%,
-  100% {
-    opacity: 1;
-  }
+    0%,
+    100% {
+        opacity: 1;
+    }
 
-  50% {
-    opacity: 0.88;
-  }
+    50% {
+        opacity: 0.8;
+    }
 }
 
 /* ==========================================================
-   INFORMAÇÕES
+   ONDA
+   ========================================================== */
+
+.onda {
+    position: absolute !important;
+
+    top: -5px !important;
+
+    left: -30% !important;
+
+    width: 160% !important;
+
+    height: 12px !important;
+
+    background:
+        radial-gradient(
+            ellipse,
+            rgba(255,255,255,0.35),
+            rgba(255,255,255,0.08),
+            transparent
+        ) !important;
+
+    border-radius: 50% !important;
+
+    z-index: 8 !important;
+
+    animation:
+        onda 4s ease-in-out infinite !important;
+
+    pointer-events: none !important;
+}
+
+@keyframes onda {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(30%);
+    }
+}
+
+/* ==========================================================
+   ESCALA
+   ========================================================== */
+
+.escala {
+    position: absolute !important;
+
+    right: -50px !important;
+
+    top: 20px !important;
+
+    height: 78% !important;
+
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    justify-content: space-between !important;
+
+    color: #9ac8e8 !important;
+
+    font-size: 11px !important;
+
+    font-weight: 700 !important;
+
+    z-index: 20 !important;
+
+    pointer-events: none !important;
+}
+
+.escala span {
+    position: relative !important;
+
+    display: block !important;
+
+    padding-right: 8px !important;
+
+    white-space: nowrap !important;
+}
+
+.escala span::before {
+    content: "";
+
+    position: absolute !important;
+
+    right: 0 !important;
+
+    top: 50% !important;
+
+    width: 14px !important;
+
+    height: 1px !important;
+
+    background: #5b91b8 !important;
+
+    transform: translateY(-50%) !important;
+}
+
+/* ==========================================================
+   INFORMAÇÕES DO CARD
    ========================================================== */
 
 .info {
-  text-align: center;
+    display: block !important;
 
-  margin-top: 28px;
+    position: relative !important;
 
-  padding-top: 20px;
+    margin-top: 20px !important;
 
-  border-top:
-    1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 18px !important;
 
-  position: relative;
+    border-top:
+        1px solid rgba(255,255,255,0.12) !important;
 
-  z-index: 30;
+    text-align: center !important;
+
+    z-index: 20 !important;
+
+    opacity: 1 !important;
+
+    visibility: visible !important;
 }
-
-/* ==========================================================
-   VALOR
-   ========================================================== */
 
 .info .valor {
-  font-size: 38px;
+    display: block !important;
 
-  font-weight: 900;
+    font-size: 36px !important;
 
-  line-height: 1;
+    font-weight: 900 !important;
 
-  display: block;
+    line-height: 1 !important;
 
-  background:
-    linear-gradient(
-      135deg,
-      #00e5ff 0%,
-      #40d4ff 50%,
-      #80e0ff 100%
-    );
+    color: #00e5ff !important;
 
-  -webkit-background-clip: text;
-  background-clip: text;
+    text-align: center !important;
 
-  -webkit-text-fill-color: transparent;
+    opacity: 1 !important;
 
-  text-shadow:
-    0 4px 25px rgba(0, 229, 255, 0.50);
-
-  filter:
-    drop-shadow(
-      0 3px 10px rgba(0, 0, 0, 0.80)
-    );
+    visibility: visible !important;
 }
-
-/* ==========================================================
-   LITROS
-   ========================================================== */
 
 .info .litros {
-  font-size: 15px;
+    display: block !important;
 
-  color: #a8c8e8;
+    margin-top: 10px !important;
 
-  margin-top: 10px;
+    font-size: 15px !important;
 
-  font-weight: 600;
+    font-weight: 600 !important;
 
-  letter-spacing: 0.5px;
+    color: #b7d7ed !important;
 
-  line-height: 1.4;
+    text-align: center !important;
 
-  text-shadow:
-    1px 1px 5px rgba(0, 0, 0, 0.90);
+    opacity: 1 !important;
+
+    visibility: visible !important;
 }
 
 /* ==========================================================
-   ESTADO
+   CARD EM ALERTA
    ========================================================== */
 
-.info .estado {
-  margin-top: 8px;
+.card.reservatorio.alerta {
+    border-color: #ff3d00 !important;
 
-  font-size: 12px;
+    box-shadow:
+        0 0 25px rgba(255, 61, 0, 0.35),
+        0 15px 35px rgba(0, 0, 0, 0.55) !important;
 
-  font-weight: 700;
+    animation:
+        alerta-card 2s ease-in-out infinite !important;
+}
 
-  letter-spacing: 0.8px;
+@keyframes alerta-card {
 
-  text-transform: uppercase;
+    0%,
+    100% {
+        border-color: #ff3d00;
+    }
 
-  color: #8db4d5;
-
-  text-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.80);
+    50% {
+        border-color: #ff7043;
+    }
 }
 
 /* ==========================================================
-   ESTADO CRÍTICO
+   RESPONSIVO
    ========================================================== */
 
-.card.reservatorio.alerta .info .estado {
-  color: #ff7043;
+@media (max-width: 900px) {
 
-  text-shadow:
-    0 0 10px rgba(255, 61, 0, 0.50);
+    .grid-reservatorios {
+        grid-template-columns: repeat(
+            2,
+            minmax(260px, 1fr)
+        ) !important;
+    }
 }
 
-/* ==========================================================
-   RESPONSIVIDADE
-   ========================================================== */
+@media (max-width: 650px) {
 
-@media (max-width: 1100px) {
+    .grid-reservatorios {
+        grid-template-columns: 1fr !important;
 
-  .grid-reservatorios {
-    grid-template-columns:
-      repeat(2, minmax(280px, 1fr));
+        gap: 25px !important;
+    }
 
-    gap: 30px;
-  }
+    .card.reservatorio {
+        min-height: 400px !important;
+    }
 }
-
-/* ==========================================================
-   TABLET
-   ========================================================== */
-
-@media (max-width: 768px) {
-
-  .grid-reservatorios {
-    grid-template-columns:
-      1fr;
-
-    gap: 30px;
-
-    margin-bottom: 35px;
-  }
-
-  .card.reservatorio {
-    padding:
-      24px 20px 28px;
-  }
-
-  .tanque {
-    width: 145px;
-
-    height: 220px;
-
-    margin:
-      25px auto;
-  }
-
-  .escala {
-    right: -48px;
-
-    font-size: 10px;
-  }
-
-  .info .valor {
-    font-size: 32px;
-  }
-
-  .info .litros {
-    font-size: 14px;
-  }
-}
-
-/* ==========================================================
-   CELULAR
-   ========================================================== */
 
 @media (max-width: 480px) {
 
-  .grid-reservatorios {
-    gap: 22px;
-  }
+    .card.reservatorio {
+        min-height: 380px !important;
 
-  .card.reservatorio {
-    border-radius: 15px;
+        padding:
+            20px 15px 25px !important;
+    }
 
-    padding:
-      20px 15px 24px;
-  }
+    .tanque {
+        width: 130px !important;
 
-  .card.reservatorio h2 {
-    font-size: 16px;
+        height: 210px !important;
+    }
 
-    margin-bottom: 18px;
-  }
+    .escala {
+        right: -45px !important;
 
-  .tanque {
-    width: 125px;
+        font-size: 9px !important;
+    }
 
-    height: 190px;
+    .info .valor {
+        font-size: 30px !important;
+    }
 
-    margin:
-      22px auto;
-  }
-
-  .tanque::before {
-    width: 92px;
-
-    height: 20px;
-
-    top: -10px;
-  }
-
-  .escala {
-    right: -44px;
-
-    top: 15px;
-
-    height: 80%;
-
-    font-size: 9px;
-  }
-
-  .escala span::before {
-    width: 12px;
-  }
-
-  .info {
-    margin-top: 22px;
-
-    padding-top: 16px;
-  }
-
-  .info .valor {
-    font-size: 29px;
-  }
-
-  .info .litros {
-    font-size: 13px;
-  }
-}
-
-/* ==========================================================
-   TELAS MUITO PEQUENAS
-   ========================================================== */
-
-@media (max-width: 360px) {
-
-  .card.reservatorio {
-    padding-left: 12px;
-
-    padding-right: 12px;
-  }
-
-  .tanque {
-    width: 115px;
-
-    height: 180px;
-  }
-
-  .escala {
-    right: -40px;
-
-    font-size: 8px;
-  }
-
-  .info .valor {
-    font-size: 26px;
-  }
-}
-
-/* ==========================================================
-   ACESSIBILIDADE
-   ========================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .card.reservatorio,
-  .agua {
-    transition: none;
-  }
-
-  .card.reservatorio.alerta,
-  .agua.nivel-critico,
-  .onda,
-  .agua.balancando {
-    animation: none;
-  }
-}
-
-/* ==========================================================
-   CORREÇÃO PARA ELEMENTOS DESALINHADOS
-   ========================================================== */
-
-.grid-reservatorios *,
-.grid-reservatorios *::before,
-.grid-reservatorios *::after {
-  box-sizing: border-box;
+    .info .litros {
+        font-size: 13px !important;
+    }
 }
