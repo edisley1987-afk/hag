@@ -1,311 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Monitoramento HAG</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-<style>
+<link rel="stylesheet" href="/style.css">
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #e2e8f0;
-    padding: 20px;
-    min-height: 100vh;
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: rgba(30, 41, 59, 0.8);
-    border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.header h1 {
-    font-size: 24px;
-    color: #60a5fa;
-}
-
-.status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-}
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #00ff88;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-
-}
-
-.kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.kpi-card {
-    background: rgba(30, 41, 59, 0.8);
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    text-align: center;
-}
-
-.kpi-card h3 {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-.kpi-card .value {
-    font-size: 28px;
-    font-weight: bold;
-    color: #60a5fa;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.card {
-    background: rgba(30, 41, 59, 0.8);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    transition: all 0.3s;
-}
-
-.card:hover {
-    border-color: #60a5fa;
-    box-shadow: 0 8px 20px rgba(96, 165, 250, 0.2);
-}
-
-.card h2 {
-    font-size: 16px;
-    margin-bottom: 15px;
-    color: #cbd5e1;
-}
-
-.tanque {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid #334155;
-    margin-bottom: 15px;
-}
-
-.escala {
-    position: absolute;
-    right: 5px;
-    top: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 10px 0;
-    font-size: 10px;
-    color: #64748b;
-    z-index: 2;
-}
-
-.agua {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 0%;
-    background: linear-gradient(180deg, #3b82f6 0%, #1e40af 100%);
-    transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
-}
-
-.agua.nivel-cheio {
-    background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
-}
-
-.agua.nivel-alto {
-    background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
-}
-
-.agua.nivel-medio {
-    background: linear-gradient(180deg, #facc15 0%, #ca8a04 100%);
-}
-
-.agua.nivel-baixo {
-    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
-}
-
-.agua.nivel-critico {
-    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
-}
-
-.onda {
-    position: absolute;
-    top: -10px;
-    width: 200%;
-    height: 20px;
-    background: radial-gradient(
-        circle at 50% 0%,
-        rgba(255, 255, 255, 0.3) 0%,
-        transparent 50%
-    );
-    animation: wave 3s infinite linear;
-    opacity: 0.5;
-}
-
-@keyframes wave {
-
-    0% {
-        transform: translateX(-50%);
-    }
-
-    100% {
-        transform: translateX(0%);
-    }
-
-}
-
-.agua.balancando .onda {
-    animation: wave-bounce 1.3s ease-in-out;
-}
-
-@keyframes wave-bounce {
-
-    0%,
-    100% {
-        transform: translateX(-50%) translateY(0);
-    }
-
-    25% {
-        transform: translateX(-40%) translateY(-5px);
-    }
-
-    75% {
-        transform: translateX(-60%) translateY(5px);
-    }
-
-}
-
-.info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.valor {
-    font-size: 32px;
-    font-weight: bold;
-}
-
-.litros {
-    font-size: 14px;
-    color: #94a3b8;
-}
-
-.card.alerta {
-    border-color: #ef4444;
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
-}
-
-.bomba.ligada .status-icon {
-    color: #22c55e;
-}
-
-.bomba.desligada .status-icon {
-    color: #ef4444;
-}
-
-.bomba.stale .status-icon {
-    color: #64748b;
-}
-
-.status-icon {
-    font-size: 40px;
-    text-align: center;
-    margin: 10px 0;
-}
-
-.ciclos {
-    font-size: 12px;
-    color: #94a3b8;
-    text-align: center;
-}
-
-.valor-pressao {
-    font-size: 28px;
-    font-weight: bold;
-    color: #60a5fa;
-    text-align: center;
-    margin: 20px 0;
-}
-
-.chart-container {
-    background: rgba(30, 41, 59, 0.8);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    position: relative;
-    height: 380px;
-}
-
-.chart-container h2 {
-    margin-bottom: 15px;
-    font-size: 18px;
-    color: #cbd5e1;
-}
-
-.chart-container canvas {
-    width: 100% !important;
-    height: 300px !important;
-}
-
-body.sem-sinal {
-    opacity: 0.7;
-}
-
-</style>
 </head>
 
 <body>
+
+<!-- =========================================================
+     ALERTA CRÍTICO DE TELA INTEIRA
+     ========================================================= -->
+
+<div id="alertaCriticoTela" class="alerta-critico-tela">
+
+    <div class="alerta-critico-box">
+
+        <div class="alerta-icone">
+            🚨
+        </div>
+
+        <div class="alerta-titulo">
+            RESERVATÓRIO EM ESTADO CRÍTICO
+        </div>
+
+        <div class="alerta-subtitulo">
+            Atenção! O nível de água está abaixo do limite crítico.
+        </div>
+
+        <div id="alertaReservatoriosLista"
+             class="alerta-reservatorios-lista">
+        </div>
+
+        <button
+            id="btnFecharAlerta"
+            class="btn-fechar-alerta"
+            onclick="fecharAlertaCritico()">
+
+            FECHAR ALERTA
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CABEÇALHO
+     ========================================================= -->
 
 <div class="header">
 
@@ -322,7 +76,7 @@ body.sem-sinal {
         </span>
 
         <span id="hora">
-            --:--
+            --:--:--
         </span>
 
     </div>
@@ -330,42 +84,135 @@ body.sem-sinal {
 </div>
 
 
+<!-- =========================================================
+     KPIs
+     ========================================================= -->
+
 <div class="kpis">
 
     <div class="kpi-card">
-        <h3>Reservatórios Críticos</h3>
-        <div class="value" id="kpiCritico">0</div>
+
+        <h3>
+            Reservatórios Críticos
+        </h3>
+
+        <div
+            class="value"
+            id="kpiCritico">
+
+            0
+
+        </div>
+
     </div>
 
-    <div class="kpi-card">
-        <h3>Bombas Ativas</h3>
-        <div class="value" id="bombasAtivas">0</div>
-    </div>
 
     <div class="kpi-card">
-        <h3>Consumo Elevador Hoje</h3>
-        <div class="value" id="kpiElevador">0 L</div>
+
+        <h3>
+            Bombas Ativas
+        </h3>
+
+        <div
+            class="value"
+            id="bombasAtivas">
+
+            0
+
+        </div>
+
     </div>
 
-    <div class="kpi-card">
-        <h3>Consumo Lavanderia Hoje</h3>
-        <div class="value" id="kpiLavanderia">0 L</div>
-    </div>
 
     <div class="kpi-card">
-        <h3>Consumo Osmose Hoje</h3>
-        <div class="value" id="kpiOsmose">0 L</div>
+
+        <h3>
+            Consumo Elevador Hoje
+        </h3>
+
+        <div
+            class="value"
+            id="kpiElevador">
+
+            0 L
+
+        </div>
+
+    </div>
+
+
+    <div class="kpi-card">
+
+        <h3>
+            Consumo Lavanderia Hoje
+        </h3>
+
+        <div
+            class="value"
+            id="kpiLavanderia">
+
+            0 L
+
+        </div>
+
+    </div>
+
+
+    <div class="kpi-card">
+
+        <h3>
+            Consumo Osmose Hoje
+        </h3>
+
+        <div
+            class="value"
+            id="kpiOsmose">
+
+            0 L
+
+        </div>
+
     </div>
 
 </div>
 
 
-<div class="grid" id="areaReservatorios"></div>
+<!-- =========================================================
+     RESERVATÓRIOS
+     ========================================================= -->
 
-<div class="grid" id="areaBombas"></div>
+<div
+    class="grid grid-reservatorios"
+    id="areaReservatorios">
 
-<div class="grid" id="areaPressoes"></div>
+</div>
 
+
+<!-- =========================================================
+     BOMBAS
+     ========================================================= -->
+
+<div
+    class="grid"
+    id="areaBombas">
+
+</div>
+
+
+<!-- =========================================================
+     PRESSÕES
+     ========================================================= -->
+
+<div
+    class="grid"
+    id="areaPressoes">
+
+</div>
+
+
+<!-- =========================================================
+     GRÁFICO
+     ========================================================= -->
 
 <div class="chart-container">
 
@@ -373,14 +220,24 @@ body.sem-sinal {
         Histórico 7 Dias - Nível dos Reservatórios (%)
     </h2>
 
-    <canvas id="chartHistorico"></canvas>
+    <div class="chart-wrapper">
+
+        <canvas id="chartHistorico"></canvas>
+
+    </div>
 
 </div>
 
 
 <script>
 
+/* ==========================================================
+   CONFIGURAÇÃO
+   ========================================================== */
+
 const API = "/api/dashboard";
+
+const HISTORICO_API = "/historico";
 
 let ws = null;
 
@@ -392,74 +249,125 @@ let renderPending = false;
 
 let chartHistorico = null;
 
+let ultimoHistoricoJson = "";
 
-/*
-==========================================================
-CONTROLE DE ATUALIZAÇÃO DO HISTÓRICO
-==========================================================
-*/
+let alertaAberto = false;
 
-let historicoAtualizacaoTimer = null;
+let reservatoriosCriticosAtuais = [];
 
-let ultimaAtualizacaoHistorico = 0;
-
-let atualizacaoHistoricoEmAndamento = false;
+let ultimoAlertaExibido = 0;
 
 
 /*
-==========================================================
-INICIALIZAÇÃO
-==========================================================
+   Intervalo para reapresentar o alerta crítico.
+
+   30 segundos.
 */
+const INTERVALO_ALERTA_CRITICO = 30000;
+
+
+/*
+   Tempo que o alerta permanece na tela.
+
+   8 segundos.
+*/
+const TEMPO_ALERTA_TELA = 8000;
+
+
+/* ==========================================================
+   INICIALIZAÇÃO
+   ========================================================== */
 
 init();
 
 
 function init() {
 
-    // Carrega o histórico inicialmente
+    /*
+       Carrega o histórico imediatamente.
+    */
     carregarHistorico();
-
-    // Carrega os dados atuais
-    fallbackHTTP();
-
-    // Conecta WebSocket
-    conectarWS();
-
-    // Fallback periódico
-    setInterval(fallbackHTTP, 8000);
 
 
     /*
-    Verifica se ainda existe comunicação
+       Carrega dados atuais.
     */
+    fallbackHTTP();
 
+
+    /*
+       Conecta WebSocket.
+    */
+    conectarWS();
+
+
+    /*
+       Fallback dos dados.
+    */
+    setInterval(
+        fallbackHTTP,
+        8000
+    );
+
+
+    /*
+       Atualiza o gráfico automaticamente.
+
+       Isso resolve o problema de o gráfico só mudar
+       depois de atualizar a página.
+    */
+    setInterval(
+        carregarHistorico,
+        8000
+    );
+
+
+    /*
+       Verifica conexão.
+    */
     setInterval(() => {
 
-        if (Date.now() - ultimoDado > 15000) {
+        if (
+            Date.now() - ultimoDado > 15000
+        ) {
 
-            atualizarStatusVisual("Sem sinal");
+            atualizarStatusVisual(
+                "Sem sinal"
+            );
 
-            document.body.classList.add("sem-sinal");
+            document.body.classList.add(
+                "sem-sinal"
+            );
 
         } else {
 
-            document.body.classList.remove("sem-sinal");
+            document.body.classList.remove(
+                "sem-sinal"
+            );
 
-            atualizarStatusVisual("Tempo real conectado");
+            atualizarStatusVisual(
+                "Tempo real conectado"
+            );
 
         }
 
     }, 5000);
 
+
+    /*
+       Verificação periódica do alerta crítico.
+    */
+    setInterval(
+        verificarAlertaPeriodico,
+        5000
+    );
+
 }
 
 
-/*
-==========================================================
-PROCESSAMENTO DO PAYLOAD
-==========================================================
-*/
+/* ==========================================================
+   PROCESSAMENTO DO PAYLOAD
+   ========================================================== */
 
 function processarPayload(payload) {
 
@@ -467,133 +375,35 @@ function processarPayload(payload) {
 
 
     /*
-    Alguns servidores enviam:
+       Alguns payloads vêm assim:
 
-    {
-        type: "update",
-        dados: {...}
-    }
-
+       {
+           type: "update",
+           dados: {...}
+       }
     */
 
-    if (payload.type === "update" && payload.dados) {
+    if (
+        payload.type === "update" &&
+        payload.dados
+    ) {
 
         payload = payload.dados;
 
     }
 
 
-    /*
-    Marca que recebemos dados
-    */
-
     ultimoDado = Date.now();
 
 
-    /*
-    Atualiza os cards
-    */
-
     scheduleRender(payload);
 
-
-    /*
-    IMPORTANTE:
-
-    Toda nova leitura também agenda
-    atualização do gráfico.
-    */
-
-    agendarAtualizacaoHistorico();
-
 }
 
 
-/*
-==========================================================
-AGENDAMENTO DA ATUALIZAÇÃO DO GRÁFICO
-==========================================================
-*/
-
-function agendarAtualizacaoHistorico() {
-
-    /*
-    Se já existe uma atualização agendada,
-    cancela para evitar várias requisições.
-    */
-
-    if (historicoAtualizacaoTimer) {
-
-        clearTimeout(historicoAtualizacaoTimer);
-
-    }
-
-
-    /*
-    Pequeno atraso para dar tempo
-    do servidor salvar o histórico.
-    */
-
-    historicoAtualizacaoTimer = setTimeout(async () => {
-
-        const agora = Date.now();
-
-
-        /*
-        Não atualiza mais de uma vez por segundo.
-        */
-
-        if (agora - ultimaAtualizacaoHistorico < 1000) {
-
-            return;
-
-        }
-
-
-        /*
-        Se já existe uma consulta em andamento,
-        não inicia outra.
-        */
-
-        if (atualizacaoHistoricoEmAndamento) {
-
-            return;
-
-        }
-
-
-        ultimaAtualizacaoHistorico = agora;
-
-        atualizacaoHistoricoEmAndamento = true;
-
-
-        try {
-
-            await carregarHistorico();
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao atualizar histórico:",
-                erro
-            );
-
-        } finally {
-
-            atualizacaoHistoricoEmAndamento = false;
-
-        }
-
-    }, 800);
-
-}
-
-
-/*
-==========================================================
-RENDERIZAÇÃO CONTROLADA
-==========================================================
-*/
+/* ==========================================================
+   RENDERIZAÇÃO CONTROLADA
+   ========================================================== */
 
 function scheduleRender(data) {
 
@@ -613,11 +423,9 @@ function scheduleRender(data) {
 }
 
 
-/*
-==========================================================
-ATUALIZA INTERFACE
-==========================================================
-*/
+/* ==========================================================
+   ATUALIZAÇÃO GERAL
+   ========================================================== */
 
 function atualizarUI(data) {
 
@@ -642,7 +450,8 @@ function atualizarUI(data) {
 
     if (hora) {
 
-        hora.innerText = horaBR;
+        hora.innerText =
+            horaBR;
 
     }
 
@@ -664,14 +473,20 @@ function atualizarUI(data) {
 
     atualizarKPIs(data);
 
+
+    /*
+       Atualiza a lista usada pelo alerta.
+    */
+    atualizarReservatoriosCriticos(
+        data.reservatorios || []
+    );
+
 }
 
 
-/*
-==========================================================
-RESERVATÓRIOS
-==========================================================
-*/
+/* ==========================================================
+   RESERVATÓRIOS
+   ========================================================== */
 
 function renderReservatorios(lista) {
 
@@ -686,18 +501,34 @@ function renderReservatorios(lista) {
 
     lista.forEach(r => {
 
+        const setor =
+            String(
+                r.setor ||
+                r.nome ||
+                "reservatorio"
+            )
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+
         const id =
-            `res-${r.setor}`;
+            `res-${setor}`;
 
 
         let el =
             document.getElementById(id);
 
 
+        /*
+           Cria o card somente uma vez.
+        */
+
         if (!el) {
 
             el =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             el.id = id;
@@ -708,7 +539,7 @@ function renderReservatorios(lista) {
 
             el.innerHTML = `
 
-                <h2>${r.nome}</h2>
+                <h2></h2>
 
                 <div class="tanque">
 
@@ -730,6 +561,7 @@ function renderReservatorios(lista) {
 
                 </div>
 
+
                 <div class="info">
 
                     <div class="valor">
@@ -741,6 +573,7 @@ function renderReservatorios(lista) {
                     </div>
 
                 </div>
+
             `;
 
 
@@ -750,16 +583,42 @@ function renderReservatorios(lista) {
 
 
         const agua =
-            el.querySelector(".agua");
+            el.querySelector(
+                ".agua"
+            );
 
 
         const valor =
-            el.querySelector(".valor");
+            el.querySelector(
+                ".valor"
+            );
 
 
         const litros =
-            el.querySelector(".litros");
+            el.querySelector(
+                ".litros"
+            );
 
+
+        const titulo =
+            el.querySelector(
+                "h2"
+            );
+
+
+        if (titulo) {
+
+            titulo.innerText =
+                r.nome ||
+                r.setor ||
+                "Reservatório";
+
+        }
+
+
+        /*
+           Limita o nível entre 0 e 100.
+        */
 
         const nivel =
             Math.min(
@@ -780,6 +639,10 @@ function renderReservatorios(lista) {
                 agua.dataset.nivel || 0
             );
 
+
+        /*
+           Efeito de balanço quando o nível muda.
+        */
 
         if (
             Math.abs(
@@ -804,19 +667,11 @@ function renderReservatorios(lista) {
         }
 
 
-        agua.style.height =
-            `${nivelSuavizado}%`;
-
-
-        agua.dataset.nivel =
-            nivelSuavizado;
-
-
         /*
-        Remove somente as classes
-        de nível.
+           Remove somente as classes de nível.
 
-        Mantém a classe água.
+           Não usamos className = "agua",
+           pois isso apagava a animação.
         */
 
         agua.classList.remove(
@@ -828,31 +683,55 @@ function renderReservatorios(lista) {
         );
 
 
+        /*
+           Atualiza altura.
+        */
+
+        agua.style.height =
+            `${nivelSuavizado}%`;
+
+
+        agua.dataset.nivel =
+            nivelSuavizado;
+
+
+        /*
+           Classificação do nível.
+        */
+
         if (nivel >= 95) {
 
             agua.classList.add(
                 "nivel-cheio"
             );
 
-        } else if (nivel >= 70) {
+        }
+
+        else if (nivel >= 70) {
 
             agua.classList.add(
                 "nivel-alto"
             );
 
-        } else if (nivel >= 40) {
+        }
+
+        else if (nivel >= 40) {
 
             agua.classList.add(
                 "nivel-medio"
             );
 
-        } else if (nivel >= 20) {
+        }
+
+        else if (nivel >= 20) {
 
             agua.classList.add(
                 "nivel-baixo"
             );
 
-        } else {
+        }
+
+        else {
 
             agua.classList.add(
                 "nivel-critico"
@@ -861,13 +740,21 @@ function renderReservatorios(lista) {
         }
 
 
+        /*
+           ALERTA DO CARD
+
+           Menor que 20%.
+        */
+
         if (nivel < 20) {
 
             el.classList.add(
                 "alerta"
             );
 
-        } else {
+        }
+
+        else {
 
             el.classList.remove(
                 "alerta"
@@ -876,25 +763,35 @@ function renderReservatorios(lista) {
         }
 
 
-        valor.innerText =
-            `${nivelSuavizado}%`;
+        /*
+           Valores.
+        */
+
+        if (valor) {
+
+            valor.innerText =
+                `${nivelSuavizado}%`;
+
+        }
 
 
-        litros.innerText =
-            `${formatar(
-                r.current_liters
-            )} L`;
+        if (litros) {
+
+            litros.innerText =
+                `${formatar(
+                    r.current_liters
+                )} L`;
+
+        }
 
     });
 
 }
 
 
-/*
-==========================================================
-BOMBAS
-==========================================================
-*/
+/* ==========================================================
+   BOMBAS
+   ========================================================== */
 
 function renderBombas(lista) {
 
@@ -1003,11 +900,9 @@ function renderBombas(lista) {
 }
 
 
-/*
-==========================================================
-PRESSÕES
-==========================================================
-*/
+/* ==========================================================
+   PRESSÕES
+   ========================================================== */
 
 function renderPressoes(lista) {
 
@@ -1041,14 +936,16 @@ function renderPressoes(lista) {
             el.id = id;
 
             el.className =
-                "card";
+                "card pressao";
 
 
             el.innerHTML = `
 
                 <h2></h2>
 
-                <div class="valor-pressao"></div>
+                <div class="valor-pressao">
+                    0.00 bar
+                </div>
 
             `;
 
@@ -1076,11 +973,9 @@ function renderPressoes(lista) {
 }
 
 
-/*
-==========================================================
-CARREGAR HISTÓRICO
-==========================================================
-*/
+/* ==========================================================
+   HISTÓRICO
+   ========================================================== */
 
 async function carregarHistorico() {
 
@@ -1088,14 +983,11 @@ async function carregarHistorico() {
 
         const res =
             await fetch(
-                "/historico?t=" +
+                HISTORICO_API +
+                "?t=" +
                 Date.now(),
                 {
-                    cache: "no-store",
-                    headers: {
-                        "Cache-Control":
-                            "no-cache"
-                    }
+                    cache: "no-store"
                 }
             );
 
@@ -1114,13 +1006,30 @@ async function carregarHistorico() {
 
 
         /*
-        Atualiza o gráfico
+           Evita redesenhar o gráfico
+           se os dados forem exatamente iguais.
         */
+
+        const jsonAtual =
+            JSON.stringify(data);
+
+
+        if (
+            jsonAtual ===
+            ultimoHistoricoJson
+        ) {
+
+            return;
+
+        }
+
+
+        ultimoHistoricoJson =
+            jsonAtual;
+
 
         renderHistoricoChart(data);
 
-
-        return data;
 
     } catch (e) {
 
@@ -1129,19 +1038,14 @@ async function carregarHistorico() {
             e
         );
 
-
-        throw e;
-
     }
 
 }
 
 
-/*
-==========================================================
-GRÁFICO HISTÓRICO
-==========================================================
-*/
+/* ==========================================================
+   GRÁFICO
+   ========================================================== */
 
 function renderHistoricoChart(data) {
 
@@ -1152,26 +1056,6 @@ function renderHistoricoChart(data) {
 
 
     if (!canvas) return;
-
-
-    /*
-    Se o servidor retornar vazio,
-    não quebra o dashboard.
-    */
-
-    if (
-        !data ||
-        typeof data !== "object"
-    ) {
-
-        console.warn(
-            "Histórico inválido:",
-            data
-        );
-
-        return;
-
-    }
 
 
     const cores = {
@@ -1202,11 +1086,7 @@ function renderHistoricoChart(data) {
                         setor.slice(1),
 
                     data:
-                        Array.isArray(
-                            data[setor]
-                        )
-                            ? data[setor]
-                            : [],
+                        data[setor],
 
                     borderWidth: 2,
 
@@ -1233,24 +1113,28 @@ function renderHistoricoChart(data) {
 
 
     /*
-    Se o gráfico já existe,
-    destrói antes de recriar.
-
-    Isso garante que os dados
-    antigos não fiquem presos.
+       Se o gráfico já existe,
+       atualizamos os dados sem destruir.
     */
 
     if (chartHistorico) {
 
-        chartHistorico.destroy();
+        chartHistorico.data.datasets =
+            datasets;
 
-        chartHistorico = null;
+
+        chartHistorico.update(
+            "none"
+        );
+
+
+        return;
 
     }
 
 
     /*
-    Cria novo gráfico
+       Criação inicial.
     */
 
     chartHistorico =
@@ -1274,17 +1158,13 @@ function renderHistoricoChart(data) {
                     maintainAspectRatio:
                         false,
 
-                    animation: {
-
-                        duration: 500
-
-                    },
+                    animation: false,
 
                     interaction: {
 
-                        mode: "nearest",
+                        intersect: false,
 
-                        intersect: false
+                        mode: "index"
 
                     },
 
@@ -1300,13 +1180,9 @@ function renderHistoricoChart(data) {
 
                                 displayFormats: {
 
-                                    hour:
-                                        "HH:mm"
+                                    hour: "HH:mm"
 
-                                },
-
-                                tooltipFormat:
-                                    "dd/MM/yyyy HH:mm"
+                                }
 
                             },
 
@@ -1338,9 +1214,8 @@ function renderHistoricoChart(data) {
                                     "#94a3b8",
 
                                 callback:
-                                    value =>
-                                        value +
-                                        "%"
+                                    v =>
+                                        v + "%"
 
                             },
 
@@ -1373,9 +1248,7 @@ function renderHistoricoChart(data) {
                             callbacks: {
 
                                 label:
-                                    function(
-                                        context
-                                    ) {
+                                    function(context) {
 
                                         return (
                                             context
@@ -1404,17 +1277,11 @@ function renderHistoricoChart(data) {
 }
 
 
-/*
-==========================================================
-WEBSOCKET
-==========================================================
-*/
+/* ==========================================================
+   WEBSOCKET
+   ========================================================== */
 
 function conectarWS() {
-
-    /*
-    Fecha conexão anterior
-    */
 
     if (ws) {
 
@@ -1422,14 +1289,7 @@ function conectarWS() {
 
             ws.close();
 
-        } catch (e) {
-
-            console.warn(
-                "Erro fechando WS:",
-                e
-            );
-
-        }
+        } catch (e) {}
 
     }
 
@@ -1440,26 +1300,13 @@ function conectarWS() {
             : "ws:";
 
 
-    const url =
-        `${protocolo}//${location.host}`;
-
-
-    console.log(
-        "Conectando WebSocket:",
-        url
-    );
-
-
     ws =
-        new WebSocket(url);
+        new WebSocket(
+            `${protocolo}//${location.host}`
+        );
 
 
     ws.onopen = () => {
-
-        console.log(
-            "WebSocket conectado"
-        );
-
 
         atualizarStatusVisual(
             "Tempo real conectado"
@@ -1478,14 +1325,21 @@ function conectarWS() {
                 );
 
 
-            console.log(
-                "WebSocket recebeu atualização"
-            );
-
-
             processarPayload(
                 payload
             );
+
+
+            /*
+               Quando chegar nova leitura
+               pelo WebSocket, também tentamos
+               atualizar o histórico.
+
+               O intervalo de 8 segundos continua
+               como garantia.
+            */
+
+            carregarHistorico();
 
 
         } catch (e) {
@@ -1501,11 +1355,6 @@ function conectarWS() {
 
 
     ws.onclose = () => {
-
-        console.warn(
-            "WebSocket desconectado"
-        );
-
 
         atualizarStatusVisual(
             "Reconectando..."
@@ -1532,11 +1381,9 @@ function conectarWS() {
 }
 
 
-/*
-==========================================================
-FALLBACK HTTP
-==========================================================
-*/
+/* ==========================================================
+   FALLBACK HTTP
+   ========================================================== */
 
 async function fallbackHTTP() {
 
@@ -1548,13 +1395,7 @@ async function fallbackHTTP() {
                 "?t=" +
                 Date.now(),
                 {
-                    cache:
-                        "no-store",
-
-                    headers: {
-                        "Cache-Control":
-                            "no-cache"
-                    }
+                    cache: "no-store"
                 }
             );
 
@@ -1571,12 +1412,6 @@ async function fallbackHTTP() {
         const data =
             await res.json();
 
-
-        /*
-        Mesmo pelo fallback,
-        processarPayload agenda
-        a atualização do gráfico.
-        */
 
         processarPayload(
             data
@@ -1601,15 +1436,11 @@ async function fallbackHTTP() {
 }
 
 
-/*
-==========================================================
-STATUS
-==========================================================
-*/
+/* ==========================================================
+   STATUS
+   ========================================================== */
 
-function atualizarStatusVisual(
-    texto
-) {
+function atualizarStatusVisual(texto) {
 
     const el =
         document.getElementById(
@@ -1639,7 +1470,9 @@ function atualizarStatusVisual(
         dot.style.background =
             "#00ff88";
 
-    } else if (
+    }
+
+    else if (
         texto.includes(
             "Reconectando"
         )
@@ -1648,7 +1481,9 @@ function atualizarStatusVisual(
         dot.style.background =
             "#ffd600";
 
-    } else {
+    }
+
+    else {
 
         dot.style.background =
             "#ff3d00";
@@ -1658,11 +1493,268 @@ function atualizarStatusVisual(
 }
 
 
-/*
-==========================================================
-FORMATAÇÃO
-==========================================================
-*/
+/* ==========================================================
+   RESERVATÓRIOS CRÍTICOS
+   ========================================================== */
+
+function atualizarReservatoriosCriticos(lista) {
+
+    /*
+       MESMO LIMITE DO CARD:
+
+       abaixo de 20%.
+    */
+
+    reservatoriosCriticosAtuais =
+        lista.filter(r => {
+
+            return Number(
+                r.percent || 0
+            ) < 20;
+
+        });
+
+
+    /*
+       Se não existe nenhum crítico,
+       garante que o alerta esteja fechado.
+    */
+
+    if (
+        reservatoriosCriticosAtuais.length === 0
+    ) {
+
+        fecharAlertaCritico();
+
+        return;
+
+    }
+
+
+    /*
+       Se acabou de entrar em estado crítico,
+       mostra imediatamente.
+    */
+
+    const agora =
+        Date.now();
+
+
+    if (
+        !alertaAberto &&
+        agora - ultimoAlertaExibido >
+            INTERVALO_ALERTA_CRITICO
+    ) {
+
+        mostrarAlertaCritico();
+
+    }
+
+}
+
+
+/* ==========================================================
+   ALERTA PERIÓDICO
+   ========================================================== */
+
+function verificarAlertaPeriodico() {
+
+    if (
+        reservatoriosCriticosAtuais.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    if (alertaAberto) {
+
+        return;
+
+    }
+
+
+    const agora =
+        Date.now();
+
+
+    if (
+        agora -
+        ultimoAlertaExibido >=
+        INTERVALO_ALERTA_CRITICO
+    ) {
+
+        mostrarAlertaCritico();
+
+    }
+
+}
+
+
+/* ==========================================================
+   MOSTRAR ALERTA
+   ========================================================== */
+
+function mostrarAlertaCritico() {
+
+    if (
+        reservatoriosCriticosAtuais.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    const overlay =
+        document.getElementById(
+            "alertaCriticoTela"
+        );
+
+
+    const lista =
+        document.getElementById(
+            "alertaReservatoriosLista"
+        );
+
+
+    if (!overlay || !lista) {
+
+        return;
+
+    }
+
+
+    /*
+       Monta a lista.
+    */
+
+    lista.innerHTML =
+        reservatoriosCriticosAtuais
+            .map(r => {
+
+                const nome =
+                    r.nome ||
+                    r.setor ||
+                    "Reservatório";
+
+
+                const percentual =
+                    Math.round(
+                        Number(
+                            r.percent || 0
+                        )
+                    );
+
+
+                const litros =
+                    formatar(
+                        r.current_liters
+                    );
+
+
+                return `
+
+                    <div class="alerta-reservatorio-item">
+
+                        <div class="alerta-nome">
+
+                            💧 ${nome}
+
+                        </div>
+
+                        <div class="alerta-nivel">
+
+                            ${percentual}%
+
+                        </div>
+
+                        <div class="alerta-litros">
+
+                            ${litros} L
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+
+    overlay.classList.add(
+        "mostrar"
+    );
+
+
+    document.body.classList.add(
+        "alerta-tela-ativa"
+    );
+
+
+    alertaAberto =
+        true;
+
+
+    ultimoAlertaExibido =
+        Date.now();
+
+
+    /*
+       Fecha automaticamente depois
+       de 8 segundos.
+    */
+
+    setTimeout(() => {
+
+        if (alertaAberto) {
+
+            fecharAlertaCritico();
+
+        }
+
+    }, TEMPO_ALERTA_TELA);
+
+}
+
+
+/* ==========================================================
+   FECHAR ALERTA
+   ========================================================== */
+
+function fecharAlertaCritico() {
+
+    const overlay =
+        document.getElementById(
+            "alertaCriticoTela"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "mostrar"
+        );
+
+    }
+
+
+    document.body.classList.remove(
+        "alerta-tela-ativa"
+    );
+
+
+    alertaAberto =
+        false;
+
+}
+
+
+/* ==========================================================
+   FORMATAR NÚMEROS
+   ========================================================== */
 
 function formatar(n) {
 
@@ -1675,11 +1767,9 @@ function formatar(n) {
 }
 
 
-/*
-==========================================================
-KPIs
-==========================================================
-*/
+/* ==========================================================
+   KPIs
+   ========================================================== */
 
 function atualizarKPIs(data) {
 
@@ -1713,18 +1803,24 @@ function atualizarKPIs(data) {
         );
 
 
+    /*
+       IMPORTANTE:
+
+       O KPI agora usa o mesmo limite
+       de 20% do card crítico.
+    */
+
     if (elCritico) {
 
         elCritico.innerText =
-            (
-                data.reservatorios ||
-                []
-            ).filter(
-                r =>
-                    Number(
-                        r.percent || 0
-                    ) < 30
-            ).length;
+            (data.reservatorios || [])
+                .filter(
+                    r =>
+                        Number(
+                            r.percent || 0
+                        ) < 20
+                )
+                .length;
 
     }
 
@@ -1732,14 +1828,13 @@ function atualizarKPIs(data) {
     if (elAtivas) {
 
         elAtivas.innerText =
-            (
-                data.bombas ||
-                []
-            ).filter(
-                b =>
-                    b.estado ===
-                    "ligada"
-            ).length;
+            (data.bombas || [])
+                .filter(
+                    b =>
+                        b.estado ===
+                        "ligada"
+                )
+                .length;
 
     }
 
@@ -1784,4 +1879,5 @@ function atualizarKPIs(data) {
 </script>
 
 </body>
+
 </html>
