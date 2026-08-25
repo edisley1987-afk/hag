@@ -1,266 +1,1124 @@
-// ===============================
-// 📊 HISTÓRICO PROFISSIONAL HAG (V4)
-// ===============================
+// =========================================================
+// 📊 HISTÓRICO PROFISSIONAL HAG
+// V5 — compatível com server.js v1.0.3
+// =========================================================
 
-const API_URL = window.location.origin + "/historico";
+const API_HISTORICO =
+  window.location.origin +
+  "/historico";
+
+const API_CONSUMO =
+  window.location.origin +
+  "/api/consumo_diario?dias=30";
 
 let grafico = null;
 
+let dadosHistorico = {};
 
-// ===============================
-// 🚀 CARREGAR HISTÓRICO
-// ===============================
+
+// =========================================================
+// CARREGAR HISTÓRICO
+// =========================================================
+
 async function carregarHistorico() {
 
-  const container = document.getElementById("historico");
-  const ctx = document.getElementById("graficoHistorico");
+  const container =
+    document.getElementById(
+      "historico"
+    );
 
-  container.innerHTML = "⏳ Carregando histórico...";
+  const canvas =
+    document.getElementById(
+      "graficoHistorico"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML =
+    `
+      <div class="carregando">
+        ⏳ Carregando histórico...
+      </div>
+    `;
 
   try {
 
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error("Erro ao buscar histórico");
+    const [
+      respostaHistorico,
+      respostaConsumo
+    ] =
+      await Promise.all([
+        fetch(
+          API_HISTORICO,
+          {
+            cache: "no-store"
+          }
+        ),
 
-    let dados = await res.json();
+        fetch(
+          API_CONSUMO,
+          {
+            cache: "no-store"
+          }
+        )
+      ]);
 
-    if (!dados || !dados.length) {
-      container.innerHTML = "📭 Nenhum dado encontrado";
+    if (
+      !respostaHistorico.ok
+    ) {
+      throw new Error(
+        "Erro ao buscar histórico"
+      );
+    }
+
+    dadosHistorico =
+      await respostaHistorico.json();
+
+    let dadosConsumo =
+      {};
+
+    if (
+      respostaConsumo.ok
+    ) {
+      dadosConsumo =
+        await respostaConsumo.json();
+    }
+
+    const quantidade =
+      Object.values(
+        dadosHistorico
+      ).reduce(
+        (
+          total,
+          lista
+        ) =>
+          total +
+          (
+            Array.isArray(
+              lista
+            )
+              ? lista.length
+              : 0
+          ),
+        0
+      );
+
+    if (
+      quantidade === 0
+    ) {
+
+      container.innerHTML =
+        `
+          <div class="sem-dados">
+            📭 Nenhum dado histórico encontrado.
+          </div>
+        `;
+
+      atualizarConsumo(
+        dadosConsumo
+      );
+
+      destruirGrafico();
+
       return;
     }
 
-    // ===============================
-    // 🔄 ORDENAR
-    // ===============================
-    dados.sort((a,b)=> a.timestamp - b.timestamp);
+    const registros =
+      transformarDadosHistorico(
+        dadosHistorico
+      );
 
-
-    // ===============================
-    // 📊 CONSUMO
-    // ===============================
-    let consumoElevador = 0;
-    let consumoLavanderia = 0;
-    let consumoOsmose = 0;
-
-    const ultimoNivel = {};
-
-
-    // ===============================
-    // 📋 TABELA
-    // ===============================
-    let html = `
-      <table class="tabela-historico">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Reservatório</th>
-            <th>Nível (%)</th>
-            <th>Volume (L)</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-
-    // ===============================
-    // 📈 GRÁFICO
-    // ===============================
-    const datasets = {};
-
-
-    dados.forEach(p => {
-
-      const dataFormatada = new Date(p.timestamp).toLocaleString("pt-BR");
-      const volume = Number(p.valor || 0);
-      const percent = Number(p.percent || 0);
-
-      // ===============================
-      // 📊 CONSUMO INTELIGENTE
-      // ===============================
-      if(ultimoNivel[p.reservatorio] !== undefined){
-
-        const diferenca = ultimoNivel[p.reservatorio] - volume;
-
-        // ignora ruído e reset
-        if(diferenca > 1 && diferenca < 1000){
-
-          if(p.reservatorio === "elevador")
-            consumoElevador += diferenca;
-
-          if(p.reservatorio === "lavanderia")
-            consumoLavanderia += diferenca;
-
-          if(p.reservatorio === "osmose")
-            consumoOsmose += diferenca;
-        }
-      }
-
-      ultimoNivel[p.reservatorio] = volume;
-
-
-      // ===============================
-      // 📋 TABELA
-      // ===============================
-      html += `
-        <tr>
-          <td>${dataFormatada}</td>
-          <td>${formatarNome(p.reservatorio)}</td>
-          <td class="${percent < 20 ? 'nivel-critico':''}">
-            ${percent.toFixed(1)}%
-          </td>
-          <td>${formatarNumero(volume)} L</td>
-        </tr>
-      `;
-
-
-      // ===============================
-      // 📈 GRÁFICO
-      // ===============================
-      if (!datasets[p.reservatorio]) {
-        datasets[p.reservatorio] = [];
-      }
-
-      datasets[p.reservatorio].push({
-        x: new Date(p.timestamp),
-        y: percent
-      });
-
-    });
-
-
-    html += "</tbody></table>";
-    container.innerHTML = html;
-
-
-    // ===============================
-    // 📊 MOSTRAR CONSUMO
-    // ===============================
-    setText("consumoElevador", consumoElevador);
-    setText("consumoLavanderia", consumoLavanderia);
-    setText("consumoOsmose", consumoOsmose);
-
-    setText("consumoTotal",
-      consumoElevador + consumoLavanderia + consumoOsmose
+    registros.sort(
+      (a, b) =>
+        a.timestamp -
+        b.timestamp
     );
 
+    montarTabela(
+      container,
+      registros
+    );
 
-    // ===============================
-    // 📊 RESET GRÁFICO
-    // ===============================
-    if (grafico) grafico.destroy();
+    montarGrafico(
+      canvas,
+      dadosHistorico
+    );
 
+    atualizarConsumo(
+      dadosConsumo
+    );
 
-    // ===============================
-    // 🎨 CORES
-    // ===============================
-    const cores = [
-      "#00e5ff",
-      "#00ff88",
-      "#ffd600",
-      "#ff9800",
-      "#b388ff",
-      "#ff5252"
-    ];
+    atualizarStatus();
 
+  } catch (erro) {
 
-    // ===============================
-    // 📈 CRIAR GRÁFICO
-    // ===============================
-    grafico = new Chart(ctx, {
+    console.error(
+      "Erro histórico:",
+      erro
+    );
 
-      type: "line",
+    container.innerHTML =
+      `
+        <div class="erro-historico">
+          ❌ ${escaparHTML(
+            erro.message
+          )}
 
-      data: {
-        datasets: Object.entries(datasets).map(([nome, valores], index) => ({
-
-          label: formatarNome(nome),
-
-          data: valores.sort((a,b)=>a.x-b.x),
-
-          borderColor: cores[index % cores.length],
-          backgroundColor: cores[index % cores.length],
-
-          tension: 0.3,
-          borderWidth: 2,
-          pointRadius: 1,
-          fill:false
-
-        }))
-      },
-
-      options: {
-
-        parsing:false,
-        responsive:true,
-        maintainAspectRatio:false,
-
-        plugins: {
-          legend:{ position:"bottom" },
-          title:{
-            display:true,
-            text:"📊 Histórico de Nível (%)"
-          }
-        },
-
-        scales:{
-          x:{
-            type:"time",
-            time:{ unit:"hour" }
-          },
-          y:{
-            beginAtZero:true,
-            max:100
-          }
-        }
-      }
-    });
-
-
-    // ===============================
-    // ⏰ HORA
-    // ===============================
-    const elHora = document.getElementById("horaHistorico");
-    if(elHora) elHora.innerText = new Date().toLocaleTimeString("pt-BR");
-
-
-  } catch (err) {
-
-    container.innerHTML = `<p style="color:red;">❌ ${err.message}</p>`;
-    console.error(err);
+          <button
+            onclick="carregarHistorico()"
+            class="erro-btn"
+          >
+            🔄 Tentar novamente
+          </button>
+        </div>
+      `;
 
   }
 
 }
 
 
-// ===============================
-// 🔧 UTIL
-// ===============================
-function formatarNome(nome){
-  return nome
-    .replace(/_/g," ")
-    .replace(/reservatorio/gi,"Reservatório")
-    .replace(/agua/gi,"Água")
+// =========================================================
+// TRANSFORMAR HISTÓRICO
+// =========================================================
+
+function transformarDadosHistorico(
+  dados
+) {
+
+  const registros = [];
+
+  Object.entries(
+    dados || {}
+  ).forEach(
+    (
+      [
+        reservatorio,
+        pontos
+      ]
+    ) => {
+
+      if (
+        !Array.isArray(
+          pontos
+        )
+      ) {
+        return;
+      }
+
+      pontos.forEach(
+        (ponto) => {
+
+          const timestamp =
+            Number(
+              ponto.x
+            );
+
+          const percent =
+            Number(
+              ponto.y
+            ) || 0;
+
+          const litros =
+            Number(
+              ponto.litros
+            ) || 0;
+
+          if (
+            !isNaN(
+              timestamp
+            )
+          ) {
+
+            registros.push({
+
+              timestamp,
+
+              reservatorio,
+
+              percent,
+
+              litros,
+
+              corrente:
+                Number(
+                  ponto.corrente
+                ) || 0
+
+            });
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+  return registros;
+
+}
+
+
+// =========================================================
+// MONTAR TABELA
+// =========================================================
+
+function montarTabela(
+  container,
+  registros
+) {
+
+  let html =
+    `
+      <div class="tabela-wrapper">
+
+      <table
+        class="tabela-historico"
+      >
+
+        <thead>
+
+          <tr>
+
+            <th>
+              Data e Hora
+            </th>
+
+            <th>
+              Reservatório
+            </th>
+
+            <th>
+              Nível
+            </th>
+
+            <th>
+              Volume
+            </th>
+
+            <th>
+              Estado
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+    `;
+
+  registros
+    .slice()
+    .reverse()
+    .forEach(
+      (ponto) => {
+
+        const data =
+          new Date(
+            ponto.timestamp
+          );
+
+        const percent =
+          ponto.percent;
+
+        const classeNivel =
+          obterClasseNivel(
+            percent
+          );
+
+        const estado =
+          obterEstadoNivel(
+            percent
+          );
+
+        html +=
+          `
+            <tr>
+
+              <td>
+                ${formatarDataHora(
+                  data
+                )}
+              </td>
+
+              <td>
+                <strong>
+                  ${formatarNome(
+                    ponto.reservatorio
+                  )}
+                </strong>
+              </td>
+
+              <td>
+                <span
+                  class="nivel-badge ${classeNivel}"
+                >
+                  ${percent.toFixed(
+                    1
+                  )}%
+                </span>
+              </td>
+
+              <td>
+                ${formatarNumero(
+                  ponto.litros
+                )}
+                L
+              </td>
+
+              <td>
+                <span
+                  class="estado-badge ${classeNivel}"
+                >
+                  ${estado}
+                </span>
+              </td>
+
+            </tr>
+          `;
+
+      }
+    );
+
+  html +=
+    `
+        </tbody>
+
+      </table>
+
+      </div>
+    `;
+
+  container.innerHTML =
+    html;
+
+}
+
+
+// =========================================================
+// GRÁFICO
+// =========================================================
+
+function montarGrafico(
+  canvas,
+  dados
+) {
+
+  if (!canvas) {
+    return;
+  }
+
+  destruirGrafico();
+
+  const cores = [
+    "#00e5ff",
+    "#00ff88",
+    "#ffd600",
+    "#ff9800",
+    "#b388ff"
+  ];
+
+  const ordem = [
+    "elevador",
+    "osmose",
+    "cme",
+    "abrandada",
+    "lavanderia"
+  ];
+
+  const datasets =
+    [];
+
+  ordem.forEach(
+    (
+      reservatorio,
+      index
+    ) => {
+
+      const pontos =
+        Array.isArray(
+          dados[
+            reservatorio
+          ]
+        )
+          ? dados[
+              reservatorio
+            ]
+          : [];
+
+      if (
+        pontos.length ===
+        0
+      ) {
+        return;
+      }
+
+      const valores =
+        pontos
+          .map(
+            (ponto) => ({
+              x:
+                Number(
+                  ponto.x
+                ),
+
+              y:
+                Number(
+                  ponto.y
+                ) || 0
+            })
+          )
+          .filter(
+            (ponto) =>
+              !isNaN(
+                ponto.x
+              )
+          )
+          .sort(
+            (a, b) =>
+              a.x - b.x
+          );
+
+      datasets.push({
+
+        label:
+          formatarNome(
+            reservatorio
+          ),
+
+        data:
+          valores,
+
+        borderColor:
+          cores[
+            index %
+              cores.length
+          ],
+
+        backgroundColor:
+          cores[
+            index %
+              cores.length
+          ],
+
+        borderWidth: 2,
+
+        pointRadius: 2,
+
+        pointHoverRadius: 5,
+
+        tension: 0.25,
+
+        fill: false,
+
+        spanGaps: true
+
+      });
+
+    }
+  );
+
+  if (
+    datasets.length ===
+    0
+  ) {
+    return;
+  }
+
+  grafico =
+    new Chart(
+      canvas,
+      {
+
+        type:
+          "line",
+
+        data: {
+          datasets
+        },
+
+        options: {
+
+          parsing: false,
+
+          responsive: true,
+
+          maintainAspectRatio:
+            false,
+
+          interaction: {
+            mode:
+              "nearest",
+
+            intersect:
+              false
+          },
+
+          plugins: {
+
+            legend: {
+              position:
+                "bottom",
+
+              labels: {
+                color:
+                  "#e6f1ee",
+
+                usePointStyle:
+                  true,
+
+                padding:
+                  18
+              }
+            },
+
+            tooltip: {
+
+              callbacks: {
+
+                title:
+                  function (
+                    items
+                  ) {
+
+                    if (
+                      !items.length
+                    ) {
+                      return "";
+                    }
+
+                    return new Date(
+                      items[0]
+                        .parsed.x
+                    ).toLocaleString(
+                      "pt-BR",
+                      {
+                        timeZone:
+                          "America/Sao_Paulo"
+                      }
+                    );
+
+                  },
+
+                label:
+                  function (
+                    context
+                  ) {
+
+                    const valor =
+                      Number(
+                        context.parsed.y
+                      );
+
+                    return (
+                      " " +
+                      context.dataset.label +
+                      ": " +
+                      valor.toFixed(
+                        1
+                      ) +
+                      "%"
+                    );
+
+                  }
+
+              }
+
+            },
+
+            title: {
+              display:
+                false
+            }
+
+          },
+
+          scales: {
+
+            x: {
+
+              type:
+                "time",
+
+              time: {
+
+                tooltipFormat:
+                  "dd/MM/yyyy HH:mm",
+
+                displayFormats: {
+
+                  hour:
+                    "dd/MM HH:mm",
+
+                  day:
+                    "dd/MM/yyyy"
+
+                }
+
+              },
+
+              ticks: {
+                color:
+                  "#b9ccc7"
+              },
+
+              grid: {
+                color:
+                  "rgba(255,255,255,0.06)"
+              }
+
+            },
+
+            y: {
+
+              beginAtZero:
+                true,
+
+              min:
+                0,
+
+              max:
+                100,
+
+              ticks: {
+
+                color:
+                  "#b9ccc7",
+
+                callback:
+                  function (
+                    value
+                  ) {
+                    return (
+                      value +
+                      "%"
+                    );
+                  }
+
+              },
+
+              grid: {
+                color:
+                  "rgba(255,255,255,0.06)"
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+    );
+
+}
+
+
+// =========================================================
+// CONSUMO
+// =========================================================
+
+function atualizarConsumo(
+  dados
+) {
+
+  const dias =
+    Array.isArray(
+      dados.dias
+    )
+      ? dados.dias
+      : [];
+
+  const hojeIndex =
+    dias.length - 1;
+
+  const elevador =
+    Number(
+      dados.elevador?.[
+        hojeIndex
+      ] || 0
+    );
+
+  const lavanderia =
+    Number(
+      dados.lavanderia?.[
+        hojeIndex
+      ] || 0
+    );
+
+  const osmose =
+    Number(
+      dados.osmose?.[
+        hojeIndex
+      ] || 0
+    );
+
+  const total =
+    elevador +
+    lavanderia +
+    osmose;
+
+  setText(
+    "consumoElevador",
+    elevador
+  );
+
+  setText(
+    "consumoLavanderia",
+    lavanderia
+  );
+
+  setText(
+    "consumoOsmose",
+    osmose
+  );
+
+  setText(
+    "consumoTotal",
+    total
+  );
+
+}
+
+
+// =========================================================
+// NÍVEL
+// =========================================================
+
+function obterClasseNivel(
+  percent
+) {
+
+  if (
+    percent <= 20
+  ) {
+    return "critico";
+  }
+
+  if (
+    percent <= 40
+  ) {
+    return "alerta";
+  }
+
+  if (
+    percent <= 70
+  ) {
+    return "atencao";
+  }
+
+  return "normal";
+
+}
+
+
+function obterEstadoNivel(
+  percent
+) {
+
+  if (
+    percent <= 20
+  ) {
+    return "CRÍTICO";
+  }
+
+  if (
+    percent <= 40
+  ) {
+    return "ATENÇÃO";
+  }
+
+  if (
+    percent <= 70
+  ) {
+    return "NORMAL";
+  }
+
+  return "NORMAL";
+
+}
+
+
+// =========================================================
+// FORMATADORES
+// =========================================================
+
+function formatarNome(
+  nome
+) {
+
+  const nomes = {
+
+    elevador:
+      "Reservatório Elevador",
+
+    osmose:
+      "Reservatório Osmose",
+
+    cme:
+      "Reservatório CME",
+
+    abrandada:
+      "Água Abrandada",
+
+    lavanderia:
+      "Reservatório Lavanderia"
+
+  };
+
+  if (
+    nomes[nome]
+  ) {
+    return nomes[
+      nome
+    ];
+  }
+
+  return String(
+    nome || ""
+  )
+    .replace(
+      /_/g,
+      " "
+    )
+    .replace(
+      /reservatorio/gi,
+      "Reservatório"
+    )
+    .replace(
+      /agua/gi,
+      "Água"
+    )
+    .replace(
+      /\b\w/g,
+      (letra) =>
+        letra.toUpperCase()
+    )
     .trim();
-}
 
-function formatarNumero(n){
-  return Number(n || 0).toLocaleString("pt-BR");
-}
-
-function setText(id, valor){
-  const el = document.getElementById(id);
-  if(el) el.innerText = formatarNumero(valor) + " L";
 }
 
 
-// ===============================
-// 🔄 AUTO REFRESH
-// ===============================
-setInterval(carregarHistorico, 60000);
+function formatarNumero(
+  numero
+) {
+
+  return Number(
+    numero || 0
+  ).toLocaleString(
+    "pt-BR"
+  );
+
+}
 
 
-// ===============================
-// 🚀 START
-// ===============================
+function formatarDataHora(
+  data
+) {
+
+  return data.toLocaleString(
+    "pt-BR",
+    {
+      timeZone:
+        "America/Sao_Paulo",
+
+      day:
+        "2-digit",
+
+      month:
+        "2-digit",
+
+      year:
+        "numeric",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit",
+
+      second:
+        "2-digit"
+    }
+  );
+
+}
+
+
+function setText(
+  id,
+  valor
+) {
+
+  const el =
+    document.getElementById(
+      id
+    );
+
+  if (
+    !el
+  ) {
+    return;
+  }
+
+  el.innerText =
+    formatarNumero(
+      Math.round(
+        Number(
+          valor || 0
+        )
+      )
+    ) +
+    " L";
+
+}
+
+
+function escaparHTML(
+  texto
+) {
+
+  return String(
+    texto || ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+// =========================================================
+// STATUS
+// =========================================================
+
+function atualizarStatus() {
+
+  const el =
+    document.getElementById(
+      "horaHistorico"
+    );
+
+  if (
+    el
+  ) {
+
+    el.innerText =
+      new Date().toLocaleTimeString(
+        "pt-BR",
+        {
+          timeZone:
+            "America/Sao_Paulo"
+        }
+      );
+
+  }
+
+}
+
+
+// =========================================================
+// DESTRUIR GRÁFICO
+// =========================================================
+
+function destruirGrafico() {
+
+  if (
+    grafico
+  ) {
+
+    grafico.destroy();
+
+    grafico =
+      null;
+
+  }
+
+}
+
+
+// =========================================================
+// BOTÃO ATUALIZAR
+// =========================================================
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    const btn =
+      document.getElementById(
+        "btnAtualizar"
+      );
+
+    if (
+      btn
+    ) {
+
+      btn.addEventListener(
+        "click",
+        async () => {
+
+          btn.disabled =
+            true;
+
+          btn.innerText =
+            "⏳ Atualizando...";
+
+          try {
+
+            await carregarHistorico();
+
+          } finally {
+
+            btn.disabled =
+              false;
+
+            btn.innerText =
+              "🔄 Atualizar";
+
+          }
+
+        }
+      );
+
+    }
+
+  }
+);
+
+
+// =========================================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// =========================================================
+
+setInterval(
+  carregarHistorico,
+  60000
+);
+
+
+// =========================================================
+// INICIAR
+// =========================================================
+
 carregarHistorico();
