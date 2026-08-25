@@ -1,1209 +1,648 @@
-// =========================================================
-// 📊 HISTÓRICO PROFISSIONAL HAG
-// V6 — corrigido
-// =========================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-const API_HISTORICO =
-  window.location.origin + "/historico";
+<head>
 
-const API_CONSUMO =
-  window.location.origin + "/api/consumo_diario?dias=30";
+  <meta charset="UTF-8">
 
-let grafico = null;
-let dadosHistorico = {};
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Histórico - HAG</title>
+
+  <!-- =====================================================
+       CHART.JS
+       ===================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- =====================================================
+       LUXON
+       ===================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+
+  <!-- =====================================================
+       ADAPTADOR DE DATA DO CHART.JS
+       ===================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
+  <!-- =====================================================
+       ESTILO
+       ===================================================== -->
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+    }
+
+    body {
+
+      font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+      background:
+        linear-gradient(
+          135deg,
+          #021e1a,
+          #03352c
+        );
+
+      color: #e6f1ee;
+
+      min-height: 100vh;
+
+    }
+
+    header {
+
+      background:
+        linear-gradient(
+          90deg,
+          #065f50,
+          #087c67
+        );
+
+      padding: 20px 30px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 20px;
+
+      box-shadow:
+        0 4px 20px
+        rgba(0,0,0,.25);
+
+    }
+
+    header h1 {
+
+      margin: 0;
+
+      font-size: 24px;
+
+    }
+
+    header span {
+
+      font-size: 14px;
+
+      color: #b9ccc7;
+
+    }
+
+    main {
+
+      width: 100%;
+
+      max-width: 1600px;
+
+      margin: 0 auto;
+
+      padding: 25px;
+
+    }
+
+    .acoes {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      margin-bottom: 20px;
+
+    }
+
+    button {
+
+      border: 0;
+
+      border-radius: 8px;
+
+      padding: 11px 18px;
+
+      background: #087c67;
+
+      color: white;
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+
+    }
+
+    button:hover {
+
+      background: #099579;
+
+    }
+
+    button:disabled {
+
+      opacity: .65;
+
+      cursor: wait;
+
+    }
+
+    #horaHistorico {
+
+      color: #b9ccc7;
+
+      font-size: 14px;
+
+    }
+
+    .cards-consumo {
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          4,
+          minmax(180px, 1fr)
+        );
+
+      gap: 15px;
+
+      margin-bottom: 20px;
+
+    }
+
+    .card {
+
+      background:
+        rgba(255,255,255,.06);
+
+      border:
+        1px solid
+        rgba(255,255,255,.08);
+
+      border-radius: 12px;
+
+      padding: 18px;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.18);
+
+    }
+
+    .card-titulo {
+
+      color: #b9ccc7;
+
+      font-size: 13px;
+
+      margin-bottom: 8px;
+
+    }
+
+    .card-valor {
+
+      font-size: 25px;
+
+      font-weight: 700;
+
+    }
+
+    .painel {
+
+      background:
+        rgba(0,0,0,.18);
+
+      border:
+        1px solid
+        rgba(255,255,255,.07);
+
+      border-radius: 12px;
+
+      padding: 20px;
+
+      margin-bottom: 20px;
+
+    }
+
+    .painel h2 {
+
+      margin-top: 0;
+
+      font-size: 18px;
+
+    }
+
+    #graficoHistorico {
+
+      width: 100% !important;
+
+      height: 420px !important;
+
+    }
+
+    .tabela-wrapper {
+
+      width: 100%;
+
+      overflow-x: auto;
+
+    }
+
+    .tabela-historico {
+
+      width: 100%;
+
+      border-collapse: collapse;
+
+      min-width: 800px;
+
+    }
+
+    .tabela-historico th {
+
+      background: #065f50;
+
+      padding: 13px;
+
+      text-align: left;
+
+      font-size: 13px;
+
+      position: sticky;
+
+      top: 0;
+
+    }
+
+    .tabela-historico td {
+
+      padding: 11px 13px;
+
+      border-bottom:
+        1px solid
+        rgba(255,255,255,.07);
+
+      font-size: 13px;
+
+    }
+
+    .tabela-historico tbody tr:hover {
+
+      background:
+        rgba(255,255,255,.04);
+
+    }
+
+    .nivel-badge,
+    .estado-badge {
+
+      display: inline-block;
+
+      padding: 5px 9px;
+
+      border-radius: 20px;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+    }
+
+    .normal {
+
+      background:
+        rgba(0,255,136,.14);
+
+      color: #00ff88;
+
+    }
+
+    .atencao {
+
+      background:
+        rgba(255,214,0,.14);
+
+      color: #ffd600;
+
+    }
+
+    .alerta {
+
+      background:
+        rgba(255,152,0,.14);
+
+      color: #ff9800;
+
+    }
+
+    .critico {
+
+      background:
+        rgba(255,60,60,.16);
+
+      color: #ff6666;
+
+    }
+
+    .carregando,
+    .sem-dados,
+    .erro-historico {
+
+      padding: 30px;
+
+      text-align: center;
+
+      border-radius: 10px;
+
+      background:
+        rgba(255,255,255,.04);
+
+    }
+
+    .erro-historico {
+
+      color: #ff8a8a;
+
+    }
+
+    .erro-btn {
+
+      margin-top: 10px;
+
+    }
+
+    @media (
+      max-width: 900px
+    ) {
+
+      .cards-consumo {
+
+        grid-template-columns:
+          repeat(
+            2,
+            minmax(150px, 1fr)
+          );
+
+      }
+
+      header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+      }
+
+    }
+
+    @media (
+      max-width: 600px
+    ) {
+
+      main {
+
+        padding: 12px;
+
+      }
+
+      .cards-consumo {
+
+        grid-template-columns: 1fr;
+
+      }
+
+      .acoes {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+      }
+
+      #btnAtualizar {
+
+        width: 100%;
+
+      }
+
+    }
+
+  </style>
+
+</head>
 
 
-// =========================================================
-// CARREGAR HISTÓRICO
-// =========================================================
+<body>
 
-window.carregarHistorico = async function carregarHistorico() {
 
-  const container =
-    document.getElementById("historico");
+  <!-- =====================================================
+       CABEÇALHO
+       ===================================================== -->
 
-  const canvas =
-    document.getElementById("graficoHistorico");
+  <header>
 
-  if (!container) {
-    console.warn("Elemento #historico não encontrado.");
-    return;
-  }
+    <div>
 
-  container.innerHTML = `
-    <div class="carregando">
-      ⏳ Carregando histórico...
+      <h1>
+        📊 Histórico Profissional HAG
+      </h1>
+
+      <span>
+        Sistema de Monitoramento
+        Hospital Arnaldo Gavazza
+      </span>
+
     </div>
-  `;
 
-  try {
+    <div id="horaHistorico">
+      --
+    </div>
 
-    const [
-      respostaHistorico,
-      respostaConsumo
-    ] = await Promise.all([
+  </header>
 
-      fetch(
-        API_HISTORICO,
-        {
-          cache: "no-store"
-        }
-      ),
 
-      fetch(
-        API_CONSUMO,
-        {
-          cache: "no-store"
-        }
-      )
+  <!-- =====================================================
+       CONTEÚDO
+       ===================================================== -->
 
-    ]);
+  <main>
 
-    if (!respostaHistorico.ok) {
 
-      throw new Error(
-        "Erro ao buscar histórico: HTTP " +
-        respostaHistorico.status
-      );
+    <!-- ===================================================
+         AÇÕES
+         =================================================== -->
 
-    }
+    <div class="acoes">
 
-    dadosHistorico =
-      await respostaHistorico.json();
+      <div>
+        Histórico dos reservatórios
+      </div>
 
-    let dadosConsumo = {};
+      <button
+        type="button"
+        id="btnAtualizar"
+        onclick="carregarHistorico()"
+      >
+        🔄 Atualizar
+      </button>
 
-    if (respostaConsumo.ok) {
+    </div>
 
-      dadosConsumo =
-        await respostaConsumo.json();
 
-    }
+    <!-- ===================================================
+         CONSUMO
+         =================================================== -->
 
-    const quantidade =
-      Object.values(
-        dadosHistorico || {}
-      ).reduce(
-        (
-          total,
-          lista
-        ) => {
+    <div class="cards-consumo">
 
-          return total +
-            (
-              Array.isArray(lista)
-                ? lista.length
-                : 0
-            );
 
-        },
-        0
-      );
+      <div class="card">
 
-    // =====================================================
-    // SEM DADOS
-    // =====================================================
-
-    if (quantidade === 0) {
-
-      container.innerHTML = `
-        <div class="sem-dados">
-          📭 Nenhum dado histórico encontrado.
+        <div class="card-titulo">
+          Consumo Elevador Hoje
         </div>
-      `;
 
-      atualizarConsumo(
-        dadosConsumo
-      );
-
-      destruirGrafico();
-
-      atualizarStatus();
-
-      return;
-    }
-
-    // =====================================================
-    // TRANSFORMAR DADOS
-    // =====================================================
-
-    const registros =
-      transformarDadosHistorico(
-        dadosHistorico
-      );
-
-    registros.sort(
-      (a, b) =>
-        a.timestamp -
-        b.timestamp
-    );
-
-    // =====================================================
-    // TABELA
-    // =====================================================
-
-    montarTabela(
-      container,
-      registros
-    );
-
-    // =====================================================
-    // GRÁFICO
-    // =====================================================
-
-    montarGrafico(
-      canvas,
-      dadosHistorico
-    );
-
-    // =====================================================
-    // CONSUMO
-    // =====================================================
-
-    atualizarConsumo(
-      dadosConsumo
-    );
-
-    // =====================================================
-    // STATUS
-    // =====================================================
-
-    atualizarStatus();
-
-  } catch (erro) {
-
-    console.error(
-      "Erro histórico:",
-      erro
-    );
-
-    container.innerHTML = `
-      <div class="erro-historico">
-
-        ❌ ${escaparHTML(
-          erro.message
-        )}
-
-        <br><br>
-
-        <button
-          type="button"
-          onclick="carregarHistorico()"
-          class="erro-btn"
+        <div
+          class="card-valor"
+          id="consumoElevador"
         >
-          🔄 Tentar novamente
-        </button>
+          0 L
+        </div>
 
       </div>
-    `;
-
-  }
-
-};
 
 
-// =========================================================
-// TRANSFORMAR HISTÓRICO
-// =========================================================
+      <div class="card">
 
-function transformarDadosHistorico(
-  dados
-) {
+        <div class="card-titulo">
+          Consumo Lavanderia Hoje
+        </div>
 
-  const registros = [];
+        <div
+          class="card-valor"
+          id="consumoLavanderia"
+        >
+          0 L
+        </div>
 
-  Object.entries(
-    dados || {}
-  ).forEach(
-    (
-      [
-        reservatorio,
-        pontos
-      ]
-    ) => {
-
-      if (
-        !Array.isArray(pontos)
-      ) {
-        return;
-      }
-
-      pontos.forEach(
-        (ponto) => {
-
-          const timestamp =
-            Number(
-              ponto.x
-            );
-
-          const percent =
-            Number(
-              ponto.y
-            ) || 0;
-
-          const litros =
-            Number(
-              ponto.litros
-            ) || 0;
-
-          const corrente =
-            Number(
-              ponto.corrente
-            ) || 0;
-
-          if (
-            !Number.isNaN(
-              timestamp
-            )
-          ) {
-
-            registros.push({
-
-              timestamp,
-
-              reservatorio,
-
-              percent,
-
-              litros,
-
-              corrente
-
-            });
-
-          }
-
-        }
-      );
-
-    }
-  );
-
-  return registros;
-
-}
+      </div>
 
 
-// =========================================================
-// MONTAR TABELA
-// =========================================================
+      <div class="card">
 
-function montarTabela(
-  container,
-  registros
-) {
+        <div class="card-titulo">
+          Consumo Osmose Hoje
+        </div>
 
-  let html = `
-    <div class="tabela-wrapper">
+        <div
+          class="card-valor"
+          id="consumoOsmose"
+        >
+          0 L
+        </div>
 
-      <table
-        class="tabela-historico"
-      >
+      </div>
 
-        <thead>
 
-          <tr>
+      <div class="card">
 
-            <th>
-              Data e Hora
-            </th>
+        <div class="card-titulo">
+          Consumo Total Hoje
+        </div>
 
-            <th>
-              Reservatório
-            </th>
+        <div
+          class="card-valor"
+          id="consumoTotal"
+        >
+          0 L
+        </div>
 
-            <th>
-              Nível
-            </th>
+      </div>
 
-            <th>
-              Volume
-            </th>
-
-            <th>
-              Estado
-            </th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-  `;
-
-  registros
-    .slice()
-    .reverse()
-    .forEach(
-      (ponto) => {
-
-        const data =
-          new Date(
-            ponto.timestamp
-          );
-
-        const percent =
-          ponto.percent;
-
-        const classeNivel =
-          obterClasseNivel(
-            percent
-          );
-
-        const estado =
-          obterEstadoNivel(
-            percent
-          );
-
-        html += `
-          <tr>
-
-            <td>
-              ${formatarDataHora(
-                data
-              )}
-            </td>
-
-            <td>
-              <strong>
-                ${escaparHTML(
-                  formatarNome(
-                    ponto.reservatorio
-                  )
-                )}
-              </strong>
-            </td>
-
-            <td>
-
-              <span
-                class="nivel-badge ${classeNivel}"
-              >
-                ${percent.toFixed(1)}%
-              </span>
-
-            </td>
-
-            <td>
-              ${formatarNumero(
-                ponto.litros
-              )}
-              L
-            </td>
-
-            <td>
-
-              <span
-                class="estado-badge ${classeNivel}"
-              >
-                ${estado}
-              </span>
-
-            </td>
-
-          </tr>
-        `;
-
-      }
-    );
-
-  html += `
-        </tbody>
-
-      </table>
 
     </div>
-  `;
 
-  container.innerHTML =
-    html;
 
-}
+    <!-- ===================================================
+         GRÁFICO
+         =================================================== -->
 
+    <section class="painel">
 
-// =========================================================
-// GRÁFICO
-// =========================================================
+      <h2>
+        📈 Nível dos Reservatórios
+      </h2>
 
-function montarGrafico(
-  canvas,
-  dados
-) {
+      <div
+        style="
+          position:relative;
+          width:100%;
+          height:420px;
+        "
+      >
 
-  if (!canvas) {
-    return;
-  }
+        <canvas
+          id="graficoHistorico"
+        ></canvas>
 
-  if (
-    typeof Chart ===
-    "undefined"
-  ) {
+      </div>
 
-    console.error(
-      "Chart.js não foi carregado."
-    );
+    </section>
 
-    return;
 
-  }
+    <!-- ===================================================
+         TABELA
+         =================================================== -->
 
-  destruirGrafico();
+    <section class="painel">
 
-  const cores = [
-    "#00e5ff",
-    "#00ff88",
-    "#ffd600",
-    "#ff9800",
-    "#b388ff"
-  ];
+      <h2>
+        📋 Registros Históricos
+      </h2>
 
-  const ordem = [
-    "elevador",
-    "osmose",
-    "cme",
-    "abrandada",
-    "lavanderia"
-  ];
+      <div id="historico">
 
-  const datasets = [];
+        <div class="carregando">
+          ⏳ Carregando histórico...
+        </div>
 
-  ordem.forEach(
-    (
-      reservatorio,
-      index
-    ) => {
+      </div>
 
-      const pontos =
-        Array.isArray(
-          dados[
-            reservatorio
-          ]
-        )
-          ? dados[
-              reservatorio
-            ]
-          : [];
+    </section>
 
-      if (
-        pontos.length === 0
-      ) {
-        return;
-      }
 
-      const valores =
-        pontos
-          .map(
-            (ponto) => ({
+  </main>
 
-              x:
-                Number(
-                  ponto.x
-                ),
 
-              y:
-                Number(
-                  ponto.y
-                ) || 0
+  <!-- =====================================================
+       SEU JAVASCRIPT
+       ===================================================== -->
 
-            })
-          )
-          .filter(
-            (ponto) =>
-              !Number.isNaN(
-                ponto.x
-              )
-          )
-          .sort(
-            (a, b) =>
-              a.x - b.x
-          );
+  <script src="/historico.js"></script>
 
-      if (
-        valores.length === 0
-      ) {
-        return;
-      }
 
-      datasets.push({
+</body>
 
-        label:
-          formatarNome(
-            reservatorio
-          ),
-
-        data:
-          valores,
-
-        borderColor:
-          cores[
-            index %
-            cores.length
-          ],
-
-        backgroundColor:
-          cores[
-            index %
-            cores.length
-          ],
-
-        borderWidth: 2,
-
-        pointRadius: 2,
-
-        pointHoverRadius: 5,
-
-        tension: 0.25,
-
-        fill: false,
-
-        spanGaps: true
-
-      });
-
-    }
-  );
-
-  if (
-    datasets.length === 0
-  ) {
-    return;
-  }
-
-  grafico =
-    new Chart(
-      canvas,
-      {
-
-        type:
-          "line",
-
-        data: {
-
-          datasets
-
-        },
-
-        options: {
-
-          parsing:
-            false,
-
-          responsive:
-            true,
-
-          maintainAspectRatio:
-            false,
-
-          interaction: {
-
-            mode:
-              "nearest",
-
-            intersect:
-              false
-
-          },
-
-          plugins: {
-
-            legend: {
-
-              position:
-                "bottom",
-
-              labels: {
-
-                color:
-                  "#e6f1ee",
-
-                usePointStyle:
-                  true,
-
-                padding:
-                  18
-
-              }
-
-            },
-
-            tooltip: {
-
-              callbacks: {
-
-                title:
-                  function(items) {
-
-                    if (
-                      !items.length
-                    ) {
-                      return "";
-                    }
-
-                    return new Date(
-                      items[0]
-                        .parsed.x
-                    ).toLocaleString(
-                      "pt-BR",
-                      {
-                        timeZone:
-                          "America/Sao_Paulo"
-                      }
-                    );
-
-                  },
-
-                label:
-                  function(context) {
-
-                    const valor =
-                      Number(
-                        context.parsed.y
-                      );
-
-                    return (
-                      " " +
-                      context.dataset.label +
-                      ": " +
-                      valor.toFixed(1) +
-                      "%"
-                    );
-
-                  }
-
-              }
-
-            },
-
-            title: {
-
-              display:
-                false
-
-            }
-
-          },
-
-          scales: {
-
-            x: {
-
-              type:
-                "time",
-
-              time: {
-
-                tooltipFormat:
-                  "dd/MM/yyyy HH:mm",
-
-                displayFormats: {
-
-                  hour:
-                    "dd/MM HH:mm",
-
-                  day:
-                    "dd/MM/yyyy"
-
-                }
-
-              },
-
-              ticks: {
-
-                color:
-                  "#b9ccc7"
-
-              },
-
-              grid: {
-
-                color:
-                  "rgba(255,255,255,0.06)"
-
-              }
-
-            },
-
-            y: {
-
-              beginAtZero:
-                true,
-
-              min:
-                0,
-
-              max:
-                100,
-
-              ticks: {
-
-                color:
-                  "#b9ccc7",
-
-                callback:
-                  function(value) {
-
-                    return (
-                      value +
-                      "%"
-                    );
-
-                  }
-
-              },
-
-              grid: {
-
-                color:
-                  "rgba(255,255,255,0.06)"
-
-              }
-
-            }
-
-          }
-
-        }
-
-      }
-    );
-
-}
-
-
-// =========================================================
-// CONSUMO
-// =========================================================
-
-function atualizarConsumo(
-  dados
-) {
-
-  dados =
-    dados || {};
-
-  const dias =
-    Array.isArray(
-      dados.dias
-    )
-      ? dados.dias
-      : [];
-
-  if (
-    dias.length === 0
-  ) {
-
-    setText(
-      "consumoElevador",
-      0
-    );
-
-    setText(
-      "consumoLavanderia",
-      0
-    );
-
-    setText(
-      "consumoOsmose",
-      0
-    );
-
-    setText(
-      "consumoTotal",
-      0
-    );
-
-    return;
-
-  }
-
-  const hojeIndex =
-    dias.length - 1;
-
-  const elevador =
-    Number(
-      dados.elevador?.[
-        hojeIndex
-      ] || 0
-    );
-
-  const lavanderia =
-    Number(
-      dados.lavanderia?.[
-        hojeIndex
-      ] || 0
-    );
-
-  const osmose =
-    Number(
-      dados.osmose?.[
-        hojeIndex
-      ] || 0
-    );
-
-  const total =
-    elevador +
-    lavanderia +
-    osmose;
-
-  setText(
-    "consumoElevador",
-    elevador
-  );
-
-  setText(
-    "consumoLavanderia",
-    lavanderia
-  );
-
-  setText(
-    "consumoOsmose",
-    osmose
-  );
-
-  setText(
-    "consumoTotal",
-    total
-  );
-
-}
-
-
-// =========================================================
-// NÍVEL
-// =========================================================
-
-function obterClasseNivel(
-  percent
-) {
-
-  if (
-    percent <= 20
-  ) {
-    return "critico";
-  }
-
-  if (
-    percent <= 40
-  ) {
-    return "alerta";
-  }
-
-  if (
-    percent <= 70
-  ) {
-    return "atencao";
-  }
-
-  return "normal";
-
-}
-
-
-function obterEstadoNivel(
-  percent
-) {
-
-  if (
-    percent <= 20
-  ) {
-    return "CRÍTICO";
-  }
-
-  if (
-    percent <= 40
-  ) {
-    return "ATENÇÃO";
-  }
-
-  return "NORMAL";
-
-}
-
-
-// =========================================================
-// FORMATADORES
-// =========================================================
-
-function formatarNome(
-  nome
-) {
-
-  const nomes = {
-
-    elevador:
-      "Reservatório Elevador",
-
-    osmose:
-      "Reservatório Osmose",
-
-    cme:
-      "Reservatório CME",
-
-    abrandada:
-      "Água Abrandada",
-
-    lavanderia:
-      "Reservatório Lavanderia"
-
-  };
-
-  if (
-    nomes[nome]
-  ) {
-
-    return nomes[
-      nome
-    ];
-
-  }
-
-  return String(
-    nome || ""
-  )
-    .replace(
-      /_/g,
-      " "
-    )
-    .replace(
-      /reservatorio/gi,
-      "Reservatório"
-    )
-    .replace(
-      /agua/gi,
-      "Água"
-    )
-    .replace(
-      /\b\w/g,
-      (letra) =>
-        letra.toUpperCase()
-    )
-    .trim();
-
-}
-
-
-function formatarNumero(
-  numero
-) {
-
-  return Number(
-    numero || 0
-  ).toLocaleString(
-    "pt-BR"
-  );
-
-}
-
-
-function formatarDataHora(
-  data
-) {
-
-  return data.toLocaleString(
-    "pt-BR",
-    {
-
-      timeZone:
-        "America/Sao_Paulo",
-
-      day:
-        "2-digit",
-
-      month:
-        "2-digit",
-
-      year:
-        "numeric",
-
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-
-      second:
-        "2-digit"
-
-    }
-  );
-
-}
-
-
-function setText(
-  id,
-  valor
-) {
-
-  const el =
-    document.getElementById(
-      id
-    );
-
-  if (!el) {
-    return;
-  }
-
-  el.innerText =
-    formatarNumero(
-      Math.round(
-        Number(
-          valor || 0
-        )
-      )
-    ) +
-    " L";
-
-}
-
-
-function escaparHTML(
-  texto
-) {
-
-  return String(
-    texto || ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-// =========================================================
-// STATUS
-// =========================================================
-
-function atualizarStatus() {
-
-  const el =
-    document.getElementById(
-      "horaHistorico"
-    );
-
-  if (!el) {
-    return;
-  }
-
-  el.innerText =
-    new Date().toLocaleTimeString(
-      "pt-BR",
-      {
-        timeZone:
-          "America/Sao_Paulo"
-      }
-    );
-
-}
-
-
-// =========================================================
-// DESTRUIR GRÁFICO
-// =========================================================
-
-function destruirGrafico() {
-
-  if (grafico) {
-
-    grafico.destroy();
-
-    grafico =
-      null;
-
-  }
-
-}
-
-
-// =========================================================
-// BOTÃO ATUALIZAR
-// =========================================================
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    const btn =
-      document.getElementById(
-        "btnAtualizar"
-      );
-
-    if (!btn) {
-      return;
-    }
-
-    btn.addEventListener(
-      "click",
-      async () => {
-
-        btn.disabled =
-          true;
-
-        btn.innerText =
-          "⏳ Atualizando...";
-
-        try {
-
-          await carregarHistorico();
-
-        } finally {
-
-          btn.disabled =
-            false;
-
-          btn.innerText =
-            "🔄 Atualizar";
-
-        }
-
-      }
-    );
-
-  }
-);
-
-
-// =========================================================
-// ATUALIZAÇÃO AUTOMÁTICA
-// =========================================================
-
-setInterval(
-  () => {
-
-    carregarHistorico();
-
-  },
-  60000
-);
-
-
-// =========================================================
-// INICIAR
-// =========================================================
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    carregarHistorico();
-
-  }
-);
+</html>
