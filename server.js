@@ -484,7 +484,7 @@ const SENSORES =
           leituraVazio:
             0.004088,
           leituraCheio:
-            0.005370,
+            0.005531,
           capacidade:
             1000,
           altura:
