@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 
 <head>
@@ -25,37 +26,39 @@
 
 <div id="alertaCriticoTela" class="alerta-critico-tela">
 
-    <div class="alerta-critico-box">
+```
+<div class="alerta-critico-box">
 
-        <div class="alerta-icone">
-            🚨
-        </div>
-
-        <div class="alerta-titulo">
-            RESERVATÓRIO EM ESTADO CRÍTICO
-        </div>
-
-        <div class="alerta-subtitulo">
-            Atenção! O nível de água está abaixo do limite crítico.
-        </div>
-
-        <div id="alertaReservatoriosLista"
-             class="alerta-reservatorios-lista">
-        </div>
-
-        <button
-            id="btnFecharAlerta"
-            class="btn-fechar-alerta"
-            onclick="fecharAlertaCritico()">
-
-            FECHAR ALERTA
-
-        </button>
-
+    <div class="alerta-icone">
+        🚨
     </div>
 
-</div>
+    <div class="alerta-titulo">
+        RESERVATÓRIO EM ESTADO CRÍTICO
+    </div>
 
+    <div class="alerta-subtitulo">
+        Atenção! O nível de água está abaixo do limite crítico.
+    </div>
+
+    <div
+        id="alertaReservatoriosLista"
+        class="alerta-reservatorios-lista">
+    </div>
+
+    <button
+        id="btnFecharAlerta"
+        class="btn-fechar-alerta"
+        onclick="fecharAlertaCritico()">
+
+        FECHAR ALERTA
+
+    </button>
+
+</div>
+```
+
+</div>
 
 <!-- =========================================================
      CABEÇALHO
@@ -63,26 +66,27 @@
 
 <div class="header">
 
-    <h1>
-        🏥 Monitoramento Hospital Arnaldo Gavazza
-    </h1>
+```
+<h1>
+    🏥 Monitoramento Hospital Arnaldo Gavazza
+</h1>
 
-    <div class="status">
+<div class="status">
 
-        <div class="status-dot"></div>
+    <div class="status-dot"></div>
 
-        <span id="statusTexto">
-            Tempo real conectado
-        </span>
+    <span id="statusTexto">
+        Conectando...
+    </span>
 
-        <span id="hora">
-            --:--:--
-        </span>
-
-    </div>
+    <span id="hora">
+        --:--:--
+    </span>
 
 </div>
+```
 
+</div>
 
 <!-- =========================================================
      KPIs
@@ -90,92 +94,93 @@
 
 <div class="kpis">
 
-    <div class="kpi-card">
+```
+<div class="kpi-card">
 
-        <h3>
-            Reservatórios Críticos
-        </h3>
+    <h3>
+        Reservatórios Críticos
+    </h3>
 
-        <div
-            class="value"
-            id="kpiCritico">
+    <div
+        class="value"
+        id="kpiCritico">
 
-            0
-
-        </div>
-
-    </div>
-
-
-    <div class="kpi-card">
-
-        <h3>
-            Bombas Ativas
-        </h3>
-
-        <div
-            class="value"
-            id="bombasAtivas">
-
-            0
-
-        </div>
-
-    </div>
-
-
-    <div class="kpi-card">
-
-        <h3>
-            Consumo Elevador Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiElevador">
-
-            0 L
-
-        </div>
-
-    </div>
-
-
-    <div class="kpi-card">
-
-        <h3>
-            Consumo Lavanderia Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiLavanderia">
-
-            0 L
-
-        </div>
-
-    </div>
-
-
-    <div class="kpi-card">
-
-        <h3>
-            Consumo Osmose Hoje
-        </h3>
-
-        <div
-            class="value"
-            id="kpiOsmose">
-
-            0 L
-
-        </div>
+        0
 
     </div>
 
 </div>
 
+
+<div class="kpi-card">
+
+    <h3>
+        Bombas Ativas
+    </h3>
+
+    <div
+        class="value"
+        id="bombasAtivas">
+
+        0
+
+    </div>
+
+</div>
+
+
+<div class="kpi-card">
+
+    <h3>
+        Consumo Elevador Hoje
+    </h3>
+
+    <div
+        class="value"
+        id="kpiElevador">
+
+        0 L
+
+    </div>
+
+</div>
+
+
+<div class="kpi-card">
+
+    <h3>
+        Consumo Lavanderia Hoje
+    </h3>
+
+    <div
+        class="value"
+        id="kpiLavanderia">
+
+        0 L
+
+    </div>
+
+</div>
+
+
+<div class="kpi-card">
+
+    <h3>
+        Consumo Osmose Hoje
+    </h3>
+
+    <div
+        class="value"
+        id="kpiOsmose">
+
+        0 L
+
+    </div>
+
+</div>
+```
+
+</div>
 
 <!-- =========================================================
      RESERVATÓRIOS
@@ -187,7 +192,6 @@
 
 </div>
 
-
 <!-- =========================================================
      BOMBAS
      ========================================================= -->
@@ -197,7 +201,6 @@
     id="areaBombas">
 
 </div>
-
 
 <!-- =========================================================
      PRESSÕES
@@ -209,25 +212,25 @@
 
 </div>
 
-
 <!-- =========================================================
      GRÁFICO
      ========================================================= -->
 
 <div class="chart-container">
 
-    <h2>
-        Histórico 7 Dias - Nível dos Reservatórios (%)
-    </h2>
+```
+<h2>
+    Histórico 7 Dias - Nível dos Reservatórios (%)
+</h2>
 
-    <div class="chart-wrapper">
+<div class="chart-wrapper">
 
-        <canvas id="chartHistorico"></canvas>
-
-    </div>
+    <canvas id="chartHistorico"></canvas>
 
 </div>
+```
 
+</div>
 
 <script>
 
@@ -239,17 +242,55 @@ const API = "/api/dashboard";
 
 const HISTORICO_API = "/historico";
 
+
+/*
+   WebSocket.
+*/
+
 let ws = null;
+
+
+/*
+   Tempo para reconexão.
+*/
 
 let reconnectDelay = 3000;
 
+
+/*
+   Último dado recebido.
+*/
+
 let ultimoDado = Date.now();
+
+
+/*
+   Controle de renderização.
+*/
 
 let renderPending = false;
 
+
+/*
+   Instância do gráfico.
+*/
+
 let chartHistorico = null;
 
+
+/*
+   Último histórico recebido.
+
+   Usado para evitar redesenho
+   desnecessário do gráfico.
+*/
+
 let ultimoHistoricoJson = "";
+
+
+/*
+   Controle do alerta crítico.
+*/
 
 let alertaAberto = false;
 
@@ -259,10 +300,38 @@ let ultimoAlertaExibido = 0;
 
 
 /*
-   Intervalo para reapresentar o alerta crítico.
+   Evita várias requisições simultâneas
+   do histórico.
+*/
+
+let carregandoHistorico = false;
+
+
+/*
+   Evita várias requisições simultâneas
+   do Dashboard.
+*/
+
+let carregandoDashboard = false;
+
+
+/*
+   Histórico atualizado a cada 30 segundos.
+
+   Antes estava em 8 segundos e também
+   era chamado pelo WebSocket.
+*/
+
+const INTERVALO_HISTORICO = 30000;
+
+
+/*
+   Intervalo para reapresentar
+   o alerta crítico.
 
    30 segundos.
 */
+
 const INTERVALO_ALERTA_CRITICO = 30000;
 
 
@@ -271,6 +340,7 @@ const INTERVALO_ALERTA_CRITICO = 30000;
 
    8 segundos.
 */
+
 const TEMPO_ALERTA_TELA = 8000;
 
 
@@ -284,26 +354,38 @@ init();
 function init() {
 
     /*
-       Carrega o histórico imediatamente.
+       Primeiro carregamos os dados atuais.
+
+       Isso permite que o Dashboard apareça
+       rapidamente sem esperar o histórico.
     */
-    carregarHistorico();
+
+    fallbackHTTP();
 
 
     /*
-       Carrega dados atuais.
+       Depois carregamos o histórico.
+
+       O histórico não bloqueia o Dashboard.
     */
-    fallbackHTTP();
+
+    carregarHistorico();
 
 
     /*
        Conecta WebSocket.
     */
+
     conectarWS();
 
 
     /*
-       Fallback dos dados.
+       Fallback HTTP dos dados atuais.
+
+       Serve como segurança caso o WebSocket
+       fique indisponível.
     */
+
     setInterval(
         fallbackHTTP,
         8000
@@ -311,20 +393,24 @@ function init() {
 
 
     /*
-       Atualiza o gráfico automaticamente.
+       Atualiza somente o histórico
+       a cada 30 segundos.
 
-       Isso resolve o problema de o gráfico só mudar
-       depois de atualizar a página.
+       IMPORTANTE:
+
+       Não fazemos isso dentro do WebSocket.
     */
+
     setInterval(
         carregarHistorico,
-        8000
+        INTERVALO_HISTORICO
     );
 
 
     /*
        Verifica conexão.
     */
+
     setInterval(() => {
 
         if (
@@ -357,6 +443,7 @@ function init() {
     /*
        Verificação periódica do alerta crítico.
     */
+
     setInterval(
         verificarAlertaPeriodico,
         5000
@@ -409,6 +496,7 @@ function scheduleRender(data) {
 
     if (renderPending) return;
 
+
     renderPending = true;
 
 
@@ -445,7 +533,9 @@ function atualizarUI(data) {
 
 
     const hora =
-        document.getElementById("hora");
+        document.getElementById(
+            "hora"
+        );
 
 
     if (hora) {
@@ -456,27 +546,44 @@ function atualizarUI(data) {
     }
 
 
+    /*
+       Atualiza reservatórios.
+    */
+
     renderReservatorios(
         data.reservatorios || []
     );
 
+
+    /*
+       Atualiza bombas.
+    */
 
     renderBombas(
         data.bombas || []
     );
 
 
+    /*
+       Atualiza pressões.
+    */
+
     renderPressoes(
         data.pressoes || []
     );
 
 
+    /*
+       Atualiza KPIs.
+    */
+
     atualizarKPIs(data);
 
 
     /*
-       Atualiza a lista usada pelo alerta.
+       Atualiza estado dos reservatórios críticos.
     */
+
     atualizarReservatoriosCriticos(
         data.reservatorios || []
     );
@@ -625,7 +732,9 @@ function renderReservatorios(lista) {
                 100,
                 Math.max(
                     0,
-                    Number(r.percent || 0)
+                    Number(
+                        r.percent || 0
+                    )
                 )
             );
 
@@ -979,6 +1088,23 @@ function renderPressoes(lista) {
 
 async function carregarHistorico() {
 
+    /*
+       Se já existe uma requisição em andamento,
+       não inicia outra.
+
+       Isso evita duas ou mais chamadas simultâneas.
+    */
+
+    if (carregandoHistorico) {
+
+        return;
+
+    }
+
+
+    carregandoHistorico = true;
+
+
     try {
 
         const res =
@@ -1028,7 +1154,9 @@ async function carregarHistorico() {
             jsonAtual;
 
 
-        renderHistoricoChart(data);
+        renderHistoricoChart(
+            data
+        );
 
 
     } catch (e) {
@@ -1037,6 +1165,11 @@ async function carregarHistorico() {
             "Erro histórico:",
             e
         );
+
+    } finally {
+
+        carregandoHistorico =
+            false;
 
     }
 
@@ -1325,21 +1458,21 @@ function conectarWS() {
                 );
 
 
+            /*
+               IMPORTANTE:
+
+               O WebSocket atualiza somente
+               os dados do Dashboard.
+
+               NÃO carregamos /historico aqui.
+
+               Isso elimina uma grande quantidade
+               de requisições ao servidor.
+            */
+
             processarPayload(
                 payload
             );
-
-
-            /*
-               Quando chegar nova leitura
-               pelo WebSocket, também tentamos
-               atualizar o histórico.
-
-               O intervalo de 8 segundos continua
-               como garantia.
-            */
-
-            carregarHistorico();
 
 
         } catch (e) {
@@ -1387,6 +1520,20 @@ function conectarWS() {
 
 async function fallbackHTTP() {
 
+    /*
+       Evita várias chamadas simultâneas.
+    */
+
+    if (carregandoDashboard) {
+
+        return;
+
+    }
+
+
+    carregandoDashboard = true;
+
+
     try {
 
         const res =
@@ -1430,6 +1577,11 @@ async function fallbackHTTP() {
             );
 
         }
+
+    } finally {
+
+        carregandoDashboard =
+            false;
 
     }
 
@@ -1500,7 +1652,7 @@ function atualizarStatusVisual(texto) {
 function atualizarReservatoriosCriticos(lista) {
 
     /*
-       MESMO LIMITE DO CARD:
+       Mesmo limite do card:
 
        abaixo de 20%.
     */
@@ -1804,10 +1956,9 @@ function atualizarKPIs(data) {
 
 
     /*
-       IMPORTANTE:
+       KPI de reservatórios críticos.
 
-       O KPI agora usa o mesmo limite
-       de 20% do card crítico.
+       Mesmo limite de 20%.
     */
 
     if (elCritico) {
@@ -1825,6 +1976,10 @@ function atualizarKPIs(data) {
     }
 
 
+    /*
+       KPI de bombas ativas.
+    */
+
     if (elAtivas) {
 
         elAtivas.innerText =
@@ -1839,6 +1994,10 @@ function atualizarKPIs(data) {
     }
 
 
+    /*
+       Consumo Elevador.
+    */
+
     if (elElevador) {
 
         elElevador.innerText =
@@ -1851,6 +2010,10 @@ function atualizarKPIs(data) {
     }
 
 
+    /*
+       Consumo Lavanderia.
+    */
+
     if (elLavanderia) {
 
         elLavanderia.innerText =
@@ -1862,6 +2025,10 @@ function atualizarKPIs(data) {
 
     }
 
+
+    /*
+       Consumo Osmose.
+    */
 
     if (elOsmose) {
 
