@@ -1,1243 +1,885 @@
-<!DOCTYPE html>
+// =========================================================
+// 📊 HISTÓRICO PROFISSIONAL HAG
+// Versão corrigida e compatível com diferentes formatos
+// =========================================================
 
-<html lang="pt-BR">
+const API_URL = "/historico";
 
-<head>
+let grafico = null;
 
-<meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+// =========================================================
+// 🚀 INICIALIZAÇÃO
+// =========================================================
 
-<title>Monitoramento HAG</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
-<link rel="stylesheet" href="/style.css">
-
-</head>
-
-<body>
-
-<!-- =========================================================
-     ALERTA CRÍTICO DE TELA INTEIRA
-     ========================================================= -->
-
-<div id="alertaCriticoTela" class="alerta-critico-tela">
-
-```
-<div class="alerta-critico-box">
-
-    <div class="alerta-icone">
-        🚨
-    </div>
-
-    <div class="alerta-titulo">
-        RESERVATÓRIO EM ESTADO CRÍTICO
-    </div>
-
-    <div class="alerta-subtitulo">
-        Atenção! O nível de água está abaixo do limite crítico.
-    </div>
-
-    <div
-        id="alertaReservatoriosLista"
-        class="alerta-reservatorios-lista">
-    </div>
-
-    <button
-        id="btnFecharAlerta"
-        class="btn-fechar-alerta"
-        onclick="fecharAlertaCritico()">
-
-        FECHAR ALERTA
-
-    </button>
-
-</div>
-```
-
-</div>
-
-<!-- =========================================================
-     CABEÇALHO
-     ========================================================= -->
-
-<div class="header">
-
-```
-<h1>
-    🏥 Monitoramento Hospital Arnaldo Gavazza
-</h1>
-
-<div class="status">
-
-    <div class="status-dot"></div>
-
-    <span id="statusTexto">
-        Conectando...
-    </span>
-
-    <span id="hora">
-        --:--:--
-    </span>
-
-</div>
-```
-
-</div>
-
-<!-- =========================================================
-     KPIs
-     ========================================================= -->
-
-<div class="kpis">
-
-```
-<div class="kpi-card">
-
-    <h3>
-        Reservatórios Críticos
-    </h3>
-
-    <div
-        class="value"
-        id="kpiCritico">
-
-        0
-
-    </div>
-
-</div>
-
-
-<div class="kpi-card">
-
-    <h3>
-        Bombas Ativas
-    </h3>
-
-    <div
-        class="value"
-        id="bombasAtivas">
-
-        0
-
-    </div>
-
-</div>
-
-
-<div class="kpi-card">
-
-    <h3>
-        Consumo Elevador Hoje
-    </h3>
-
-    <div
-        class="value"
-        id="kpiElevador">
-
-        0 L
-
-    </div>
-
-</div>
-
-
-<div class="kpi-card">
-
-    <h3>
-        Consumo Lavanderia Hoje
-    </h3>
-
-    <div
-        class="value"
-        id="kpiLavanderia">
-
-        0 L
-
-    </div>
-
-</div>
-
-
-<div class="kpi-card">
-
-    <h3>
-        Consumo Osmose Hoje
-    </h3>
-
-    <div
-        class="value"
-        id="kpiOsmose">
-
-        0 L
-
-    </div>
-
-</div>
-```
-
-</div>
-
-<!-- =========================================================
-     RESERVATÓRIOS
-     ========================================================= -->
-
-<div
-    class="grid grid-reservatorios"
-    id="areaReservatorios">
-
-</div>
-
-<!-- =========================================================
-     BOMBAS
-     ========================================================= -->
-
-<div
-    class="grid"
-    id="areaBombas">
-
-</div>
-
-<!-- =========================================================
-     PRESSÕES
-     ========================================================= -->
-
-<div
-    class="grid"
-    id="areaPressoes">
-
-</div>
-
-<!-- =========================================================
-     GRÁFICO
-     ========================================================= -->
-
-<div class="chart-container">
-
-```
-<h2>
-    Histórico 7 Dias - Nível dos Reservatórios (%)
-</h2>
-
-<div class="chart-wrapper">
-
-    <canvas id="chartHistorico"></canvas>
-
-</div>
-```
-
-</div>
-
-<script>
-
-/* ==========================================================
-   CONFIGURAÇÃO
-   ========================================================== */
-
-const API = "/api/dashboard";
-
-const HISTORICO_API = "/historico";
-
-
-/*
-   WebSocket.
-*/
-
-let ws = null;
-
-
-/*
-   Tempo para reconexão.
-*/
-
-let reconnectDelay = 3000;
-
-
-/*
-   Último dado recebido.
-*/
-
-let ultimoDado = Date.now();
-
-
-/*
-   Controle de renderização.
-*/
-
-let renderPending = false;
-
-
-/*
-   Instância do gráfico.
-*/
-
-let chartHistorico = null;
-
-
-/*
-   Último histórico recebido.
-
-   Usado para evitar redesenho
-   desnecessário do gráfico.
-*/
-
-let ultimoHistoricoJson = "";
-
-
-/*
-   Controle do alerta crítico.
-*/
-
-let alertaAberto = false;
-
-let reservatoriosCriticosAtuais = [];
-
-let ultimoAlertaExibido = 0;
-
-
-/*
-   Evita várias requisições simultâneas
-   do histórico.
-*/
-
-let carregandoHistorico = false;
-
-
-/*
-   Evita várias requisições simultâneas
-   do Dashboard.
-*/
-
-let carregandoDashboard = false;
-
-
-/*
-   Histórico atualizado a cada 30 segundos.
-
-   Antes estava em 8 segundos e também
-   era chamado pelo WebSocket.
-*/
-
-const INTERVALO_HISTORICO = 30000;
-
-
-/*
-   Intervalo para reapresentar
-   o alerta crítico.
-
-   30 segundos.
-*/
-
-const INTERVALO_ALERTA_CRITICO = 30000;
-
-
-/*
-   Tempo que o alerta permanece na tela.
-
-   8 segundos.
-*/
-
-const TEMPO_ALERTA_TELA = 8000;
-
-
-/* ==========================================================
-   INICIALIZAÇÃO
-   ========================================================== */
-
-init();
-
-
-function init() {
-
-    /*
-       Primeiro carregamos os dados atuais.
-
-       Isso permite que o Dashboard apareça
-       rapidamente sem esperar o histórico.
-    */
-
-    fallbackHTTP();
-
-
-    /*
-       Depois carregamos o histórico.
-
-       O histórico não bloqueia o Dashboard.
-    */
+document.addEventListener("DOMContentLoaded", () => {
 
     carregarHistorico();
 
+    // Atualiza automaticamente a cada 60 segundos
+    setInterval(carregarHistorico, 60000);
 
-    /*
-       Conecta WebSocket.
-    */
+});
 
-    conectarWS();
 
-
-    /*
-       Fallback HTTP dos dados atuais.
-
-       Serve como segurança caso o WebSocket
-       fique indisponível.
-    */
-
-    setInterval(
-        fallbackHTTP,
-        8000
-    );
-
-
-    /*
-       Atualiza somente o histórico
-       a cada 30 segundos.
-
-       IMPORTANTE:
-
-       Não fazemos isso dentro do WebSocket.
-    */
-
-    setInterval(
-        carregarHistorico,
-        INTERVALO_HISTORICO
-    );
-
-
-    /*
-       Verifica conexão.
-    */
-
-    setInterval(() => {
-
-        if (
-            Date.now() - ultimoDado > 15000
-        ) {
-
-            atualizarStatusVisual(
-                "Sem sinal"
-            );
-
-            document.body.classList.add(
-                "sem-sinal"
-            );
-
-        } else {
-
-            document.body.classList.remove(
-                "sem-sinal"
-            );
-
-            atualizarStatusVisual(
-                "Tempo real conectado"
-            );
-
-        }
-
-    }, 5000);
-
-
-    /*
-       Verificação periódica do alerta crítico.
-    */
-
-    setInterval(
-        verificarAlertaPeriodico,
-        5000
-    );
-
-}
-
-
-/* ==========================================================
-   PROCESSAMENTO DO PAYLOAD
-   ========================================================== */
-
-function processarPayload(payload) {
-
-    if (!payload) return;
-
-
-    /*
-       Alguns payloads vêm assim:
-
-       {
-           type: "update",
-           dados: {...}
-       }
-    */
-
-    if (
-        payload.type === "update" &&
-        payload.dados
-    ) {
-
-        payload = payload.dados;
-
-    }
-
-
-    ultimoDado = Date.now();
-
-
-    scheduleRender(payload);
-
-}
-
-
-/* ==========================================================
-   RENDERIZAÇÃO CONTROLADA
-   ========================================================== */
-
-function scheduleRender(data) {
-
-    if (renderPending) return;
-
-
-    renderPending = true;
-
-
-    requestAnimationFrame(() => {
-
-        atualizarUI(data);
-
-        renderPending = false;
-
-    });
-
-}
-
-
-/* ==========================================================
-   ATUALIZAÇÃO GERAL
-   ========================================================== */
-
-function atualizarUI(data) {
-
-    if (!data) return;
-
-
-    const horaBR =
-        new Date().toLocaleTimeString(
-            "pt-BR",
-            {
-                timeZone: "America/Sao_Paulo",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-            }
-        );
-
-
-    const hora =
-        document.getElementById(
-            "hora"
-        );
-
-
-    if (hora) {
-
-        hora.innerText =
-            horaBR;
-
-    }
-
-
-    /*
-       Atualiza reservatórios.
-    */
-
-    renderReservatorios(
-        data.reservatorios || []
-    );
-
-
-    /*
-       Atualiza bombas.
-    */
-
-    renderBombas(
-        data.bombas || []
-    );
-
-
-    /*
-       Atualiza pressões.
-    */
-
-    renderPressoes(
-        data.pressoes || []
-    );
-
-
-    /*
-       Atualiza KPIs.
-    */
-
-    atualizarKPIs(data);
-
-
-    /*
-       Atualiza estado dos reservatórios críticos.
-    */
-
-    atualizarReservatoriosCriticos(
-        data.reservatorios || []
-    );
-
-}
-
-
-/* ==========================================================
-   RESERVATÓRIOS
-   ========================================================== */
-
-function renderReservatorios(lista) {
-
-    const area =
-        document.getElementById(
-            "areaReservatorios"
-        );
-
-
-    if (!area) return;
-
-
-    lista.forEach(r => {
-
-        const setor =
-            String(
-                r.setor ||
-                r.nome ||
-                "reservatorio"
-            )
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-
-
-        const id =
-            `res-${setor}`;
-
-
-        let el =
-            document.getElementById(id);
-
-
-        /*
-           Cria o card somente uma vez.
-        */
-
-        if (!el) {
-
-            el =
-                document.createElement(
-                    "div"
-                );
-
-
-            el.id = id;
-
-            el.className =
-                "card reservatorio";
-
-
-            el.innerHTML = `
-
-                <h2></h2>
-
-                <div class="tanque">
-
-                    <div class="escala">
-
-                        <span>100</span>
-                        <span>75</span>
-                        <span>50</span>
-                        <span>25</span>
-                        <span>0</span>
-
-                    </div>
-
-                    <div class="agua">
-
-                        <div class="onda"></div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="info">
-
-                    <div class="valor">
-                        0%
-                    </div>
-
-                    <div class="litros">
-                        0 L
-                    </div>
-
-                </div>
-
-            `;
-
-
-            area.appendChild(el);
-
-        }
-
-
-        const agua =
-            el.querySelector(
-                ".agua"
-            );
-
-
-        const valor =
-            el.querySelector(
-                ".valor"
-            );
-
-
-        const litros =
-            el.querySelector(
-                ".litros"
-            );
-
-
-        const titulo =
-            el.querySelector(
-                "h2"
-            );
-
-
-        if (titulo) {
-
-            titulo.innerText =
-                r.nome ||
-                r.setor ||
-                "Reservatório";
-
-        }
-
-
-        /*
-           Limita o nível entre 0 e 100.
-        */
-
-        const nivel =
-            Math.min(
-                100,
-                Math.max(
-                    0,
-                    Number(
-                        r.percent || 0
-                    )
-                )
-            );
-
-
-        const nivelSuavizado =
-            Math.round(nivel);
-
-
-        const nivelAnterior =
-            Number(
-                agua.dataset.nivel || 0
-            );
-
-
-        /*
-           Efeito de balanço quando o nível muda.
-        */
-
-        if (
-            Math.abs(
-                nivelSuavizado -
-                nivelAnterior
-            ) >= 1
-        ) {
-
-            agua.classList.add(
-                "balancando"
-            );
-
-
-            setTimeout(() => {
-
-                agua.classList.remove(
-                    "balancando"
-                );
-
-            }, 1300);
-
-        }
-
-
-        /*
-           Remove somente as classes de nível.
-
-           Não usamos className = "agua",
-           pois isso apagava a animação.
-        */
-
-        agua.classList.remove(
-            "nivel-cheio",
-            "nivel-alto",
-            "nivel-medio",
-            "nivel-baixo",
-            "nivel-critico"
-        );
-
-
-        /*
-           Atualiza altura.
-        */
-
-        agua.style.height =
-            `${nivelSuavizado}%`;
-
-
-        agua.dataset.nivel =
-            nivelSuavizado;
-
-
-        /*
-           Classificação do nível.
-        */
-
-        if (nivel >= 95) {
-
-            agua.classList.add(
-                "nivel-cheio"
-            );
-
-        }
-
-        else if (nivel >= 70) {
-
-            agua.classList.add(
-                "nivel-alto"
-            );
-
-        }
-
-        else if (nivel >= 40) {
-
-            agua.classList.add(
-                "nivel-medio"
-            );
-
-        }
-
-        else if (nivel >= 20) {
-
-            agua.classList.add(
-                "nivel-baixo"
-            );
-
-        }
-
-        else {
-
-            agua.classList.add(
-                "nivel-critico"
-            );
-
-        }
-
-
-        /*
-           ALERTA DO CARD
-
-           Menor que 20%.
-        */
-
-        if (nivel < 20) {
-
-            el.classList.add(
-                "alerta"
-            );
-
-        }
-
-        else {
-
-            el.classList.remove(
-                "alerta"
-            );
-
-        }
-
-
-        /*
-           Valores.
-        */
-
-        if (valor) {
-
-            valor.innerText =
-                `${nivelSuavizado}%`;
-
-        }
-
-
-        if (litros) {
-
-            litros.innerText =
-                `${formatar(
-                    r.current_liters
-                )} L`;
-
-        }
-
-    });
-
-}
-
-
-/* ==========================================================
-   BOMBAS
-   ========================================================== */
-
-function renderBombas(lista) {
-
-    const area =
-        document.getElementById(
-            "areaBombas"
-        );
-
-
-    if (!area) return;
-
-
-    lista.forEach((b, i) => {
-
-        const id =
-            `bomba-${i}`;
-
-
-        let el =
-            document.getElementById(id);
-
-
-        const ligada =
-            b.estado === "ligada";
-
-
-        const desconhecido =
-            b.estado === "desconhecido";
-
-
-        if (!el) {
-
-            el =
-                document.createElement(
-                    "div"
-                );
-
-
-            el.id = id;
-
-            el.className =
-                "card bomba";
-
-
-            el.innerHTML = `
-
-                <h2></h2>
-
-                <div class="status-icon"></div>
-
-                <div class="valor"></div>
-
-                <div class="ciclos"></div>
-
-            `;
-
-
-            area.appendChild(el);
-
-        }
-
-
-        el.className =
-            `card bomba ${
-                desconhecido
-                    ? "stale"
-                    : ligada
-                        ? "ligada"
-                        : "desligada"
-            }`;
-
-
-        el.querySelector(
-            "h2"
-        ).innerText =
-            b.nome;
-
-
-        el.querySelector(
-            ".status-icon"
-        ).innerText =
-            desconhecido
-                ? "⚪"
-                : ligada
-                    ? "🟢"
-                    : "🔴";
-
-
-        el.querySelector(
-            ".valor"
-        ).innerText =
-            desconhecido
-                ? "SEM DADOS"
-                : ligada
-                    ? "EM OPERAÇÃO"
-                    : "INATIVA";
-
-
-        el.querySelector(
-            ".ciclos"
-        ).innerText =
-            `${b.ciclo || 0} ciclos`;
-
-    });
-
-}
-
-
-/* ==========================================================
-   PRESSÕES
-   ========================================================== */
-
-function renderPressoes(lista) {
-
-    const area =
-        document.getElementById(
-            "areaPressoes"
-        );
-
-
-    if (!area) return;
-
-
-    lista.forEach((p, i) => {
-
-        const id =
-            `pressao-${i}`;
-
-
-        let el =
-            document.getElementById(id);
-
-
-        if (!el) {
-
-            el =
-                document.createElement(
-                    "div"
-                );
-
-
-            el.id = id;
-
-            el.className =
-                "card pressao";
-
-
-            el.innerHTML = `
-
-                <h2></h2>
-
-                <div class="valor-pressao">
-                    0.00 bar
-                </div>
-
-            `;
-
-
-            area.appendChild(el);
-
-        }
-
-
-        el.querySelector(
-            "h2"
-        ).innerText =
-            p.nome;
-
-
-        el.querySelector(
-            ".valor-pressao"
-        ).innerText =
-            `${Number(
-                p.pressao || 0
-            ).toFixed(2)} bar`;
-
-    });
-
-}
-
-
-/* ==========================================================
-   HISTÓRICO
-   ========================================================== */
+// =========================================================
+// 📊 CARREGAR HISTÓRICO
+// =========================================================
 
 async function carregarHistorico() {
 
-    /*
-       Se já existe uma requisição em andamento,
-       não inicia outra.
+    const container =
+        document.getElementById("historico");
 
-       Isso evita duas ou mais chamadas simultâneas.
-    */
+    const canvas =
+        document.getElementById("graficoHistorico");
 
-    if (carregandoHistorico) {
 
+    if (!container) {
+        console.warn(
+            "Elemento #historico não encontrado."
+        );
         return;
-
     }
 
 
-    carregandoHistorico = true;
+    container.innerHTML =
+        "⏳ Carregando histórico...";
 
 
     try {
 
-        const res =
+        const resposta =
             await fetch(
-                HISTORICO_API +
-                "?t=" +
-                Date.now(),
+                API_URL + "?t=" + Date.now(),
                 {
-                    cache: "no-store"
+                    method: "GET",
+                    cache: "no-store",
+                    headers: {
+                        "Accept": "application/json"
+                    }
                 }
             );
 
 
-        if (!res.ok) {
+        // =====================================================
+        // VERIFICA HTTP
+        // =====================================================
+
+        if (!resposta.ok) {
 
             throw new Error(
-                `HTTP ${res.status}`
+                `Erro HTTP ${resposta.status}`
             );
 
         }
 
 
-        const data =
-            await res.json();
+        // =====================================================
+        // VERIFICA CONTENT-TYPE
+        // =====================================================
 
-
-        /*
-           Evita redesenhar o gráfico
-           se os dados forem exatamente iguais.
-        */
-
-        const jsonAtual =
-            JSON.stringify(data);
+        const contentType =
+            resposta.headers.get(
+                "content-type"
+            ) || "";
 
 
         if (
-            jsonAtual ===
-            ultimoHistoricoJson
+            !contentType.includes(
+                "application/json"
+            )
         ) {
+
+            const texto =
+                await resposta.text();
+
+            console.error(
+                "Resposta recebida em /historico:",
+                texto.substring(0, 500)
+            );
+
+
+            throw new Error(
+                "O servidor não retornou JSON em /historico."
+            );
+
+        }
+
+
+        let dados =
+            await resposta.json();
+
+
+        // =====================================================
+        // NORMALIZAR DADOS
+        // =====================================================
+
+        dados =
+            normalizarHistorico(dados);
+
+
+        if (!dados.length) {
+
+            container.innerHTML =
+                `
+                <div class="historico-vazio">
+                    📭 Nenhum dado histórico encontrado.
+                </div>
+                `;
+
+            atualizarConsumos(
+                0,
+                0,
+                0
+            );
 
             return;
 
         }
 
 
-        ultimoHistoricoJson =
-            jsonAtual;
+        // =====================================================
+        // ORDENAR POR DATA
+        // =====================================================
 
-
-        renderHistoricoChart(
-            data
+        dados.sort(
+            (a, b) =>
+                obterTimestamp(a) -
+                obterTimestamp(b)
         );
 
 
-    } catch (e) {
+        // =====================================================
+        // CONSUMO
+        // =====================================================
+
+        let consumoElevador = 0;
+
+        let consumoLavanderia = 0;
+
+        let consumoOsmose = 0;
+
+
+        const ultimoNivel = {};
+
+
+        // =====================================================
+        // TABELA
+        // =====================================================
+
+        let html = `
+
+            <div class="historico-tabela-wrapper">
+
+                <table class="tabela-historico">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Data</th>
+
+                            <th>Reservatório</th>
+
+                            <th>Nível (%)</th>
+
+                            <th>Volume (L)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+        `;
+
+
+        // =====================================================
+        // DATASETS DO GRÁFICO
+        // =====================================================
+
+        const datasets = {};
+
+
+        // =====================================================
+        // PROCESSAR DADOS
+        // =====================================================
+
+        dados.forEach(p => {
+
+            const reservatorio =
+                obterReservatorio(p);
+
+
+            const timestamp =
+                obterTimestamp(p);
+
+
+            const volume =
+                obterVolume(p);
+
+
+            const percent =
+                obterPercentual(p);
+
+
+            // =================================================
+            // CONSUMO
+            // =================================================
+
+            if (
+                ultimoNivel[reservatorio] !==
+                undefined
+            ) {
+
+                const diferenca =
+                    ultimoNivel[reservatorio] -
+                    volume;
+
+
+                /*
+                   Evita considerar:
+
+                   - ruído
+                   - reset
+                   - valores negativos
+                   - grandes saltos
+                */
+
+                if (
+                    diferenca > 1 &&
+                    diferenca < 1000
+                ) {
+
+                    if (
+                        reservatorio ===
+                        "elevador"
+                    ) {
+
+                        consumoElevador +=
+                            diferenca;
+
+                    }
+
+
+                    if (
+                        reservatorio ===
+                        "lavanderia"
+                    ) {
+
+                        consumoLavanderia +=
+                            diferenca;
+
+                    }
+
+
+                    if (
+                        reservatorio ===
+                        "osmose"
+                    ) {
+
+                        consumoOsmose +=
+                            diferenca;
+
+                    }
+
+                }
+
+            }
+
+
+            ultimoNivel[reservatorio] =
+                volume;
+
+
+            // =================================================
+            // TABELA
+            // =================================================
+
+            const dataFormatada =
+                new Date(
+                    timestamp
+                ).toLocaleString(
+                    "pt-BR"
+                );
+
+
+            const classeNivel =
+                percent < 20
+                    ? "nivel-critico"
+                    : "";
+
+
+            html += `
+
+                <tr>
+
+                    <td>
+                        ${dataFormatada}
+                    </td>
+
+                    <td>
+                        ${formatarNome(
+                            reservatorio
+                        )}
+                    </td>
+
+                    <td class="${classeNivel}">
+                        ${percent.toFixed(1)}%
+                    </td>
+
+                    <td>
+                        ${formatarNumero(
+                            volume
+                        )} L
+                    </td>
+
+                </tr>
+
+            `;
+
+
+            // =================================================
+            // GRÁFICO
+            // =================================================
+
+            if (
+                !datasets[reservatorio]
+            ) {
+
+                datasets[reservatorio] =
+                    [];
+
+            }
+
+
+            datasets[
+                reservatorio
+            ].push({
+
+                x: new Date(timestamp),
+
+                y: percent
+
+            });
+
+        });
+
+
+        html += `
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
+
+
+        container.innerHTML =
+            html;
+
+
+        // =====================================================
+        // ATUALIZAR CONSUMOS
+        // =====================================================
+
+        atualizarConsumos(
+            consumoElevador,
+            consumoLavanderia,
+            consumoOsmose
+        );
+
+
+        // =====================================================
+        // GRÁFICO
+        // =====================================================
+
+        if (canvas) {
+
+            criarGrafico(
+                canvas,
+                datasets
+            );
+
+        }
+
+
+        // =====================================================
+        // HORA DA ATUALIZAÇÃO
+        // =====================================================
+
+        const hora =
+            document.getElementById(
+                "horaHistorico"
+            );
+
+
+        if (hora) {
+
+            hora.innerText =
+                new Date()
+                    .toLocaleTimeString(
+                        "pt-BR"
+                    );
+
+        }
+
+
+    } catch (erro) {
 
         console.error(
-            "Erro histórico:",
-            e
+            "Erro ao carregar histórico:",
+            erro
         );
 
-    } finally {
 
-        carregandoHistorico =
-            false;
+        container.innerHTML = `
+
+            <div class="historico-erro">
+
+                ❌ Erro ao carregar histórico.
+
+                <br>
+
+                <small>
+                    ${erro.message}
+                </small>
+
+            </div>
+
+        `;
 
     }
 
 }
 
 
-/* ==========================================================
-   GRÁFICO
-   ========================================================== */
+// =========================================================
+// 🔄 NORMALIZAR HISTÓRICO
+// =========================================================
 
-function renderHistoricoChart(data) {
+function normalizarHistorico(dados) {
 
-    const canvas =
-        document.getElementById(
-            "chartHistorico"
+    /*
+       FORMATO 1:
+
+       Array:
+
+       [
+           {
+               reservatorio: "elevador",
+               timestamp: ...,
+               valor: ...
+           }
+       ]
+    */
+
+    if (Array.isArray(dados)) {
+
+        return dados;
+
+    }
+
+
+    /*
+       FORMATO 2:
+
+       Objeto:
+
+       {
+           elevador: [...],
+           lavanderia: [...],
+           osmose: [...]
+       }
+    */
+
+    if (
+        dados &&
+        typeof dados === "object"
+    ) {
+
+        const resultado = [];
+
+
+        Object.entries(
+            dados
+        ).forEach(
+            ([reservatorio, valores]) => {
+
+                if (
+                    !Array.isArray(
+                        valores
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                valores.forEach(
+                    ponto => {
+
+                        /*
+                           Mantém objetos já completos.
+                        */
+
+                        if (
+                            ponto &&
+                            typeof ponto ===
+                            "object"
+                        ) {
+
+                            resultado.push({
+
+                                ...ponto,
+
+                                reservatorio:
+                                    ponto.reservatorio ||
+                                    reservatorio
+
+                            });
+
+                        }
+
+                    }
+                );
+
+            }
         );
 
 
-    if (!canvas) return;
+        return resultado;
+
+    }
 
 
-    const cores = {
+    return [];
 
-        elevador: "#60a5fa",
-
-        osmose: "#22c55e",
-
-        cme: "#facc15",
-
-        abrandada: "#f97316",
-
-        lavanderia: "#a855f7"
-
-    };
+}
 
 
-    const datasets =
-        Object.keys(data).map(
-            setor => {
+// =========================================================
+// ⏱️ TIMESTAMP
+// =========================================================
+
+function obterTimestamp(p) {
+
+    if (
+        p.timestamp !==
+        undefined
+    ) {
+
+        const n =
+            Number(
+                p.timestamp
+            );
+
+
+        /*
+           Timestamp em segundos
+           precisa ser convertido
+           para milissegundos.
+        */
+
+        if (
+            Number.isFinite(n)
+        ) {
+
+            return n < 10000000000
+                ? n * 1000
+                : n;
+
+        }
+
+    }
+
+
+    if (p.data) {
+
+        return new Date(
+            p.data
+        ).getTime();
+
+    }
+
+
+    if (p.datetime) {
+
+        return new Date(
+            p.datetime
+        ).getTime();
+
+    }
+
+
+    if (p.created_at) {
+
+        return new Date(
+            p.created_at
+        ).getTime();
+
+    }
+
+
+    return Date.now();
+
+}
+
+
+// =========================================================
+// 💧 RESERVATÓRIO
+// =========================================================
+
+function obterReservatorio(p) {
+
+    const nome =
+        String(
+            p.reservatorio ||
+            p.setor ||
+            p.nome ||
+            ""
+        )
+        .toLowerCase()
+        .trim();
+
+
+    /*
+       Normalização dos nomes.
+    */
+
+    if (
+        nome.includes("elevador")
+    ) {
+
+        return "elevador";
+
+    }
+
+
+    if (
+        nome.includes("lavanderia")
+    ) {
+
+        return "lavanderia";
+
+    }
+
+
+    if (
+        nome.includes("osmose")
+    ) {
+
+        return "osmose";
+
+    }
+
+
+    if (
+        nome.includes("cme")
+    ) {
+
+        return "cme";
+
+    }
+
+
+    if (
+        nome.includes("abrand")
+    ) {
+
+        return "abrandada";
+
+    }
+
+
+    return nome
+        .replace(/\s+/g, "_");
+
+}
+
+
+// =========================================================
+// 📦 VOLUME
+// =========================================================
+
+function obterVolume(p) {
+
+    const valor =
+        Number(
+            p.valor ??
+            p.current_liters ??
+            p.litros ??
+            p.volume ??
+            0
+        );
+
+
+    return Number.isFinite(valor)
+        ? valor
+        : 0;
+
+}
+
+
+// =========================================================
+// 📊 PERCENTUAL
+// =========================================================
+
+function obterPercentual(p) {
+
+    const percent =
+        Number(
+            p.percent ??
+            p.percentual ??
+            p.nivel ??
+            0
+        );
+
+
+    if (
+        Number.isFinite(percent)
+    ) {
+
+        return Math.min(
+            100,
+            Math.max(
+                0,
+                percent
+            )
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+// =========================================================
+// 📊 ATUALIZAR CONSUMOS
+// =========================================================
+
+function atualizarConsumos(
+    elevador,
+    lavanderia,
+    osmose
+) {
+
+    setText(
+        "consumoElevador",
+        elevador
+    );
+
+
+    setText(
+        "consumoLavanderia",
+        lavanderia
+    );
+
+
+    setText(
+        "consumoOsmose",
+        osmose
+    );
+
+
+    setText(
+        "consumoTotal",
+
+        elevador +
+        lavanderia +
+        osmose
+
+    );
+
+}
+
+
+// =========================================================
+// 📈 CRIAR GRÁFICO
+// =========================================================
+
+function criarGrafico(
+    canvas,
+    datasets
+) {
+
+    if (grafico) {
+
+        grafico.destroy();
+
+        grafico = null;
+
+    }
+
+
+    const cores = [
+
+        "#00e5ff",
+
+        "#00ff88",
+
+        "#ffd600",
+
+        "#ff9800",
+
+        "#b388ff",
+
+        "#ff5252"
+
+    ];
+
+
+    const datasetsGrafico =
+        Object.entries(
+            datasets
+        ).map(
+            ([nome, valores], index) => {
 
                 return {
 
                     label:
-                        setor
-                            .charAt(0)
-                            .toUpperCase() +
-                        setor.slice(1),
+                        formatarNome(
+                            nome
+                        ),
 
                     data:
-                        data[setor],
-
-                    borderWidth: 2,
-
-                    tension: 0.4,
+                        valores.sort(
+                            (a, b) =>
+                                a.x - b.x
+                        ),
 
                     borderColor:
-                        cores[setor] ||
-                        "#60a5fa",
+                        cores[
+                            index %
+                            cores.length
+                        ],
 
                     backgroundColor:
-                        cores[setor] ||
-                        "#60a5fa",
+                        cores[
+                            index %
+                            cores.length
+                        ],
 
-                    pointRadius: 2,
+                    tension:
+                        0.3,
 
-                    pointHoverRadius: 5,
+                    borderWidth:
+                        2,
 
-                    fill: false
+                    pointRadius:
+                        1,
+
+                    pointHoverRadius:
+                        4,
+
+                    fill:
+                        false
 
                 };
 
@@ -1245,32 +887,7 @@ function renderHistoricoChart(data) {
         );
 
 
-    /*
-       Se o gráfico já existe,
-       atualizamos os dados sem destruir.
-    */
-
-    if (chartHistorico) {
-
-        chartHistorico.data.datasets =
-            datasets;
-
-
-        chartHistorico.update(
-            "none"
-        );
-
-
-        return;
-
-    }
-
-
-    /*
-       Criação inicial.
-    */
-
-    chartHistorico =
+    grafico =
         new Chart(
             canvas,
             {
@@ -1280,11 +897,13 @@ function renderHistoricoChart(data) {
                 data: {
 
                     datasets:
-                        datasets
+                        datasetsGrafico
 
                 },
 
                 options: {
+
+                    parsing: false,
 
                     responsive: true,
 
@@ -1295,71 +914,11 @@ function renderHistoricoChart(data) {
 
                     interaction: {
 
-                        intersect: false,
+                        intersect:
+                            false,
 
-                        mode: "index"
-
-                    },
-
-                    scales: {
-
-                        x: {
-
-                            type: "time",
-
-                            time: {
-
-                                unit: "hour",
-
-                                displayFormats: {
-
-                                    hour: "HH:mm"
-
-                                }
-
-                            },
-
-                            ticks: {
-
-                                color:
-                                    "#94a3b8"
-
-                            },
-
-                            grid: {
-
-                                color:
-                                    "rgba(148,163,184,0.1)"
-
-                            }
-
-                        },
-
-                        y: {
-
-                            min: 0,
-
-                            max: 100,
-
-                            ticks: {
-
-                                color:
-                                    "#94a3b8",
-
-                                callback:
-                                    v =>
-                                        v + "%"
-
-                            },
-
-                            grid: {
-
-                                color:
-                                    "rgba(148,163,184,0.1)"
-
-                            }
-
-                        }
+                        mode:
+                            "index"
 
                     },
 
@@ -1367,34 +926,62 @@ function renderHistoricoChart(data) {
 
                         legend: {
 
-                            labels: {
+                            position:
+                                "bottom"
 
-                                color:
-                                    "#e2e8f0"
+                        },
+
+                        title: {
+
+                            display:
+                                true,
+
+                            text:
+                                "📊 Histórico de Nível (%)"
+
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            type:
+                                "time",
+
+                            time: {
+
+                                unit:
+                                    "hour",
+
+                                displayFormats: {
+
+                                    hour:
+                                        "HH:mm"
+
+                                }
 
                             }
 
                         },
 
-                        tooltip: {
+                        y: {
 
-                            callbacks: {
+                            beginAtZero:
+                                true,
 
-                                label:
-                                    function(context) {
+                            min:
+                                0,
 
-                                        return (
-                                            context
-                                                .dataset
-                                                .label +
-                                            ": " +
-                                            context
-                                                .parsed
-                                                .y +
-                                            "%"
-                                        );
+                            max:
+                                100,
 
-                                    }
+                            ticks: {
+
+                                callback:
+                                    value =>
+                                        value + "%"
 
                             }
 
@@ -1410,641 +997,73 @@ function renderHistoricoChart(data) {
 }
 
 
-/* ==========================================================
-   WEBSOCKET
-   ========================================================== */
+// =========================================================
+// 🔧 FORMATAR NOME
+// =========================================================
 
-function conectarWS() {
+function formatarNome(nome) {
 
-    if (ws) {
-
-        try {
-
-            ws.close();
-
-        } catch (e) {}
-
-    }
-
-
-    const protocolo =
-        location.protocol === "https:"
-            ? "wss:"
-            : "ws:";
-
-
-    ws =
-        new WebSocket(
-            `${protocolo}//${location.host}`
-        );
-
-
-    ws.onopen = () => {
-
-        atualizarStatusVisual(
-            "Tempo real conectado"
-        );
-
-    };
-
-
-    ws.onmessage = (msg) => {
-
-        try {
-
-            const payload =
-                JSON.parse(
-                    msg.data
-                );
-
-
-            /*
-               IMPORTANTE:
-
-               O WebSocket atualiza somente
-               os dados do Dashboard.
-
-               NÃO carregamos /historico aqui.
-
-               Isso elimina uma grande quantidade
-               de requisições ao servidor.
-            */
-
-            processarPayload(
-                payload
-            );
-
-
-        } catch (e) {
-
-            console.error(
-                "Erro WS:",
-                e
-            );
-
-        }
-
-    };
-
-
-    ws.onclose = () => {
-
-        atualizarStatusVisual(
-            "Reconectando..."
-        );
-
-
-        setTimeout(
-            conectarWS,
-            reconnectDelay
-        );
-
-    };
-
-
-    ws.onerror = (err) => {
-
-        console.error(
-            "Erro WebSocket:",
-            err
-        );
-
-    };
+    return String(
+        nome || ""
+    )
+    .replace(/_/g, " ")
+    .replace(
+        /reservatorio/gi,
+        "Reservatório"
+    )
+    .replace(
+        /agua/gi,
+        "Água"
+    )
+    .replace(
+        /\b\w/g,
+        letra =>
+            letra.toUpperCase()
+    )
+    .trim();
 
 }
 
 
-/* ==========================================================
-   FALLBACK HTTP
-   ========================================================== */
-
-async function fallbackHTTP() {
-
-    /*
-       Evita várias chamadas simultâneas.
-    */
-
-    if (carregandoDashboard) {
-
-        return;
-
-    }
-
-
-    carregandoDashboard = true;
-
-
-    try {
-
-        const res =
-            await fetch(
-                API +
-                "?t=" +
-                Date.now(),
-                {
-                    cache: "no-store"
-                }
-            );
-
-
-        if (!res.ok) {
-
-            throw new Error(
-                `HTTP ${res.status}`
-            );
-
-        }
-
-
-        const data =
-            await res.json();
-
-
-        processarPayload(
-            data
-        );
-
-
-    } catch (err) {
-
-        if (
-            !ws ||
-            ws.readyState !== 1
-        ) {
-
-            atualizarStatusVisual(
-                "Desconectado"
-            );
-
-        }
-
-    } finally {
-
-        carregandoDashboard =
-            false;
-
-    }
-
-}
-
-
-/* ==========================================================
-   STATUS
-   ========================================================== */
-
-function atualizarStatusVisual(texto) {
-
-    const el =
-        document.getElementById(
-            "statusTexto"
-        );
-
-
-    const dot =
-        document.querySelector(
-            ".status-dot"
-        );
-
-
-    if (!el || !dot) return;
-
-
-    el.innerText =
-        texto;
-
-
-    if (
-        texto.includes(
-            "Tempo real"
-        )
-    ) {
-
-        dot.style.background =
-            "#00ff88";
-
-    }
-
-    else if (
-        texto.includes(
-            "Reconectando"
-        )
-    ) {
-
-        dot.style.background =
-            "#ffd600";
-
-    }
-
-    else {
-
-        dot.style.background =
-            "#ff3d00";
-
-    }
-
-}
-
-
-/* ==========================================================
-   RESERVATÓRIOS CRÍTICOS
-   ========================================================== */
-
-function atualizarReservatoriosCriticos(lista) {
-
-    /*
-       Mesmo limite do card:
-
-       abaixo de 20%.
-    */
-
-    reservatoriosCriticosAtuais =
-        lista.filter(r => {
-
-            return Number(
-                r.percent || 0
-            ) < 20;
-
-        });
-
-
-    /*
-       Se não existe nenhum crítico,
-       garante que o alerta esteja fechado.
-    */
-
-    if (
-        reservatoriosCriticosAtuais.length === 0
-    ) {
-
-        fecharAlertaCritico();
-
-        return;
-
-    }
-
-
-    /*
-       Se acabou de entrar em estado crítico,
-       mostra imediatamente.
-    */
-
-    const agora =
-        Date.now();
-
-
-    if (
-        !alertaAberto &&
-        agora - ultimoAlertaExibido >
-            INTERVALO_ALERTA_CRITICO
-    ) {
-
-        mostrarAlertaCritico();
-
-    }
-
-}
-
-
-/* ==========================================================
-   ALERTA PERIÓDICO
-   ========================================================== */
-
-function verificarAlertaPeriodico() {
-
-    if (
-        reservatoriosCriticosAtuais.length === 0
-    ) {
-
-        return;
-
-    }
-
-
-    if (alertaAberto) {
-
-        return;
-
-    }
-
-
-    const agora =
-        Date.now();
-
-
-    if (
-        agora -
-        ultimoAlertaExibido >=
-        INTERVALO_ALERTA_CRITICO
-    ) {
-
-        mostrarAlertaCritico();
-
-    }
-
-}
-
-
-/* ==========================================================
-   MOSTRAR ALERTA
-   ========================================================== */
-
-function mostrarAlertaCritico() {
-
-    if (
-        reservatoriosCriticosAtuais.length === 0
-    ) {
-
-        return;
-
-    }
-
-
-    const overlay =
-        document.getElementById(
-            "alertaCriticoTela"
-        );
-
-
-    const lista =
-        document.getElementById(
-            "alertaReservatoriosLista"
-        );
-
-
-    if (!overlay || !lista) {
-
-        return;
-
-    }
-
-
-    /*
-       Monta a lista.
-    */
-
-    lista.innerHTML =
-        reservatoriosCriticosAtuais
-            .map(r => {
-
-                const nome =
-                    r.nome ||
-                    r.setor ||
-                    "Reservatório";
-
-
-                const percentual =
-                    Math.round(
-                        Number(
-                            r.percent || 0
-                        )
-                    );
-
-
-                const litros =
-                    formatar(
-                        r.current_liters
-                    );
-
-
-                return `
-
-                    <div class="alerta-reservatorio-item">
-
-                        <div class="alerta-nome">
-
-                            💧 ${nome}
-
-                        </div>
-
-                        <div class="alerta-nivel">
-
-                            ${percentual}%
-
-                        </div>
-
-                        <div class="alerta-litros">
-
-                            ${litros} L
-
-                        </div>
-
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-
-    overlay.classList.add(
-        "mostrar"
-    );
-
-
-    document.body.classList.add(
-        "alerta-tela-ativa"
-    );
-
-
-    alertaAberto =
-        true;
-
-
-    ultimoAlertaExibido =
-        Date.now();
-
-
-    /*
-       Fecha automaticamente depois
-       de 8 segundos.
-    */
-
-    setTimeout(() => {
-
-        if (alertaAberto) {
-
-            fecharAlertaCritico();
-
-        }
-
-    }, TEMPO_ALERTA_TELA);
-
-}
-
-
-/* ==========================================================
-   FECHAR ALERTA
-   ========================================================== */
-
-function fecharAlertaCritico() {
-
-    const overlay =
-        document.getElementById(
-            "alertaCriticoTela"
-        );
-
-
-    if (overlay) {
-
-        overlay.classList.remove(
-            "mostrar"
-        );
-
-    }
-
-
-    document.body.classList.remove(
-        "alerta-tela-ativa"
-    );
-
-
-    alertaAberto =
-        false;
-
-}
-
-
-/* ==========================================================
-   FORMATAR NÚMEROS
-   ========================================================== */
-
-function formatar(n) {
+// =========================================================
+// 🔢 FORMATAR NÚMERO
+// =========================================================
+
+function formatarNumero(n) {
 
     return Number(
         n || 0
     ).toLocaleString(
-        "pt-BR"
+        "pt-BR",
+        {
+            maximumFractionDigits: 2
+        }
     );
 
 }
 
 
-/* ==========================================================
-   KPIs
-   ========================================================== */
+// =========================================================
+// 📝 ALTERAR TEXTO
+// =========================================================
 
-function atualizarKPIs(data) {
+function setText(
+    id,
+    valor
+) {
 
-    const elCritico =
+    const el =
         document.getElementById(
-            "kpiCritico"
+            id
         );
 
 
-    const elAtivas =
-        document.getElementById(
-            "bombasAtivas"
-        );
+    if (!el) return;
 
 
-    const elElevador =
-        document.getElementById(
-            "kpiElevador"
-        );
-
-
-    const elLavanderia =
-        document.getElementById(
-            "kpiLavanderia"
-        );
-
-
-    const elOsmose =
-        document.getElementById(
-            "kpiOsmose"
-        );
-
-
-    /*
-       KPI de reservatórios críticos.
-
-       Mesmo limite de 20%.
-    */
-
-    if (elCritico) {
-
-        elCritico.innerText =
-            (data.reservatorios || [])
-                .filter(
-                    r =>
-                        Number(
-                            r.percent || 0
-                        ) < 20
-                )
-                .length;
-
-    }
-
-
-    /*
-       KPI de bombas ativas.
-    */
-
-    if (elAtivas) {
-
-        elAtivas.innerText =
-            (data.bombas || [])
-                .filter(
-                    b =>
-                        b.estado ===
-                        "ligada"
-                )
-                .length;
-
-    }
-
-
-    /*
-       Consumo Elevador.
-    */
-
-    if (elElevador) {
-
-        elElevador.innerText =
-            `${formatar(
-                data.kpis
-                    ?.elevador_hoje ||
-                0
-            )} L`;
-
-    }
-
-
-    /*
-       Consumo Lavanderia.
-    */
-
-    if (elLavanderia) {
-
-        elLavanderia.innerText =
-            `${formatar(
-                data.kpis
-                    ?.lavanderia_hoje ||
-                0
-            )} L`;
-
-    }
-
-
-    /*
-       Consumo Osmose.
-    */
-
-    if (elOsmose) {
-
-        elOsmose.innerText =
-            `${formatar(
-                data.kpis
-                    ?.osmose_hoje ||
-                0
-            )} L`;
-
-    }
+    el.innerText =
+        formatarNumero(
+            valor
+        ) + " L";
 
 }
-
-</script>
-
-</body>
-
-</html>
