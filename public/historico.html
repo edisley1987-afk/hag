@@ -12,13 +12,11 @@
 
   <title>Histórico - HAG</title>
 
-
   <!-- =====================================================
        CHART.JS
        ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 
   <!-- =====================================================
        LUXON
@@ -26,16 +24,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
 
-
   <!-- =====================================================
        ADAPTADOR CHART.JS
        ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
 
-
   <!-- =====================================================
-       ESTILO
+       CSS
        ===================================================== -->
 
   <style>
@@ -44,14 +40,12 @@
       box-sizing: border-box;
     }
 
-
     html,
     body {
       margin: 0;
       padding: 0;
       min-height: 100%;
     }
-
 
     body {
 
@@ -70,9 +64,7 @@
       color: #e6f1ee;
 
       min-height: 100vh;
-
     }
-
 
     /* =====================================================
        HEADER
@@ -100,27 +92,30 @@
       box-shadow:
         0 4px 20px
         rgba(0,0,0,.25);
-
     }
-
 
     header h1 {
 
-      margin: 0;
+      margin: 0 0 5px 0;
 
       font-size: 24px;
-
     }
-
 
     header span {
 
       font-size: 14px;
 
       color: #b9ccc7;
-
     }
 
+    #horaHistorico {
+
+      color: #d7eee8;
+
+      font-size: 14px;
+
+      white-space: nowrap;
+    }
 
     /* =====================================================
        MAIN
@@ -135,9 +130,7 @@
       margin: 0 auto;
 
       padding: 25px;
-
     }
-
 
     /* =====================================================
        AÇÕES
@@ -155,8 +148,17 @@
 
       margin-bottom: 20px;
 
+      padding: 0 2px;
     }
 
+    .acoes-titulo {
+
+      font-size: 15px;
+
+      font-weight: 600;
+
+      color: #d9ebe7;
+    }
 
     button {
 
@@ -176,15 +178,22 @@
 
       cursor: pointer;
 
+      transition:
+        background .2s,
+        transform .15s;
     }
-
 
     button:hover {
 
       background: #099579;
 
+      transform: translateY(-1px);
     }
 
+    button:active {
+
+      transform: translateY(0);
+    }
 
     button:disabled {
 
@@ -192,19 +201,8 @@
 
       cursor: wait;
 
+      transform: none;
     }
-
-
-    #horaHistorico {
-
-      color: #b9ccc7;
-
-      font-size: 14px;
-
-      white-space: nowrap;
-
-    }
-
 
     /* =====================================================
        CARDS DE CONSUMO
@@ -225,25 +223,19 @@
       margin-bottom: 20px;
 
       align-items: stretch;
-
     }
 
-
-    .cards-consumo .card {
+    .card {
 
       min-width: 0;
 
-      min-height: 105px;
-
-      height: 100%;
+      min-height: 115px;
 
       display: flex;
 
       flex-direction: column;
 
       justify-content: center;
-
-      align-items: flex-start;
 
       background:
         rgba(255,255,255,.06);
@@ -260,74 +252,50 @@
         0 8px 25px
         rgba(0,0,0,.18);
 
+      overflow: hidden;
     }
 
-
     .card-titulo {
-
-      width: 100%;
 
       color: #b9ccc7;
 
       font-size: 13px;
 
-      line-height: 1.3;
+      line-height: 1.35;
 
       margin-bottom: 8px;
 
+      min-height: 18px;
     }
-
 
     .card-valor {
 
-      width: 100%;
-
       font-size: 25px;
 
-      line-height: 1.2;
+      line-height: 1.15;
 
       font-weight: 700;
 
       white-space: nowrap;
 
+      overflow: hidden;
+
+      text-overflow: ellipsis;
     }
 
+    .card-total {
 
-    /* =====================================================
-       CORES DOS CARDS
-       ===================================================== */
+      border:
+        1px solid
+        rgba(0,229,255,.22);
 
-    .cards-consumo .card:nth-child(1) {
-
-      border-top:
-        3px solid #60a5fa;
-
+      background:
+        linear-gradient(
+          135deg,
+          rgba(0,229,255,.08),
+          rgba(255,255,255,.05)
+        );
     }
-
-
-    .cards-consumo .card:nth-child(2) {
-
-      border-top:
-        3px solid #22c55e;
-
-    }
-
-
-    .cards-consumo .card:nth-child(3) {
-
-      border-top:
-        3px solid #facc15;
-
-    }
-
-
-    .cards-consumo .card:nth-child(4) {
-
-      border-top:
-        3px solid #a855f7;
-
-    }
-
 
     /* =====================================================
        PAINÉIS
@@ -348,45 +316,35 @@
 
       margin-bottom: 20px;
 
+      overflow: hidden;
     }
-
 
     .painel h2 {
 
-      margin-top: 0;
-
-      margin-bottom: 20px;
+      margin: 0 0 18px 0;
 
       font-size: 18px;
-
     }
-
 
     /* =====================================================
        GRÁFICO
        ===================================================== */
 
-    .grafico-wrapper {
+    .grafico-container {
 
       position: relative;
 
       width: 100%;
 
       height: 420px;
-
     }
 
-
     #graficoHistorico {
-
-      display: block;
 
       width: 100% !important;
 
       height: 100% !important;
-
     }
-
 
     /* =====================================================
        TABELA
@@ -396,10 +354,12 @@
 
       width: 100%;
 
-      overflow-x: auto;
+      max-height: 600px;
 
+      overflow: auto;
+
+      border-radius: 8px;
     }
-
 
     .tabela-historico {
 
@@ -407,14 +367,23 @@
 
       border-collapse: collapse;
 
-      min-width: 800px;
-
+      min-width: 760px;
     }
 
+    .tabela-historico thead {
+
+      position: sticky;
+
+      top: 0;
+
+      z-index: 5;
+    }
 
     .tabela-historico th {
 
       background: #065f50;
+
+      color: white;
 
       padding: 13px;
 
@@ -422,14 +391,8 @@
 
       font-size: 13px;
 
-      position: sticky;
-
-      top: 0;
-
-      z-index: 2;
-
+      white-space: nowrap;
     }
-
 
     .tabela-historico td {
 
@@ -441,25 +404,50 @@
 
       font-size: 13px;
 
+      white-space: nowrap;
     }
 
+    .tabela-historico tbody tr {
+
+      transition:
+        background .15s;
+    }
 
     .tabela-historico tbody tr:hover {
 
       background:
         rgba(255,255,255,.04);
-
     }
 
-
     /* =====================================================
-       NÍVEIS
+       BADGES
        ===================================================== */
 
-    .nivel-badge,
-    .estado-badge {
+    .reservatorio-badge {
 
-      display: inline-block;
+      display: inline-flex;
+
+      align-items: center;
+
+      padding: 5px 9px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(0,229,255,.10);
+
+      color: #8cefff;
+
+      font-size: 12px;
+
+      font-weight: 700;
+    }
+
+    .nivel-badge {
+
+      display: inline-flex;
+
+      align-items: center;
 
       padding: 5px 9px;
 
@@ -468,58 +456,39 @@
       font-size: 12px;
 
       font-weight: 700;
-
     }
 
-
-    .normal {
+    .nivel-normal {
 
       background:
         rgba(0,255,136,.14);
 
       color: #00ff88;
-
     }
 
-
-    .atencao {
+    .nivel-atencao {
 
       background:
         rgba(255,214,0,.14);
 
       color: #ffd600;
-
     }
 
-
-    .alerta {
+    .nivel-alerta {
 
       background:
         rgba(255,152,0,.14);
 
       color: #ff9800;
-
     }
 
-
-    .critico {
+    .nivel-critico {
 
       background:
         rgba(255,60,60,.16);
 
       color: #ff6666;
-
     }
-
-
-    .nivel-critico {
-
-      color: #ff6666;
-
-      font-weight: 700;
-
-    }
-
 
     /* =====================================================
        ESTADOS
@@ -538,30 +507,19 @@
       background:
         rgba(255,255,255,.04);
 
+      color: #b9ccc7;
     }
-
 
     .erro-historico {
 
       color: #ff8a8a;
-
     }
-
-
-    .erro-btn {
-
-      margin-top: 10px;
-
-    }
-
 
     /* =====================================================
        RESPONSIVO
        ===================================================== */
 
-    @media (
-      max-width: 1100px
-    ) {
+    @media (max-width: 1100px) {
 
       .cards-consumo {
 
@@ -570,15 +528,10 @@
             2,
             minmax(0, 1fr)
           );
-
       }
-
     }
 
-
-    @media (
-      max-width: 900px
-    ) {
+    @media (max-width: 700px) {
 
       header {
 
@@ -588,57 +541,37 @@
 
       }
 
-    }
-
-
-    @media (
-      max-width: 600px
-    ) {
-
       main {
 
         padding: 12px;
-
       }
-
-
-      .cards-consumo {
-
-        grid-template-columns:
-          1fr;
-
-      }
-
 
       .acoes {
 
         flex-direction: column;
 
         align-items: stretch;
-
       }
-
 
       #btnAtualizar {
 
         width: 100%;
-
       }
 
+      .cards-consumo {
 
-      #horaHistorico {
-
-        align-self: flex-start;
-
+        grid-template-columns: 1fr;
       }
 
+      .grafico-container {
 
-      .grafico-wrapper {
-
-        height: 350px;
-
+        height: 320px;
       }
 
+      .painel {
+
+        padding: 14px;
+      }
     }
 
   </style>
@@ -648,9 +581,8 @@
 
 <body>
 
-
   <!-- =====================================================
-       CABEÇALHO
+       HEADER
        ===================================================== -->
 
   <header>
@@ -668,20 +600,18 @@
 
     </div>
 
-
     <div id="horaHistorico">
-      --
+      Atualizado: --
     </div>
 
   </header>
 
 
   <!-- =====================================================
-       CONTEÚDO
+       MAIN
        ===================================================== -->
 
   <main>
-
 
     <!-- ===================================================
          AÇÕES
@@ -689,15 +619,13 @@
 
     <div class="acoes">
 
-      <div>
+      <div class="acoes-titulo">
         Histórico dos reservatórios
       </div>
-
 
       <button
         type="button"
         id="btnAtualizar"
-        onclick="carregarHistorico()"
       >
         🔄 Atualizar
       </button>
@@ -706,7 +634,7 @@
 
 
     <!-- ===================================================
-         CONSUMO
+         CARDS
          =================================================== -->
 
     <div class="cards-consumo">
@@ -760,7 +688,7 @@
       </div>
 
 
-      <div class="card">
+      <div class="card card-total">
 
         <div class="card-titulo">
           Consumo Total Hoje
@@ -789,8 +717,7 @@
         📈 Nível dos Reservatórios
       </h2>
 
-
-      <div class="grafico-wrapper">
+      <div class="grafico-container">
 
         <canvas
           id="graficoHistorico"
@@ -811,7 +738,6 @@
         📋 Registros Históricos
       </h2>
 
-
       <div id="historico">
 
         <div class="carregando">
@@ -822,16 +748,14 @@
 
     </section>
 
-
   </main>
 
 
   <!-- =====================================================
-       JAVASCRIPT DO HISTÓRICO
+       JAVASCRIPT
        ===================================================== -->
 
-  <script src="/historico.js"></script>
-
+  <script src="/historico.js?v=5"></script>
 
 </body>
 
