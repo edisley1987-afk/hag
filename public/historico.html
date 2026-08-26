@@ -12,11 +12,13 @@
 
   <title>Histórico - HAG</title>
 
+
   <!-- =====================================================
        CHART.JS
        ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 
   <!-- =====================================================
        LUXON
@@ -24,11 +26,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
 
+
   <!-- =====================================================
-       ADAPTADOR DE DATA DO CHART.JS
+       ADAPTADOR CHART.JS
        ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+
 
   <!-- =====================================================
        ESTILO
@@ -40,12 +44,14 @@
       box-sizing: border-box;
     }
 
+
     html,
     body {
       margin: 0;
       padding: 0;
       min-height: 100%;
     }
+
 
     body {
 
@@ -66,6 +72,11 @@
       min-height: 100vh;
 
     }
+
+
+    /* =====================================================
+       HEADER
+       ===================================================== */
 
     header {
 
@@ -92,6 +103,7 @@
 
     }
 
+
     header h1 {
 
       margin: 0;
@@ -100,6 +112,7 @@
 
     }
 
+
     header span {
 
       font-size: 14px;
@@ -107,6 +120,11 @@
       color: #b9ccc7;
 
     }
+
+
+    /* =====================================================
+       MAIN
+       ===================================================== */
 
     main {
 
@@ -119,6 +137,11 @@
       padding: 25px;
 
     }
+
+
+    /* =====================================================
+       AÇÕES
+       ===================================================== */
 
     .acoes {
 
@@ -133,6 +156,7 @@
       margin-bottom: 20px;
 
     }
+
 
     button {
 
@@ -154,11 +178,13 @@
 
     }
 
+
     button:hover {
 
       background: #099579;
 
     }
+
 
     button:disabled {
 
@@ -168,13 +194,21 @@
 
     }
 
+
     #horaHistorico {
 
       color: #b9ccc7;
 
       font-size: 14px;
 
+      white-space: nowrap;
+
     }
+
+
+    /* =====================================================
+       CARDS DE CONSUMO
+       ===================================================== */
 
     .cards-consumo {
 
@@ -183,16 +217,33 @@
       grid-template-columns:
         repeat(
           4,
-          minmax(180px, 1fr)
+          minmax(0, 1fr)
         );
 
       gap: 15px;
 
       margin-bottom: 20px;
 
+      align-items: stretch;
+
     }
 
-    .card {
+
+    .cards-consumo .card {
+
+      min-width: 0;
+
+      min-height: 105px;
+
+      height: 100%;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: center;
+
+      align-items: flex-start;
 
       background:
         rgba(255,255,255,.06);
@@ -211,23 +262,76 @@
 
     }
 
+
     .card-titulo {
+
+      width: 100%;
 
       color: #b9ccc7;
 
       font-size: 13px;
 
+      line-height: 1.3;
+
       margin-bottom: 8px;
 
     }
 
+
     .card-valor {
+
+      width: 100%;
 
       font-size: 25px;
 
+      line-height: 1.2;
+
       font-weight: 700;
 
+      white-space: nowrap;
+
     }
+
+
+    /* =====================================================
+       CORES DOS CARDS
+       ===================================================== */
+
+    .cards-consumo .card:nth-child(1) {
+
+      border-top:
+        3px solid #60a5fa;
+
+    }
+
+
+    .cards-consumo .card:nth-child(2) {
+
+      border-top:
+        3px solid #22c55e;
+
+    }
+
+
+    .cards-consumo .card:nth-child(3) {
+
+      border-top:
+        3px solid #facc15;
+
+    }
+
+
+    .cards-consumo .card:nth-child(4) {
+
+      border-top:
+        3px solid #a855f7;
+
+    }
+
+
+    /* =====================================================
+       PAINÉIS
+       ===================================================== */
 
     .painel {
 
@@ -246,21 +350,47 @@
 
     }
 
+
     .painel h2 {
 
       margin-top: 0;
+
+      margin-bottom: 20px;
 
       font-size: 18px;
 
     }
 
+
+    /* =====================================================
+       GRÁFICO
+       ===================================================== */
+
+    .grafico-wrapper {
+
+      position: relative;
+
+      width: 100%;
+
+      height: 420px;
+
+    }
+
+
     #graficoHistorico {
+
+      display: block;
 
       width: 100% !important;
 
-      height: 420px !important;
+      height: 100% !important;
 
     }
+
+
+    /* =====================================================
+       TABELA
+       ===================================================== */
 
     .tabela-wrapper {
 
@@ -269,6 +399,7 @@
       overflow-x: auto;
 
     }
+
 
     .tabela-historico {
 
@@ -279,6 +410,7 @@
       min-width: 800px;
 
     }
+
 
     .tabela-historico th {
 
@@ -294,7 +426,10 @@
 
       top: 0;
 
+      z-index: 2;
+
     }
+
 
     .tabela-historico td {
 
@@ -308,12 +443,18 @@
 
     }
 
+
     .tabela-historico tbody tr:hover {
 
       background:
         rgba(255,255,255,.04);
 
     }
+
+
+    /* =====================================================
+       NÍVEIS
+       ===================================================== */
 
     .nivel-badge,
     .estado-badge {
@@ -330,6 +471,7 @@
 
     }
 
+
     .normal {
 
       background:
@@ -338,6 +480,7 @@
       color: #00ff88;
 
     }
+
 
     .atencao {
 
@@ -348,6 +491,7 @@
 
     }
 
+
     .alerta {
 
       background:
@@ -357,6 +501,7 @@
 
     }
 
+
     .critico {
 
       background:
@@ -365,6 +510,20 @@
       color: #ff6666;
 
     }
+
+
+    .nivel-critico {
+
+      color: #ff6666;
+
+      font-weight: 700;
+
+    }
+
+
+    /* =====================================================
+       ESTADOS
+       ===================================================== */
 
     .carregando,
     .sem-dados,
@@ -381,11 +540,13 @@
 
     }
 
+
     .erro-historico {
 
       color: #ff8a8a;
 
     }
+
 
     .erro-btn {
 
@@ -393,8 +554,13 @@
 
     }
 
+
+    /* =====================================================
+       RESPONSIVO
+       ===================================================== */
+
     @media (
-      max-width: 900px
+      max-width: 1100px
     ) {
 
       .cards-consumo {
@@ -402,10 +568,17 @@
         grid-template-columns:
           repeat(
             2,
-            minmax(150px, 1fr)
+            minmax(0, 1fr)
           );
 
       }
+
+    }
+
+
+    @media (
+      max-width: 900px
+    ) {
 
       header {
 
@@ -417,6 +590,7 @@
 
     }
 
+
     @media (
       max-width: 600px
     ) {
@@ -427,11 +601,14 @@
 
       }
 
+
       .cards-consumo {
 
-        grid-template-columns: 1fr;
+        grid-template-columns:
+          1fr;
 
       }
+
 
       .acoes {
 
@@ -441,9 +618,24 @@
 
       }
 
+
       #btnAtualizar {
 
         width: 100%;
+
+      }
+
+
+      #horaHistorico {
+
+        align-self: flex-start;
+
+      }
+
+
+      .grafico-wrapper {
+
+        height: 350px;
 
       }
 
@@ -476,6 +668,7 @@
 
     </div>
 
+
     <div id="horaHistorico">
       --
     </div>
@@ -499,6 +692,7 @@
       <div>
         Histórico dos reservatórios
       </div>
+
 
       <button
         type="button"
@@ -595,13 +789,8 @@
         📈 Nível dos Reservatórios
       </h2>
 
-      <div
-        style="
-          position:relative;
-          width:100%;
-          height:420px;
-        "
-      >
+
+      <div class="grafico-wrapper">
 
         <canvas
           id="graficoHistorico"
@@ -622,6 +811,7 @@
         📋 Registros Históricos
       </h2>
 
+
       <div id="historico">
 
         <div class="carregando">
@@ -637,7 +827,7 @@
 
 
   <!-- =====================================================
-       SEU JAVASCRIPT
+       JAVASCRIPT DO HISTÓRICO
        ===================================================== -->
 
   <script src="/historico.js"></script>
